@@ -1,0 +1,7 @@
+[
+{
+  "directory": "/home/danielaugusto/prog/printfunc/build",
+  "command": "/usr/bin/c++    -o CMakeFiles/a.out.dir/a.cpp.o -c /home/danielaugusto/prog/printfunc/a.cpp",
+  "file": "/home/danielaugusto/prog/printfunc/a.cpp"
+}
+]
