@@ -1,6 +1,0 @@
-/home/danielaugusto/prog/printfunc/build/CMakeFiles/intrinsics_gen.dir
-/home/danielaugusto/prog/printfunc/build/CMakeFiles/omp_gen.dir
-/home/danielaugusto/prog/printfunc/build/CMakeFiles/acc_gen.dir
-/home/danielaugusto/prog/printfunc/build/CMakeFiles/a.out.dir
-/home/danielaugusto/prog/printfunc/build/CMakeFiles/edit_cache.dir
-/home/danielaugusto/prog/printfunc/build/CMakeFiles/rebuild_cache.dir
