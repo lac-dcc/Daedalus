@@ -1,0 +1,11 @@
+# ninja log v5
+6269	6350	1693827334574791438	lib/libprintFunc.so	fdf5a106a35cd1d7
+2	6269	1693827334491458102	lib/CMakeFiles/printFunc.dir/printFuncPlugin.cpp.o	79d9c8ed12b5e76a
+2	5880	1693827334104791419	lib/CMakeFiles/printFunc.dir/printFunc.cpp.o	c7f2ff3f075b9c1c
+2	789	1693826796504769441	CMakeFiles/a.out.dir/a.cpp.o	e742a0eac6b12414
+789	968	1693826796684769449	a.out	fa534802861e1530
+3	466	1693827418428128200	CMakeFiles/a.out.dir/a.cpp.o	e742a0eac6b12414
+466	575	1693827418534794871	a.out	fa534802861e1530
+3	6418	1693827424381461776	lib/CMakeFiles/printFunc.dir/printFunc.cpp.o	c7f2ff3f075b9c1c
+3	6735	1693827424698128455	lib/CMakeFiles/printFunc.dir/printFuncPlugin.cpp.o	79d9c8ed12b5e76a
+6735	6817	1693827424778128459	lib/libprintFunc.so	fdf5a106a35cd1d7
