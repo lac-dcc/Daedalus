@@ -55,7 +55,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "/home/pc2/programming/cpp/llvm/InstructionToFunction-WyvernSlice/build"
+			"value" : "/home/danielaugusto/prog/printfunc/build"
 		},
 		{
 			"name" : "CMAKE_CACHE_MAJOR_VERSION",
@@ -79,7 +79,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "27"
+			"value" : "22"
 		},
 		{
 			"name" : "CMAKE_CACHE_PATCH_VERSION",
@@ -159,7 +159,7 @@
 				}
 			],
 			"type" : "FILEPATH",
-			"value" : "/usr/bin/gcc-ar"
+			"value" : "/usr/bin/gcc-ar-11"
 		},
 		{
 			"name" : "CMAKE_CXX_COMPILER_RANLIB",
@@ -175,7 +175,7 @@
 				}
 			],
 			"type" : "FILEPATH",
-			"value" : "/usr/bin/gcc-ranlib"
+			"value" : "/usr/bin/gcc-ranlib-11"
 		},
 		{
 			"name" : "CMAKE_CXX_FLAGS",
@@ -287,7 +287,7 @@
 				}
 			],
 			"type" : "FILEPATH",
-			"value" : "/usr/bin/gcc-ar"
+			"value" : "/usr/bin/gcc-ar-11"
 		},
 		{
 			"name" : "CMAKE_C_COMPILER_RANLIB",
@@ -303,7 +303,7 @@
 				}
 			],
 			"type" : "FILEPATH",
-			"value" : "/usr/bin/gcc-ranlib"
+			"value" : "/usr/bin/gcc-ranlib-11"
 		},
 		{
 			"name" : "CMAKE_C_FLAGS",
@@ -400,18 +400,6 @@
 			],
 			"type" : "FILEPATH",
 			"value" : "CMAKE_DLLTOOL-NOTFOUND"
-		},
-		{
-			"name" : "CMAKE_EDIT_COMMAND",
-			"properties" : 
-			[
-				{
-					"name" : "HELPSTRING",
-					"value" : "Path to cache edit program executable."
-				}
-			],
-			"type" : "INTERNAL",
-			"value" : "/usr/bin/ccmake"
 		},
 		{
 			"name" : "CMAKE_EXECUTABLE_FORMAT",
@@ -534,18 +522,6 @@
 			"value" : ""
 		},
 		{
-			"name" : "CMAKE_FIND_PACKAGE_REDIRECTS_DIR",
-			"properties" : 
-			[
-				{
-					"name" : "HELPSTRING",
-					"value" : "Value Computed by CMake."
-				}
-			],
-			"type" : "STATIC",
-			"value" : "/home/pc2/programming/cpp/llvm/InstructionToFunction-WyvernSlice/build/CMakeFiles/pkgRedirects"
-		},
-		{
 			"name" : "CMAKE_GENERATOR",
 			"properties" : 
 			[
@@ -603,7 +579,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "/home/pc2/programming/cpp/llvm/InstructionToFunction-WyvernSlice"
+			"value" : "/home/danielaugusto/prog/printfunc"
 		},
 		{
 			"name" : "CMAKE_INSTALL_PREFIX",
@@ -627,7 +603,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "0"
+			"value" : "1"
 		},
 		{
 			"name" : "CMAKE_LINKER",
@@ -891,7 +867,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "/usr/share/cmake"
+			"value" : "/usr/share/cmake-3.22"
 		},
 		{
 			"name" : "CMAKE_SHARED_LINKER_FLAGS",
@@ -1102,22 +1078,6 @@
 			"value" : "/usr/bin/strip"
 		},
 		{
-			"name" : "CMAKE_TAPI",
-			"properties" : 
-			[
-				{
-					"name" : "ADVANCED",
-					"value" : "1"
-				},
-				{
-					"name" : "HELPSTRING",
-					"value" : "Path to a program."
-				}
-			],
-			"type" : "FILEPATH",
-			"value" : "CMAKE_TAPI-NOTFOUND"
-		},
-		{
 			"name" : "CMAKE_UNAME",
 			"properties" : 
 			[
@@ -1146,18 +1106,6 @@
 			"value" : "FALSE"
 		},
 		{
-			"name" : "FIND_PACKAGE_MESSAGE_DETAILS_LibEdit",
-			"properties" : 
-			[
-				{
-					"name" : "HELPSTRING",
-					"value" : "Details about finding LibEdit"
-				}
-			],
-			"type" : "INTERNAL",
-			"value" : "[/usr/include][/usr/lib/libedit.so][v2.11()]"
-		},
-		{
 			"name" : "FIND_PACKAGE_MESSAGE_DETAILS_LibXml2",
 			"properties" : 
 			[
@@ -1167,7 +1115,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "[/usr/lib/libxml2.so][/usr/include/libxml2][v2.11.5()]"
+			"value" : "[/usr/lib/x86_64-linux-gnu/libxml2.so][/usr/include/libxml2][v2.9.13()]"
 		},
 		{
 			"name" : "FIND_PACKAGE_MESSAGE_DETAILS_Terminfo",
@@ -1179,7 +1127,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "[/usr/lib/libtinfo.so][1][v()]"
+			"value" : "[/usr/lib/x86_64-linux-gnu/libtinfo.so][1][v()]"
 		},
 		{
 			"name" : "FIND_PACKAGE_MESSAGE_DETAILS_ZLIB",
@@ -1191,31 +1139,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "[/usr/lib/libz.so][/usr/include][c ][v1.2.13()]"
-		},
-		{
-			"name" : "FIND_PACKAGE_MESSAGE_DETAILS_zstd",
-			"properties" : 
-			[
-				{
-					"name" : "HELPSTRING",
-					"value" : "Details about finding zstd"
-				}
-			],
-			"type" : "INTERNAL",
-			"value" : "[/usr/lib/libzstd.so][/usr/include][v()]"
-		},
-		{
-			"name" : "HAVE_HISTEDIT_H",
-			"properties" : 
-			[
-				{
-					"name" : "HELPSTRING",
-					"value" : "Have include histedit.h"
-				}
-			],
-			"type" : "INTERNAL",
-			"value" : "1"
+			"value" : "[/usr/lib/x86_64-linux-gnu/libz.so][/usr/include][v1.2.11()]"
 		},
 		{
 			"name" : "LIBXML2_INCLUDE_DIR",
@@ -1247,7 +1171,7 @@
 				}
 			],
 			"type" : "FILEPATH",
-			"value" : "/usr/lib/libxml2.so"
+			"value" : "/usr/lib/x86_64-linux-gnu/libxml2.so"
 		},
 		{
 			"name" : "LIBXML2_XMLLINT_EXECUTABLE",
@@ -1263,7 +1187,7 @@
 				}
 			],
 			"type" : "FILEPATH",
-			"value" : "/usr/bin/xmllint"
+			"value" : "LIBXML2_XMLLINT_EXECUTABLE-NOTFOUND"
 		},
 		{
 			"name" : "LLVM_DIR",
@@ -1275,7 +1199,7 @@
 				}
 			],
 			"type" : "PATH",
-			"value" : "/home/pc2/llvm-project/build/lib/cmake/llvm"
+			"value" : "/home/danielaugusto/llvm-project/build/lib/cmake/llvm"
 		},
 		{
 			"name" : "LLVM_INSTALL_DIR",
@@ -1287,458 +1211,6 @@
 				}
 			],
 			"type" : "UNINITIALIZED",
-			"value" : "/home/pc2/llvm14/llvm-project/build/"
-		},
-		{
-			"name" : "LibEdit_INCLUDE_DIRS",
-			"properties" : 
-			[
-				{
-					"name" : "ADVANCED",
-					"value" : "1"
-				},
-				{
-					"name" : "HELPSTRING",
-					"value" : "Path to a file."
-				}
-			],
-			"type" : "PATH",
-			"value" : "/usr/include"
-		},
-		{
-			"name" : "LibEdit_LIBRARIES",
-			"properties" : 
-			[
-				{
-					"name" : "ADVANCED",
-					"value" : "1"
-				},
-				{
-					"name" : "HELPSTRING",
-					"value" : "Path to a library."
-				}
-			],
-			"type" : "FILEPATH",
-			"value" : "/usr/lib/libedit.so"
-		},
-		{
-			"name" : "PC_LIBEDIT_CFLAGS",
-			"properties" : 
-			[
-				{
-					"name" : "HELPSTRING",
-					"value" : ""
-				}
-			],
-			"type" : "INTERNAL",
-			"value" : "-I/usr/include/editline"
-		},
-		{
-			"name" : "PC_LIBEDIT_CFLAGS_I",
-			"properties" : 
-			[
-				{
-					"name" : "HELPSTRING",
-					"value" : ""
-				}
-			],
-			"type" : "INTERNAL",
-			"value" : ""
-		},
-		{
-			"name" : "PC_LIBEDIT_CFLAGS_OTHER",
-			"properties" : 
-			[
-				{
-					"name" : "HELPSTRING",
-					"value" : ""
-				}
-			],
-			"type" : "INTERNAL",
-			"value" : ""
-		},
-		{
-			"name" : "PC_LIBEDIT_FOUND",
-			"properties" : 
-			[
-				{
-					"name" : "HELPSTRING",
-					"value" : ""
-				}
-			],
-			"type" : "INTERNAL",
-			"value" : "1"
-		},
-		{
-			"name" : "PC_LIBEDIT_INCLUDEDIR",
-			"properties" : 
-			[
-				{
-					"name" : "HELPSTRING",
-					"value" : ""
-				}
-			],
-			"type" : "INTERNAL",
-			"value" : "/usr/include"
-		},
-		{
-			"name" : "PC_LIBEDIT_INCLUDE_DIRS",
-			"properties" : 
-			[
-				{
-					"name" : "HELPSTRING",
-					"value" : ""
-				}
-			],
-			"type" : "INTERNAL",
-			"value" : "/usr/include/editline"
-		},
-		{
-			"name" : "PC_LIBEDIT_LDFLAGS",
-			"properties" : 
-			[
-				{
-					"name" : "HELPSTRING",
-					"value" : ""
-				}
-			],
-			"type" : "INTERNAL",
-			"value" : "-L/usr/lib;-ledit"
-		},
-		{
-			"name" : "PC_LIBEDIT_LDFLAGS_OTHER",
-			"properties" : 
-			[
-				{
-					"name" : "HELPSTRING",
-					"value" : ""
-				}
-			],
-			"type" : "INTERNAL",
-			"value" : ""
-		},
-		{
-			"name" : "PC_LIBEDIT_LIBDIR",
-			"properties" : 
-			[
-				{
-					"name" : "HELPSTRING",
-					"value" : ""
-				}
-			],
-			"type" : "INTERNAL",
-			"value" : "/usr/lib"
-		},
-		{
-			"name" : "PC_LIBEDIT_LIBRARIES",
-			"properties" : 
-			[
-				{
-					"name" : "HELPSTRING",
-					"value" : ""
-				}
-			],
-			"type" : "INTERNAL",
-			"value" : "edit"
-		},
-		{
-			"name" : "PC_LIBEDIT_LIBRARY_DIRS",
-			"properties" : 
-			[
-				{
-					"name" : "HELPSTRING",
-					"value" : ""
-				}
-			],
-			"type" : "INTERNAL",
-			"value" : "/usr/lib"
-		},
-		{
-			"name" : "PC_LIBEDIT_LIBS",
-			"properties" : 
-			[
-				{
-					"name" : "HELPSTRING",
-					"value" : ""
-				}
-			],
-			"type" : "INTERNAL",
-			"value" : ""
-		},
-		{
-			"name" : "PC_LIBEDIT_LIBS_L",
-			"properties" : 
-			[
-				{
-					"name" : "HELPSTRING",
-					"value" : ""
-				}
-			],
-			"type" : "INTERNAL",
-			"value" : ""
-		},
-		{
-			"name" : "PC_LIBEDIT_LIBS_OTHER",
-			"properties" : 
-			[
-				{
-					"name" : "HELPSTRING",
-					"value" : ""
-				}
-			],
-			"type" : "INTERNAL",
-			"value" : ""
-		},
-		{
-			"name" : "PC_LIBEDIT_LIBS_PATHS",
-			"properties" : 
-			[
-				{
-					"name" : "HELPSTRING",
-					"value" : ""
-				}
-			],
-			"type" : "INTERNAL",
-			"value" : ""
-		},
-		{
-			"name" : "PC_LIBEDIT_MODULE_NAME",
-			"properties" : 
-			[
-				{
-					"name" : "HELPSTRING",
-					"value" : ""
-				}
-			],
-			"type" : "INTERNAL",
-			"value" : "libedit"
-		},
-		{
-			"name" : "PC_LIBEDIT_PREFIX",
-			"properties" : 
-			[
-				{
-					"name" : "HELPSTRING",
-					"value" : ""
-				}
-			],
-			"type" : "INTERNAL",
-			"value" : "/usr"
-		},
-		{
-			"name" : "PC_LIBEDIT_STATIC_CFLAGS",
-			"properties" : 
-			[
-				{
-					"name" : "HELPSTRING",
-					"value" : ""
-				}
-			],
-			"type" : "INTERNAL",
-			"value" : "-I/usr/include/editline"
-		},
-		{
-			"name" : "PC_LIBEDIT_STATIC_CFLAGS_I",
-			"properties" : 
-			[
-				{
-					"name" : "HELPSTRING",
-					"value" : ""
-				}
-			],
-			"type" : "INTERNAL",
-			"value" : ""
-		},
-		{
-			"name" : "PC_LIBEDIT_STATIC_CFLAGS_OTHER",
-			"properties" : 
-			[
-				{
-					"name" : "HELPSTRING",
-					"value" : ""
-				}
-			],
-			"type" : "INTERNAL",
-			"value" : ""
-		},
-		{
-			"name" : "PC_LIBEDIT_STATIC_INCLUDE_DIRS",
-			"properties" : 
-			[
-				{
-					"name" : "HELPSTRING",
-					"value" : ""
-				}
-			],
-			"type" : "INTERNAL",
-			"value" : "/usr/include/editline"
-		},
-		{
-			"name" : "PC_LIBEDIT_STATIC_LDFLAGS",
-			"properties" : 
-			[
-				{
-					"name" : "HELPSTRING",
-					"value" : ""
-				}
-			],
-			"type" : "INTERNAL",
-			"value" : "-L/usr/lib;-ledit;-lncurses"
-		},
-		{
-			"name" : "PC_LIBEDIT_STATIC_LDFLAGS_OTHER",
-			"properties" : 
-			[
-				{
-					"name" : "HELPSTRING",
-					"value" : ""
-				}
-			],
-			"type" : "INTERNAL",
-			"value" : ""
-		},
-		{
-			"name" : "PC_LIBEDIT_STATIC_LIBDIR",
-			"properties" : 
-			[
-				{
-					"name" : "HELPSTRING",
-					"value" : ""
-				}
-			],
-			"type" : "INTERNAL",
-			"value" : ""
-		},
-		{
-			"name" : "PC_LIBEDIT_STATIC_LIBRARIES",
-			"properties" : 
-			[
-				{
-					"name" : "HELPSTRING",
-					"value" : ""
-				}
-			],
-			"type" : "INTERNAL",
-			"value" : "edit;ncurses"
-		},
-		{
-			"name" : "PC_LIBEDIT_STATIC_LIBRARY_DIRS",
-			"properties" : 
-			[
-				{
-					"name" : "HELPSTRING",
-					"value" : ""
-				}
-			],
-			"type" : "INTERNAL",
-			"value" : "/usr/lib"
-		},
-		{
-			"name" : "PC_LIBEDIT_STATIC_LIBS",
-			"properties" : 
-			[
-				{
-					"name" : "HELPSTRING",
-					"value" : ""
-				}
-			],
-			"type" : "INTERNAL",
-			"value" : ""
-		},
-		{
-			"name" : "PC_LIBEDIT_STATIC_LIBS_L",
-			"properties" : 
-			[
-				{
-					"name" : "HELPSTRING",
-					"value" : ""
-				}
-			],
-			"type" : "INTERNAL",
-			"value" : ""
-		},
-		{
-			"name" : "PC_LIBEDIT_STATIC_LIBS_OTHER",
-			"properties" : 
-			[
-				{
-					"name" : "HELPSTRING",
-					"value" : ""
-				}
-			],
-			"type" : "INTERNAL",
-			"value" : ""
-		},
-		{
-			"name" : "PC_LIBEDIT_STATIC_LIBS_PATHS",
-			"properties" : 
-			[
-				{
-					"name" : "HELPSTRING",
-					"value" : ""
-				}
-			],
-			"type" : "INTERNAL",
-			"value" : ""
-		},
-		{
-			"name" : "PC_LIBEDIT_VERSION",
-			"properties" : 
-			[
-				{
-					"name" : "HELPSTRING",
-					"value" : ""
-				}
-			],
-			"type" : "INTERNAL",
-			"value" : "3.1"
-		},
-		{
-			"name" : "PC_LIBEDIT_libedit_INCLUDEDIR",
-			"properties" : 
-			[
-				{
-					"name" : "HELPSTRING",
-					"value" : ""
-				}
-			],
-			"type" : "INTERNAL",
-			"value" : ""
-		},
-		{
-			"name" : "PC_LIBEDIT_libedit_LIBDIR",
-			"properties" : 
-			[
-				{
-					"name" : "HELPSTRING",
-					"value" : ""
-				}
-			],
-			"type" : "INTERNAL",
-			"value" : ""
-		},
-		{
-			"name" : "PC_LIBEDIT_libedit_PREFIX",
-			"properties" : 
-			[
-				{
-					"name" : "HELPSTRING",
-					"value" : ""
-				}
-			],
-			"type" : "INTERNAL",
-			"value" : ""
-		},
-		{
-			"name" : "PC_LIBEDIT_libedit_VERSION",
-			"properties" : 
-			[
-				{
-					"name" : "HELPSTRING",
-					"value" : ""
-				}
-			],
-			"type" : "INTERNAL",
 			"value" : ""
 		},
 		{
@@ -1823,7 +1295,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "-L/usr/lib;-lxml2"
+			"value" : "-L/usr/lib/x86_64-linux-gnu;-lxml2"
 		},
 		{
 			"name" : "PC_LIBXML_LDFLAGS_OTHER",
@@ -1847,7 +1319,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "/usr/lib"
+			"value" : "/usr/lib/x86_64-linux-gnu"
 		},
 		{
 			"name" : "PC_LIBXML_LIBRARIES",
@@ -1871,7 +1343,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "/usr/lib"
+			"value" : "/usr/lib/x86_64-linux-gnu"
 		},
 		{
 			"name" : "PC_LIBXML_LIBS",
@@ -2003,7 +1475,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "-L/usr/lib;-lxml2;-lz;-llzma;-licui18n;-licuuc;-licudata;-lm"
+			"value" : "-L/usr/lib/x86_64-linux-gnu;-lxml2;-licui18n;-licuuc;-licudata;-lz;-llzma;-lm"
 		},
 		{
 			"name" : "PC_LIBXML_STATIC_LDFLAGS_OTHER",
@@ -2039,7 +1511,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "xml2;z;lzma;icui18n;icuuc;icudata;m"
+			"value" : "xml2;icui18n;icuuc;icudata;z;lzma;m"
 		},
 		{
 			"name" : "PC_LIBXML_STATIC_LIBRARY_DIRS",
@@ -2051,7 +1523,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "/usr/lib"
+			"value" : "/usr/lib/x86_64-linux-gnu"
 		},
 		{
 			"name" : "PC_LIBXML_STATIC_LIBS",
@@ -2111,7 +1583,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "2.11.5"
+			"value" : "2.9.13"
 		},
 		{
 			"name" : "PC_LIBXML_libxml-2.0_INCLUDEDIR",
@@ -2219,7 +1691,7 @@
 				}
 			],
 			"type" : "FILEPATH",
-			"value" : "/usr/lib/libtinfo.so"
+			"value" : "/usr/lib/x86_64-linux-gnu/libtinfo.so"
 		},
 		{
 			"name" : "Terminfo_LINKABLE",
@@ -2283,31 +1755,7 @@
 				}
 			],
 			"type" : "FILEPATH",
-			"value" : "/usr/lib/libz.so"
-		},
-		{
-			"name" : "_CMAKE_LINKER_PUSHPOP_STATE_SUPPORTED",
-			"properties" : 
-			[
-				{
-					"name" : "HELPSTRING",
-					"value" : "linker supports push/pop state"
-				}
-			],
-			"type" : "INTERNAL",
-			"value" : "TRUE"
-		},
-		{
-			"name" : "__pkg_config_arguments_PC_LIBEDIT",
-			"properties" : 
-			[
-				{
-					"name" : "HELPSTRING",
-					"value" : ""
-				}
-			],
-			"type" : "INTERNAL",
-			"value" : "QUIET;libedit"
+			"value" : "/usr/lib/x86_64-linux-gnu/libz.so"
 		},
 		{
 			"name" : "__pkg_config_arguments_PC_LIBXML",
@@ -2322,18 +1770,6 @@
 			"value" : "QUIET;libxml-2.0"
 		},
 		{
-			"name" : "__pkg_config_checked_PC_LIBEDIT",
-			"properties" : 
-			[
-				{
-					"name" : "HELPSTRING",
-					"value" : ""
-				}
-			],
-			"type" : "INTERNAL",
-			"value" : "1"
-		},
-		{
 			"name" : "__pkg_config_checked_PC_LIBXML",
 			"properties" : 
 			[
@@ -2344,22 +1780,6 @@
 			],
 			"type" : "INTERNAL",
 			"value" : "1"
-		},
-		{
-			"name" : "pkgcfg_lib_PC_LIBEDIT_edit",
-			"properties" : 
-			[
-				{
-					"name" : "ADVANCED",
-					"value" : "1"
-				},
-				{
-					"name" : "HELPSTRING",
-					"value" : "Path to a library."
-				}
-			],
-			"type" : "FILEPATH",
-			"value" : "/usr/lib/libedit.so"
 		},
 		{
 			"name" : "pkgcfg_lib_PC_LIBXML_xml2",
@@ -2375,7 +1795,7 @@
 				}
 			],
 			"type" : "FILEPATH",
-			"value" : "/usr/lib/libxml2.so"
+			"value" : "/usr/lib/x86_64-linux-gnu/libxml2.so"
 		},
 		{
 			"name" : "prefix_result",
@@ -2387,7 +1807,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "/usr/lib"
+			"value" : "/usr/lib/x86_64-linux-gnu"
 		},
 		{
 			"name" : "printfunc_BINARY_DIR",
@@ -2399,7 +1819,7 @@
 				}
 			],
 			"type" : "STATIC",
-			"value" : "/home/pc2/programming/cpp/llvm/InstructionToFunction-WyvernSlice/build"
+			"value" : "/home/danielaugusto/prog/printfunc/build"
 		},
 		{
 			"name" : "printfunc_IS_TOP_LEVEL",
@@ -2423,55 +1843,7 @@
 				}
 			],
 			"type" : "STATIC",
-			"value" : "/home/pc2/programming/cpp/llvm/InstructionToFunction-WyvernSlice"
-		},
-		{
-			"name" : "zstd_INCLUDE_DIR",
-			"properties" : 
-			[
-				{
-					"name" : "ADVANCED",
-					"value" : "1"
-				},
-				{
-					"name" : "HELPSTRING",
-					"value" : "Path to a file."
-				}
-			],
-			"type" : "PATH",
-			"value" : "/usr/include"
-		},
-		{
-			"name" : "zstd_LIBRARY",
-			"properties" : 
-			[
-				{
-					"name" : "ADVANCED",
-					"value" : "1"
-				},
-				{
-					"name" : "HELPSTRING",
-					"value" : "Path to a library."
-				}
-			],
-			"type" : "FILEPATH",
-			"value" : "/usr/lib/libzstd.so"
-		},
-		{
-			"name" : "zstd_STATIC_LIBRARY",
-			"properties" : 
-			[
-				{
-					"name" : "ADVANCED",
-					"value" : "1"
-				},
-				{
-					"name" : "HELPSTRING",
-					"value" : "Path to a library."
-				}
-			],
-			"type" : "FILEPATH",
-			"value" : "zstd_STATIC_LIBRARY-NOTFOUND"
+			"value" : "/home/danielaugusto/prog/printfunc"
 		}
 	],
 	"kind" : "cache",

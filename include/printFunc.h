@@ -6,10 +6,14 @@
 #include "llvm/IR/InstrTypes.h"
 #include "llvm/IR/PassManager.h"
 #include <llvm/Support/raw_ostream.h>
+#include "/home/danielaugusto/wyvern/passes/ProgramSlice.cpp"
+
+#include <vector>
 
 namespace printFunc{
 	struct printFuncAnalysis : public llvm::AnalysisInfoMixin<printFuncAnalysis>{
-		using Result = llvm::SmallVector<llvm::BinaryOperator *, 0>;
+	//	using Result = llvm::SmallVector<llvm::BinaryOperator *, 0>;
+		using Result = llvm::SmallVector<Function *, 0>;
 		Result run(llvm::Function &, llvm::FunctionAnalysisManager &);
 		static llvm::AnalysisKey Key;
 	};

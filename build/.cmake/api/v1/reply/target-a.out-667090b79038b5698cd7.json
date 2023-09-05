@@ -42,18 +42,18 @@
 			"compileCommandFragments" : 
 			[
 				{
-					"fragment" : " -fno-rtti -fvisibility-inlines-hidden   -D_GNU_SOURCE -D_DEBUG -D_GLIBCXX_ASSERTIONS -D_LIBCPP_ENABLE_HARDENED_MODE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS"
+					"fragment" : " -fno-rtti -fvisibility-inlines-hidden   -D_GNU_SOURCE -D_DEBUG -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS"
 				}
 			],
 			"includes" : 
 			[
 				{
 					"backtrace" : 2,
-					"path" : "/home/pc2/llvm-project/llvm/include"
+					"path" : "/home/danielaugusto/llvm-project/llvm/include"
 				},
 				{
 					"backtrace" : 2,
-					"path" : "/home/pc2/llvm-project/build/include"
+					"path" : "/home/danielaugusto/llvm-project/build/include"
 				}
 			],
 			"language" : "CXX",

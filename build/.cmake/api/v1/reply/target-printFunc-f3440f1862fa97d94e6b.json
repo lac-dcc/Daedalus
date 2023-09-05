@@ -60,7 +60,7 @@
 			"compileCommandFragments" : 
 			[
 				{
-					"fragment" : " -fno-rtti -fvisibility-inlines-hidden -fPIC   -D_GNU_SOURCE -D_DEBUG -D_GLIBCXX_ASSERTIONS -D_LIBCPP_ENABLE_HARDENED_MODE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS"
+					"fragment" : " -fno-rtti -fvisibility-inlines-hidden -fPIC   -D_GNU_SOURCE -D_DEBUG -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS"
 				}
 			],
 			"defines" : 
@@ -73,15 +73,15 @@
 			[
 				{
 					"backtrace" : 4,
-					"path" : "/home/pc2/llvm-project/llvm/include"
+					"path" : "/home/danielaugusto/llvm-project/llvm/include"
 				},
 				{
 					"backtrace" : 4,
-					"path" : "/home/pc2/llvm-project/build/include"
+					"path" : "/home/danielaugusto/llvm-project/build/include"
 				},
 				{
 					"backtrace" : 5,
-					"path" : "/home/pc2/programming/cpp/llvm/InstructionToFunction-WyvernSlice/lib/../include"
+					"path" : "/home/danielaugusto/prog/printfunc/lib/../include"
 				}
 			],
 			"language" : "CXX",
@@ -111,7 +111,7 @@
 			},
 			{
 				"backtrace" : 3,
-				"fragment" : "-L/home/pc2/llvm-project/build/./lib",
+				"fragment" : "-L/home/danielaugusto/llvm-project/build/./lib",
 				"role" : "libraryPath"
 			}
 		],
