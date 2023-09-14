@@ -1,51 +1,54 @@
 
 #include "../include/printFunc.h"
-#include "llvm/IR/BasicBlock.h"
-#include "llvm/IR/InstrTypes.h"
-#include "llvm/IR/PassManager.h"
+#include "/home/danielaugusto/wyvern/passes/ProgramSlice.cpp"
 #include <llvm-14/llvm/Analysis/AliasAnalysis.h>
 #include <llvm-14/llvm/Analysis/TargetLibraryInfo.h>
 #include <llvm-14/llvm/IR/Instruction.h>
-#include "llvm/Analysis/AliasSetTracker.h"
-#include "llvm/Analysis/CaptureTracking.h"
-#include "llvm/Analysis/LoopInfo.h"
-#include "llvm/Analysis/AliasAnalysis.h"
-#include <llvm/Analysis/TargetLibraryInfo.h>
 using namespace llvm;
-
+#include <iostream>
 namespace printFunc {
 AnalysisKey printFuncAnalysis::Key;
 printFuncAnalysis::Result printFuncAnalysis::run(Function &F,
                                                  FunctionAnalysisManager &FAM) {
-  SmallVector<Function *, 0> Instr;
+  SmallVector<std::pair<std::string, std::vector<std::string>>, 0> Instr;
   for (BasicBlock &BB : F) {
     for (Instruction &I : BB) {
-		  CallInst *ci = dyn_cast<CallInst>(&I);
-		  if (!ci)
-			continue;
-		  inst_begin(F);
-		//  TargetLibraryInfo &TLI = getAnalysis<TargetLibraryInfoWrapperPass>().getTLI(*ci);
-		AAResults AA = ;
-		auto TLI = FAM.getResult<TargetLibraryInfoWrapperPass>(F);
-    	ProgramSlice p = ProgramSlice(I, F, ci, NULL, NULL, false);
-	
+		if(CallInst *ci = dyn_cast<CallInst>(&I)){
+			Function* fn = ci->getCalledFunction();
+			std::string s = fn->getName().str();
+			printf("%s", s.c_str());
+			Instr.push_back({s, std::vector<std::string>()});
+
+			for(auto arg = fn->arg_begin();arg != fn->arg_end();++arg){
+	//			if(auto *ic = dyn_cast<ConstantInt>(arg))  printf("%d\n", ic-);
+				Instr.back().first = (*arg).getName();
+			}
+			
+		}
+		// if I is call instructino, then cast it into CallInst C::
+		// find first árameter P of the call instruciton
+		// Buid the slice for C and P 
+	//	ProgramSlice x = ProgramSlice(I, F, *ci, d, *e, false);
+	//	if(x.canOutline()) x.outline();
+	//	Function *k = (Function *)malloc(sizeof(Function));
+	//	k = x.outline();
     }
   }
-  //	CallInst *ci = dyn_cast<CallInst>(I);
-  if (p.canOutline()) {
-	  Function *a = p.outline();
-  }
-  free(p);
   return Instr;
 }
 PreservedAnalyses printFuncPass::run(Function &F,
                                      FunctionAnalysisManager &FAM) {
   auto &FunctionArray = FAM.getResult<printFuncAnalysis>(F);
-  auto &TLI = FAM.getResult<TargetLibraryInfoWrapperPass>(F);
-  OS << "Functions:\n";
-  for (Function *f : FunctionArray)
-    OS << *f;
-  //	printf("%p", a);
+  OS << "===========" << F.getName().str() << "==============\n";
+  OS << "Instructions: " << FunctionArray.size() << '\n';
+//  OS << FunctionArray << '\n';
+  for (auto &f : FunctionArray) {
+	OS << f.first << '\n';
+	for(auto k: f.second){
+		OS << k << '\n';
+	}
+	OS << "------\n";
+  }
   return PreservedAnalyses::all();
 }
 }
