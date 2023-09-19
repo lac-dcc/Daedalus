@@ -1,28 +1,34 @@
 
 #include "../include/printFunc.h"
 #include "/home/danielaugusto/wyvern/passes/ProgramSlice.cpp"
-#include <llvm-14/llvm/Analysis/AliasAnalysis.h>
 #include <llvm-14/llvm/Analysis/TargetLibraryInfo.h>
-#include <llvm-14/llvm/IR/Instruction.h>
+#include <llvm-14/llvm/IR/PassManager.h>
+#include <llvm-14/llvm/Support/Casting.h>
 using namespace llvm;
 #include <iostream>
 namespace printFunc {
 AnalysisKey printFuncAnalysis::Key;
 printFuncAnalysis::Result printFuncAnalysis::run(Function &F,
                                                  FunctionAnalysisManager &FAM) {
-  SmallVector<std::pair<std::string, std::vector<std::string>>, 0> Instr;
+ // SmallVector<std::pair<std::string, std::vector<std::string>>, 0> Instr;
+	std::string res = "";
   for (BasicBlock &BB : F) {
     for (Instruction &I : BB) {
 		if(CallInst *ci = dyn_cast<CallInst>(&I)){
 			Function* fn = ci->getCalledFunction();
-			std::string s = fn->getName().str();
-			printf("%s", s.c_str());
-			Instr.push_back({s, std::vector<std::string>()});
-
-			for(auto arg = fn->arg_begin();arg != fn->arg_end();++arg){
-	//			if(auto *ic = dyn_cast<ConstantInt>(arg))  printf("%d\n", ic-);
-				Instr.back().first = (*arg).getName();
+			res += fn->getName().str();
+			res += '\n';
+			for(auto *arg = ci->arg_begin();arg != ci->arg_end();++arg){
+				Instruction *SliceableArg = dyn_cast<Instruction>(arg);
+				if(!(SliceableArg = dyn_cast<Instruction>(arg))) {printf("not sliceable\n");continue;}
+				printf("sliceable!\n");
+				TargetLibraryInfo &tl = FAM.getResult<TargetLibraryAnalysis>(F);
+//  ProgramSlice(Instruction &I, Function &F, CallInst &CallSite, AAResults *AA, TrgetLibraryInfo &TLI, bool thunkDebugging);
+				ProgramSlice ps = ProgramSlice(*SliceableArg, F, *ci, NULL,tl,true);
+				Function *test = ps.outline();
+				printf("outline: %p\n", test);
 			}
+			res += '\n';
 			
 		}
 		// if I is call instructino, then cast it into CallInst C::
@@ -34,21 +40,14 @@ printFuncAnalysis::Result printFuncAnalysis::run(Function &F,
 	//	k = x.outline();
     }
   }
-  return Instr;
+  return res;
 }
 PreservedAnalyses printFuncPass::run(Function &F,
                                      FunctionAnalysisManager &FAM) {
   auto &FunctionArray = FAM.getResult<printFuncAnalysis>(F);
   OS << "===========" << F.getName().str() << "==============\n";
-  OS << "Instructions: " << FunctionArray.size() << '\n';
-//  OS << FunctionArray << '\n';
-  for (auto &f : FunctionArray) {
-	OS << f.first << '\n';
-	for(auto k: f.second){
-		OS << k << '\n';
-	}
-	OS << "------\n";
-  }
+ // OS << "Instructions: " << FunctionArray.size() << '\n';
+	std::cout << FunctionArray << std::endl;
   return PreservedAnalyses::all();
 }
 }

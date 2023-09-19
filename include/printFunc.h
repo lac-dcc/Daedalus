@@ -10,6 +10,8 @@
 #include "llvm/IR/BasicBlock.h"
 #include <llvm/IR/Instruction.h>
 #include "llvm/IR/Function.h"
+#include "llvm/IR/Value.h"
+#include "llvm/Support/raw_ostream.h"
 #include <llvm/Analysis/AliasAnalysis.h>
 #include <llvm/Analysis/TargetLibraryInfo.h>
 #include "llvm/Analysis/AliasSetTracker.h"
@@ -22,7 +24,8 @@
 namespace printFunc{
 	struct printFuncAnalysis : public llvm::AnalysisInfoMixin<printFuncAnalysis>{
 		//using Result = llvm::SmallVector<llvm::Function *, 0>;
-		using Result = llvm::SmallVector<std::pair<std::string, std::vector<std::string>>, 0>;
+	//	using Result = llvm::SmallVector<std::pair<std::string, std::vector<std::string>>, 0>;
+		using Result = std::string;
 		Result run(llvm::Function &, llvm::FunctionAnalysisManager &);
 		static llvm::AnalysisKey Key;
 	};
