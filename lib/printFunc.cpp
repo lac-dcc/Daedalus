@@ -1,6 +1,7 @@
 
 #include "../include/printFunc.h"
 #include "/home/danielaugusto/wyvern/passes/ProgramSlice.cpp"
+#include <llvm-14/llvm/Analysis/AliasAnalysis.h>
 #include <llvm-14/llvm/Analysis/TargetLibraryInfo.h>
 #include <llvm-14/llvm/IR/PassManager.h>
 #include <llvm-14/llvm/Support/Casting.h>
@@ -12,6 +13,8 @@ printFuncAnalysis::Result printFuncAnalysis::run(Function &F,
                                                  FunctionAnalysisManager &FAM) {
  // SmallVector<std::pair<std::string, std::vector<std::string>>, 0> Instr;
 	std::string res = "";
+	std::cout << "Function: \n";
+	F.dump();
   for (BasicBlock &BB : F) {
     for (Instruction &I : BB) {
 		if(CallInst *ci = dyn_cast<CallInst>(&I)){
@@ -23,9 +26,15 @@ printFuncAnalysis::Result printFuncAnalysis::run(Function &F,
 				if(!(SliceableArg = dyn_cast<Instruction>(arg))) {printf("not sliceable\n");continue;}
 				printf("sliceable!\n");
 				TargetLibraryInfo &tl = FAM.getResult<TargetLibraryAnalysis>(F);
+//				AAResults AA = FAM.getResult<>(F);
 //  ProgramSlice(Instruction &I, Function &F, CallInst &CallSite, AAResults *AA, TrgetLibraryInfo &TLI, bool thunkDebugging);
 				ProgramSlice ps = ProgramSlice(*SliceableArg, F, *ci, NULL,tl,true);
+				std::cout << "Instruction: \n";
+				SliceableArg->dump();
+				std::cout << "Function: \n";
+//				std::cout << "Instruction: " << *SliceableArg << std::endl;
 				Function *test = ps.outline();
+				test->dump();
 				printf("outline: %p\n", test);
 			}
 			res += '\n';
