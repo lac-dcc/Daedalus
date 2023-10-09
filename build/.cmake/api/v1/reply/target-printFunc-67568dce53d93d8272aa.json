@@ -81,7 +81,7 @@
 				},
 				{
 					"backtrace" : 5,
-					"path" : "/home/danielaugusto/prog/printfunc/lib/../include"
+					"path" : "/home/danielaugusto/workspace/sliceInstr/lib/../include"
 				}
 			],
 			"language" : "CXX",

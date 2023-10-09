@@ -1,4 +1,4 @@
-# Install script for directory: /home/danielaugusto/prog/printfunc/lib
+# Install script for directory: /home/danielaugusto/workspace/sliceInstr/lib
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)

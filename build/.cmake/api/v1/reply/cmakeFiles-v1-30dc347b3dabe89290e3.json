@@ -257,8 +257,8 @@
 	"kind" : "cmakeFiles",
 	"paths" : 
 	{
-		"build" : "/home/danielaugusto/prog/printfunc/build",
-		"source" : "/home/danielaugusto/prog/printfunc"
+		"build" : "/home/danielaugusto/workspace/sliceInstr/build",
+		"source" : "/home/danielaugusto/workspace/sliceInstr"
 	},
 	"version" : 
 	{

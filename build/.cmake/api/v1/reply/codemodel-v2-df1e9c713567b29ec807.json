@@ -94,7 +94,7 @@
 				{
 					"directoryIndex" : 1,
 					"id" : "printFunc::@306ed2d68c6501e8728f",
-					"jsonFile" : "target-printFunc-f3440f1862fa97d94e6b.json",
+					"jsonFile" : "target-printFunc-67568dce53d93d8272aa.json",
 					"name" : "printFunc",
 					"projectIndex" : 0
 				}
@@ -104,8 +104,8 @@
 	"kind" : "codemodel",
 	"paths" : 
 	{
-		"build" : "/home/danielaugusto/prog/printfunc/build",
-		"source" : "/home/danielaugusto/prog/printfunc"
+		"build" : "/home/danielaugusto/workspace/sliceInstr/build",
+		"source" : "/home/danielaugusto/workspace/sliceInstr"
 	},
 	"version" : 
 	{
