@@ -451,6 +451,7 @@ lib/CMakeFiles/printFunc.dir/printFunc.cpp.o: \
  /home/danielaugusto/llvm-project/llvm/include/llvm/Analysis/DependenceAnalysis.h \
  /home/danielaugusto/llvm-project/llvm/include/llvm/ADT/SmallBitVector.h \
  /usr/include/llvm-14/llvm/Analysis/DependenceAnalysis.h \
+ /usr/include/llvm-14/llvm/Analysis/TargetLibraryInfo.h \
  /usr/include/llvm-14/llvm/IR/PassManager.h /usr/include/c++/11/iostream \
  /usr/include/c++/11/ostream /usr/include/c++/11/ios \
  /usr/include/c++/11/bits/basic_ios.h \

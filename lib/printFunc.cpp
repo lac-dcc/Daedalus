@@ -4,11 +4,15 @@
 #include "llvm/IR/InstIterator.h"
 #include "llvm/Analysis/DependenceAnalysis.h"
 #include <llvm-14/llvm/Analysis/DependenceAnalysis.h>
+#include <llvm-14/llvm/Analysis/TargetLibraryInfo.h>
 #include <llvm-14/llvm/IR/PassManager.h>
+#include <unordered_map>
 #include "llvm/IR/PassManager.h"
 #include "llvm/IR/Function.h"
 using namespace llvm;
 #include <iostream>
+
+
 namespace printFunc {
 AnalysisKey printFuncAnalysis::Key;
 printFuncAnalysis::Result printFuncAnalysis::run(Function &F,FunctionAnalysisManager &FAM) {
@@ -16,9 +20,22 @@ printFuncAnalysis::Result printFuncAnalysis::run(Function &F,FunctionAnalysisMan
 	std::string res = "";
 	std::cout << "Function: \n";
 	//F.dump();
+	std::vector<std::pair<Instruction *, ProgramSlice *> >v;
+	std::vector<std::pair<int,int>> a;
+	a.push_back(std::make_pair(2,3));
+	TargetLibraryInfo *TLI = (TargetLibraryInfo *)malloc(sizeof(TargetLibraryInfo));
+	int i =0;
 	for(Instruction &I: instructions(F)){
-		
+		if(!isa<CallInst>(&I)) continue;
+		CallInst *CI = cast<CallInst>(&I);
+		ProgramSlice ps = ProgramSlice(I, F, *CI, NULL, *TLI, true);
+		v.push_back({&I,&ps});
+		printf("%d\n", ++i);
+	} 
+	for(auto e: v){
+		printf("%p - %p\n", e.first, e.second);
 	}
+	delete(TLI);
 	return res;
 }
 PreservedAnalyses printFuncPass::run(Function &F,
@@ -27,22 +44,6 @@ PreservedAnalyses printFuncPass::run(Function &F,
 	DependenceAnalysis DA;
 	Function *function;
 	Instruction *inst;
-//	//FunctionAnalysisManager::Result<DependenceAnalysis>&DAResult = FAM.getResult<llvm::DependenceAnalysis>(*function);
-	auto &DAResult = FAM.getResult<DependenceAnalysis>(*function);
-//	DA.run(*function, FAM);
-//	DependenceAnalysis a;
-//	a.name();
-
-//	DependenceAnalysis::Dependence deps;
-//	DA.getDependences(*inst, deps);
-//    for (const auto &dep : deps) {
-//        if (dep.isOrdered()) {
-//            llvm::errs() << "Data dependence found:\n";
-//            dep.dump();
-//        } else {
-//            llvm::errs() << "No data dependence found.\n";
-//        }
-//    }
-	  return PreservedAnalyses::all();
+	return PreservedAnalyses::all();
 }
 }

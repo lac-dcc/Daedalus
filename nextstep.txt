@@ -1,0 +1,3 @@
+tirar callsite do wyvern
+fork wyvern
+aplicar vector<Instruction, ProgramSlice>

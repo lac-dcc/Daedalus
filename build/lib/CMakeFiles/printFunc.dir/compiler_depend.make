@@ -506,6 +506,7 @@ lib/CMakeFiles/printFunc.dir/printFunc.cpp.o: ../lib/printFunc.cpp \
   /home/danielaugusto/llvm-project/llvm/include/llvm/Analysis/DependenceAnalysis.h \
   /home/danielaugusto/llvm-project/llvm/include/llvm/ADT/SmallBitVector.h \
   /usr/include/llvm-14/llvm/Analysis/DependenceAnalysis.h \
+  /usr/include/llvm-14/llvm/Analysis/TargetLibraryInfo.h \
   /usr/include/llvm-14/llvm/IR/PassManager.h \
   /usr/include/c++/11/iostream \
   /usr/include/c++/11/ostream \
@@ -2038,6 +2039,8 @@ lib/CMakeFiles/printFunc.dir/printFuncPlugin.cpp.o: ../lib/printFuncPlugin.cpp \
 /usr/include/c++/11/cstdint:
 
 /home/danielaugusto/llvm-project/llvm/include/llvm/ADT/DenseMap.h:
+
+/usr/include/llvm-14/llvm/Analysis/TargetLibraryInfo.h:
 
 /usr/lib/gcc/x86_64-linux-gnu/11/include/limits.h:
 
