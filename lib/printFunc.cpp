@@ -1,5 +1,6 @@
 
 #include "../include/printFunc.h"
+<<<<<<< HEAD
 #include "/home/danielaugusto/wyvern/passes/ProgramSlice.cpp"
 #include "llvm/IR/InstIterator.h"
 #include "llvm/Analysis/DependenceAnalysis.h"
@@ -9,12 +10,22 @@
 #include <unordered_map>
 #include "llvm/IR/PassManager.h"
 #include "llvm/IR/Function.h"
+=======
+#include "/home/pc2/wyvern/passes/ProgramSlice.cpp"
+#include <llvm-14/llvm/Support/Casting.h>
+#include <llvm-14/llvm/Analysis/AliasAnalysis.h>
+#include <llvm-14/llvm/Analysis/TargetLibraryInfo.h>
+#include <llvm-14/llvm/IR/PassManager.h>
+#include <llvm-14/llvm/Support/Casting.h>
+#include <unordered_map>
+>>>>>>> 18d8ac6 (a)
 using namespace llvm;
 #include <iostream>
 
 
 namespace printFunc {
 AnalysisKey printFuncAnalysis::Key;
+<<<<<<< HEAD
 printFuncAnalysis::Result printFuncAnalysis::run(Function &F,FunctionAnalysisManager &FAM) {
 	
 	std::string res = "";
@@ -37,6 +48,7 @@ printFuncAnalysis::Result printFuncAnalysis::run(Function &F,FunctionAnalysisMan
 	}
 	delete(TLI);
 	return res;
+>>>>>>> 18d8ac6 (a)
 }
 PreservedAnalyses printFuncPass::run(Function &F,
                                      FunctionAnalysisManager &FAM) {
