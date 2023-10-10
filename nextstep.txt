@@ -1,3 +1,7 @@
-tirar callsite do wyvern
-fork wyvern
-aplicar vector<Instruction, ProgramSlice>
+gerar I->outline
+nao usar canoutline
+modificar outline
+nao retornar thunk
+
+reusar populate*
+
