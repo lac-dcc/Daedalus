@@ -431,11 +431,11 @@ lib/CMakeFiles/printFunc.dir/printFunc.cpp.o: \
  /home/danielaugusto/llvm-project/llvm/include/llvm/Analysis/MemoryLocation.h \
  /home/danielaugusto/llvm-project/llvm/include/llvm/Analysis/AliasSetTracker.h \
  /home/danielaugusto/llvm-project/llvm/include/llvm/Analysis/CaptureTracking.h \
- /home/danielaugusto/wyvern/passes/ProgramSlice.cpp \
- /home/danielaugusto/wyvern/passes/ProgramSlice.h /usr/include/c++/11/map \
- /usr/include/c++/11/bits/stl_map.h \
+ /home/danielaugusto/slicevern/passes/ProgramSlice.cpp \
+ /home/danielaugusto/slicevern/passes/ProgramSlice.h \
+ /usr/include/c++/11/map /usr/include/c++/11/bits/stl_map.h \
  /usr/include/c++/11/bits/stl_multimap.h \
- /home/danielaugusto/wyvern/passes/DebugUtils.h \
+ /home/danielaugusto/slicevern/passes/DebugUtils.h \
  /home/danielaugusto/llvm-project/llvm/include/llvm/IR/IRBuilder.h \
  /home/danielaugusto/llvm-project/llvm/include/llvm/IR/ConstantFolder.h \
  /home/danielaugusto/llvm-project/llvm/include/llvm/IR/IRBuilderFolder.h \
@@ -450,11 +450,12 @@ lib/CMakeFiles/printFunc.dir/printFunc.cpp.o: \
  /usr/include/c++/11/bits/random.tcc \
  /home/danielaugusto/llvm-project/llvm/include/llvm/Analysis/DependenceAnalysis.h \
  /home/danielaugusto/llvm-project/llvm/include/llvm/ADT/SmallBitVector.h \
- /usr/include/llvm-14/llvm/Analysis/DependenceAnalysis.h \
  /usr/include/llvm-14/llvm/Analysis/TargetLibraryInfo.h \
- /usr/include/llvm-14/llvm/IR/PassManager.h /usr/include/c++/11/iostream \
- /usr/include/c++/11/ostream /usr/include/c++/11/ios \
- /usr/include/c++/11/bits/basic_ios.h \
+ /usr/include/llvm-14/llvm/IR/PassManager.h \
+ /usr/include/llvm-14/llvm/Support/Casting.h \
+ /usr/include/llvm-14/llvm/Analysis/AliasAnalysis.h \
+ /usr/include/c++/11/iostream /usr/include/c++/11/ostream \
+ /usr/include/c++/11/ios /usr/include/c++/11/bits/basic_ios.h \
  /usr/include/c++/11/bits/locale_facets.h /usr/include/c++/11/cwctype \
  /usr/include/wctype.h /usr/include/x86_64-linux-gnu/bits/wctype-wchar.h \
  /usr/include/x86_64-linux-gnu/c++/11/bits/ctype_base.h \
