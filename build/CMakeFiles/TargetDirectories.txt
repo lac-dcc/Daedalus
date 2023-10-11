@@ -1,9 +1,0 @@
-/home/danielaugusto/workspace/sliceInstr/build/CMakeFiles/intrinsics_gen.dir
-/home/danielaugusto/workspace/sliceInstr/build/CMakeFiles/omp_gen.dir
-/home/danielaugusto/workspace/sliceInstr/build/CMakeFiles/acc_gen.dir
-/home/danielaugusto/workspace/sliceInstr/build/CMakeFiles/a.out.dir
-/home/danielaugusto/workspace/sliceInstr/build/CMakeFiles/edit_cache.dir
-/home/danielaugusto/workspace/sliceInstr/build/CMakeFiles/rebuild_cache.dir
-/home/danielaugusto/workspace/sliceInstr/build/lib/CMakeFiles/printFunc.dir
-/home/danielaugusto/workspace/sliceInstr/build/lib/CMakeFiles/edit_cache.dir
-/home/danielaugusto/workspace/sliceInstr/build/lib/CMakeFiles/rebuild_cache.dir
