@@ -1,1 +1,1 @@
-/usr/bin/c++ -fPIC  -fno-rtti -fvisibility-inlines-hidden -shared  -o libprintFunc.so CMakeFiles/printFunc.dir/printFunc.cpp.o CMakeFiles/printFunc.dir/printFuncPlugin.cpp.o   -L/home/danielaugusto/llvm-project/build/./lib 
+/usr/bin/c++ -fPIC  -fno-rtti -fvisibility-inlines-hidden -shared  -o libprintFunc.so CMakeFiles/printFunc.dir/printFunc.cpp.o CMakeFiles/printFunc.dir/printFuncPlugin.cpp.o   -L/home/pc2/llvm-project/build/./lib 
