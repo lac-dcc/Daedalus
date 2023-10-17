@@ -19,11 +19,13 @@ printFuncAnalysis::Result printFuncAnalysis::run(Function &F,FunctionAnalysisMan
 	
 	std::string res = "";
 	SmallVector<std::pair<Instruction *, ProgramSlice *> >v;
+	int i=0;
 	for(Instruction &I: instructions(F)){
-		ProgramSlice ps = ProgramSlice(I, F);
-		v.push_back({&I,&ps});
+		ProgramSlice *ps = new ProgramSlice(I,F,++i);
+		v.push_back({&I,ps});
 	}
-	v[0].second->outline();
+	Function *X = v[0].second->outline();
+	X->dump();
 	return res;
 }
 PreservedAnalyses printFuncPass::run(Function &F,
