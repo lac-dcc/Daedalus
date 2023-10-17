@@ -15,17 +15,19 @@ using namespace llvm;
 
 namespace printFunc {
 AnalysisKey printFuncAnalysis::Key;
+int i=0;
 printFuncAnalysis::Result printFuncAnalysis::run(Function &F,FunctionAnalysisManager &FAM) {
-	
 	std::string res = "";
 	SmallVector<std::pair<Instruction *, ProgramSlice *> >v;
-	int i=0;
 	for(Instruction &I: instructions(F)){
 		ProgramSlice *ps = new ProgramSlice(I,F,++i);
 		v.push_back({&I,ps});
+		if(i > 0) break;
+		++i;
 	}
 	Function *X = v[0].second->outline();
 	X->dump();
+	for(auto &e: v) delete(e.second);
 	return res;
 }
 PreservedAnalyses printFuncPass::run(Function &F,
