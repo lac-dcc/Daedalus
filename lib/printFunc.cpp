@@ -1,17 +1,11 @@
 
 #include "../include/printFunc.h"
-#include "/home/danielaugusto/slicevern/passes/ProgramSlice.cpp"
+#include "passes/ProgramSlice.cpp"
 #include "llvm/IR/InstIterator.h"
 #include "llvm/Analysis/DependenceAnalysis.h"
-#include <llvm-14/llvm/Analysis/TargetLibraryInfo.h>
-#include <llvm-14/llvm/IR/PassManager.h>
 #include "llvm/IR/PassManager.h"
 #include "llvm/IR/Function.h"
-#include <llvm-14/llvm/Support/Casting.h>
-#include <llvm-14/llvm/Analysis/AliasAnalysis.h>
-#include <llvm-14/llvm/Analysis/TargetLibraryInfo.h>
-#include <llvm-14/llvm/IR/PassManager.h>
-#include <llvm-14/llvm/Support/Casting.h>
+#include <llvm/IR/Instructions.h>
 #include <unordered_map>
 using namespace llvm;
 #include <iostream>
@@ -27,9 +21,9 @@ printFuncAnalysis::Result printFuncAnalysis::run(Function &F,FunctionAnalysisMan
 	SmallVector<std::pair<Instruction *, ProgramSlice *> >v;
 	for(Instruction &I: instructions(F)){
 		ProgramSlice ps = ProgramSlice(I, F);
-		if(ps.canOutline()) 
 		v.push_back({&I,&ps});
 	}
+	v[0].second->outline();
 	return res;
 }
 PreservedAnalyses printFuncPass::run(Function &F,

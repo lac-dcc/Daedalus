@@ -1,8 +1,0 @@
-[
-{
-  "directory": "/home/pc2/programming/cpp/llvm/InstructionToFunction-WyvernSlice/build",
-  "command": "/usr/bin/c++  -I/home/pc2/llvm-project/llvm/include -I/home/pc2/programming/cpp/wyvern/passes -I/home/pc2/llvm-project/build/include   -D_GNU_SOURCE -D_DEBUG -D_GLIBCXX_ASSERTIONS -D_LIBCPP_ENABLE_HARDENED_MODE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -o CMakeFiles/a.out.dir/a.cpp.o -c /home/pc2/programming/cpp/llvm/InstructionToFunction-WyvernSlice/a.cpp",
-  "file": "/home/pc2/programming/cpp/llvm/InstructionToFunction-WyvernSlice/a.cpp",
-  "output": "CMakeFiles/a.out.dir/a.cpp.o"
-}
-]
