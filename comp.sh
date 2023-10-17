@@ -3,4 +3,4 @@
 cd build
 make
 cd ..
-opt -load-pass-plugin build/lib/libprintFunc.so -passes=printFunc -disable-output examples/foo.ll
+opt -load-pass-plugin build/lib/libprintFunc.so -passes=printFunc -disable-output examples/test.ll

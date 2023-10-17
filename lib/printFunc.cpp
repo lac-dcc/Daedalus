@@ -18,15 +18,21 @@ AnalysisKey printFuncAnalysis::Key;
 int i=0;
 printFuncAnalysis::Result printFuncAnalysis::run(Function &F,FunctionAnalysisManager &FAM) {
 	std::string res = "";
-	SmallVector<std::pair<Instruction *, ProgramSlice *> >v;
+	SmallVector<std::pair<Instruction *, Function *> >v;
 	for(Instruction &I: instructions(F)){
 		ProgramSlice *ps = new ProgramSlice(I,F,++i);
-		v.push_back({&I,ps});
-		if(i > 0) break;
+		printf("1\n");
+		if(ps->canOutline()){
+			Function *X = ps->outline();
+			X->dump();
+			v.push_back({&I,X});
+
+		}
+		printf("pass\n");
 		++i;
+		delete(ps);
 	}
-	Function *X = v[0].second->outline();
-	X->dump();
+	printf("Size: %ld\n", v.size());
 	for(auto &e: v) delete(e.second);
 	return res;
 }
