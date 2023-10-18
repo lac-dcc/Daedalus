@@ -1,5 +1,5 @@
 #include "../include/instrToSlice.h"
-#include "passes/ProgramSlice.cpp"
+#include "../include/wyvern/ProgramSlice.h"
 #include "llvm/IR/InstIterator.h"
 #include "llvm/Analysis/DependenceAnalysis.h"
 #include "llvm/IR/PassManager.h"
