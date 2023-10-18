@@ -1,5 +1,4 @@
-
-#include "../include/printFunc.h"
+#include "../include/instrToSlice.h"
 #include "passes/ProgramSlice.cpp"
 #include "llvm/IR/InstIterator.h"
 #include "llvm/Analysis/DependenceAnalysis.h"
@@ -8,15 +7,13 @@
 #include <llvm/IR/Instructions.h>
 #include <unordered_map>
 using namespace llvm;
-#include <iostream>
-
 
 #include <llvm/Pass.h>
 
-namespace printFunc {
-AnalysisKey printFuncAnalysis::Key;
+namespace instrToSlice {
+AnalysisKey instrToSliceAnalysis::Key;
 int i=0;
-printFuncAnalysis::Result printFuncAnalysis::run(Function &F,FunctionAnalysisManager &FAM) {
+instrToSliceAnalysis::Result instrToSliceAnalysis::run(Function &F,FunctionAnalysisManager &FAM) {
 	std::string res = "";
 	SmallVector<std::pair<Instruction *, Function *> >v;
 	for(Instruction &I: instructions(F)){
@@ -36,9 +33,8 @@ printFuncAnalysis::Result printFuncAnalysis::run(Function &F,FunctionAnalysisMan
 	for(auto &e: v) delete(e.second);
 	return res;
 }
-PreservedAnalyses printFuncPass::run(Function &F,
-                                     FunctionAnalysisManager &FAM) {
-	auto &FunctionArray = FAM.getResult<printFuncAnalysis>(F);
+PreservedAnalyses instrToSlicePass::run(Function &F, FunctionAnalysisManager &FAM) {
+	auto &FunctionArray = FAM.getResult<instrToSliceAnalysis>(F);
 	return PreservedAnalyses::all();
 }
 }

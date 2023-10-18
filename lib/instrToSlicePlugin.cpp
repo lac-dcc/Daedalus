@@ -1,23 +1,23 @@
-#include "../include/printFunc.h"
+#include "../include/instrToSlice.h"
 #include "llvm/IR/PassManager.h"
 
 using namespace llvm;
 
 bool registerPipeline(StringRef Name, FunctionPassManager &FPM,
                       ArrayRef<PassBuilder::PipelineElement>) {
-    if (Name == "printFunc") {
-        FPM.addPass(printFunc::printFuncPass(errs()));
+    if (Name == "its") {
+        FPM.addPass(instrToSlice::instrToSlicePass(errs()));
         return true;
     }
     return false;
 }
 void registerAnalyses(FunctionAnalysisManager &FAM) {
 	FAM.registerPass([] {
-		return printFunc::printFuncAnalysis();
+		return instrToSlice::instrToSliceAnalysis();
 	});
 }
 
-PassPluginLibraryInfo printFuncPluginInfo() {
+PassPluginLibraryInfo instrToSlicePluginInfo() {
     return {LLVM_PLUGIN_API_VERSION, "printFunc", LLVM_VERSION_STRING,
             [](PassBuilder &PB) {
 				PB.registerAnalysisRegistrationCallback(registerAnalyses);
@@ -26,5 +26,5 @@ PassPluginLibraryInfo printFuncPluginInfo() {
 }
 
 extern "C" LLVM_ATTRIBUTE_WEAK PassPluginLibraryInfo llvmGetPassPluginInfo() {
-    return printFuncPluginInfo();
+    return instrToSlicePluginInfo();
 }
