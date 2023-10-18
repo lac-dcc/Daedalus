@@ -17,14 +17,13 @@ instrToSliceAnalysis::Result instrToSliceAnalysis::run(Function &F,FunctionAnaly
 	std::string res = "";
 	SmallVector<std::pair<Instruction *, Function *> >v;
 	for(Instruction &I: instructions(F)){
-		ProgramSlice *ps = new ProgramSlice(I,F,++i);
-		printf("1\n");
+		ProgramSlice *ps = new ProgramSlice(I,F);
 		if(ps->canOutline()){
 			Function *X = ps->outline();
 			X->dump();
 			v.push_back({&I,X});
 
-		}
+	}
 		printf("pass\n");
 		++i;
 		delete(ps);

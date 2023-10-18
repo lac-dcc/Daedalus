@@ -14,7 +14,9 @@ message(
 	Targets ${LLVM_TARGETS_TO_BUILD}
 	"
 )
+
 include_directories(${LLVM_INCLUDE_DIRS})
+include_directories(include/) # TODO: Include ./include doest not working and makes dynamic library not link program slice well, try shared, see on WYVERN
 link_directories(${LLVM_LIBRARY_DIRS})
 add_definitions(${LLVM_DEFINITIONS})
 

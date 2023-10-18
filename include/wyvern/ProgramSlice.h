@@ -14,7 +14,7 @@ public:
   /// Creates a backward slice of function F in terms of slice criterion I,
   /// which is passed as a parameter in call CallSite. Optionally, receives the
   /// result of an Alias Analysis in AA to perform memory safety analysis.
-  ProgramSlice(Instruction &I, Function &F, int i);
+  ProgramSlice(Instruction &I, Function &F);
 
   /// Returns whether the slice can be safely outlined into a delegate function.
   bool canOutline();
@@ -34,7 +34,6 @@ public:
   /// Returns the delegate function resulted from outlining the slice, using
   /// memoization.
   Function *memoizedOutline();
-  int _a;
 
 private:
   void insertLoadForThunkParams(Function *F, bool memo);

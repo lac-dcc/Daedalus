@@ -151,8 +151,8 @@ get_data_dependences_for(
   return std::make_tuple(BBs, deps);
 }
 
-ProgramSlice::ProgramSlice(Instruction &Initial, Function &F, int i)
-    : _initial(&Initial), _parentFunction(&F), _a(i){
+ProgramSlice::ProgramSlice(Instruction &Initial, Function &F)
+    : _initial(&Initial), _parentFunction(&F){
   assert(Initial.getParent()->getParent() == &F &&
          "Slicing instruction from different function!");
 
