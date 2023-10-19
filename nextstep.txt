@@ -1,7 +1,0 @@
-gerar I->outline
-nao usar canoutline
-modificar outline
-nao retornar thunk
-
-reusar populate*
-

@@ -1,6 +1,5 @@
-
-#cmake ../ -DLLVM_DIR="/home/danielaugusto/llvm-project"
+# Make sure to build it first
 cd build
 make
 cd ..
-opt -load-pass-plugin build/lib/libprintFunc.so -passes=printFunc -disable-output examples/test.ll
+opt -load-pass-plugin build/lib/libdaedalus.so -passes=daedalus -disable-output "$1"
