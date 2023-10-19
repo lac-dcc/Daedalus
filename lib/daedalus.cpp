@@ -3,25 +3,29 @@
 
 using namespace llvm;
 #include <llvm/Pass.h>
-
+#include <iostream>
+int i;
 namespace Daedalus {
 AnalysisKey DaedalusAnalysis::Key;
 DaedalusAnalysis::Result DaedalusAnalysis::run(Function &F,FunctionAnalysisManager &FAM) {
 	std::string res = "";
+	if(i == 2) return res;
 	SmallVector<std::pair<Instruction *, Function *> >v;
 	for(Instruction &I: instructions(F)){
 		ProgramSlice *ps = new ProgramSlice(I,F);
-		printf("MAKE SLICE\n");
 		if(ps->canOutline()){
-	//	Function *X = ps->outline();
-	//	X->dump();
-		break;
-	//v.push_back({&I,X});
+			std::string a = I.getName().str();
+			std::cout << "NAME: " << a << std::endl;
+			Function *X = ps->outline();
+		//	X->dump();
+			i++;
+			break;
+			v.push_back({&I,X});
 		}
 		printf("pass\n");
 		delete(ps);
 	}
-	printf("Size: %ld\n", v.size());
+	printf("========\n");
 	for(auto &e: v) delete(e.second);
 	return res;
 }

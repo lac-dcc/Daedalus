@@ -182,7 +182,7 @@ ProgramSlice::ProgramSlice(Instruction &Initial, Function &F)
 
   computeAttractorBlocks();
 
-  LLVM_DEBUG(printSlice());
+ // LLVM_DEBUG(printSlice());
 }
 
 /// Computes the layout of the struct type that should be used to lazify
@@ -570,12 +570,6 @@ SmallVector<Value *> ProgramSlice::getOrigFunctionArgs() {
 /// to the @param originalBB from the original function being
 /// sliced.
 void ProgramSlice::insertNewBB(const BasicBlock *originalBB, Function *F) {
-//  std::random_device rd;
-//  std::mt19937 mt(rd());
-//  std::uniform_int_distribution<int64_t> dist(1, 1000000000);
-//  uint64_t random_num = dist(mt);
-  std::string as = "ok";
-	// TODO: The problem here is to get something at originalBB, using this temporary name seems to work but it probaly will make hard to identify which function the slice is
 	auto originalName = originalBB->getName();
   std::string newBBName = "sliceclone_" + originalName.str();
   BasicBlock *newBB =
