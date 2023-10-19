@@ -1,6 +1,6 @@
-add_library(instrToSlice MODULE
-	instrToSlice.cpp
-	instrToSlicePlugin.cpp)
+add_library(daedalus SHARED
+	daedalus.cpp
+	daedalusPlugin.cpp)
 
-target_include_directories(instrToSlice PRIVATE
+target_include_directories(daedalus PUBLIC
     "${CMAKE_CURRENT_SOURCE_DIR}/../include")

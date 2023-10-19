@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.22.1)
-project(instrToSlice)
+project(daedalus)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -16,7 +16,7 @@ message(
 )
 
 include_directories(${LLVM_INCLUDE_DIRS})
-include_directories(include/) # TODO: Include ./include doest not working and makes dynamic library not link program slice well, try shared, see on WYVERN
+include_directories("include/") # TODO: Include ./include doest not working and makes dynamic library not link program slice well, try shared, see on WYVERN
 link_directories(${LLVM_LIBRARY_DIRS})
 add_definitions(${LLVM_DEFINITIONS})
 
