@@ -1,5 +1,9 @@
 # Daedalus
 
+<p align="center">
+  <img alt="Daedulus drawing" src="assets/images/BannerDaedulus.png" width="95%" height="auto"/></br>
+</p>
+
 Daedalus is a LLVM Pass that maps Instructions to Program Slices and study the relation between them to compress LLVM IR code.
 
 ```shell
