@@ -17,7 +17,7 @@
 
 namespace Daedalus{
 	struct DaedalusAnalysis : public llvm::AnalysisInfoMixin<DaedalusAnalysis>{
-		using Result = std::string; // TODO: Return an array of pair <Instruction *, Function *>
+		using Result = std::unordered_map<llvm::Instruction *, llvm::Function *>;
 		Result run(llvm::Function &, llvm::FunctionAnalysisManager &);
 		static llvm::AnalysisKey Key;
 	};

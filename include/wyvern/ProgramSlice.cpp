@@ -182,7 +182,7 @@ ProgramSlice::ProgramSlice(Instruction &Initial, Function &F)
 
   computeAttractorBlocks();
 
- // LLVM_DEBUG(printSlice());
+  LLVM_DEBUG(printSlice());
 }
 
 /// Computes the layout of the struct type that should be used to lazify
@@ -253,9 +253,9 @@ void ProgramSlice::printSlice() {
 
 /// Print original and sliced function. Used for debugging.
 void ProgramSlice::printFunctions(Function *F) {
-  LLVM_DEBUG(dbgs() << "\n======== ORIGINAL FUNCTION ==========\n"
-                    << *_parentFunction);
-  LLVM_DEBUG(dbgs() << "\n======== SLICED FUNCTION ==========\n" << *F);
+ // LLVM_DEBUG(dbgs() << "\n======== ORIGINAL FUNCTION ==========\n"
+ //                   << *_parentFunction);
+ // LLVM_DEBUG(dbgs() << "\n======== SLICED FUNCTION ==========\n" << *F);
 }
 
 /// Computes the attractor blocks (first dominator) for each basic block in the
@@ -529,7 +529,7 @@ bool ProgramSlice::canOutline() {
         return false;
       }
     }
-    else if (!I->willReturn()) {
+    if (!I->willReturn()) {
       errs() << "Cannot outline because inst may not return: " << *I << "\n";
       return false;
     }
@@ -663,12 +663,15 @@ void ProgramSlice::reorderBlocks(Function *F) {
 ReturnInst *ProgramSlice::addReturnValue(Function *F) {
   BasicBlock *exit = _Imap[_initial]->getParent();
 
+
   if (exit->getTerminator()) {
     exit->getTerminator()->eraseFromParent();
   }
 
-  return ReturnInst::Create(F->getParent()->getContext(), _Imap[_initial],
-                            exit);
+	LLVM_DEBUG(dbgs() << " @-> HERERV1 <-@\n");
+  auto a = ReturnInst::Create(F->getParent()->getContext(), _Imap[_initial],exit); // FAIL
+	LLVM_DEBUG(dbgs() << " @-> HERERV2 <-@\n");
+  return a;
 }
 
 /// Updates the delegate function's code to make use of parameters provided by
@@ -709,47 +712,48 @@ void ProgramSlice::insertLoadForThunkParams(Function *F, bool memo) {
 /// encapsulates the computation of the original value in
 /// regards to which the slice was created.
 Function *ProgramSlice::outline() {
-  StructType *thunkStructType = getThunkStructType(false);
-  PointerType *thunkStructPtrType = thunkStructType->getPointerTo();
-  FunctionType *delegateFunctionType =
-      FunctionType::get(_initial->getType(), {thunkStructPtrType}, false);
+	StructType *thunkStructType = getThunkStructType(false);
+	PointerType *thunkStructPtrType = thunkStructType->getPointerTo();
+	FunctionType *delegateFunctionType =
+	FunctionType::get(_initial->getType(), {thunkStructPtrType}, false);
 
-  // generate a random number to use as suffix for delegate function, to avoid
-  // naming conflicts
-  // NOTE: we cannot use a simple counter that gets incremented
-  // on every slice here, because when optimizing per translation unit, the same
-  // function may be sliced across different translation units
-  std::random_device rd;
-  std::mt19937 mt(rd());
-  std::uniform_int_distribution<int64_t> dist(1, 1000000000);
-  uint64_t random_num = dist(mt);
-  std::string functionName =
-      "_wyvern_slice_" + _parentFunction->getName().str() + "_" +
-      _initial->getName().str() + std::to_string(random_num);
-  Function *F =
-      Function::Create(delegateFunctionType, Function::ExternalLinkage,
-                       functionName, _parentFunction->getParent());
+	// generate a random number to use as suffix for delegate function, to avoid
+	// naming conflicts
+	// NOTE: we cannot use a simple counter that gets incremented
+	// on every slice here, because when optimizing per translation unit, the same
+	// function may be sliced across different translation units
+	std::random_device rd;
+	std::mt19937 mt(rd());
+	std::uniform_int_distribution<int64_t> dist(1, 1000000000);
+	uint64_t random_num = dist(mt);
+	std::string functionName =
+	"_wyvern_slice_" + _parentFunction->getName().str() + "_" +
+	_initial->getName().str() + std::to_string(random_num);
+	Function *F =
+	Function::Create(delegateFunctionType, Function::ExternalLinkage,
+				   functionName, _parentFunction->getParent());
 
-  // Let LLVM know that the delegate function is pure, so it can further
-  // optimize calls to it
-  AttrBuilder builder(_parentFunction->getContext());
-  builder.addAttribute(Attribute::ReadOnly);
-  builder.addAttribute(Attribute::NoUnwind);
-  builder.addAttribute(Attribute::WillReturn);
-  F->addFnAttrs(builder);
+	// Let LLVM know that the delegate function is pure, so it can further
+	// optimize calls to it
+	AttrBuilder builder(_parentFunction->getContext());
+	builder.addAttribute(Attribute::ReadOnly);
+	builder.addAttribute(Attribute::NoUnwind);
+	builder.addAttribute(Attribute::WillReturn);
+	F->addFnAttrs(builder);
 
-  F->arg_begin()->setName("_wyvern_thunkptr");
+	F->arg_begin()->setName("_wyvern_thunkptr");
 
-  populateFunctionWithBBs(F);
-  populateBBsWithInsts(F);
-  reorganizeUses(F);
-  rerouteBranches(F);
-  addReturnValue(F);
-  reorderBlocks(F);
-  insertLoadForThunkParams(F, false /*memo*/);
-  verifyFunction(*F);
-  printFunctions(F);
-
+	populateFunctionWithBBs(F);
+	populateBBsWithInsts(F);
+	reorganizeUses(F);
+	rerouteBranches(F);
+	LLVM_DEBUG(dbgs() << " @-> HEREBB1 <-@\n");
+	addReturnValue(F); // TODO: NOT RETURNING
+	LLVM_DEBUG(dbgs() << " @-> HEREBB2 <-@\n");
+	reorderBlocks(F);
+	insertLoadForThunkParams(F, false /*memo*/);
+	verifyFunction(*F);
+	printFunctions(F);
   return F;
 }
 
