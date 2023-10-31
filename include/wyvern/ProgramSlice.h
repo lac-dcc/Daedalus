@@ -18,6 +18,7 @@ public:
 
   /// Returns whether the slice can be safely outlined into a delegate function.
   bool canOutline();
+  bool newcanOutline();
 
   /// Returns the set of arguments of the slice's parent function. Used to
   /// initialize the environment for thunks that use the slice as their delegate

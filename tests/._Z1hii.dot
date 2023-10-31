@@ -1,0 +1,5 @@
+digraph "CFG for '_Z1hii' function" {
+	label="CFG for '_Z1hii' function";
+
+	Node0x555bc30b0970 [shape=record,color="#b70d28ff", style=filled, fillcolor="#b70d2870",label="{entry:\l  %rem = srem i32 %b, %a\l  %add = add nsw i32 %b, %rem\l  %div = sdiv i32 %add, %a\l  ret i32 %div\l}"];
+}

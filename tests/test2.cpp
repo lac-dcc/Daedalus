@@ -25,4 +25,5 @@ int main(void){
 	int c = g(a);
 	std::cout << c << std::endl;
 	std::cout << f(a,b) << std::endl;
+	return 1;
 }

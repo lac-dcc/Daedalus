@@ -1,0 +1,5 @@
+digraph "CFG for '_GLOBAL__sub_I_test2.cpp' function" {
+	label="CFG for '_GLOBAL__sub_I_test2.cpp' function";
+
+	Node0x555bc30b4620 [shape=record,color="#b70d28ff", style=filled, fillcolor="#b70d2870",label="{entry:\l  call void @__cxx_global_var_init()\l  ret void\l}"];
+}

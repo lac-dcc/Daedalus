@@ -1,4 +1,4 @@
-; ModuleID = 'test2.cpp'
+; ModuleID = 'test3.ll'
 source_filename = "test2.cpp"
 target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-unknown-linux-gnu"
@@ -44,29 +44,17 @@ declare dso_local i32 @__cxa_atexit(void (i8*)*, i8*, i8*) #3
 ; Function Attrs: mustprogress noinline nounwind uwtable
 define dso_local noundef i32 @_Z1hii(i32 noundef %a, i32 noundef %b) #4 {
 entry:
-  %a.addr = alloca i32, align 4
-  %b.addr = alloca i32, align 4
-  store i32 %a, i32* %a.addr, align 4
-  store i32 %b, i32* %b.addr, align 4
-  %0 = load i32, i32* %b.addr, align 4
-  %1 = load i32, i32* %b.addr, align 4
-  %2 = load i32, i32* %a.addr, align 4
-  %rem = srem i32 %1, %2
-  %add = add nsw i32 %0, %rem
-  %3 = load i32, i32* %a.addr, align 4
-  %div = sdiv i32 %add, %3
+  %rem = srem i32 %b, %a
+  %add = add nsw i32 %b, %rem
+  %div = sdiv i32 %add, %a
   ret i32 %div
 }
 
 ; Function Attrs: mustprogress noinline nounwind uwtable
 define dso_local noundef i32 @_Z1gi(i32 noundef %a) #4 {
 entry:
-  %a.addr = alloca i32, align 4
-  store i32 %a, i32* %a.addr, align 4
-  %0 = load i32, i32* %a.addr, align 4
-  %1 = load i32, i32* %a.addr, align 4
-  %rem = srem i32 %1, 10
-  %add = add nsw i32 %0, %rem
+  %rem = srem i32 %a, 10
+  %add = add nsw i32 %a, %rem
   %div = sdiv i32 %add, 10
   ret i32 %div
 }
@@ -74,65 +62,40 @@ entry:
 ; Function Attrs: mustprogress noinline nounwind uwtable
 define dso_local noundef i32 @_Z1fii(i32 noundef %a, i32 noundef %b) #4 {
 entry:
-  %retval = alloca i32, align 4
-  %a.addr = alloca i32, align 4
-  %b.addr = alloca i32, align 4
-  store i32 %a, i32* %a.addr, align 4
-  store i32 %b, i32* %b.addr, align 4
-  %0 = load i32, i32* %a.addr, align 4
-  %1 = load i32, i32* %b.addr, align 4
-  %cmp = icmp slt i32 %0, %1
+  %cmp = icmp slt i32 %a, %b
   br i1 %cmp, label %if.then, label %if.end
 
 if.then:                                          ; preds = %entry
-  %2 = load i32, i32* %a.addr, align 4
-  %3 = load i32, i32* %b.addr, align 4
-  %call = call noundef i32 @_Z1hii(i32 noundef %2, i32 noundef %3)
-  store i32 %call, i32* %retval, align 4
+  %call = call noundef i32 @_Z1hii(i32 noundef %a, i32 noundef %b)
   br label %return
 
 if.end:                                           ; preds = %entry
-  %4 = load i32, i32* %a.addr, align 4
-  %5 = load i32, i32* %a.addr, align 4
-  %6 = load i32, i32* %b.addr, align 4
-  %rem = srem i32 %5, %6
-  %add = add nsw i32 %4, %rem
-  %7 = load i32, i32* %b.addr, align 4
-  %div = sdiv i32 %add, %7
-  store i32 %div, i32* %retval, align 4
+  %rem = srem i32 %a, %b
+  %add = add nsw i32 %a, %rem
+  %div = sdiv i32 %add, %b
   br label %return
 
 return:                                           ; preds = %if.end, %if.then
-  %8 = load i32, i32* %retval, align 4
-  ret i32 %8
+  %retval.0 = phi i32 [ %call, %if.then ], [ %div, %if.end ]
+  ret i32 %retval.0
 }
 
 ; Function Attrs: mustprogress noinline norecurse uwtable
 define dso_local noundef i32 @main() #5 {
 entry:
-  %a = alloca i32, align 4
-  %b = alloca i32, align 4
-  %c = alloca i32, align 4
   %call = call i64 @time(i64* noundef null) #3
   %conv = trunc i64 %call to i32
   call void @srand(i32 noundef %conv) #3
   %call1 = call i32 @rand() #3
   %rem = srem i32 %call1, 100
   %add = add nsw i32 %rem, 1
-  store i32 %add, i32* %a, align 4
   %call2 = call i32 @rand() #3
   %rem3 = srem i32 %call2, 100
   %add4 = add nsw i32 %rem3, 1
-  store i32 %add4, i32* %b, align 4
-  %0 = load i32, i32* %a, align 4
-  %call5 = call noundef i32 @_Z1gi(i32 noundef %0)
-  store i32 %call5, i32* %c, align 4
-  %1 = load i32, i32* %c, align 4
-  %call6 = call noundef nonnull align 8 dereferenceable(8) %"class.std::basic_ostream"* @_ZNSolsEi(%"class.std::basic_ostream"* noundef nonnull align 8 dereferenceable(8) @_ZSt4cout, i32 noundef %1)
+  %call5 = call noundef i32 @_Z1gi(i32 noundef %add)
+  %call6 = call noundef nonnull align 8 dereferenceable(8) %"class.std::basic_ostream"* @_ZNSolsEi(%"class.std::basic_ostream"* noundef nonnull align 8 dereferenceable(8) @_ZSt4cout, i32 noundef %call5)
   %call7 = call noundef nonnull align 8 dereferenceable(8) %"class.std::basic_ostream"* @_ZNSolsEPFRSoS_E(%"class.std::basic_ostream"* noundef nonnull align 8 dereferenceable(8) %call6, %"class.std::basic_ostream"* (%"class.std::basic_ostream"*)* noundef @_ZSt4endlIcSt11char_traitsIcEERSt13basic_ostreamIT_T0_ES6_)
-  %2 = load i32, i32* %a, align 4
-  %3 = load i32, i32* %b, align 4
-  %call8 = call noundef i32 @_Z1fii(i32 noundef %2, i32 noundef %3)
+  %call8 = call noundef i32 @_Z1fii(i32 noundef %add, i32 noundef %add4)
   %call9 = call noundef nonnull align 8 dereferenceable(8) %"class.std::basic_ostream"* @_ZNSolsEi(%"class.std::basic_ostream"* noundef nonnull align 8 dereferenceable(8) @_ZSt4cout, i32 noundef %call8)
   %call10 = call noundef nonnull align 8 dereferenceable(8) %"class.std::basic_ostream"* @_ZNSolsEPFRSoS_E(%"class.std::basic_ostream"* noundef nonnull align 8 dereferenceable(8) %call9, %"class.std::basic_ostream"* (%"class.std::basic_ostream"*)* noundef @_ZSt4endlIcSt11char_traitsIcEERSt13basic_ostreamIT_T0_ES6_)
   ret i32 0

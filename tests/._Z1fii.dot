@@ -1,0 +1,12 @@
+digraph "CFG for '_Z1fii' function" {
+	label="CFG for '_Z1fii' function";
+
+	Node0x555bc30b1440 [shape=record,color="#b70d28ff", style=filled, fillcolor="#b70d2870",label="{entry:\l  %cmp = icmp slt i32 %a, %b\l  br i1 %cmp, label %if.then, label %if.end\l|{<s0>T|<s1>F}}"];
+	Node0x555bc30b1440:s0 -> Node0x555bc30b1520;
+	Node0x555bc30b1440:s1 -> Node0x555bc30b1590;
+	Node0x555bc30b1520 [shape=record,color="#3d50c3ff", style=filled, fillcolor="#f59c7d70",label="{if.then:                                          \l  %call = call noundef i32 @_Z1hii(i32 noundef %a, i32 noundef %b)\l  br label %return\l}"];
+	Node0x555bc30b1520 -> Node0x555bc30b1860;
+	Node0x555bc30b1590 [shape=record,color="#3d50c3ff", style=filled, fillcolor="#f59c7d70",label="{if.end:                                           \l  %rem = srem i32 %a, %b\l  %add = add nsw i32 %a, %rem\l  %div = sdiv i32 %add, %b\l  br label %return\l}"];
+	Node0x555bc30b1590 -> Node0x555bc30b1860;
+	Node0x555bc30b1860 [shape=record,color="#b70d28ff", style=filled, fillcolor="#b70d2870",label="{return:                                           \l  %retval.0 = phi i32 [ %call, %if.then ], [ %div, %if.end ]\l  ret i32 %retval.0\l}"];
+}

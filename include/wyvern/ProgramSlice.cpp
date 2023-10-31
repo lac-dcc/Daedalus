@@ -253,9 +253,9 @@ void ProgramSlice::printSlice() {
 
 /// Print original and sliced function. Used for debugging.
 void ProgramSlice::printFunctions(Function *F) {
- // LLVM_DEBUG(dbgs() << "\n======== ORIGINAL FUNCTION ==========\n"
- //                   << *_parentFunction);
- // LLVM_DEBUG(dbgs() << "\n======== SLICED FUNCTION ==========\n" << *F);
+  LLVM_DEBUG(dbgs() << "\n======== ORIGINAL FUNCTION ==========\n"
+                    << *_parentFunction);
+  LLVM_DEBUG(dbgs() << "\n======== SLICED FUNCTION ==========\n" << *F);
 }
 
 /// Computes the attractor blocks (first dominator) for each basic block in the
@@ -479,6 +479,34 @@ void ProgramSlice::rerouteBranches(Function *F) {
   updatePHINodes(F);
 }
 
+bool ProgramSlice::newcanOutline() {
+	for(const Instruction *I : _instsInSlice){
+		if(!I->willReturn() || I->mayThrow()) return false;
+		if (const CallBase *CB = dyn_cast<CallBase>(I)) {
+		  if (!CB->getCalledFunction()) {
+			errs() << "Cannot outline slice because instruction calls unknown "
+					  "function: "
+				   << *CB << "\n";
+			return false;
+		  }
+
+		  LibFunc builtin;
+		  if (CB->getCalledFunction()->isDeclaration() //&& !_TLI.getLibFunc(*CB, builtin)
+													   ) {
+			errs() << "Cannot outline slice because instruction calls non-builtin "
+					  "function with no body: "
+				   << *CB << "\n";
+			return false;
+		  }
+		}
+	}
+  	if (isa<AllocaInst>(_initial)) {
+   		LLVM_DEBUG((dbgs() << "Cannot outline slice due to slicing criteria being an alloca!\n"));
+	    return false;
+	}
+	return true;
+}
+
 bool ProgramSlice::canOutline() {
   DominatorTree DT(*_parentFunction);
   LoopInfo LI = LoopInfo(DT);
@@ -667,11 +695,11 @@ ReturnInst *ProgramSlice::addReturnValue(Function *F) {
   if (exit->getTerminator()) {
     exit->getTerminator()->eraseFromParent();
   }
-
+	
 	LLVM_DEBUG(dbgs() << " @-> HERERV1 <-@\n");
-  auto a = ReturnInst::Create(F->getParent()->getContext(), _Imap[_initial],exit); // FAIL
-	LLVM_DEBUG(dbgs() << " @-> HERERV2 <-@\n");
-  return a;
+	if(isa<BasicBlock>(exit)) LLVM_DEBUG(dbgs() << "a value! " << _Imap.size() <<  "\n");
+	LLVM_DEBUG(dbgs() << " @-> HERERV3 <-@\n");
+  return ReturnInst::Create(F->getParent()->getContext(), _Imap[_initial],exit); // TODO: FAIL
 }
 
 /// Updates the delegate function's code to make use of parameters provided by
@@ -754,7 +782,7 @@ Function *ProgramSlice::outline() {
 	insertLoadForThunkParams(F, false /*memo*/);
 	verifyFunction(*F);
 	printFunctions(F);
-  return F;
+	return F;
 }
 
 /// Adds memoization code to the delegate function. This includes the check to
