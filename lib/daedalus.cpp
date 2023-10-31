@@ -17,9 +17,10 @@ DaedalusAnalysis::Result DaedalusAnalysis::run(Function &F,FunctionAnalysisManag
 		if(!I.willReturn() || I.mayThrow()) continue;
 		ProgramSlice *ps = new ProgramSlice(I,F);
 		// TODO: The point here is, the slices seems are generated fine but they cannot be outlined. I think some slices can not be outlined, seem that slices such that instruction criteria may throw or not have a return are example of it. what others kind of slices can not be outlined.
+
 	//	if(ps->canOutline()){
-			Function *X = ps->outline();
-			instr_Func.insert({&I, X});
+	//		Function *X = ps->outline();
+		//	instr_Func.insert({&I, X});
 	//	}
 		delete(ps);
 	}
