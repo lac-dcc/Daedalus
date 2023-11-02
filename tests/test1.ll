@@ -1,4 +1,4 @@
-; ModuleID = 'test1.c'
+; ModuleID = 'test1.ll'
 source_filename = "test1.c"
 target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-unknown-linux-gnu"
@@ -15,221 +15,137 @@ target triple = "x86_64-unknown-linux-gnu"
 ; Function Attrs: noinline nounwind readonly uwtable willreturn
 define dso_local zeroext i1 @is_num(i8* noundef %str, i32 noundef %N) #0 {
 entry:
-  %retval = alloca i1, align 1
-  %str.addr = alloca i8*, align 8
-  %N.addr = alloca i32, align 4
-  %i = alloca i32, align 4
-  store i8* %str, i8** %str.addr, align 8
-  store i32 %N, i32* %N.addr, align 4
-  store i32 0, i32* %i, align 4
   br label %for.cond
 
 for.cond:                                         ; preds = %for.inc, %entry
-  %0 = load i32, i32* %i, align 4
-  %1 = load i32, i32* %N.addr, align 4
-  %cmp = icmp slt i32 %0, %1
+  %i.0 = phi i32 [ 0, %entry ], [ %inc, %for.inc ]
+  %cmp = icmp slt i32 %i.0, %N
   br i1 %cmp, label %for.body, label %for.end
 
 for.body:                                         ; preds = %for.cond
-  %2 = load i8*, i8** %str.addr, align 8
-  %3 = load i32, i32* %i, align 4
-  %idxprom = sext i32 %3 to i64
-  %arrayidx = getelementptr inbounds i8, i8* %2, i64 %idxprom
-  %4 = load i8, i8* %arrayidx, align 1
-  %conv = sext i8 %4 to i32
+  %idxprom = sext i32 %i.0 to i64
+  %arrayidx = getelementptr inbounds i8, i8* %str, i64 %idxprom
+  %0 = load i8, i8* %arrayidx, align 1
+  %conv = sext i8 %0 to i32
   %cmp1 = icmp slt i32 %conv, 48
   br i1 %cmp1, label %if.then, label %lor.lhs.false
 
 lor.lhs.false:                                    ; preds = %for.body
-  %5 = load i8*, i8** %str.addr, align 8
-  %6 = load i32, i32* %i, align 4
-  %idxprom3 = sext i32 %6 to i64
-  %arrayidx4 = getelementptr inbounds i8, i8* %5, i64 %idxprom3
-  %7 = load i8, i8* %arrayidx4, align 1
-  %conv5 = sext i8 %7 to i32
+  %idxprom3 = sext i32 %i.0 to i64
+  %arrayidx4 = getelementptr inbounds i8, i8* %str, i64 %idxprom3
+  %1 = load i8, i8* %arrayidx4, align 1
+  %conv5 = sext i8 %1 to i32
   %cmp6 = icmp sgt i32 %conv5, 57
   br i1 %cmp6, label %if.then, label %if.end
 
 if.then:                                          ; preds = %lor.lhs.false, %for.body
-  store i1 false, i1* %retval, align 1
   br label %return
 
 if.end:                                           ; preds = %lor.lhs.false
   br label %for.inc
 
 for.inc:                                          ; preds = %if.end
-  %8 = load i32, i32* %i, align 4
-  %inc = add nsw i32 %8, 1
-  store i32 %inc, i32* %i, align 4
+  %inc = add nsw i32 %i.0, 1
   br label %for.cond, !llvm.loop !4
 
 for.end:                                          ; preds = %for.cond
-  store i1 true, i1* %retval, align 1
   br label %return
 
 return:                                           ; preds = %for.end, %if.then
-  %9 = load i1, i1* %retval, align 1
-  ret i1 %9
+  %retval.0 = phi i1 [ false, %if.then ], [ true, %for.end ]
+  ret i1 %retval.0
 }
 
 ; Function Attrs: noinline nounwind uwtable
 define dso_local i32 @target(i8* noundef %s0, i8* noundef %s1, i32 noundef %is_num0, i32 noundef %is_num1, i32 noundef %N) #1 {
 entry:
-  %s0.addr = alloca i8*, align 8
-  %s1.addr = alloca i8*, align 8
-  %is_num0.addr = alloca i32, align 4
-  %is_num1.addr = alloca i32, align 4
-  %N.addr = alloca i32, align 4
-  %sum = alloca i32, align 4
-  %i = alloca i32, align 4
-  store i8* %s0, i8** %s0.addr, align 8
-  store i8* %s1, i8** %s1.addr, align 8
-  store i32 %is_num0, i32* %is_num0.addr, align 4
-  store i32 %is_num1, i32* %is_num1.addr, align 4
-  store i32 %N, i32* %N.addr, align 4
-  store i32 0, i32* %sum, align 4
-  %0 = load i32, i32* %is_num0.addr, align 4
-  %tobool = icmp ne i32 %0, 0
+  %tobool = icmp ne i32 %is_num0, 0
   br i1 %tobool, label %land.lhs.true, label %if.end
 
 land.lhs.true:                                    ; preds = %entry
-  %1 = load i32, i32* %is_num1.addr, align 4
-  %tobool1 = icmp ne i32 %1, 0
+  %tobool1 = icmp ne i32 %is_num1, 0
   br i1 %tobool1, label %if.then, label %if.end
 
 if.then:                                          ; preds = %land.lhs.true
-  store i32 0, i32* %i, align 4
   br label %for.cond
 
 for.cond:                                         ; preds = %for.inc, %if.then
-  %2 = load i32, i32* %i, align 4
-  %3 = load i32, i32* %N.addr, align 4
-  %cmp = icmp slt i32 %2, %3
+  %sum.0 = phi i32 [ 0, %if.then ], [ %add5, %for.inc ]
+  %i.0 = phi i32 [ 0, %if.then ], [ %inc, %for.inc ]
+  %cmp = icmp slt i32 %i.0, %N
   br i1 %cmp, label %for.body, label %for.end
 
 for.body:                                         ; preds = %for.cond
-  %4 = load i8*, i8** %s0.addr, align 8
-  %5 = load i32, i32* %i, align 4
-  %idxprom = sext i32 %5 to i64
-  %arrayidx = getelementptr inbounds i8, i8* %4, i64 %idxprom
-  %6 = load i8, i8* %arrayidx, align 1
-  %conv = sext i8 %6 to i32
-  %7 = load i8*, i8** %s1.addr, align 8
-  %8 = load i32, i32* %i, align 4
-  %idxprom2 = sext i32 %8 to i64
-  %arrayidx3 = getelementptr inbounds i8, i8* %7, i64 %idxprom2
-  %9 = load i8, i8* %arrayidx3, align 1
-  %conv4 = sext i8 %9 to i32
+  %idxprom = sext i32 %i.0 to i64
+  %arrayidx = getelementptr inbounds i8, i8* %s0, i64 %idxprom
+  %0 = load i8, i8* %arrayidx, align 1
+  %conv = sext i8 %0 to i32
+  %idxprom2 = sext i32 %i.0 to i64
+  %arrayidx3 = getelementptr inbounds i8, i8* %s1, i64 %idxprom2
+  %1 = load i8, i8* %arrayidx3, align 1
+  %conv4 = sext i8 %1 to i32
   %add = add nsw i32 %conv, %conv4
-  %10 = load i32, i32* %sum, align 4
-  %add5 = add nsw i32 %10, %add
-  store i32 %add5, i32* %sum, align 4
+  %add5 = add nsw i32 %sum.0, %add
   br label %for.inc
 
 for.inc:                                          ; preds = %for.body
-  %11 = load i32, i32* %i, align 4
-  %inc = add nsw i32 %11, 1
-  store i32 %inc, i32* %i, align 4
+  %inc = add nsw i32 %i.0, 1
   br label %for.cond, !llvm.loop !6
 
 for.end:                                          ; preds = %for.cond
   br label %if.end
 
 if.end:                                           ; preds = %for.end, %land.lhs.true, %entry
-  %12 = load i32, i32* %sum, align 4
-  ret i32 %12
+  %sum.1 = phi i32 [ %sum.0, %for.end ], [ 0, %land.lhs.true ], [ 0, %entry ]
+  ret i32 %sum.1
 }
 
 ; Function Attrs: noinline nounwind uwtable
 define dso_local i32 @caller(i8* noundef %s0, i8* noundef %s1, i32 noundef %N) #1 {
 entry:
-  %s0.addr = alloca i8*, align 8
-  %s1.addr = alloca i8*, align 8
-  %N.addr = alloca i32, align 4
-  %is_num0 = alloca i8, align 1
-  %is_num1 = alloca i8, align 1
-  store i8* %s0, i8** %s0.addr, align 8
-  store i8* %s1, i8** %s1.addr, align 8
-  store i32 %N, i32* %N.addr, align 4
-  %0 = load i8*, i8** %s0.addr, align 8
-  %1 = load i32, i32* %N.addr, align 4
-  %call = call zeroext i1 @is_num(i8* noundef %0, i32 noundef %1) #6
+  %call = call zeroext i1 @is_num(i8* noundef %s0, i32 noundef %N) #6
   %frombool = zext i1 %call to i8
-  store i8 %frombool, i8* %is_num0, align 1
-  %2 = load i8*, i8** %s1.addr, align 8
-  %3 = load i32, i32* %N.addr, align 4
-  %call1 = call zeroext i1 @is_num(i8* noundef %2, i32 noundef %3) #6
+  %call1 = call zeroext i1 @is_num(i8* noundef %s1, i32 noundef %N) #6
   %frombool2 = zext i1 %call1 to i8
-  store i8 %frombool2, i8* %is_num1, align 1
-  %4 = load i8*, i8** %s0.addr, align 8
-  %5 = load i8*, i8** %s1.addr, align 8
-  %6 = load i8, i8* %is_num0, align 1
-  %tobool = trunc i8 %6 to i1
+  %tobool = trunc i8 %frombool to i1
   %conv = zext i1 %tobool to i32
-  %7 = load i8, i8* %is_num1, align 1
-  %tobool3 = trunc i8 %7 to i1
+  %tobool3 = trunc i8 %frombool2 to i1
   %conv4 = zext i1 %tobool3 to i32
-  %8 = load i32, i32* %N.addr, align 4
-  %call5 = call i32 @target(i8* noundef %4, i8* noundef %5, i32 noundef %conv, i32 noundef %conv4, i32 noundef %8)
+  %call5 = call i32 @target(i8* noundef %s0, i8* noundef %s1, i32 noundef %conv, i32 noundef %conv4, i32 noundef %N)
   ret i32 %call5
 }
 
 ; Function Attrs: noinline nounwind uwtable
 define dso_local i32 @main(i32 noundef %argc, i8** noundef %argv) #1 {
 entry:
-  %retval = alloca i32, align 4
-  %argc.addr = alloca i32, align 4
-  %argv.addr = alloca i8**, align 8
-  %N = alloca i32, align 4
-  %s0 = alloca i8*, align 8
-  %s1 = alloca i8*, align 8
-  store i32 0, i32* %retval, align 4
-  store i32 %argc, i32* %argc.addr, align 4
-  store i8** %argv, i8*** %argv.addr, align 8
-  %0 = load i32, i32* %argc.addr, align 4
-  %cmp = icmp ne i32 %0, 2
+  %cmp = icmp ne i32 %argc, 2
   br i1 %cmp, label %if.then, label %if.else
 
 if.then:                                          ; preds = %entry
-  %1 = load %struct._IO_FILE*, %struct._IO_FILE** @stderr, align 8
-  %2 = load i8**, i8*** %argv.addr, align 8
-  %arrayidx = getelementptr inbounds i8*, i8** %2, i64 0
-  %3 = load i8*, i8** %arrayidx, align 8
-  %call = call i32 (%struct._IO_FILE*, i8*, ...) @fprintf(%struct._IO_FILE* noundef %1, i8* noundef getelementptr inbounds ([15 x i8], [15 x i8]* @.str, i64 0, i64 0), i8* noundef %3)
+  %0 = load %struct._IO_FILE*, %struct._IO_FILE** @stderr, align 8
+  %arrayidx = getelementptr inbounds i8*, i8** %argv, i64 0
+  %1 = load i8*, i8** %arrayidx, align 8
+  %call = call i32 (%struct._IO_FILE*, i8*, ...) @fprintf(%struct._IO_FILE* noundef %0, i8* noundef getelementptr inbounds ([15 x i8], [15 x i8]* @.str, i64 0, i64 0), i8* noundef %1)
   br label %if.end
 
 if.else:                                          ; preds = %entry
-  %4 = load i8**, i8*** %argv.addr, align 8
-  %arrayidx1 = getelementptr inbounds i8*, i8** %4, i64 1
-  %5 = load i8*, i8** %arrayidx1, align 8
-  %call2 = call i32 @atoi(i8* noundef %5) #6
-  store i32 %call2, i32* %N, align 4
-  %6 = load i32, i32* %N, align 4
-  %conv = sext i32 %6 to i64
+  %arrayidx1 = getelementptr inbounds i8*, i8** %argv, i64 1
+  %2 = load i8*, i8** %arrayidx1, align 8
+  %call2 = call i32 @atoi(i8* noundef %2) #6
+  %conv = sext i32 %call2 to i64
   %call3 = call noalias i8* @malloc(i64 noundef %conv) #7
-  store i8* %call3, i8** %s0, align 8
-  %7 = load i32, i32* %N, align 4
-  %conv4 = sext i32 %7 to i64
+  %conv4 = sext i32 %call2 to i64
   %call5 = call noalias i8* @malloc(i64 noundef %conv4) #7
-  store i8* %call5, i8** %s1, align 8
-  %8 = load i8*, i8** %s0, align 8
-  %9 = load i32, i32* %N, align 4
-  %conv6 = sext i32 %9 to i64
-  call void @llvm.memset.p0i8.i64(i8* align 1 %8, i8 97, i64 %conv6, i1 false)
-  %10 = load i8*, i8** %s1, align 8
-  %11 = load i32, i32* %N, align 4
-  %conv7 = sext i32 %11 to i64
-  call void @llvm.memset.p0i8.i64(i8* align 1 %10, i8 50, i64 %conv7, i1 false)
-  %12 = load i8*, i8** %s0, align 8
-  %13 = load i8*, i8** %s1, align 8
-  %14 = load i32, i32* %N, align 4
-  %call8 = call i32 @caller(i8* noundef %12, i8* noundef %13, i32 noundef %14)
+  %conv6 = sext i32 %call2 to i64
+  call void @llvm.memset.p0i8.i64(i8* align 1 %call3, i8 97, i64 %conv6, i1 false)
+  %conv7 = sext i32 %call2 to i64
+  call void @llvm.memset.p0i8.i64(i8* align 1 %call5, i8 50, i64 %conv7, i1 false)
+  %call8 = call i32 @caller(i8* noundef %call3, i8* noundef %call5, i32 noundef %call2)
   %call9 = call i32 (i8*, ...) @printf(i8* noundef getelementptr inbounds ([4 x i8], [4 x i8]* @.str.1, i64 0, i64 0), i32 noundef %call8)
   br label %if.end
 
 if.end:                                           ; preds = %if.else, %if.then
-  %15 = load i32, i32* %retval, align 4
-  ret i32 %15
+  ret i32 0
 }
 
 declare dso_local i32 @fprintf(%struct._IO_FILE* noundef, i8* noundef, ...) #2
