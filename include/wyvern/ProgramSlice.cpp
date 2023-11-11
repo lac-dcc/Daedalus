@@ -26,6 +26,7 @@
 #include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Verifier.h"
+#include "llvm/Support/Casting.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 
@@ -169,6 +170,12 @@ ProgramSlice::ProgramSlice(Instruction &Initial, Function &F)
       instsInSlice.insert(I);
     }
   }
+	if(isa<ReturnInst>(_initial)){
+		Value *FreturnValue = dyn_cast<ReturnInst>(_initial)->getReturnValue();
+		_instRetValue = dyn_cast<Instruction>(FreturnValue);
+	} else{
+		_instRetValue = dyn_cast<Instruction>(_initial);
+	}
 
   _instsInSlice = instsInSlice;
   _depArgs = depArgs;
@@ -231,9 +238,11 @@ StructType *ProgramSlice::getThunkStructType(bool memo) {
 
 /// Prints the slice. Used for debugging.
 void ProgramSlice::printSlice() {
-  LLVM_DEBUG(dbgs() << "\n\n ==== Slicing function "
+  LLVM_DEBUG(dbgs() << "\n\n ==== Slicing instruction: ["
+		  			<< *_initial
+					<< "] in function: "
                     << _parentFunction->getName() << " with size "
-                    << _parentFunction->size() << " in instruction" << *_initial
+                    << _parentFunction->size()
                     << " ====\n");
   LLVM_DEBUG(dbgs() << "BBs in slice:\n");
   for (const BasicBlock *BB : _BBsInSlice) {
@@ -253,8 +262,6 @@ void ProgramSlice::printSlice() {
 
 /// Print original and sliced function. Used for debugging.
 void ProgramSlice::printFunctions(Function *F) {
-  LLVM_DEBUG(dbgs() << "\n======== ORIGINAL FUNCTION ==========\n"
-                    << *_parentFunction);
   LLVM_DEBUG(dbgs() << "\n======== SLICED FUNCTION ==========\n" << *F);
 }
 
@@ -480,33 +487,9 @@ void ProgramSlice::rerouteBranches(Function *F) {
 }
 
 bool ProgramSlice::newcanOutline() {
-	for(const Instruction *I : _instsInSlice){
-		if(!I->willReturn() || I->mayThrow()) return false;
-		if (const CallBase *CB = dyn_cast<CallBase>(I)) {
-		  if (!CB->getCalledFunction()) {
-			errs() << "Cannot outline slice because instruction calls unknown "
-					  "function: "
-				   << *CB << "\n";
-			return false;
-		  }
-
-		  LibFunc builtin;
-		  if (CB->getCalledFunction()->isDeclaration() //&& !_TLI.getLibFunc(*CB, builtin)
-													   ) {
-			errs() << "Cannot outline slice because instruction calls non-builtin "
-					  "function with no body: "
-				   << *CB << "\n";
-			return false;
-		  }
-		}
-	}
-  	if (isa<AllocaInst>(_initial)) {
-   		LLVM_DEBUG((dbgs() << "Cannot outline slice due to slicing criteria being an alloca!\n"));
-	    return false;
-	}
+	if(isa<BranchInst>(_initial)) return false;
 	return true;
 }
-
 bool ProgramSlice::canOutline() {
   DominatorTree DT(*_parentFunction);
   LoopInfo LI = LoopInfo(DT);
@@ -695,11 +678,8 @@ ReturnInst *ProgramSlice::addReturnValue(Function *F) {
   if (exit->getTerminator()) {
     exit->getTerminator()->eraseFromParent();
   }
+	return ReturnInst::Create(F->getParent()->getContext(), _instRetValue,exit);
 	
-	LLVM_DEBUG(dbgs() << " @-> HERERV1 <-@\n");
-	if(isa<BasicBlock>(exit)) LLVM_DEBUG(dbgs() << "a value! " << _Imap.size() <<  "\n");
-	LLVM_DEBUG(dbgs() << " @-> HERERV3 <-@\n");
-  return ReturnInst::Create(F->getParent()->getContext(), _Imap[_initial],exit); // TODO: FAIL
 }
 
 /// Updates the delegate function's code to make use of parameters provided by
@@ -742,8 +722,19 @@ void ProgramSlice::insertLoadForThunkParams(Function *F, bool memo) {
 Function *ProgramSlice::outline() {
 	StructType *thunkStructType = getThunkStructType(false);
 	PointerType *thunkStructPtrType = thunkStructType->getPointerTo();
+
+	Type *FreturnType;
+	if(isa<ReturnInst>(_initial)){
+		FreturnType = dyn_cast<ReturnInst>(_initial)->getReturnValue()->getType();
+	} else FreturnType = _initial->getType();
+
+	LLVM_DEBUG(dbgs() << "RET TYPE: \n");
+	FreturnType->print(dbgs());
+	_initial->print(dbgs());
+	LLVM_DEBUG(dbgs() << "============\n");
+
 	FunctionType *delegateFunctionType =
-	FunctionType::get(_initial->getType(), {thunkStructPtrType}, false);
+	FunctionType::get(FreturnType, {thunkStructPtrType}, false);
 
 	// generate a random number to use as suffix for delegate function, to avoid
 	// naming conflicts
@@ -775,9 +766,7 @@ Function *ProgramSlice::outline() {
 	populateBBsWithInsts(F);
 	reorganizeUses(F);
 	rerouteBranches(F);
-	LLVM_DEBUG(dbgs() << " @-> HEREBB1 <-@\n");
 	addReturnValue(F); // TODO: NOT RETURNING
-	LLVM_DEBUG(dbgs() << " @-> HEREBB2 <-@\n");
 	reorderBlocks(F);
 	insertLoadForThunkParams(F, false /*memo*/);
 	verifyFunction(*F);

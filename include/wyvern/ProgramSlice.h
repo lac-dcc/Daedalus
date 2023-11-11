@@ -57,6 +57,8 @@ private:
   /// pointer to the Instruction used as slice criterion
   Instruction *_initial;
 
+  Instruction *_instRetValue;
+
   /// function being sliced
   Function *_parentFunction;
 
