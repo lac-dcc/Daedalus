@@ -12,8 +12,6 @@ bool registerPipeline(StringRef Name, ModulePassManager &MPM,
     return false;
 }
 
-
-
 PassPluginLibraryInfo DaedalusPluginInfo() {
     return {LLVM_PLUGIN_API_VERSION, "Daedalus", LLVM_VERSION_STRING,
             [](PassBuilder &PB) {
