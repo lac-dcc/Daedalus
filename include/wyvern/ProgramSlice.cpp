@@ -672,13 +672,18 @@ void ProgramSlice::reorderBlocks(Function *F) {
 /// Adds a return instruction to function @param F, which returns
 /// the value that is computed by the sliced function.
 ReturnInst *ProgramSlice::addReturnValue(Function *F) {
-  BasicBlock *exit = _Imap[_initial]->getParent();
+	  BasicBlock *exit = _Imap[_initial]->getParent();
 
+	if (exit->getTerminator()) {
+	exit->getTerminator()->eraseFromParent();
+	}
+	if(isa<ReturnInst>(_initial)){ // TODO: can be better
+		Value *retType = dyn_cast<ReturnInst>(_initial)->getReturnValue();
+		return ReturnInst::Create(F->getParent()->getContext(), retType,exit);
+	} else{
+		return ReturnInst::Create(F->getParent()->getContext(), _Imap[_initial],exit);
+	}
 
-  if (exit->getTerminator()) {
-    exit->getTerminator()->eraseFromParent();
-  }
-	return ReturnInst::Create(F->getParent()->getContext(), _instRetValue,exit);
 	
 }
 
@@ -731,7 +736,7 @@ Function *ProgramSlice::outline() {
 	LLVM_DEBUG(dbgs() << "RET TYPE: \n");
 	FreturnType->print(dbgs());
 	_initial->print(dbgs());
-	LLVM_DEBUG(dbgs() << "============\n");
+	LLVM_DEBUG(dbgs() << "\n============\n");
 
 	FunctionType *delegateFunctionType =
 	FunctionType::get(FreturnType, {thunkStructPtrType}, false);
@@ -755,7 +760,7 @@ Function *ProgramSlice::outline() {
 	// Let LLVM know that the delegate function is pure, so it can further
 	// optimize calls to it
 	AttrBuilder builder(_parentFunction->getContext());
-	builder.addAttribute(Attribute::ReadOnly);
+	//builder.addAttribute(Attribute::ReadOnly);
 	builder.addAttribute(Attribute::NoUnwind);
 	builder.addAttribute(Attribute::WillReturn);
 	F->addFnAttrs(builder);
