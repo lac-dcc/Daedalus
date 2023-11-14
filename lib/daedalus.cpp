@@ -12,11 +12,10 @@ using namespace llvm;
 
 bool canOutline(Instruction &I){
 	if(isa<BranchInst>(I)) return false; // Branch Instruction have badref
-	if(isa<ReturnInst>(I)) return true; // No Return for while, badref
-	if(isa<AllocaInst>(I)) return false; // No need
+	if(isa<ReturnInst>(I)) return false; // No Return for while, badref
+	if(isa<AllocaInst>(I)) return false; // No needed
 	return true;
 }
-
 
 namespace Daedalus {
 
