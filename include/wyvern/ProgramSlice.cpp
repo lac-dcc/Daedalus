@@ -189,7 +189,7 @@ ProgramSlice::ProgramSlice(Instruction &Initial, Function &F)
 
   computeAttractorBlocks();
 
-  LLVM_DEBUG(printSlice());
+ // LLVM_DEBUG(printSlice());
 }
 
 /// Computes the layout of the struct type that should be used to lazify
@@ -262,6 +262,12 @@ void ProgramSlice::printSlice() {
 
 /// Print original and sliced function. Used for debugging.
 void ProgramSlice::printFunctions(Function *F) {
+  LLVM_DEBUG(dbgs() << "\n\n ==== Slicing instruction: ["
+		  			<< *_initial
+					<< "] in function: "
+                    << _parentFunction->getName() << " with size "
+                    << _parentFunction->size()
+                    << " ====\n");
   LLVM_DEBUG(dbgs() << "\n======== SLICED FUNCTION ==========\n" << *F);
 }
 
@@ -680,11 +686,20 @@ ReturnInst *ProgramSlice::addReturnValue(Function *F) {
 	if(isa<ReturnInst>(_initial)){ // TODO: can be better
 		Value *retType = dyn_cast<ReturnInst>(_initial)->getReturnValue();
 		return ReturnInst::Create(F->getParent()->getContext(), retType,exit);
-	} else{
-		return ReturnInst::Create(F->getParent()->getContext(), _Imap[_initial],exit);
 	}
-
-	
+	if(auto *callInst = dyn_cast<CallInst>(_initial)){
+		Function *ftype = callInst->getCalledFunction();
+		if(ftype){
+			dbgs() << "== CALL TYPE ==\n";
+			callInst->getType()->print(dbgs());
+			dbgs() << "===\n";
+			_Imap[_initial]->getType()->print(dbgs());
+			dbgs() << "===\n";
+			if(ftype->getReturnType()->isVoidTy()) return ReturnInst::Create(F->getParent()->getContext(), callInst, exit);
+		}
+	}
+	return ReturnInst::Create(F->getParent()->getContext(), _Imap[_initial],exit);
+		
 }
 
 /// Updates the delegate function's code to make use of parameters provided by
@@ -732,11 +747,6 @@ Function *ProgramSlice::outline() {
 	if(isa<ReturnInst>(_initial)){
 		FreturnType = dyn_cast<ReturnInst>(_initial)->getReturnValue()->getType();
 	} else FreturnType = _initial->getType();
-
-	LLVM_DEBUG(dbgs() << "RET TYPE: \n");
-	FreturnType->print(dbgs());
-	_initial->print(dbgs());
-	LLVM_DEBUG(dbgs() << "\n============\n");
 
 	FunctionType *delegateFunctionType =
 	FunctionType::get(FreturnType, {thunkStructPtrType}, false);
