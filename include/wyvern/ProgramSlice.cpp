@@ -781,6 +781,10 @@ Function *ProgramSlice::outline() {
 	rerouteBranches(F);
 	addReturnValue(F);
 	reorderBlocks(F);
+<<<<<<< HEAD
+=======
+	//insertLoadForThunkParams(F, false /*memo*/);
+>>>>>>> 05ab72a (solved call void)
 	verifyFunction(*F);
 	printFunctions(F);
 	return F;

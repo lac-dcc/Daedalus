@@ -5,7 +5,6 @@ void f(){
 }
 
 int main(){
-	
 	f();
 	printf("ok\n");
 }
