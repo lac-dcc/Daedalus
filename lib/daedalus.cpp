@@ -12,17 +12,6 @@ using namespace llvm;
 #include <iostream>
 
 bool canOutline(Instruction &I){
-//	if(auto *callInst = dyn_cast<CallInst>(&I)){
-//		Function *F = callInst->getCalledFunction();
-//		dbgs() << "CALLINST TYPE: \n";
-//		if(F){
-//			callInst->print(dbgs());
-//			dbgs() << "\n";
-//			if(F->getReturnType()->isVoidTy()) printf("VOID\n");
-//		}
-//		dbgs() << "\n ========= \n";
-//	}
-
 	if(isa<BranchInst>(I)) return false; // Branch Instruction have badref
 	if(isa<ReturnInst>(I)) return false; // No Return for while, badref
 	if(isa<AllocaInst>(I)) return false; // No needed
@@ -40,12 +29,6 @@ namespace Daedalus {
 
 		for(Function *F: FtoMap){
 			for(Instruction &I: instructions(F)){
-				//if(isa<ReturnInst>(I)){
-				//	ReturnInst *ret = dyn_cast<ReturnInst>(&I);
-      			//	LLVM_DEBUG(dbgs() << "TYPE:\n");
-				//	LLVM_DEBUG(ret->getReturnValue()->getType()->print(dbgs()));
-      			//	LLVM_DEBUG(dbgs() << "TYPE\n");
-				//}
 				if(!canOutline(I)) continue;
 				ProgramSlice ps = ProgramSlice(I, *F);
 				ps.outline();

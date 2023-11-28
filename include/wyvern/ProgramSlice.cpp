@@ -690,12 +690,7 @@ ReturnInst *ProgramSlice::addReturnValue(Function *F) {
 	if(auto *callInst = dyn_cast<CallInst>(_initial)){
 		Function *ftype = callInst->getCalledFunction();
 		if(ftype){
-			dbgs() << "== CALL TYPE ==\n";
-			callInst->getType()->print(dbgs());
-			dbgs() << "===\n";
-			_Imap[_initial]->getType()->print(dbgs());
-			dbgs() << "===\n";
-			if(ftype->getReturnType()->isVoidTy()) return ReturnInst::Create(F->getParent()->getContext(), callInst, exit);
+			if(ftype->getReturnType()->isVoidTy()) return ReturnInst::Create(F->getParent()->getContext(), nullptr, exit);
 		}
 	}
 	return ReturnInst::Create(F->getParent()->getContext(), _Imap[_initial],exit);
@@ -781,9 +776,8 @@ Function *ProgramSlice::outline() {
 	populateBBsWithInsts(F);
 	reorganizeUses(F);
 	rerouteBranches(F);
-	addReturnValue(F); // TODO: NOT RETURNING
+	addReturnValue(F);
 	reorderBlocks(F);
-	insertLoadForThunkParams(F, false /*memo*/);
 	verifyFunction(*F);
 	printFunctions(F);
 	return F;
