@@ -779,12 +779,18 @@ Function *ProgramSlice::outline() {
 	populateBBsWithInsts(F);
 	reorganizeUses(F);
 	rerouteBranches(F);
+<<<<<<< HEAD
 	addReturnValue(F);
 	reorderBlocks(F);
 <<<<<<< HEAD
 =======
 	//insertLoadForThunkParams(F, false /*memo*/);
 >>>>>>> 05ab72a (solved call void)
+=======
+	addReturnValue(F); // TODO: NOT RETURNING
+//	reorderBlocks(F);
+//	insertLoadForThunkParams(F, false /*memo*/);
+>>>>>>> 5edb32b (?)
 	verifyFunction(*F);
 	printFunctions(F);
 	return F;

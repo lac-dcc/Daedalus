@@ -26,7 +26,6 @@ namespace Daedalus {
 		
 		std::set<Function *> FtoMap;	
 		for(Function &F: M.getFunctionList()) FtoMap.insert(&F);
-
 		for(Function *F: FtoMap){
 			for(Instruction &I: instructions(F)){
 				if(!canOutline(I)) continue;

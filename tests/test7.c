@@ -1,11 +1,17 @@
 #include <stdio.h>
 
-void f(){
-	printf("%d\n", 2);
+bool f(int a){
+	return a==0;
+}
+
+bool slice_for_cond(){
+	int a = 2;
+	return f(a);
 }
 
 int main(){
-	f();
-	printf("ok\n");
+	int a = 2;
+	for(int i=0;f(a);++i) --a;
+	printf("%d\n", a);
 }
 
