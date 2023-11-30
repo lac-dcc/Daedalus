@@ -16,11 +16,11 @@ bool canOutline(Instruction &I){
 	if(isa<ReturnInst>(I)) return false; // No Return for while, badref
 	if(isa<AllocaInst>(I)) return false; // No needed
 	if(isa<StoreInst>(I)) return false; // Branch Instruction have badref
+	if(isa<PHINode>(I)) return false;
 	return true;
 }
 
 namespace Daedalus {
-
 	PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
 		std::unordered_map<Instruction *, Function *> instr_Func;
 		

@@ -125,13 +125,16 @@ get_data_dependences_for(
     const Value *cur = to_visit.front();
     deps.insert(cur);
     to_visit.pop();
-
+	PostDominatorTree PDT;
+	PDT.recalculate(*I.getFunction());
     if (const Instruction *dep = dyn_cast<Instruction>(cur)) {
       BBs.insert(dep->getParent());
       for (const Use &U : dep->operands()) {
         if ((!isa<Instruction>(U) && !isa<Argument>(U)) || visited.count(U)) {
           continue;
         }
+		const Instruction *IU = dyn_cast<Instruction>(cur);
+		if(!PDT.dominates(IU, IU)) continue;
         visited.insert(U);
         to_visit.push(U);
       }
@@ -154,42 +157,42 @@ get_data_dependences_for(
 
 ProgramSlice::ProgramSlice(Instruction &Initial, Function &F)
     : _initial(&Initial), _parentFunction(&F){
-  assert(Initial.getParent()->getParent() == &F &&
-         "Slicing instruction from different function!");
+	assert(Initial.getParent()->getParent() == &F &&
+	 "Slicing instruction from different function!");
 
-  std::unordered_map<const BasicBlock *, SmallVector<const Value *>> gates =
-      computeGates(F);
-  auto [BBsInSlice, valuesInSlice] = get_data_dependences_for(Initial, gates);
-  std::set<const Instruction *> instsInSlice;
-  SmallVector<Argument *> depArgs;
+	std::unordered_map<const BasicBlock *, SmallVector<const Value *>> gates =
+	computeGates(F);
+	auto [BBsInSlice, valuesInSlice] = get_data_dependences_for(Initial, gates);
+	std::set<const Instruction *> instsInSlice;
+	SmallVector<Argument *> depArgs;
 
-  for (auto &val : valuesInSlice) {
-    if (Argument *A = dyn_cast<Argument>(const_cast<Value *>(val))) {
-      depArgs.push_back(A);
-    } else if (const Instruction *I = dyn_cast<Instruction>(val)) {
-      instsInSlice.insert(I);
-    }
-  }
+	for (auto &val : valuesInSlice) {
+		if (Argument *A = dyn_cast<Argument>(const_cast<Value *>(val))) {
+		depArgs.push_back(A);
+		} else if (const Instruction *I = dyn_cast<Instruction>(val)) {
+			instsInSlice.insert(I);
+		}
+	}
 	if(isa<ReturnInst>(_initial)){
-		Value *FreturnValue = dyn_cast<ReturnInst>(_initial)->getReturnValue();
-		_instRetValue = dyn_cast<Instruction>(FreturnValue);
+	Value *FreturnValue = dyn_cast<ReturnInst>(_initial)->getReturnValue();
+	_instRetValue = dyn_cast<Instruction>(FreturnValue);
 	} else{
-		_instRetValue = dyn_cast<Instruction>(_initial);
+	_instRetValue = dyn_cast<Instruction>(_initial);
 	}
 
-  _instsInSlice = instsInSlice;
-  _depArgs = depArgs;
-  _BBsInSlice = BBsInSlice;
+	_instsInSlice = instsInSlice;
+	_depArgs = depArgs;
+	_BBsInSlice = BBsInSlice;
 
-  // We need to pre-compute struct types, because if we build it everytime
-  // it's needed, LLVM creates multiple types with the same structure but
-  // different names.
-  _thunkStructType = computeStructType(false /*memo*/);
-  _memoizedThunkStructType = computeStructType(true /*memo*/);
+	// We need to pre-compute struct types, because if we build it everytime
+	// it's needed, LLVM creates multiple types with the same structure but
+	// different names.
+	_thunkStructType = computeStructType(false /*memo*/);
+	_memoizedThunkStructType = computeStructType(true /*memo*/);
 
-  computeAttractorBlocks();
+	computeAttractorBlocks();
 
- // LLVM_DEBUG(printSlice());
+	// LLVM_DEBUG(printSlice());
 }
 
 /// Computes the layout of the struct type that should be used to lazify
