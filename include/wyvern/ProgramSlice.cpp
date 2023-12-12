@@ -113,28 +113,32 @@ computeGates(Function &F) {
 static std::tuple<std::set<const BasicBlock *>, std::set<const Value *>>
 get_data_dependences_for(
     Instruction &I,
-    std::unordered_map<const BasicBlock *, SmallVector<const Value *>> &gates) {
+    std::unordered_map<const BasicBlock *, SmallVector<const Value *>> &gates)
+{
   std::set<const Value *> deps;
   std::set<const BasicBlock *> BBs;
   std::set<const Value *> visited;
-  std::queue<const Value *> to_visit;
+  std::queue<const Value *> worklist; // change all to worklist
 
-  to_visit.push(&I);
+  worklist.push(&I);
   deps.insert(&I);
+//	PostDominatorTree PDT;
+//	PDT.recalculate(*I.getFunction());
   while (!to_visit.empty()) {
     const Value *cur = to_visit.front();
     deps.insert(cur);
     to_visit.pop();
-	PostDominatorTree PDT;
-	PDT.recalculate(*I.getFunction());
     if (const Instruction *dep = dyn_cast<Instruction>(cur)) {
       BBs.insert(dep->getParent());
-      for (const Use &U : dep->operands()) {
+      for (const Use &U : dep->operands()) { // module to a stop criteria
+		  // !(if u is phi, u dominates cur, and cur dont p-dom u) -> push u.
         if ((!isa<Instruction>(U) && !isa<Argument>(U)) || visited.count(U)) {
           continue;
         }
-		const Instruction *IU = dyn_cast<Instruction>(cur);
-		if(!PDT.dominates(&I, IU)) continue;
+		/*1) Consertar critério de parada e imprimir slices
+2) Modificar o algoritmo de chaveamento*/
+//		const Instruction *IU = dyn_cast<Instruction>(cur);
+//		if(!PDT.dominates(&I, IU)) continue;
         visited.insert(U);
         to_visit.push(U);
       }
@@ -162,6 +166,7 @@ ProgramSlice::ProgramSlice(Instruction &Initial, Function &F)
 
 	std::unordered_map<const BasicBlock *, SmallVector<const Value *>> gates =
 	computeGates(F);
+	// Create post dominance tree by function
 	auto [BBsInSlice, valuesInSlice] = get_data_dependences_for(Initial, gates);
 	std::set<const Instruction *> instsInSlice;
 	SmallVector<Argument *> depArgs;
