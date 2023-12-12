@@ -82,22 +82,22 @@ computeGates(Function &F) {
     SmallVector<const Value *> BB_gates;
     const unsigned num_preds = pred_size(&BB);
     if (num_preds > 1) {
-      LLVM_DEBUG(dbgs() << BB.getName() << ":\n");
+      // LLVM_DEBUG(dbgs() << BB.getName() << ":\n");
       for (const BasicBlock *pred : predecessors(&BB)) {
-        LLVM_DEBUG(dbgs() << " - " << pred->getName() << " -> ");
+        // LLVM_DEBUG(dbgs() << " - " << pred->getName() << " -> ");
         if (DT.dominates(pred, &BB) && !PDT.dominates(&BB, pred)) {
-          LLVM_DEBUG(dbgs() << " DOM " << getGate(pred)->getName() << " -> ");
+          // LLVM_DEBUG(dbgs() << " DOM " << getGate(pred)->getName() << " -> ");
           BB_gates.push_back(getGate(pred));
         } else {
           const BasicBlock *ctrl_BB = getController(pred, DT, PDT);
           if (ctrl_BB) {
-            LLVM_DEBUG(dbgs() << " R-CTRL "
-                              << "CTRL_BB: " << ctrl_BB->getName() << " "
-                              << getGate(ctrl_BB)->getName());
+            // LLVM_DEBUG(dbgs() << " R-CTRL "
+            //                  << "CTRL_BB: " << ctrl_BB->getName() << " "
+            //                  << getGate(ctrl_BB)->getName());
             BB_gates.push_back(getGate(ctrl_BB));
           }
         }
-        LLVM_DEBUG(dbgs() << ";\n");
+        // LLVM_DEBUG(dbgs() << ";\n");
       }
     }
     gates.emplace(std::make_pair(&BB, BB_gates));
@@ -134,7 +134,7 @@ get_data_dependences_for(
           continue;
         }
 		const Instruction *IU = dyn_cast<Instruction>(cur);
-		if(!PDT.dominates(IU, IU)) continue;
+		if(!PDT.dominates(&I, IU)) continue;
         visited.insert(U);
         to_visit.push(U);
       }
@@ -746,8 +746,9 @@ Function *ProgramSlice::outline() {
 		FreturnType = dyn_cast<ReturnInst>(_initial)->getReturnValue()->getType();
 	} else FreturnType = _initial->getType();
 
+	std::vector<Type *> v(1, Type::getInt32Ty(_parentFunction->getContext()));
 	FunctionType *delegateFunctionType =
-	FunctionType::get(FreturnType, {thunkStructPtrType}, false);
+	FunctionType::get(FreturnType, false);
 
 	// generate a random number to use as suffix for delegate function, to avoid
 	// naming conflicts
@@ -779,18 +780,8 @@ Function *ProgramSlice::outline() {
 	populateBBsWithInsts(F);
 	reorganizeUses(F);
 	rerouteBranches(F);
-<<<<<<< HEAD
 	addReturnValue(F);
 	reorderBlocks(F);
-<<<<<<< HEAD
-=======
-	//insertLoadForThunkParams(F, false /*memo*/);
->>>>>>> 05ab72a (solved call void)
-=======
-	addReturnValue(F); // TODO: NOT RETURNING
-//	reorderBlocks(F);
-//	insertLoadForThunkParams(F, false /*memo*/);
->>>>>>> 5edb32b (?)
 	verifyFunction(*F);
 	printFunctions(F);
 	return F;
