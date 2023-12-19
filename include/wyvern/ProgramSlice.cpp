@@ -111,8 +111,9 @@ computeGates(Function &F) {
 /// also be tracked as data dependences. Thus, this function is enough to
 /// compute all dependencies necessary to building a slice.
 
-void checkCriteria(){
-	
+bool checkCriteria(PostDominatorTree &PDT, const Value *cur, const Use &U){
+
+	return true;
 }
 
 static std::tuple<std::set<const BasicBlock *>, std::set<const Value *>>
@@ -139,6 +140,7 @@ get_data_dependences_for(
         if ((!isa<Instruction>(U) && !isa<Argument>(U)) || visited.count(U)) {
           continue;
         }
+		if(checkCriteria(PDT, cur, U)) continue;
 		/*1) Consertar critério de parada e imprimir slices
 2) Modificar o algoritmo de chaveamento*/
 //		const Instruction *IU = dyn_cast<Instruction>(cur);
