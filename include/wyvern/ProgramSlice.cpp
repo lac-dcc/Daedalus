@@ -110,24 +110,28 @@ computeGates(Function &F) {
 /// phi-function gate information contained in gates, control dependencies can
 /// also be tracked as data dependences. Thus, this function is enough to
 /// compute all dependencies necessary to building a slice.
+
+void checkCriteria(){
+	
+}
+
 static std::tuple<std::set<const BasicBlock *>, std::set<const Value *>>
 get_data_dependences_for(
     Instruction &I,
-    std::unordered_map<const BasicBlock *, SmallVector<const Value *>> &gates)
+    std::unordered_map<const BasicBlock *, SmallVector<const Value *>> &gates,
+	PostDominatorTree &PDT)
 {
   std::set<const Value *> deps;
   std::set<const BasicBlock *> BBs;
   std::set<const Value *> visited;
-  std::queue<const Value *> worklist; // change all to worklist
+  std::queue<const Value *> worklist;
 
   worklist.push(&I);
   deps.insert(&I);
-//	PostDominatorTree PDT;
-//	PDT.recalculate(*I.getFunction());
-  while (!to_visit.empty()) {
-    const Value *cur = to_visit.front();
+  while (!worklist.empty()) {
+    const Value *cur = worklist.front();
     deps.insert(cur);
-    to_visit.pop();
+    worklist.pop();
     if (const Instruction *dep = dyn_cast<Instruction>(cur)) {
       BBs.insert(dep->getParent());
       for (const Use &U : dep->operands()) { // module to a stop criteria
@@ -140,7 +144,7 @@ get_data_dependences_for(
 //		const Instruction *IU = dyn_cast<Instruction>(cur);
 //		if(!PDT.dominates(&I, IU)) continue;
         visited.insert(U);
-        to_visit.push(U);
+        worklist.push(U);
       }
     }
 
@@ -150,7 +154,7 @@ get_data_dependences_for(
       }
       for (const Value *gate : gates[PN->getParent()]) {
         if (gate && !visited.count(gate)) {
-          to_visit.push(gate);
+          worklist.push(gate);
         }
       }
     }
@@ -159,7 +163,7 @@ get_data_dependences_for(
   return std::make_tuple(BBs, deps);
 }
 
-ProgramSlice::ProgramSlice(Instruction &Initial, Function &F)
+ProgramSlice::ProgramSlice(Instruction &Initial, Function &F, PostDominatorTree &PDT)
     : _initial(&Initial), _parentFunction(&F){
 	assert(Initial.getParent()->getParent() == &F &&
 	 "Slicing instruction from different function!");
@@ -167,7 +171,7 @@ ProgramSlice::ProgramSlice(Instruction &Initial, Function &F)
 	std::unordered_map<const BasicBlock *, SmallVector<const Value *>> gates =
 	computeGates(F);
 	// Create post dominance tree by function
-	auto [BBsInSlice, valuesInSlice] = get_data_dependences_for(Initial, gates);
+	auto [BBsInSlice, valuesInSlice] = get_data_dependences_for(Initial, gates, PDT);
 	std::set<const Instruction *> instsInSlice;
 	SmallVector<Argument *> depArgs;
 

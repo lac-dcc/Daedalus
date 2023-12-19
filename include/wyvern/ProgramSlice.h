@@ -3,6 +3,7 @@
 
 #include "llvm/Analysis/AliasAnalysis.h"
 
+#include "llvm/Analysis/PostDominators.h"
 #include "llvm/IR/Dominators.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Instructions.h"
@@ -14,7 +15,7 @@ public:
   /// Creates a backward slice of function F in terms of slice criterion I,
   /// which is passed as a parameter in call CallSite. Optionally, receives the
   /// result of an Alias Analysis in AA to perform memory safety analysis.
-  ProgramSlice(Instruction &I, Function &F);
+  ProgramSlice(Instruction &I, Function &F, PostDominatorTree &PDT);
 
   /// Returns whether the slice can be safely outlined into a delegate function.
   bool canOutline();
