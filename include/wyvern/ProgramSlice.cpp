@@ -22,6 +22,7 @@
 #include "llvm/IR/Function.h"
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/InstIterator.h"
+#include "llvm/IR/Instruction.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/Module.h"
@@ -111,9 +112,11 @@ computeGates(Function &F) {
 /// also be tracked as data dependences. Thus, this function is enough to
 /// compute all dependencies necessary to building a slice.
 
-bool checkCriteria(PostDominatorTree &PDT, const Value *cur, const Use &U){
-
-	return true;
+bool checkCriteria(PostDominatorTree &PDT, const Value *CUR, const Use &U){
+	if(!isa<Instruction>(U) || !isa<Instruction>(CUR)) return false;
+	Instruction *u = dyn_cast<Instruction>(U);
+	const Instruction *cur = dyn_cast<Instruction>(CUR);
+	return (PDT.dominates(u, cur) && !PDT.dominates(cur, u)); // !(if u is phi, u dominates cur, and cur dont p-dom u) -> push u.
 }
 
 static std::tuple<std::set<const BasicBlock *>, std::set<const Value *>>
@@ -136,13 +139,12 @@ get_data_dependences_for(
     if (const Instruction *dep = dyn_cast<Instruction>(cur)) {
       BBs.insert(dep->getParent());
       for (const Use &U : dep->operands()) { // module to a stop criteria
-		  // !(if u is phi, u dominates cur, and cur dont p-dom u) -> push u.
         if ((!isa<Instruction>(U) && !isa<Argument>(U)) || visited.count(U)) {
           continue;
         }
 		if(checkCriteria(PDT, cur, U)) continue;
 		/*1) Consertar critério de parada e imprimir slices
-2) Modificar o algoritmo de chaveamento*/
+		2) Modificar o algoritmo de chaveamento*/
 //		const Instruction *IU = dyn_cast<Instruction>(cur);
 //		if(!PDT.dominates(&I, IU)) continue;
         visited.insert(U);
@@ -758,8 +760,7 @@ Function *ProgramSlice::outline() {
 	} else FreturnType = _initial->getType();
 
 	std::vector<Type *> v(1, Type::getInt32Ty(_parentFunction->getContext()));
-	FunctionType *delegateFunctionType =
-	FunctionType::get(FreturnType, false);
+	FunctionType *delegateFunctionType = FunctionType::get(FreturnType, false);
 
 	// generate a random number to use as suffix for delegate function, to avoid
 	// naming conflicts
@@ -784,8 +785,7 @@ Function *ProgramSlice::outline() {
 	builder.addAttribute(Attribute::NoUnwind);
 	builder.addAttribute(Attribute::WillReturn);
 	F->addFnAttrs(builder);
-
-	F->arg_begin()->setName("_wyvern_thunkptr");
+	//F->arg_begin()->setName("_wyvern_thunkptr");
 
 	populateFunctionWithBBs(F);
 	populateBBsWithInsts(F);

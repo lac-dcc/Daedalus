@@ -1,0 +1,8 @@
+/home/pc2/Workspace/InstructionToFunction-WyvernSlice/build/CMakeFiles/intrinsics_gen.dir
+/home/pc2/Workspace/InstructionToFunction-WyvernSlice/build/CMakeFiles/omp_gen.dir
+/home/pc2/Workspace/InstructionToFunction-WyvernSlice/build/CMakeFiles/acc_gen.dir
+/home/pc2/Workspace/InstructionToFunction-WyvernSlice/build/CMakeFiles/edit_cache.dir
+/home/pc2/Workspace/InstructionToFunction-WyvernSlice/build/CMakeFiles/rebuild_cache.dir
+/home/pc2/Workspace/InstructionToFunction-WyvernSlice/build/lib/CMakeFiles/daedalus.dir
+/home/pc2/Workspace/InstructionToFunction-WyvernSlice/build/lib/CMakeFiles/edit_cache.dir
+/home/pc2/Workspace/InstructionToFunction-WyvernSlice/build/lib/CMakeFiles/rebuild_cache.dir

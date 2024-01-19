@@ -1,0 +1,1 @@
+/usr/bin/c++ -fPIC  -fno-rtti -fvisibility-inlines-hidden -shared -Wl,-soname,libdaedalus.so -o libdaedalus.so CMakeFiles/daedalus.dir/daedalus.cpp.o CMakeFiles/daedalus.dir/daedalusPlugin.cpp.o   -L/home/pc2/llvm-project/build/./lib 
