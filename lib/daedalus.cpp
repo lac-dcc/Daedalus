@@ -30,7 +30,6 @@ namespace Daedalus {
 		for(Function *F: FtoMap){
 			PostDominatorTree PDT;
 			PDT.recalculate(*F);
-			
 			for(Instruction &I: instructions(F)){
 				if(!canOutline(I)) continue;
 				ProgramSlice ps = ProgramSlice(I, *F, PDT);

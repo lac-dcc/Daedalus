@@ -112,11 +112,8 @@ computeGates(Function &F) {
 /// also be tracked as data dependences. Thus, this function is enough to
 /// compute all dependencies necessary to building a slice.
 
-bool checkCriteria(PostDominatorTree &PDT, const Value *CUR, const Use &U){
-	if(!isa<Instruction>(U) || !isa<Instruction>(CUR)) return false;
-	Instruction *u = dyn_cast<Instruction>(U);
-	const Instruction *cur = dyn_cast<Instruction>(CUR);
-	return (PDT.dominates(u, cur) && !PDT.dominates(cur, u)); // !(if u is phi, u dominates cur, and cur dont p-dom u) -> push u.
+bool checkCriteria(PostDominatorTree &PDT, const Instruction *cur, const Instruction *u){
+	return (PDT.dominates(u, cur) && !PDT.dominates(cur, u)); // u is phi => (!(u dominates cur, and cur dont p-dom u) => push u)
 }
 
 static std::tuple<std::set<const BasicBlock *>, std::set<const Value *>>
@@ -142,7 +139,10 @@ get_data_dependences_for(
         if ((!isa<Instruction>(U) && !isa<Argument>(U)) || visited.count(U)) {
           continue;
         }
-		if(checkCriteria(PDT, cur, U)) continue;
+		if(isa<Instruction>(U)) {
+			const Instruction *u = dyn_cast<Instruction>(U);
+			if(checkCriteria(PDT, dep, u)) continue;
+		}
 		/*1) Consertar critério de parada e imprimir slices
 		2) Modificar o algoritmo de chaveamento*/
 //		const Instruction *IU = dyn_cast<Instruction>(cur);
@@ -172,8 +172,7 @@ ProgramSlice::ProgramSlice(Instruction &Initial, Function &F, PostDominatorTree 
 	assert(Initial.getParent()->getParent() == &F &&
 	 "Slicing instruction from different function!");
 
-	std::unordered_map<const BasicBlock *, SmallVector<const Value *>> gates =
-	computeGates(F);
+	std::unordered_map<const BasicBlock *, SmallVector<const Value *>> gates = computeGates(F);
 	// Create post dominance tree by function
 	auto [BBsInSlice, valuesInSlice] = get_data_dependences_for(Initial, gates, PDT);
 	std::set<const Instruction *> instsInSlice;
@@ -278,13 +277,13 @@ void ProgramSlice::printSlice() {
 
 /// Print original and sliced function. Used for debugging.
 void ProgramSlice::printFunctions(Function *F) {
-  LLVM_DEBUG(dbgs() << "\n\n ==== Slicing instruction: ["
+  errs() << "\n\n ==== Slicing instruction: ["
 		  			<< *_initial
 					<< "] in function: "
                     << _parentFunction->getName() << " with size "
                     << _parentFunction->size()
-                    << " ====\n");
-  LLVM_DEBUG(dbgs() << "\n======== SLICED FUNCTION ==========\n" << *F);
+                    << " ====\n"
+  					<< "\n======== SLICED FUNCTION ==========\n" << *F;
 }
 
 /// Computes the attractor blocks (first dominator) for each basic block in the
@@ -508,10 +507,6 @@ void ProgramSlice::rerouteBranches(Function *F) {
   updatePHINodes(F);
 }
 
-bool ProgramSlice::newcanOutline() {
-	if(isa<BranchInst>(_initial)) return false;
-	return true;
-}
 bool ProgramSlice::canOutline() {
   DominatorTree DT(*_parentFunction);
   LoopInfo LI = LoopInfo(DT);
