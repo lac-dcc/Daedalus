@@ -10,13 +10,12 @@
 
 using namespace llvm;
 #include <llvm/Pass.h>
-#include <iostream>
 
 bool canOutline(Instruction &I){
 	if(isa<BranchInst>(I)) return false; // Branch Instruction have badref
 	if(isa<ReturnInst>(I)) return false; // No Return for while, badref
 	if(isa<AllocaInst>(I)) return false; // No needed
-	if(isa<StoreInst>(I)) return false; // Branch Instruction have badref
+	if(isa<StoreInst>(I)) return false; // No needed
 	//if(isa<PHINode>(I)) return true;
 	return true;
 }
@@ -36,6 +35,7 @@ namespace Daedalus {
 				ps.outline();
 			}
 		}
+		errs() << "END\n";
 		
 		return PreservedAnalyses::all();
 	}

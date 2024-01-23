@@ -1,5 +1,6 @@
 #include "../include/daedalus.h"
 #include "llvm/IR/PassManager.h"
+#include "llvm/Transforms/Utils/LCSSA.h"
 
 using namespace llvm;
 
@@ -7,6 +8,7 @@ bool registerPipeline(StringRef Name, ModulePassManager &MPM,
                       ArrayRef<PassBuilder::PipelineElement>) {
     if (Name == "daedalus") {
         MPM.addPass(Daedalus::DaedalusPass());
+        MPM.addPass(createModuleToFunctionPassAdaptor(LCSSAPass()));
         return true;
     }
     return false;

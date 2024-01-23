@@ -139,14 +139,10 @@ get_data_dependences_for(
         if ((!isa<Instruction>(U) && !isa<Argument>(U)) || visited.count(U)) {
           continue;
         }
-		if(isa<Instruction>(U)) {
+		if(isa<PHINode>(U)) {
 			const Instruction *u = dyn_cast<Instruction>(U);
 			if(checkCriteria(PDT, dep, u)) continue;
 		}
-		/*1) Consertar critério de parada e imprimir slices
-		2) Modificar o algoritmo de chaveamento*/
-//		const Instruction *IU = dyn_cast<Instruction>(cur);
-//		if(!PDT.dominates(&I, IU)) continue;
         visited.insert(U);
         worklist.push(U);
       }
@@ -776,11 +772,11 @@ Function *ProgramSlice::outline() {
 	// Let LLVM know that the delegate function is pure, so it can further
 	// optimize calls to it
 	AttrBuilder builder(_parentFunction->getContext());
-	//builder.addAttribute(Attribute::ReadOnly);
+	builder.addAttribute(Attribute::ReadOnly);
 	builder.addAttribute(Attribute::NoUnwind);
 	builder.addAttribute(Attribute::WillReturn);
 	F->addFnAttrs(builder);
-	//F->arg_begin()->setName("_wyvern_thunkptr");
+ //F->arg_begin()->setName("_wyvern_thunkptr");
 
 	populateFunctionWithBBs(F);
 	populateBBsWithInsts(F);

@@ -27,10 +27,8 @@ for.inc:                                          ; preds = %for.body
   br label %for.cond, !llvm.loop !4
 
 for.end:                                          ; preds = %for.cond
-  %count.0.lcssa = phi i32 [ %count.0, %for.cond ]
-  %sum.0.lcssa = phi i32 [ %sum.0, %for.cond ]
-  store i32 %count.0.lcssa, i32* %num_elements, align 4
-  ret i32 %sum.0.lcssa
+  store i32 %count.0, i32* %num_elements, align 4
+  ret i32 %sum.0
 }
 
 ; Function Attrs: noinline nounwind uwtable
