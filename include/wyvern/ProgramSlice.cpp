@@ -113,7 +113,7 @@ computeGates(Function &F) {
 /// compute all dependencies necessary to building a slice.
 
 bool checkCriteria(PostDominatorTree &PDT, const Instruction *cur, const Instruction *u){
-	return (PDT.dominates(u, cur) && !PDT.dominates(cur, u)); // u is phi => (!(u dominates cur, and cur dont p-dom u) => push u)
+	return (PDT.dominates(cur, u) && !PDT.dominates(u, cur)); // u is phi => (!(u dominates cur, and cur dont p-dom u) => push u)
 }
 
 static std::tuple<std::set<const BasicBlock *>, std::set<const Value *>>
@@ -134,18 +134,17 @@ get_data_dependences_for(
     deps.insert(cur);
     worklist.pop();
     if (const Instruction *dep = dyn_cast<Instruction>(cur)) {
-      BBs.insert(dep->getParent());
-      for (const Use &U : dep->operands()) { // module to a stop criteria
-        if ((!isa<Instruction>(U) && !isa<Argument>(U)) || visited.count(U)) {
-          continue;
-        }
-		if(isa<PHINode>(U)) {
-			const Instruction *u = dyn_cast<Instruction>(U);
-			if(checkCriteria(PDT, dep, u)) continue;
+    	BBs.insert(dep->getParent());
+		for (const Use &U : dep->operands()) {
+			if ((!isa<Instruction>(U) && !isa<Argument>(U)) || visited.count(U)) {
+			  continue;
+			}
+			if(isa<PHINode>(U))  Instruction *u = dyn_cast<Instruction>(U);
+				if(checkCriteria(PDT, dep, u)) continue;
+			}
+			visited.insert(U);
+			worklist.push(U);
 		}
-        visited.insert(U);
-        worklist.push(U);
-      }
     }
 
     if (const PHINode *PN = dyn_cast<PHINode>(cur)) {
@@ -169,14 +168,13 @@ ProgramSlice::ProgramSlice(Instruction &Initial, Function &F, PostDominatorTree 
 	 "Slicing instruction from different function!");
 
 	std::unordered_map<const BasicBlock *, SmallVector<const Value *>> gates = computeGates(F);
-	// Create post dominance tree by function
 	auto [BBsInSlice, valuesInSlice] = get_data_dependences_for(Initial, gates, PDT);
 	std::set<const Instruction *> instsInSlice;
 	SmallVector<Argument *> depArgs;
 
 	for (auto &val : valuesInSlice) {
 		if (Argument *A = dyn_cast<Argument>(const_cast<Value *>(val))) {
-		depArgs.push_back(A);
+			depArgs.push_back(A);
 		} else if (const Instruction *I = dyn_cast<Instruction>(val)) {
 			instsInSlice.insert(I);
 		}
