@@ -136,11 +136,9 @@ get_data_dependences_for(
     if (const Instruction *dep = dyn_cast<Instruction>(cur)) {
     	BBs.insert(dep->getParent());
 		for (const Use &U : dep->operands()) {
-			if ((!isa<Instruction>(U) && !isa<Argument>(U)) || visited.count(U)) {
-			  continue;
-			}
-			if(isa<PHINode>(U))  Instruction *u = dyn_cast<Instruction>(U);
-				if(checkCriteria(PDT, dep, u)) continue;
+			if ((!isa<Instruction>(U) && !isa<Argument>(U)) || visited.count(U)) continue;
+			if(const Instruction *u = dyn_cast<PHINode>(U)){
+				if(!checkCriteria(PDT, &I, u)) continue;
 			}
 			visited.insert(U);
 			worklist.push(U);

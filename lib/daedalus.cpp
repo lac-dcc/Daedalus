@@ -35,7 +35,6 @@ namespace Daedalus {
 				ps.outline();
 			}
 		}
-		errs() << "END\n";
 		
 		return PreservedAnalyses::all();
 	}
