@@ -16,6 +16,7 @@ bool canOutline(Instruction &I){
 	if(isa<ReturnInst>(I)) return false; // No Return for while, badref
 	if(isa<AllocaInst>(I)) return false; // No needed
 	if(isa<StoreInst>(I)) return false; // No needed
+	if(isa<GetElementPtrInst>(I)) return false; // No needed
 	//if(isa<PHINode>(I)) return true;
 	return true;
 }
@@ -29,13 +30,18 @@ namespace Daedalus {
 		for(Function *F: FtoMap){
 			PostDominatorTree PDT;
 			PDT.recalculate(*F);
+			int i = 0;
 			for(Instruction &I: instructions(F)){
 				if(!canOutline(I)) continue;
+				dbgs() << "\n SLICING: "; I.print(dbgs()); dbgs() << '\n';
 				ProgramSlice ps = ProgramSlice(I, *F, PDT);
-				ps.outline();
+				dbgs() << "\n OUTLING: "; I.print(dbgs()); dbgs() << '\n';
+				Function *L = ps.outline();
+				dbgs() << "\n END \n";
 			}
 		}
 		
+		dbgs() << "FINAL\n";
 		return PreservedAnalyses::all();
 	}
 }

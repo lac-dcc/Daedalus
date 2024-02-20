@@ -22,14 +22,15 @@ merge:
 	%cond = icmp ne i32* %a2, null
 	br i1 %cond, label %ac, label %ca
 
-ac:
+ac: ; preds = %merge
+	
 	%a3 = load i32, i32* %a2
 	; %a3 = phi i32 [%a2, %merge]
 	br label %ca
 
 ca:
 	; %a4 = phi i32 [%a2, %merge], [%a2, %ac]
-	; %a4 = phi i32 [%a2, %merge], [%a3, %ac]
+	;%a4 = phi i32* [%a2, %merge], [%a3, %ac]
 	%a4 = load i32, i32* %a2
 	br label %end
 

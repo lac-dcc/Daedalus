@@ -17,6 +17,7 @@
 #include "llvm/Analysis/PostDominators.h"
 #include "llvm/Analysis/TargetLibraryInfo.h"
 #include "llvm/Analysis/ValueTracking.h"
+#include "llvm/IR/Argument.h"
 #include "llvm/IR/CFG.h"
 #include "llvm/IR/Dominators.h"
 #include "llvm/IR/Function.h"
@@ -29,6 +30,7 @@
 #include "llvm/IR/Verifier.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/MathExtras.h"
 #include "llvm/Support/raw_ostream.h"
 
 #include <random>
@@ -112,11 +114,11 @@ computeGates(Function &F) {
 /// also be tracked as data dependences. Thus, this function is enough to
 /// compute all dependencies necessary to building a slice.
 
-bool checkCriteria(PostDominatorTree &PDT, const Instruction *cur, const Instruction *u){
+bool checkCriteria(const PostDominatorTree &PDT, const Instruction *cur, const Instruction *u){
 	return (PDT.dominates(cur, u) && !PDT.dominates(u, cur)); // u is phi => (!(u dominates cur, and cur dont p-dom u) => push u)
 }
 
-static std::tuple<std::set<const BasicBlock *>, std::set<const Value *>>
+static std::tuple<std::set<const BasicBlock *>, std::set<const Value *>, std::vector<std::pair<Type *, StringRef> > >
 get_data_dependences_for(
     Instruction &I,
     std::unordered_map<const BasicBlock *, SmallVector<const Value *>> &gates,
@@ -126,6 +128,7 @@ get_data_dependences_for(
   std::set<const BasicBlock *> BBs;
   std::set<const Value *> visited;
   std::queue<const Value *> worklist;
+  std::vector<std::pair<Type *, StringRef>>  phiArguments;
 
   worklist.push(&I);
   deps.insert(&I);
@@ -137,9 +140,15 @@ get_data_dependences_for(
     	BBs.insert(dep->getParent());
 		for (const Use &U : dep->operands()) {
 			if ((!isa<Instruction>(U) && !isa<Argument>(U)) || visited.count(U)) continue;
-			if(const Instruction *u = dyn_cast<PHINode>(U)){
-				if(!checkCriteria(PDT, &I, u)) continue;
+			if(const PHINode *u = dyn_cast<PHINode>(U)){
+				if(!checkCriteria(PDT, dep, u)) {
+					Argument *arg = new Argument(U->getType(), U->getName());
+					deps.insert(arg);
+					continue;
+				}
+				// May add arguments for phi function here
 			}
+
 			visited.insert(U);
 			worklist.push(U);
 		}
@@ -157,7 +166,7 @@ get_data_dependences_for(
     }
   }
 
-  return std::make_tuple(BBs, deps);
+  return std::make_tuple(BBs, deps, phiArguments);
 }
 
 ProgramSlice::ProgramSlice(Instruction &Initial, Function &F, PostDominatorTree &PDT)
@@ -166,12 +175,15 @@ ProgramSlice::ProgramSlice(Instruction &Initial, Function &F, PostDominatorTree 
 	 "Slicing instruction from different function!");
 
 	std::unordered_map<const BasicBlock *, SmallVector<const Value *>> gates = computeGates(F);
-	auto [BBsInSlice, valuesInSlice] = get_data_dependences_for(Initial, gates, PDT);
+	auto [BBsInSlice, valuesInSlice, phiTypes] = get_data_dependences_for(Initial, gates, PDT);
 	std::set<const Instruction *> instsInSlice;
 	SmallVector<Argument *> depArgs;
 
 	for (auto &val : valuesInSlice) {
 		if (Argument *A = dyn_cast<Argument>(const_cast<Value *>(val))) {
+			dbgs() << "\n ARGS: \n";
+			A->print(dbgs());
+			dbgs() << "\n";
 			depArgs.push_back(A);
 		} else if (const Instruction *I = dyn_cast<Instruction>(val)) {
 			instsInSlice.insert(I);
@@ -186,6 +198,7 @@ ProgramSlice::ProgramSlice(Instruction &Initial, Function &F, PostDominatorTree 
 
 	_instsInSlice = instsInSlice;
 	_depArgs = depArgs;
+	_phiDepArgs = phiTypes;
 	_BBsInSlice = BBsInSlice;
 
 	// We need to pre-compute struct types, because if we build it everytime
@@ -196,7 +209,7 @@ ProgramSlice::ProgramSlice(Instruction &Initial, Function &F, PostDominatorTree 
 
 	computeAttractorBlocks();
 
-	// LLVM_DEBUG(printSlice());
+	//LLVM_DEBUG(printSlice());
 }
 
 /// Computes the layout of the struct type that should be used to lazify
@@ -211,18 +224,10 @@ StructType *ProgramSlice::computeStructType(bool memo) {
       FunctionType::get(_initial->getType(), {thunkStructPtrType}, false);
   SmallVector<Type *> thunkTypes;
   if (memo) {
-    // Memoized thunks have the form:
-    //   T (fptr)(struct thunk *thk);
-    //   T memo_val;
-    //   bool memo_flag;
-    //   ... (environment)
     thunkTypes = {delegateFunctionType->getPointerTo(),
                   delegateFunctionType->getReturnType(),
                   IntegerType::get(Ctx, 1)};
   } else {
-    // Non-memoized thunks have the form:
-    //  T (fptr)(struct thunk *thk);
-    //  ... (environment)
     thunkTypes = {delegateFunctionType->getPointerTo()};
   }
 
@@ -684,7 +689,7 @@ ReturnInst *ProgramSlice::addReturnValue(Function *F) {
 	  BasicBlock *exit = _Imap[_initial]->getParent();
 
 	if (exit->getTerminator()) {
-	exit->getTerminator()->eraseFromParent();
+		exit->getTerminator()->eraseFromParent();
 	}
 	if(isa<ReturnInst>(_initial)){ // TODO: can be better
 		Value *retType = dyn_cast<ReturnInst>(_initial)->getReturnValue();
@@ -700,40 +705,6 @@ ReturnInst *ProgramSlice::addReturnValue(Function *F) {
 		
 }
 
-/// Updates the delegate function's code to make use of parameters provided by
-/// the environment in its thunk, rather than the original function's values.
-void ProgramSlice::insertLoadForThunkParams(Function *F, bool memo) {
-  IRBuilder<> builder(F->getContext());
-
-  BasicBlock &entry = F->getEntryBlock();
-  Argument *thunkStructPtr = F->arg_begin();
-  StructType *thunkStructType = getThunkStructType(memo);
-
-  assert(isa<PointerType>(thunkStructPtr->getType()) &&
-         "Sliced function's first argument does not have struct pointer type!");
-
-  builder.SetInsertPoint(&*(entry.getFirstInsertionPt()));
-
-  // memo thunk arguments start at 3, due to the memo flag and memoed value
-  // taking up two slots
-  unsigned int i = memo ? 3 : 1;
-  for (auto &arg : _depArgs) {
-    Value *new_arg_addr =
-        builder.CreateStructGEP(thunkStructType, thunkStructPtr, i,
-                                "_wyvern_arg_addr_" + arg->getName());
-    Value *new_arg =
-        builder.CreateLoad(thunkStructType->getStructElementType(i),
-                           new_arg_addr, "_wyvern_arg_" + arg->getName());
-    arg->replaceUsesWithIf(new_arg, [F](Use &U) {
-      auto *UserI = dyn_cast<Instruction>(U.getUser());
-      return UserI && UserI->getParent()->getParent() == F;
-    });
-
-    _argMap[arg] = new_arg;
-    ++i;
-  }
-}
-
 /// Outlines the given slice into a standalone Function, which
 /// encapsulates the computation of the original value in
 /// regards to which the slice was created.
@@ -746,8 +717,14 @@ Function *ProgramSlice::outline() {
 		FreturnType = dyn_cast<ReturnInst>(_initial)->getReturnValue()->getType();
 	} else FreturnType = _initial->getType();
 
-	std::vector<Type *> v(1, Type::getInt32Ty(_parentFunction->getContext()));
-	FunctionType *delegateFunctionType = FunctionType::get(FreturnType, false);
+	
+	SmallVector<Type *> v;
+	SmallVector<StringRef> g;
+	for(auto arg: _depArgs){
+		v.push_back(arg->getType());
+		g.push_back(arg->getName());
+	}
+	FunctionType *delegateFunctionType = FunctionType::get(FreturnType, v, false);
 
 	// generate a random number to use as suffix for delegate function, to avoid
 	// naming conflicts
@@ -760,7 +737,7 @@ Function *ProgramSlice::outline() {
 	uint64_t random_num = dist(mt);
 	std::string functionName =
 	"_wyvern_slice_" + _parentFunction->getName().str() + "_" +
-	_initial->getName().str() + std::to_string(random_num);
+	_initial->getName().str() + "_" + std::to_string(random_num);
 	Function *F =
 	Function::Create(delegateFunctionType, Function::ExternalLinkage,
 				   functionName, _parentFunction->getParent());
@@ -772,7 +749,11 @@ Function *ProgramSlice::outline() {
 	builder.addAttribute(Attribute::NoUnwind);
 	builder.addAttribute(Attribute::WillReturn);
 	F->addFnAttrs(builder);
- //F->arg_begin()->setName("_wyvern_thunkptr");
+
+	int i = 0;
+	for(Argument &arg: F->args()){
+		arg.setName(g[i++]);
+	}
 
 	populateFunctionWithBBs(F);
 	populateBBsWithInsts(F);
@@ -783,102 +764,4 @@ Function *ProgramSlice::outline() {
 	verifyFunction(*F);
 	printFunctions(F);
 	return F;
-}
-
-/// Adds memoization code to the delegate function. This includes the check to
-/// see if its value has been memoized, and the code to update the memoization
-/// cache once invoked.
-void ProgramSlice::addMemoizationCode(Function *F, ReturnInst *new_ret) {
-  StructType *thunkStructType = getThunkStructType(true);
-  IRBuilder<> builder(F->getContext());
-  LLVMContext &Ctx = F->getParent()->getContext();
-
-  assert(isa<PointerType>(F->arg_begin()->getType()) &&
-         "Memoized function does not have PointerType argument!\n");
-
-  // create new entry block and block to insert memoed return
-  BasicBlock *oldEntry = &F->getEntryBlock();
-  BasicBlock *newEntry =
-      BasicBlock::Create(Ctx, "_wyvern_memo_entry", F, &F->getEntryBlock());
-  BasicBlock *memoRetBlock =
-      BasicBlock::Create(Ctx, "_wyvern_memo_ret", F, oldEntry);
-
-  // load addresses and values for memo flag and memoed value
-  Value *argValue = F->arg_begin();
-  builder.SetInsertPoint(newEntry);
-  Value *memoedValueGEP = builder.CreateStructGEP(thunkStructType, argValue, 1,
-                                                  "_wyvern_memo_val_addr");
-  LoadInst *memoedValueLoad =
-      builder.CreateLoad(thunkStructType->getStructElementType(1),
-                         memoedValueGEP, "_wyvern_memo_val");
-
-  Value *memoFlagGEP = builder.CreateStructGEP(thunkStructType, argValue, 2,
-                                               "_wyvern_memo_flag_addr");
-  LoadInst *memoFlagLoad =
-      builder.CreateLoad(thunkStructType->getStructElementType(2), memoFlagGEP,
-                         "_wyvern_memo_flag");
-
-  // add if (memoFlag == true) { return memo_val; }
-  Value *toBool = builder.CreateTruncOrBitCast(
-      memoFlagLoad, builder.getInt1Ty(), "_wyvern_memo_flag_bool");
-  BranchInst *memoCheckBranch =
-      builder.CreateCondBr(toBool, memoRetBlock, oldEntry);
-
-  builder.SetInsertPoint(memoRetBlock);
-  ReturnInst *memoedValueRet = builder.CreateRet(memoedValueLoad);
-
-  // store computed value and update memoization flag
-  builder.SetInsertPoint(new_ret);
-  builder.CreateStore(builder.getInt1(1), memoFlagGEP);
-  builder.CreateStore(new_ret->getReturnValue(), memoedValueGEP);
-}
-
-/// Outlines the given slice into a standalone Function, which
-/// encapsulates the computation of the original value in
-/// regards to which the slice was created. Adds memoization
-/// code so that the function saves its evaluated value and
-/// returns it on successive executions.
-Function *ProgramSlice::memoizedOutline() {
-  StructType *thunkStructType = getThunkStructType(true);
-  PointerType *thunkStructPtrType = thunkStructType->getPointerTo();
-  FunctionType *delegateFunctionType =
-      FunctionType::get(_initial->getType(), {thunkStructPtrType}, false);
-
-  std::random_device rd;
-  std::mt19937 mt(rd());
-  std::uniform_int_distribution<int64_t> dist(1, 1000000000);
-  uint64_t random_num = dist(mt);
-
-  std::string functionName =
-      "_wyvern_slice_memo_" + _parentFunction->getName().str() + "_" +
-      _initial->getName().str() + std::to_string(random_num);
-  Function *F =
-      Function::Create(delegateFunctionType, Function::ExternalLinkage,
-                       functionName, _parentFunction->getParent());
-
-  // Let LLVM know that the delegate function is pure, so it can further
-  // optimize calls to it
-  AttrBuilder builder(_parentFunction->getContext());
-  builder.addAttribute(Attribute::ReadOnly);
-  builder.addAttribute(Attribute::NoUnwind);
-  builder.addAttribute(Attribute::WillReturn);
-  F->addFnAttrs(builder);
-
-  F->arg_begin()->setName("_wyvern_thunkptr");
-
-  populateFunctionWithBBs(F);
-  populateBBsWithInsts(F);
-  reorganizeUses(F);
-  rerouteBranches(F);
-  ReturnInst *new_ret = addReturnValue(F);
-  reorderBlocks(F);
-  insertLoadForThunkParams(F, true /*memo*/);
-  addMemoizationCode(F, new_ret);
-
-  verifyFunction(*F);
-  verifyFunction(*_initial->getParent()->getParent());
-
-  printFunctions(F);
-
-  return F;
 }
