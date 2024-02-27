@@ -143,7 +143,11 @@ get_data_dependences_for(
 			if(const PHINode *u = dyn_cast<PHINode>(U)){
 				if(!checkCriteria(PDT, dep, u)) {
 					Argument *arg = new Argument(U->getType(), U->getName());
+					dbgs() << "\nkkkkkkk\n";
+					arg->print(dbgs());
+					dbgs() << "\nkkkkkkk\n";
 					deps.insert(arg);
+					visited.insert(U);
 					continue;
 				}
 				// May add arguments for phi function here
@@ -181,9 +185,6 @@ ProgramSlice::ProgramSlice(Instruction &Initial, Function &F, PostDominatorTree 
 
 	for (auto &val : valuesInSlice) {
 		if (Argument *A = dyn_cast<Argument>(const_cast<Value *>(val))) {
-			dbgs() << "\n ARGS: \n";
-			A->print(dbgs());
-			dbgs() << "\n";
 			depArgs.push_back(A);
 		} else if (const Instruction *I = dyn_cast<Instruction>(val)) {
 			instsInSlice.insert(I);
