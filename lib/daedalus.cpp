@@ -7,6 +7,13 @@
 #include "llvm/IR/PassManager.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/raw_ostream.h"
+#include <fstream>
+#include <memory>
+#include "llvm/Transforms/Utils/Cloning.h"
+#include "llvm/Transforms/Utils/ValueMapper.h"
+#include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/FileSystem.h"
 
 using namespace llvm;
 #include <llvm/Pass.h>
@@ -27,6 +34,8 @@ namespace Daedalus {
 		
 		std::set<Function *> FtoMap;	
 		for(Function &F: M.getFunctionList()) FtoMap.insert(&F);
+
+		std::unique_ptr<Module> module = std::make_unique<Module>("New_" + M.getName().str(), M.getContext());
 		for(Function *F: FtoMap){
 			PostDominatorTree PDT;
 			PDT.recalculate(*F);
@@ -37,11 +46,20 @@ namespace Daedalus {
 				ProgramSlice ps = ProgramSlice(I, *F, PDT);
 				dbgs() << "\n OUTLING: "; I.print(dbgs()); dbgs() << '\n';
 				Function *L = ps.outline();
-				dbgs() << "\n END \n";
+				dbgs() << "\n DUMPING: \n";
+			//	std::error_code EC;
+			//	raw_fd_ostream file("output.ll", EC, sys::fs::OF_Text | sys::fs::OF_Append);
+			//	if(EC) {
+			//		dbgs() << "\nERROR FILE\n";
+			//	}else{
+			//		L->print(file);
+			//	}
+			//	file.close();
 			}
 		}
+		module->print(dbgs(), nullptr);
 		
-		dbgs() << "FINAL\n";
+		dbgs() << "END\n";
 		return PreservedAnalyses::all();
 	}
 }

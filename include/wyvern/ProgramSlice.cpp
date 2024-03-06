@@ -143,16 +143,11 @@ get_data_dependences_for(
 			if(const PHINode *u = dyn_cast<PHINode>(U)){
 				if(!checkCriteria(PDT, dep, u)) {
 					Argument *arg = new Argument(U->getType(), U->getName());
-					dbgs() << "\nkkkkkkk\n";
-					arg->print(dbgs());
-					dbgs() << "\nkkkkkkk\n";
 					deps.insert(arg);
 					visited.insert(U);
 					continue;
 				}
-				// May add arguments for phi function here
 			}
-
 			visited.insert(U);
 			worklist.push(U);
 		}
