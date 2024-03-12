@@ -40,13 +40,32 @@ namespace Daedalus {
 			PostDominatorTree PDT;
 			PDT.recalculate(*F);
 			int i = 0;
-			for(Instruction &I: instructions(F)){
+			std::set<Instruction *> s;
+			std::map<Instruction *, CallInst *> ItoCall;
+			std::map<Argument *, Argument *> ArgtoArgcall;
+			for(Instruction &I: instructions(F)) {
 				if(!canOutline(I)) continue;
-				dbgs() << "\n SLICING: "; I.print(dbgs()); dbgs() << '\n';
-				ProgramSlice ps = ProgramSlice(I, *F, PDT);
-				dbgs() << "\n OUTLING: "; I.print(dbgs()); dbgs() << '\n';
-				Function *L = ps.outline();
-				dbgs() << "\n DUMPING: \n";
+				s.insert(&I);
+			}
+			for(Instruction *I: s){
+				dbgs() << "\n SLICING: "; I->print(dbgs()); dbgs() << '\n';
+				ProgramSlice ps = ProgramSlice(*I, *F, PDT);
+				dbgs() << "\n OUTLING: "; I->print(dbgs()); dbgs() << '\n';
+				auto [dps, L] = ps.outline();
+				dbgs() << "\n DUMPING: \n FIRST L\n";
+				SmallVector<Value *> v;
+				for(auto e: dps) {
+					auto it = ArgtoArgcall.find(e);
+					if(it != ArgtoArgcall.end()) v.push_back(it->second);
+					else v.push_back(e);
+					// v.push_back(e);
+				}
+				CallInst *callInst = CallInst::Create(L, v, I->getName(), I->getParent());
+				callInst->moveAfter(I);
+				ItoCall[I] = callInst;
+				Argument *arg = new Argument(I->getType(), I->getName());
+				Argument *argcall = new Argument(callInst->getType(), callInst->getName());
+				ArgtoArgcall[arg] = argcall;
 			//	std::error_code EC;
 			//	raw_fd_ostream file("output.ll", EC, sys::fs::OF_Text | sys::fs::OF_Append);
 			//	if(EC) {
@@ -56,6 +75,12 @@ namespace Daedalus {
 			//	}
 			//	file.close();
 			}
+			for(auto [I, callInst]: ItoCall){
+				I->replaceAllUsesWith(callInst);
+				I->eraseFromParent();
+			}
+			dbgs() << "\n\n END F\n" << *F << "\n\n";
+			dbgs() << '\n';
 		}
 		module->print(dbgs(), nullptr);
 		

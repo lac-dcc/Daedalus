@@ -31,7 +31,7 @@ public:
   StructType *getThunkStructType(bool memo = false);
 
   /// Returns the delegate function resulted from outlining the slice.
-  Function *outline();
+  std::pair<SmallVector<Argument *>, Function *> outline();
 
   /// Returns the delegate function resulted from outlining the slice, using
   /// memoization.

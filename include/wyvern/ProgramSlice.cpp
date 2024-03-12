@@ -704,7 +704,7 @@ ReturnInst *ProgramSlice::addReturnValue(Function *F) {
 /// Outlines the given slice into a standalone Function, which
 /// encapsulates the computation of the original value in
 /// regards to which the slice was created.
-Function *ProgramSlice::outline() {
+std::pair<SmallVector<Argument *>,Function *> ProgramSlice::outline() {
 	StructType *thunkStructType = getThunkStructType(false);
 	PointerType *thunkStructPtrType = thunkStructType->getPointerTo();
 
@@ -759,5 +759,5 @@ Function *ProgramSlice::outline() {
 	reorderBlocks(F);
 	verifyFunction(*F);
 	printFunctions(F);
-	return F;
+	return {_depArgs, F};
 }
