@@ -2,4 +2,4 @@
 cd build
 make
 cd ..
-opt -load-pass-plugin build/lib/libdaedalus.so -passes=daedalus -disable-output "$1"
+opt -load-pass-plugin build/lib/libdaedalus.so -passes=daedalus -disable-output "$1" -debug

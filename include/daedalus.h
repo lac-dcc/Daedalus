@@ -16,16 +16,9 @@
 #include "llvm/Analysis/TargetLibraryInfo.h"
 
 namespace Daedalus{
-	struct DaedalusAnalysis : public llvm::AnalysisInfoMixin<DaedalusAnalysis>{
-		using Result = std::string; // TODO: Return an array of pair <Instruction *, Function *>
-		Result run(llvm::Function &, llvm::FunctionAnalysisManager &);
-		static llvm::AnalysisKey Key;
-	};
 	struct DaedalusPass : public llvm::PassInfoMixin<DaedalusPass>{
-		explicit DaedalusPass(llvm::raw_ostream &OS):OS(OS){}
-		llvm::PreservedAnalyses run(llvm::Function &F, llvm::FunctionAnalysisManager &FAM);
-		private:
-			llvm::raw_ostream &OS;
+//		explicit DaedalusPass(llvm::raw_ostream &OS):OS(OS){} // TODO Maybe remove this?
+		llvm::PreservedAnalyses run(llvm::Module &M, llvm::ModuleAnalysisManager &MAM);
 	};
 };
 

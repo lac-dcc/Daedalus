@@ -3,6 +3,7 @@
 
 #include "llvm/Analysis/AliasAnalysis.h"
 
+#include "llvm/Analysis/PostDominators.h"
 #include "llvm/IR/Dominators.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Instructions.h"
@@ -14,10 +15,11 @@ public:
   /// Creates a backward slice of function F in terms of slice criterion I,
   /// which is passed as a parameter in call CallSite. Optionally, receives the
   /// result of an Alias Analysis in AA to perform memory safety analysis.
-  ProgramSlice(Instruction &I, Function &F);
+  ProgramSlice(Instruction &I, Function &F, PostDominatorTree &PDT);
 
   /// Returns whether the slice can be safely outlined into a delegate function.
   bool canOutline();
+  bool newcanOutline();
 
   /// Returns the set of arguments of the slice's parent function. Used to
   /// initialize the environment for thunks that use the slice as their delegate
@@ -29,7 +31,7 @@ public:
   StructType *getThunkStructType(bool memo = false);
 
   /// Returns the delegate function resulted from outlining the slice.
-  Function *outline();
+  std::pair<SmallVector<Argument *>, Function *> outline();
 
   /// Returns the delegate function resulted from outlining the slice, using
   /// memoization.
@@ -51,16 +53,20 @@ private:
   void computeAttractorBlocks();
   void addDomBranches(DomTreeNode *cur, DomTreeNode *parent,
                       std::set<DomTreeNode *> &visited);
+  void size();
   StructType *computeStructType(bool memo);
 
   /// pointer to the Instruction used as slice criterion
   Instruction *_initial;
+
+  Instruction *_instRetValue;
 
   /// function being sliced
   Function *_parentFunction;
 
   /// list of formal arguments on which the slice depends on (if any)
   SmallVector<Argument *> _depArgs;
+  std::vector<std::pair<Type *, StringRef> > _phiDepArgs;
 
   /// set of instructions that must be in the slice, accordingto dependence
   /// analysis
@@ -79,6 +85,8 @@ private:
 
   /// maps original function arguments to new counterparts in the slice function
   std::map<Argument *, Value *> _argMap;
+
+  size_t _size;
 
   /// maps BasicBlocks in the original function to their new cloned counterparts
   /// in the slice

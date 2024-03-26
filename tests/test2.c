@@ -1,4 +1,4 @@
-#include <iostream>
+#include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
 
@@ -23,6 +23,7 @@ int main(void){
 	b = rand() % 100 + 1;
 
 	int c = g(a);
-	std::cout << c << std::endl;
-	std::cout << f(a,b) << std::endl;
+	printf("%d\n", c);
+	printf("%d\n", f(a,b));
+	return 1;
 }
