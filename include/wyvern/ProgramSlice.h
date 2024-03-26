@@ -53,6 +53,7 @@ private:
   void computeAttractorBlocks();
   void addDomBranches(DomTreeNode *cur, DomTreeNode *parent,
                       std::set<DomTreeNode *> &visited);
+  void size();
   StructType *computeStructType(bool memo);
 
   /// pointer to the Instruction used as slice criterion
@@ -84,6 +85,8 @@ private:
 
   /// maps original function arguments to new counterparts in the slice function
   std::map<Argument *, Value *> _argMap;
+
+  size_t _size;
 
   /// maps BasicBlocks in the original function to their new cloned counterparts
   /// in the slice

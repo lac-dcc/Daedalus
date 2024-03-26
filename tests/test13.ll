@@ -51,6 +51,7 @@ if.end4:                                          ; preds = %if.then2, %for.end
   ret i32 %mul5
 }
 
+
 declare dso_local i32 @printf(i8* noundef, ...) #1
 
 attributes #0 = { noinline nounwind uwtable "frame-pointer"="all" "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
