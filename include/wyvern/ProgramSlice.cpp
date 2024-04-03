@@ -783,6 +783,7 @@ std::pair<SmallVector<Argument *>, Function *> ProgramSlice::outline() {
     // builder.addAttribute(Attribute::NoUnwind);
     // builder.addAttribute(Attribute::WillReturn);
     // F->addFnAttrs(builder);
+    F->setLinkage(GlobalValue::LinkageTypes::InternalLinkage);
 
     int i = 0;
     for (Argument &arg : F->args()) {

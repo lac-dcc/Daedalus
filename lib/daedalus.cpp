@@ -23,7 +23,7 @@ bool canOutline(Instruction &I) {
     if (isa<ReturnInst>(I)) return false; // No Return for while, badref
     if (isa<AllocaInst>(I)) return false; // No needed
     if (isa<StoreInst>(I)) return false;  // No needed
-    if (isa<GetElementPtrInst>(I)) return false; // No needed
+    // if (isa<GetElementPtrInst>(I)) return false; // No needed
     if (isa<PHINode>(I)) return false;           // No needed
     return true;
 }

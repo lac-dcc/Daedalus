@@ -1,32 +1,17 @@
-; ModuleID = 'tests/test14.ll'
-source_filename = "tests/test14.c"
+; ModuleID = 'tests/test15.ll'
+source_filename = "tests/test15.c"
 target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-unknown-linux-gnu"
 
-@.str = private unnamed_addr constant [4 x i8] c"%d\0A\00", align 1
+@.str = private unnamed_addr constant [3 x i8] c"%d\00", align 1
 
 ; Function Attrs: noinline nounwind uwtable
-define dso_local void @f(ptr noundef %i) #0 {
+define dso_local i32 @main(i32 noundef %argc, ptr noundef %argv) #0 {
 entry:
-  %0 = load i32, ptr %i, align 4
-  %1 = load i32, ptr %i, align 4
-  %add = add nsw i32 %0, %1
-  store i32 %add, ptr %i, align 4
-  ret void
-}
-
-; Function Attrs: noinline nounwind uwtable
-define dso_local i32 @main() #0 {
-entry:
-  %i = alloca i32, align 4
-  store i32 10, ptr %i, align 4
-  call void @f(ptr noundef %i)
-  %0 = load i32, ptr %i, align 4
-  %call = call i32 (ptr, ...) @printf(ptr noundef @.str, i32 noundef %0)
-  %1 = load i32, ptr %i, align 4
-  %2 = load i32, ptr %i, align 4
-  %mul = mul nsw i32 %1, %2
-  ret i32 %mul
+  %mul = mul nsw i32 %argc, %argc
+  %mul1 = mul nsw i32 %mul, %argc
+  %call = call i32 (ptr, ...) @printf(ptr noundef @.str, i32 noundef %mul1)
+  ret i32 0
 }
 
 declare i32 @printf(ptr noundef, ...) #1
