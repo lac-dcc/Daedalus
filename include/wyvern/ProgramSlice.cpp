@@ -806,6 +806,6 @@ std::pair<SmallVector<Argument *>, Function *> ProgramSlice::outline() {
         }
     };
     verifyFunction(*F);
-    printFunctions(F);
+   // printFunctions(F);
     return {_depArgs, F};
 }

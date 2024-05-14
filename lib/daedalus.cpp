@@ -25,6 +25,7 @@ bool canOutline(Instruction &I) {
     if (isa<StoreInst>(I)) return false;  // No needed
     // if (isa<GetElementPtrInst>(I)) return false; // No needed
     if (isa<PHINode>(I)) return false;           // No needed
+	if (isa<LoadInst>(I)) return false;
     return true;
 }
 
@@ -69,17 +70,17 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
         }
         for (Instruction *I : s) {
             if (!canOutline(*I)) continue;
-	    LLVM_DEBUG(dbgs() << "\n SLICING: " << *I << '\n');
+	//    LLVM_DEBUG(dbgs() << "\n SLICING: " << *I << '\n');
             ProgramSlice ps = ProgramSlice(*I, *F, PDT);
 
-	    LLVM_DEBUG(dbgs() << "\n OUTLING: " << *I << '\n');
+	  //  LLVM_DEBUG(dbgs() << "\n OUTLING: " << *I << '\n');
             auto [dps, G] = ps.outline();
-	    dbgs() << "ENDF\n" << *G << '\n';
+	  //  dbgs() << "ENDF\n" << *G << '\n';
 
 	    std::set<CallInst *> context;
-	    LLVM_DEBUG(dbgs() << "SLICE SIZE = " << sliceFunctionSize(G, context) << '\n');
+	   // LLVM_DEBUG(dbgs() << "SLICE SIZE = " << sliceFunctionSize(G, context) << '\n');
 
-	    LLVM_DEBUG(dbgs() << "\n CALLS FOR SLICE: " << *I << '\n');
+	    // LLVM_DEBUG(dbgs() << "\n CALLS FOR SLICE: " << *I << '\n');
             SmallVector<Value *> v = ps.getOrigFunctionArgs();
             SmallVector<Value *> arr;
             for (auto &e : v) {
