@@ -7,8 +7,10 @@ using namespace llvm;
 bool registerPipeline(StringRef Name, ModulePassManager &MPM,
                       ArrayRef<PassBuilder::PipelineElement>) {
     if (Name == "daedalus") {
+		MPM.addPass(createModuleToFunctionPassAdaptor(LCSSAPass()));
+		MPM.addPass(LCSSAPass());
+		MPM.isRequired();
         MPM.addPass(Daedalus::DaedalusPass());
-        MPM.addPass(createModuleToFunctionPassAdaptor(LCSSAPass()));
         return true;
     }
     return false;

@@ -286,11 +286,12 @@ void ProgramSlice::printSlice() {
 
 /// Print original and sliced function. Used for debugging.
 void ProgramSlice::printFunctions(Function *F) {
-    errs() << "\n\n ==== Slicing instruction: [" << *_initial
+    LLVM_DEBUG(errs() << "\n\n ==== Slicing instruction: [" << *_initial
            << "] in function: " << _parentFunction->getName() << " with size "
            << _parentFunction->size() << " ====\n"
            << "\n======== SLICED FUNCTION ==========\n"
            << *F;
+		);
 }
 
 /// Computes the attractor blocks (first dominator) for each basic block in the
@@ -806,6 +807,6 @@ std::pair<SmallVector<Argument *>, Function *> ProgramSlice::outline() {
         }
     };
     verifyFunction(*F);
-   // printFunctions(F);
+    printFunctions(F);
     return {_depArgs, F};
 }
