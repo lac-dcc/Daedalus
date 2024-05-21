@@ -21,6 +21,9 @@ public:
   bool canOutline();
   bool newcanOutline();
 
+  /// if a phi-function is the criterion and dont post dominates all phi in your slice
+  bool _phiCrit;
+
   /// Returns the set of arguments of the slice's parent function. Used to
   /// initialize the environment for thunks that use the slice as their delegate
   /// function.

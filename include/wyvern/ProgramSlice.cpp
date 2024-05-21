@@ -84,24 +84,23 @@ computeGates(Function &F) {
         SmallVector<const Value *> BB_gates;
         const unsigned num_preds = pred_size(&BB);
         if (num_preds > 1) {
-            // LLVM_DEBUG(dbgs() << BB.getName() << ":\n");
+            LLVM_DEBUG(dbgs() << BB.getName() << ":\n");
             for (const BasicBlock *pred : predecessors(&BB)) {
-                // LLVM_DEBUG(dbgs() << " - " << pred->getName() << " -> ");
+                LLVM_DEBUG(dbgs() << " - " << pred->getName() << " -> ");
                 if (DT.dominates(pred, &BB) && !PDT.dominates(&BB, pred)) {
-                    // LLVM_DEBUG(dbgs() << " DOM " << getGate(pred)->getName()
-                    // << " -> ");
+                    LLVM_DEBUG(dbgs() << " DOM " << getGate(pred)->getName()
+                                      << " -> ");
                     BB_gates.push_back(getGate(pred));
                 } else {
                     const BasicBlock *ctrl_BB = getController(pred, DT, PDT);
                     if (ctrl_BB) {
-                        // LLVM_DEBUG(dbgs() << " R-CTRL "
-                        //                  << "CTRL_BB: " << ctrl_BB->getName()
-                        //                  << " "
-                        //                  << getGate(ctrl_BB)->getName());
+                        LLVM_DEBUG(dbgs() << " R-CTRL " << "CTRL_BB: "
+                                          << ctrl_BB->getName() << " "
+                                          << getGate(ctrl_BB)->getName());
                         BB_gates.push_back(getGate(ctrl_BB));
                     }
                 }
-                // LLVM_DEBUG(dbgs() << ";\n");
+                LLVM_DEBUG(dbgs() << ";\n");
             }
         }
         gates.emplace(std::make_pair(&BB, BB_gates));
@@ -116,13 +115,12 @@ computeGates(Function &F) {
 /// compute all dependencies necessary to building a slice.
 
 bool checkCriteria(const PostDominatorTree &PDT, const Instruction *crit,
-                   const Instruction *stop) {
-    return (PDT.dominates(crit, stop) &&
-            !PDT.dominates(stop, crit));
+                   const Instruction *inst) {
+    return (PDT.dominates(crit, inst));
 }
 
 static std::tuple<std::set<const BasicBlock *>, std::set<const Value *>,
-                  std::vector<std::pair<Type *, StringRef>>>
+                  std::vector<std::pair<Type *, StringRef>>, bool>
 get_data_dependences_for(
     Instruction &I,
     std::unordered_map<const BasicBlock *, SmallVector<const Value *>> &gates,
@@ -135,22 +133,35 @@ get_data_dependences_for(
 
     worklist.push(&I);
     deps.insert(&I);
+    bool phiCrit = false;
     while (!worklist.empty()) {
         const Value *cur = worklist.front();
         deps.insert(cur);
-	visited.insert(cur);
+        visited.insert(cur);
         worklist.pop();
         if (const Instruction *dep = dyn_cast<Instruction>(cur)) {
             BBs.insert(dep->getParent());
             for (const Use &U : dep->operands()) {
                 if ((!isa<Instruction>(U) && !isa<Argument>(U)) ||
-                    visited.count(U))
+                    visited.count(U)) {
+                    if (visited.count(U) && isa<PHINode>(U) && U == &I) {
+                        deps.clear();
+                        Argument *arg =
+                            new Argument(U->getType(), U->getName());
+                        deps.insert(arg);
+                        deps.insert(&I);
+                        while (!worklist.empty()) worklist.pop();
+                        phiCrit = true;
+                        break;
+                    }
                     continue;
+                }
                 if (const PHINode *u = dyn_cast<PHINode>(U)) {
                     if (!checkCriteria(PDT, &I, u)) {
                         Argument *arg =
                             new Argument(U->getType(), U->getName());
                         deps.insert(arg);
+                        dbgs() << "ARGS: " << *arg << '\n';
                         visited.insert(U);
                         continue;
                     }
@@ -159,6 +170,7 @@ get_data_dependences_for(
                 worklist.push(U);
             }
         }
+        if (phiCrit) break;
 
         if (const PHINode *PN = dyn_cast<PHINode>(cur)) {
             for (const BasicBlock *BB : PN->blocks()) {
@@ -172,7 +184,7 @@ get_data_dependences_for(
         }
     }
 
-    return std::make_tuple(BBs, deps, phiArguments);
+    return std::make_tuple(BBs, deps, phiArguments, phiCrit);
 }
 
 ProgramSlice::ProgramSlice(Instruction &Initial, Function &F,
@@ -183,8 +195,9 @@ ProgramSlice::ProgramSlice(Instruction &Initial, Function &F,
 
     std::unordered_map<const BasicBlock *, SmallVector<const Value *>> gates =
         computeGates(F);
-    auto [BBsInSlice, valuesInSlice, phiTypes] =
+    auto [BBsInSlice, valuesInSlice, phiTypes, phiCrit] =
         get_data_dependences_for(Initial, gates, PDT);
+    _phiCrit = phiCrit;
     std::set<const Instruction *> instsInSlice;
     SmallVector<Argument *> depArgs;
 
@@ -216,15 +229,6 @@ ProgramSlice::ProgramSlice(Instruction &Initial, Function &F,
     computeAttractorBlocks();
 
     // LLVM_DEBUG(printSlice());
-}
-
-void ProgramSlice::size() {
-    _size = _instsInSlice.size();
-    for(auto &inst: _instsInSlice){
-	if(isa<CallInst>(inst)){
-	    
-	}
-    }
 }
 
 /// Computes the layout of the struct type that should be used to lazify
@@ -287,11 +291,10 @@ void ProgramSlice::printSlice() {
 /// Print original and sliced function. Used for debugging.
 void ProgramSlice::printFunctions(Function *F) {
     LLVM_DEBUG(errs() << "\n\n ==== Slicing instruction: [" << *_initial
-           << "] in function: " << _parentFunction->getName() << " with size "
-           << _parentFunction->size() << " ====\n"
-           << "\n======== SLICED FUNCTION ==========\n"
-           << *F;
-		);
+                      << "] in function: " << _parentFunction->getName()
+                      << " with size " << _parentFunction->size() << " ====\n"
+                      << "\n======== SLICED FUNCTION ==========\n"
+                      << *F;);
 }
 
 /// Computes the attractor blocks (first dominator) for each basic block in the
@@ -727,6 +730,19 @@ ReturnInst *ProgramSlice::addReturnValue(Function *F) {
                                           exit);
         }
     }
+    // If PhiCrit was seted, just return the argument that correspondes to the\
+    // phi instruction criterion. (i.e take an argument and return it) TODO: identity should be a slice?
+    if (_phiCrit) {
+        for (int k = 0; k < F->arg_size(); ++k) {
+            dbgs() << "k: " << k << ' ' << F->arg_size() << '\n';
+            Value *myArg = F->getArg(k);
+            if (myArg->getName() == _initial->getName()) {
+                return ReturnInst::Create(F->getParent()->getContext(), myArg,
+                                          exit);
+            }
+        }
+        // return ReturnInst::Create(F->getParent()->getContext(), )//
+    }
     return ReturnInst::Create(F->getParent()->getContext(), _Imap[_initial],
                               exit);
 }
@@ -787,9 +803,7 @@ std::pair<SmallVector<Argument *>, Function *> ProgramSlice::outline() {
     F->setLinkage(GlobalValue::LinkageTypes::InternalLinkage);
 
     int i = 0;
-    for (Argument &arg : F->args()) {
-        arg.setName(g[i++]);
-    }
+    for (Argument &arg : F->args()) arg.setName(g[i++]);
 
     populateFunctionWithBBs(F);
     populateBBsWithInsts(F);
@@ -797,6 +811,10 @@ std::pair<SmallVector<Argument *>, Function *> ProgramSlice::outline() {
     rerouteBranches(F);
     addReturnValue(F);
     reorderBlocks(F);
+    /* Adjusting references between the function arguments and the operators
+     of the instructions
+    TODO: Module function
+     */
     for (Instruction &I : instructions(F)) {
         for (int j = 0; j < I.getNumOperands(); ++j) {
             for (int k = 0; k < F->arg_size(); ++k) {
