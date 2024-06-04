@@ -48,6 +48,7 @@ private:
   ReturnInst *addReturnValue(Function *F);
   void reorganizeUses(Function *F);
   void populateBBsWithInsts(Function *F);
+  void replaceArgs(Function *F);
   void populateFunctionWithBBs(Function *F);
   void addMissingTerminators(Function *F);
   void addMemoizationCode(Function *F, ReturnInst *new_ret);

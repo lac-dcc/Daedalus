@@ -108,17 +108,18 @@ computeGates(Function &F) {
     return gates;
 }
 
+// PHI Nodes MUST to dominate the slice criteria. Otherwise it will be a
+// function argument
+bool posDomCriteria(const PostDominatorTree &PDT, const Instruction *crit,
+                    const Instruction *inst) {
+    return (PDT.dominates(crit, inst));
+}
+
 /// Computes the backwards data dependences for the given instruction, to
 /// compute which instructions should be part of the slice. Using the
 /// phi-function gate information contained in gates, control dependencies can
 /// also be tracked as data dependences. Thus, this function is enough to
 /// compute all dependencies necessary to building a slice.
-
-bool checkCriteria(const PostDominatorTree &PDT, const Instruction *crit,
-                   const Instruction *inst) {
-    return (PDT.dominates(crit, inst));
-}
-
 static std::tuple<std::set<const BasicBlock *>, std::set<const Value *>,
                   std::vector<std::pair<Type *, StringRef>>, bool>
 get_data_dependences_for(
@@ -157,7 +158,7 @@ get_data_dependences_for(
                     continue;
                 }
                 if (const PHINode *u = dyn_cast<PHINode>(U)) {
-                    if (!checkCriteria(PDT, &I, u)) {
+                    if (!posDomCriteria(PDT, &I, u)) {
                         Argument *arg =
                             new Argument(U->getType(), U->getName());
                         deps.insert(arg);
@@ -555,6 +556,12 @@ bool ProgramSlice::canOutline() {
         }
     }
 
+    if (_instsInSlice.size() == 1) {
+        errs() << "Not outlined, Insufficient Numbers os instruction to "
+                  "outline! \n";
+        return false;
+    }
+
     for (const Instruction *I : _instsInSlice) {
         if (I->mayThrow()) {
             errs() << "Cannot outline slice because inst may throw: " << *I
@@ -649,6 +656,7 @@ void ProgramSlice::populateBBsWithInsts(Function *F) {
                 _Imap.insert(std::make_pair(&origInst, newInst));
                 IRBuilder<> builder(_origToNewBBmap[&BB]);
                 builder.Insert(newInst);
+		//origInst.eraseFromParent();
             }
         }
     }
@@ -710,6 +718,20 @@ void ProgramSlice::reorderBlocks(Function *F) {
     realEntry->moveBefore(&F->getEntryBlock());
 }
 
+/// Adjusting references between the function arguments and the operators
+/// of the Instructions
+void ProgramSlice::replaceArgs(Function *F) {
+    for (Instruction &I : instructions(F)) {
+        for (int j = 0; j < I.getNumOperands(); ++j) {
+            for (int k = 0; k < F->arg_size(); ++k) {
+                StringRef ArgName = I.getOperand(j)->getName();
+                Value *valArg = F->getArg(k);
+                if (ArgName == valArg->getName()) I.setOperand(j, valArg);
+            }
+        }
+    };
+}
+
 /// Adds a return instruction to function @param F, which returns
 /// the value that is computed by the sliced function.
 ReturnInst *ProgramSlice::addReturnValue(Function *F) {
@@ -731,10 +753,9 @@ ReturnInst *ProgramSlice::addReturnValue(Function *F) {
         }
     }
     // If PhiCrit was seted, just return the argument that correspondes to the\
-    // phi instruction criterion. (i.e take an argument and return it) TODO: identity should be a slice?
+    // phi instruction criterion. (i.e take an argument and return it) TODO: identity should be a slice? nop
     if (_phiCrit) {
         for (int k = 0; k < F->arg_size(); ++k) {
-            dbgs() << "k: " << k << ' ' << F->arg_size() << '\n';
             Value *myArg = F->getArg(k);
             if (myArg->getName() == _initial->getName()) {
                 return ReturnInst::Create(F->getParent()->getContext(), myArg,
@@ -766,11 +787,9 @@ std::pair<SmallVector<Argument *>, Function *> ProgramSlice::outline() {
     // Getting Arguments for the function
     SmallVector<Type *> v;
     SmallVector<StringRef> g;
-    std::map<StringRef, Argument *> nameToArg;
     for (auto arg : _depArgs) {
         v.push_back(arg->getType());
         g.push_back(arg->getName());
-        nameToArg[arg->getName()] = arg;
     }
     FunctionType *delegateFunctionType =
         FunctionType::get(FreturnType, v, false);
@@ -794,7 +813,7 @@ std::pair<SmallVector<Argument *>, Function *> ProgramSlice::outline() {
     // Let LLVM know that the delegate function is pure, so it can further
     // optimize calls to it
 
-    // TODO: maybe not worth to add.
+    // TODO: maybe not worth to add. Can i guarantee willReturn for instance?
     // AttrBuilder builder(_parentFunction->getContext());
     // builder.addAttribute(Attribute::ReadOnly);
     // builder.addAttribute(Attribute::NoUnwind);
@@ -811,19 +830,7 @@ std::pair<SmallVector<Argument *>, Function *> ProgramSlice::outline() {
     rerouteBranches(F);
     addReturnValue(F);
     reorderBlocks(F);
-    /* Adjusting references between the function arguments and the operators
-     of the instructions
-    TODO: Module function
-     */
-    for (Instruction &I : instructions(F)) {
-        for (int j = 0; j < I.getNumOperands(); ++j) {
-            for (int k = 0; k < F->arg_size(); ++k) {
-                StringRef ArgName = I.getOperand(j)->getName();
-                Value *valArg = F->getArg(k);
-                if (ArgName == valArg->getName()) I.setOperand(j, valArg);
-            }
-        }
-    };
+    replaceArgs(F);
     verifyFunction(*F);
     printFunctions(F);
     return {_depArgs, F};

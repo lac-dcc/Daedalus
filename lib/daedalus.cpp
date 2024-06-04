@@ -1,5 +1,6 @@
 #include "../include/daedalus.h"
 #include "../include/wyvern/ProgramSlice.cpp"
+#include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/PostDominators.h"
 #include "llvm/Analysis/TargetLibraryInfo.h"
 #include "llvm/IR/InstIterator.h"
@@ -19,32 +20,17 @@ using namespace llvm;
 #include <llvm/Pass.h>
 
 bool canSliceInstrType(Instruction &I) {
+    // These Instruction will not be a slice criterion.
     if (isa<BranchInst>(I)) return false; // Branch Instruction have badref
-    if (isa<ReturnInst>(I)) return false; // No Return for while, badref
+    if (isa<ReturnInst>(I)) return false;
     if (isa<AllocaInst>(I)) return false; // No needed
-    // if (isa<GetElementPtrInst>(I)) return false; // No needed
-    if (isa<PHINode>(I)) return true; // No needed
+    if (isa<ICmpInst>(I)) return false;
     if (isa<LoadInst>(I)) return false;
-    if (isa<StoreInst>(I)) return false; // No needed
+    if (isa<StoreInst>(I)) return false;
     return true;
 }
 
 namespace Daedalus {
-
-uint sliceFunctionSize(Function *F, std::set<CallInst *> context) {
-    uint ans = 0;
-    for (auto &I : instructions(F)) {
-        if (CallInst *K = dyn_cast<CallInst>(&I)) {
-            if (context.find(K) == context.end()) {
-                context.insert(K);
-                ans += sliceFunctionSize(K->getCalledFunction(), context);
-                continue;
-            }
-        }
-        ++ans;
-    }
-    return ans;
-}
 
 PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
 
@@ -59,7 +45,6 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
 
         PostDominatorTree PDT;
         PDT.recalculate(*F);
-        int i = 0;
 
         std::set<Instruction *> s;
         /// To replace all uses of I with the correpondent call
@@ -70,28 +55,21 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
 
         for (Instruction *I : s) {
             if (!canSliceInstrType(*I)) continue;
-            if (isa<PHINode>(I)) {
-                dbgs() << "PHI FUNC HERE: " << *I << '\n';
-            }
-            LLVM_DEBUG(dbgs() << "\n SLICING: " << *I << '\n');
+
+            LLVM_DEBUG(dbgs() << "\n Slicing Instruction: " << *I << '\n');
             ProgramSlice ps = ProgramSlice(*I, *F, PDT);
-            if (!ps.canOutline()) {
-                dbgs() << "CANNOT OUTLINE: " << *I << '\n';
-                continue;
-            }
+            if (!ps.canOutline()) continue;
 
-            LLVM_DEBUG(dbgs() << "\n OUTLING: " << *I << '\n');
+            LLVM_DEBUG(dbgs() << "\n Outlining instruction : " << *I << '\n');
             auto [dps, G] = ps.outline();
-            dbgs() << "ENDF\n" << *G << '\n';
+            LLVM_DEBUG(dbgs() << " === Outlined Funcion === \n" << *G << '\n');
 
-            std::set<CallInst *> context;
-            LLVM_DEBUG(dbgs() << "SLICE SIZE = "
-                              << sliceFunctionSize(G, context) << '\n');
-
-            LLVM_DEBUG(dbgs() << "\n CALLS FOR SLICE: " << *I << '\n');
+            LLVM_DEBUG(dbgs()
+                       << "\n Making Function call to Instruction Slice: " << *I
+                       << '\n');
             SmallVector<Value *> v = ps.getOrigFunctionArgs();
 
-	    /// Vector of Argument to pass to the callInst
+            /// Vector of Argument to pass to the callInst
             SmallVector<Value *> arr;
 
             for (auto &e : v) {
@@ -110,7 +88,7 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
                 if (!flag) arr.push_back(e);
             }
 
-            if (ps._phiCrit) continue;
+           // if (ps._phiCrit) continue;
 
             // Create callInst to the outlined slice, and move it next to the
             // original Func
@@ -119,16 +97,16 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
             callInst->moveAfter(I);
             ItoCall[I] = callInst;
 
-            // Argument *arg = new Argument(I->getType(), I->getName());
-            // Argument *argcall =
-            //     new Argument(callInst->getType(), callInst->getName());
-            // ArgtoArgcall[arg] = argcall;
+            Argument *arg = new Argument(I->getType(), I->getName());
+            Argument *argcall =
+                new Argument(callInst->getType(), callInst->getName());
+            ArgtoArgcall[arg] = argcall;
+            LLVM_DEBUG(dbgs() << "\n Instruction Outlined: " << *I << '\n');
         }
         for (auto [I, callInst] : ItoCall) {
             I->replaceAllUsesWith(callInst);
             I->eraseFromParent();
         }
-        dbgs() << *F << '\n';
     }
     module->print(dbgs(), nullptr);
 

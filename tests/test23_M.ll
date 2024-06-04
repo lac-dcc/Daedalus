@@ -1,4 +1,4 @@
-; ModuleID = 'tests/test23.ll'
+; ModuleID = 'tests/test23_F.ll'
 source_filename = "tests/test23.c"
 target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-unknown-linux-gnu"
@@ -18,13 +18,13 @@ if.then:                                          ; preds = %entry
 
 if.else:                                          ; preds = %entry
   %mul1 = mul nsw i32 3, %argc
-  %mul2 = mul nsw i32 %mul1, %argc
-  %call3 = call i32 (ptr, ...) @printf(ptr noundef @.str, i32 noundef %mul2)
+  %mul21 = call i32 @_wyvern_slice_f_mul2_124671717(i32 %argc)
+  %call3 = call i32 (ptr, ...) @printf(ptr noundef @.str, i32 noundef %mul21)
   br label %if.end
 
 if.end:                                           ; preds = %if.else, %if.then
-  %c.0 = phi i32 [ %mul, %if.then ], [ %mul2, %if.else ]
-  %call4 = call i32 (ptr, ...) @printf(ptr noundef @.str, i32 noundef %c.0)
+  %c.02 = call i32 @_wyvern_slice_f_c.0_483138304(i32 %argc)
+  %call4 = call i32 (ptr, ...) @printf(ptr noundef @.str, i32 noundef %c.02)
   ret void
 }
 
@@ -43,14 +43,40 @@ if.then:                                          ; preds = %entry
 
 if.else:                                          ; preds = %entry
   %mul1 = mul nsw i32 3, %argc
-  %mul2 = mul nsw i32 %mul1, %argc
-  %call3 = call i32 (ptr, ...) @printf(ptr noundef @.str, i32 noundef %mul2)
+  %mul21 = call i32 @_wyvern_slice_f_mul2_124671717(i32 %argc)
+  %call3 = call i32 (ptr, ...) @printf(ptr noundef @.str, i32 noundef %mul21)
   br label %if.end
 
 if.end:                                           ; preds = %if.else, %if.then
-  %c.0 = phi i32 [ %mul, %if.then ], [ %mul2, %if.else ]
-  %call4 = call i32 (ptr, ...) @printf(ptr noundef @.str, i32 noundef %c.0)
+  %c.02 = call i32 @_wyvern_slice_f_c.0_483138304(i32 %argc)
+  %call4 = call i32 (ptr, ...) @printf(ptr noundef @.str, i32 noundef %c.02)
   ret i32 0
+}
+
+define internal i32 @_wyvern_slice_f_mul2_124671717(i32 %argc) {
+sliceclone_if.else:
+  %0 = mul nsw i32 3, %argc
+  %1 = mul nsw i32 %0, %argc
+  ret i32 %1
+}
+
+define internal i32 @_wyvern_slice_f_c.0_483138304(i32 %argc) {
+sliceclone_entry:
+  %0 = icmp sgt i32 %argc, 2
+  br i1 %0, label %sliceclone_if.then, label %sliceclone_if.else
+
+sliceclone_if.else:                               ; preds = %sliceclone_entry
+  %1 = mul nsw i32 3, %argc
+  %2 = mul nsw i32 %1, %argc
+  br label %sliceclone_if.end
+
+sliceclone_if.then:                               ; preds = %sliceclone_entry
+  %3 = mul nsw i32 2, %argc
+  br label %sliceclone_if.end
+
+sliceclone_if.end:                                ; preds = %sliceclone_if.then, %sliceclone_if.else
+  %4 = phi i32 [ %3, %sliceclone_if.then ], [ %2, %sliceclone_if.else ]
+  ret i32 %4
 }
 
 attributes #0 = { noinline nounwind uwtable "frame-pointer"="all" "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
