@@ -55,6 +55,7 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
 
         for (Instruction *I : s) {
             if (!canSliceInstrType(*I)) continue;
+	    if(I->getName() != "c.0") continue;
 
             LLVM_DEBUG(dbgs() << "\n Slicing Instruction: " << *I << '\n');
             ProgramSlice ps = ProgramSlice(*I, *F, PDT);

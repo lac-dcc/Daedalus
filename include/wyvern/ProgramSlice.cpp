@@ -656,7 +656,6 @@ void ProgramSlice::populateBBsWithInsts(Function *F) {
                 _Imap.insert(std::make_pair(&origInst, newInst));
                 IRBuilder<> builder(_origToNewBBmap[&BB]);
                 builder.Insert(newInst);
-		//origInst.eraseFromParent();
             }
         }
     }
@@ -833,5 +832,12 @@ std::pair<SmallVector<Argument *>, Function *> ProgramSlice::outline() {
     replaceArgs(F);
     verifyFunction(*F);
     printFunctions(F);
+
+    // Remove from parent
+    for(BasicBlock &BB: *_parentFunction){
+	for(Instruction &origInst: BB){
+	    origInst.eraseFromParent();    
+	}
+    }
     return {_depArgs, F};
 }
