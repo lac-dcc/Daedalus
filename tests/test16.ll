@@ -1,32 +1,31 @@
-; ModuleID = 'tests/test14.ll'
-source_filename = "tests/test14.c"
+; ModuleID = 'tests/test16.ll'
+source_filename = "tests/test16.c"
 target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-unknown-linux-gnu"
 
 @.str = private unnamed_addr constant [4 x i8] c"%d\0A\00", align 1
 
 ; Function Attrs: noinline nounwind uwtable
-define dso_local void @f(ptr noundef %i) #0 {
+define internal i32 @f(i32 noundef %a) #0 {
 entry:
-  %0 = load i32, ptr %i, align 4
-  %1 = load i32, ptr %i, align 4
-  %add = add nsw i32 %0, %1
-  store i32 %add, ptr %i, align 4
-  ret void
+  ret i32 %a
 }
 
 ; Function Attrs: noinline nounwind uwtable
-define dso_local i32 @main() #0 {
+define internal i32 @g(i32 noundef %a) #0 {
 entry:
-  %i = alloca i32, align 4
-  store i32 10, ptr %i, align 4
-  call void @f(ptr noundef %i)
-  %0 = load i32, ptr %i, align 4
-  %call = call i32 (ptr, ...) @printf(ptr noundef @.str, i32 noundef %0)
-  %1 = load i32, ptr %i, align 4
-  %2 = load i32, ptr %i, align 4
-  %mul = mul nsw i32 %1, %2
-  ret i32 %mul
+  ret i32 %a
+}
+
+; Function Attrs: noinline nounwind uwtable
+define dso_local i32 @main(i32 noundef %argc, ptr noundef %argv) #0 {
+entry:
+  %call = call i32 @f(i32 noundef %argc)
+  %call1 = call i32 (ptr, ...) @printf(ptr noundef @.str, i32 noundef %call)
+  %mul = mul nsw i32 %argc, %argc
+  %call2 = call i32 @g(i32 noundef %mul)
+  %call3 = call i32 (ptr, ...) @printf(ptr noundef @.str, i32 noundef %call2)
+  ret i32 0
 }
 
 declare i32 @printf(ptr noundef, ...) #1

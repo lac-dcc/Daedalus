@@ -84,24 +84,23 @@ computeGates(Function &F) {
         SmallVector<const Value *> BB_gates;
         const unsigned num_preds = pred_size(&BB);
         if (num_preds > 1) {
-            // LLVM_DEBUG(dbgs() << BB.getName() << ":\n");
+            LLVM_DEBUG(dbgs() << BB.getName() << ":\n");
             for (const BasicBlock *pred : predecessors(&BB)) {
-                // LLVM_DEBUG(dbgs() << " - " << pred->getName() << " -> ");
+                LLVM_DEBUG(dbgs() << " - " << pred->getName() << " -> ");
                 if (DT.dominates(pred, &BB) && !PDT.dominates(&BB, pred)) {
-                    // LLVM_DEBUG(dbgs() << " DOM " << getGate(pred)->getName()
-                    // << " -> ");
+                    LLVM_DEBUG(dbgs() << " DOM " << getGate(pred)->getName()
+                                      << " -> ");
                     BB_gates.push_back(getGate(pred));
                 } else {
                     const BasicBlock *ctrl_BB = getController(pred, DT, PDT);
                     if (ctrl_BB) {
-                        // LLVM_DEBUG(dbgs() << " R-CTRL "
-                        //                  << "CTRL_BB: " << ctrl_BB->getName()
-                        //                  << " "
-                        //                  << getGate(ctrl_BB)->getName());
+                        LLVM_DEBUG(dbgs() << " R-CTRL " << "CTRL_BB: "
+                                          << ctrl_BB->getName() << " "
+                                          << getGate(ctrl_BB)->getName());
                         BB_gates.push_back(getGate(ctrl_BB));
                     }
                 }
-                // LLVM_DEBUG(dbgs() << ";\n");
+                LLVM_DEBUG(dbgs() << ";\n");
             }
         }
         gates.emplace(std::make_pair(&BB, BB_gates));
@@ -109,20 +108,20 @@ computeGates(Function &F) {
     return gates;
 }
 
+// PHI Nodes MUST to dominate the slice criteria. Otherwise it will be a
+// function argument
+bool posDomCriteria(const PostDominatorTree &PDT, const Instruction *crit,
+                    const Instruction *inst) {
+    return (PDT.dominates(crit, inst));
+}
+
 /// Computes the backwards data dependences for the given instruction, to
 /// compute which instructions should be part of the slice. Using the
 /// phi-function gate information contained in gates, control dependencies can
 /// also be tracked as data dependences. Thus, this function is enough to
 /// compute all dependencies necessary to building a slice.
-
-bool checkCriteria(const PostDominatorTree &PDT, const Instruction *crit,
-                   const Instruction *stop) {
-    return (PDT.dominates(crit, stop) &&
-            !PDT.dominates(stop, crit));
-}
-
 static std::tuple<std::set<const BasicBlock *>, std::set<const Value *>,
-                  std::vector<std::pair<Type *, StringRef>>>
+                  std::vector<std::pair<Type *, StringRef>>, bool>
 get_data_dependences_for(
     Instruction &I,
     std::unordered_map<const BasicBlock *, SmallVector<const Value *>> &gates,
@@ -133,24 +132,40 @@ get_data_dependences_for(
     std::queue<const Value *> worklist;
     std::vector<std::pair<Type *, StringRef>> phiArguments;
 
+    std::set<Instruction *> toRemoveDeps;
+    toRemoveDeps.insert(&I);
     worklist.push(&I);
     deps.insert(&I);
+    bool phiCrit = false;
     while (!worklist.empty()) {
         const Value *cur = worklist.front();
         deps.insert(cur);
-	visited.insert(cur);
+        visited.insert(cur);
         worklist.pop();
         if (const Instruction *dep = dyn_cast<Instruction>(cur)) {
             BBs.insert(dep->getParent());
             for (const Use &U : dep->operands()) {
                 if ((!isa<Instruction>(U) && !isa<Argument>(U)) ||
-                    visited.count(U))
-                    continue;
-                if (const PHINode *u = dyn_cast<PHINode>(U)) {
-                    if (!checkCriteria(PDT, &I, u)) {
+                    visited.count(U)) {
+                    if (visited.count(U) && isa<PHINode>(U) && U == &I) {
+                        deps.clear();
                         Argument *arg =
                             new Argument(U->getType(), U->getName());
                         deps.insert(arg);
+                        deps.insert(&I);
+			toRemoveDeps.clear();
+                        while (!worklist.empty()) worklist.pop();
+                        phiCrit = true;
+                        break;
+                    }
+                    continue;
+                }
+                if (const PHINode *u = dyn_cast<PHINode>(U)) {
+                    if (!posDomCriteria(PDT, &I, u)) {
+                        Argument *arg =
+                            new Argument(U->getType(), U->getName());
+                        deps.insert(arg);
+                        dbgs() << "ARGS: " << *arg << '\n';
                         visited.insert(U);
                         continue;
                     }
@@ -159,6 +174,7 @@ get_data_dependences_for(
                 worklist.push(U);
             }
         }
+        if (phiCrit) break;
 
         if (const PHINode *PN = dyn_cast<PHINode>(cur)) {
             for (const BasicBlock *BB : PN->blocks()) {
@@ -172,7 +188,7 @@ get_data_dependences_for(
         }
     }
 
-    return std::make_tuple(BBs, deps, phiArguments);
+    return std::make_tuple(BBs, deps, phiArguments, phiCrit);
 }
 
 ProgramSlice::ProgramSlice(Instruction &Initial, Function &F,
@@ -183,11 +199,11 @@ ProgramSlice::ProgramSlice(Instruction &Initial, Function &F,
 
     std::unordered_map<const BasicBlock *, SmallVector<const Value *>> gates =
         computeGates(F);
-    auto [BBsInSlice, valuesInSlice, phiTypes] =
+    auto [BBsInSlice, valuesInSlice, phiTypes, phiCrit] =
         get_data_dependences_for(Initial, gates, PDT);
+    _phiCrit = phiCrit;
     std::set<const Instruction *> instsInSlice;
     SmallVector<Argument *> depArgs;
-
     for (auto &val : valuesInSlice) {
         if (Argument *A = dyn_cast<Argument>(const_cast<Value *>(val))) {
             depArgs.push_back(A);
@@ -216,15 +232,6 @@ ProgramSlice::ProgramSlice(Instruction &Initial, Function &F,
     computeAttractorBlocks();
 
     // LLVM_DEBUG(printSlice());
-}
-
-void ProgramSlice::size() {
-    _size = _instsInSlice.size();
-    for(auto &inst: _instsInSlice){
-	if(isa<CallInst>(inst)){
-	    
-	}
-    }
 }
 
 /// Computes the layout of the struct type that should be used to lazify
@@ -286,11 +293,11 @@ void ProgramSlice::printSlice() {
 
 /// Print original and sliced function. Used for debugging.
 void ProgramSlice::printFunctions(Function *F) {
-    errs() << "\n\n ==== Slicing instruction: [" << *_initial
-           << "] in function: " << _parentFunction->getName() << " with size "
-           << _parentFunction->size() << " ====\n"
-           << "\n======== SLICED FUNCTION ==========\n"
-           << *F;
+    LLVM_DEBUG(errs() << "\n\n ==== Slicing instruction: [" << *_initial
+                      << "] in function: " << _parentFunction->getName()
+                      << " with size " << _parentFunction->size() << " ====\n"
+                      << "\n======== SLICED FUNCTION ==========\n"
+                      << *F;);
 }
 
 /// Computes the attractor blocks (first dominator) for each basic block in the
@@ -551,6 +558,12 @@ bool ProgramSlice::canOutline() {
         }
     }
 
+    if (_instsInSlice.size() == 1) {
+        errs() << "Not outlined, Insufficient Numbers os instruction to "
+                  "outline! \n";
+        return false;
+    }
+
     for (const Instruction *I : _instsInSlice) {
         if (I->mayThrow()) {
             errs() << "Cannot outline slice because inst may throw: " << *I
@@ -642,6 +655,7 @@ void ProgramSlice::populateBBsWithInsts(Function *F) {
         for (Instruction &origInst : BB) {
             if (_instsInSlice.count(&origInst)) {
                 Instruction *newInst = origInst.clone();
+		newInst->setName(origInst.getName());
                 _Imap.insert(std::make_pair(&origInst, newInst));
                 IRBuilder<> builder(_origToNewBBmap[&BB]);
                 builder.Insert(newInst);
@@ -706,6 +720,20 @@ void ProgramSlice::reorderBlocks(Function *F) {
     realEntry->moveBefore(&F->getEntryBlock());
 }
 
+/// Adjusting references between the function arguments and the operators
+/// of the Instructions
+void ProgramSlice::replaceArgs(Function *F) {
+    for (Instruction &I : instructions(F)) {
+        for (int j = 0; j < I.getNumOperands(); ++j) {
+            for (int k = 0; k < F->arg_size(); ++k) {
+                StringRef ArgName = I.getOperand(j)->getName();
+                Value *valArg = F->getArg(k);
+                if (ArgName == valArg->getName()) I.setOperand(j, valArg);
+            }
+        }
+    };
+}
+
 /// Adds a return instruction to function @param F, which returns
 /// the value that is computed by the sliced function.
 ReturnInst *ProgramSlice::addReturnValue(Function *F) {
@@ -726,8 +754,31 @@ ReturnInst *ProgramSlice::addReturnValue(Function *F) {
                                           exit);
         }
     }
+    // If PhiCrit was seted, just return the argument that correspondes to the\
+    // phi instruction criterion. (i.e take an argument and return it) TODO: identity should be a slice? nop
+    if (_phiCrit) {
+        for (int k = 0; k < F->arg_size(); ++k) {
+            Value *myArg = F->getArg(k);
+            if (myArg->getName() == _initial->getName()) {
+                return ReturnInst::Create(F->getParent()->getContext(), myArg,
+                                          exit);
+            }
+        }
+        // return ReturnInst::Create(F->getParent()->getContext(), )//
+    }
     return ReturnInst::Create(F->getParent()->getContext(), _Imap[_initial],
                               exit);
+}
+
+void recursiveRemoveUses(Instruction *I){
+    for(auto *K: I->users()){
+	if(auto M = dyn_cast<Instruction>(K)){
+	    dbgs() << "Removing: " << *M << '\n';
+	    recursiveRemoveUses(M);
+	}
+    }
+    // I->dropAllReferences();
+    I->eraseFromParent();
 }
 
 /// Outlines the given slice into a standalone Function, which
@@ -749,11 +800,9 @@ std::pair<SmallVector<Argument *>, Function *> ProgramSlice::outline() {
     // Getting Arguments for the function
     SmallVector<Type *> v;
     SmallVector<StringRef> g;
-    std::map<StringRef, Argument *> nameToArg;
     for (auto arg : _depArgs) {
         v.push_back(arg->getType());
         g.push_back(arg->getName());
-        nameToArg[arg->getName()] = arg;
     }
     FunctionType *delegateFunctionType =
         FunctionType::get(FreturnType, v, false);
@@ -777,17 +826,16 @@ std::pair<SmallVector<Argument *>, Function *> ProgramSlice::outline() {
     // Let LLVM know that the delegate function is pure, so it can further
     // optimize calls to it
 
-    // TODO: maybe not worth to add.
+    // TODO: maybe not worth to add. Can i guarantee willReturn for instance?
     // AttrBuilder builder(_parentFunction->getContext());
     // builder.addAttribute(Attribute::ReadOnly);
     // builder.addAttribute(Attribute::NoUnwind);
     // builder.addAttribute(Attribute::WillReturn);
     // F->addFnAttrs(builder);
+    F->setLinkage(GlobalValue::LinkageTypes::InternalLinkage);
 
     int i = 0;
-    for (Argument &arg : F->args()) {
-        arg.setName(g[i++]);
-    }
+    for (Argument &arg : F->args()) arg.setName(g[i++]);
 
     populateFunctionWithBBs(F);
     populateBBsWithInsts(F);
@@ -795,16 +843,33 @@ std::pair<SmallVector<Argument *>, Function *> ProgramSlice::outline() {
     rerouteBranches(F);
     addReturnValue(F);
     reorderBlocks(F);
-    for (Instruction &I : instructions(F)) {
-        for (int j = 0; j < I.getNumOperands(); ++j) {
-            for (int k = 0; k < F->arg_size(); ++k) {
-                StringRef ArgName = I.getOperand(j)->getName();
-                Value *valArg = F->getArg(k);
-                if (ArgName == valArg->getName()) I.setOperand(j, valArg);
-            }
-        }
-    };
+    replaceArgs(F);
     verifyFunction(*F);
     printFunctions(F);
+
+
+    // TODO: Remove instructions from slices ?
+    // Remove from parent
+    // dbgs() << "del insts: \n";
+ //    for(BasicBlock &BB: *_parentFunction){
+	// for(Instruction &origInst: BB){
+	//     origInst.print(dbgs() << "\n");
+	//     // origInst.eraseFromParent();
+	// }
+ //    }
+ //    Function *H = _initial->getParent()->getParent();
+ //    for(Instruction &I: instructions(F)){
+	// for(const Instruction *I2: _instsInSlice){
+	//     dbgs() << *I2 << "\n";
+	//     for(auto *K: I2->users()){
+	// 	dbgs() << "\t - " << *K << "\n";
+	// 	const Instruction *M = dyn_cast<Instruction>(K);
+	// 	if(!M || _instsInSlice.count(M)) continue;
+	// 	if(I.getName() == M->getName()){
+	// 	    recursiveRemoveUses(&I);
+	// 	}
+	//     }
+	// }
+ //    }
     return {_depArgs, F};
 }

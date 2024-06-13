@@ -21,6 +21,9 @@ public:
   bool canOutline();
   bool newcanOutline();
 
+  /// if a phi-function is the criterion and dont post dominates all phi in your slice
+  bool _phiCrit;
+
   /// Returns the set of arguments of the slice's parent function. Used to
   /// initialize the environment for thunks that use the slice as their delegate
   /// function.
@@ -45,6 +48,7 @@ private:
   ReturnInst *addReturnValue(Function *F);
   void reorganizeUses(Function *F);
   void populateBBsWithInsts(Function *F);
+  void replaceArgs(Function *F);
   void populateFunctionWithBBs(Function *F);
   void addMissingTerminators(Function *F);
   void addMemoizationCode(Function *F, ReturnInst *new_ret);
