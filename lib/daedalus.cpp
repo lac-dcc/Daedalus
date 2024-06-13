@@ -55,7 +55,6 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
 
         for (Instruction *I : s) {
             if (!canSliceInstrType(*I)) continue;
-	    if(I->getName() != "c.0") continue;
 
             LLVM_DEBUG(dbgs() << "\n Slicing Instruction: " << *I << '\n');
             ProgramSlice ps = ProgramSlice(*I, *F, PDT);
@@ -103,6 +102,7 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
                 new Argument(callInst->getType(), callInst->getName());
             ArgtoArgcall[arg] = argcall;
             LLVM_DEBUG(dbgs() << "\n Instruction Outlined: " << *I << '\n');
+
         }
         for (auto [I, callInst] : ItoCall) {
             I->replaceAllUsesWith(callInst);

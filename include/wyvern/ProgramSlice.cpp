@@ -132,6 +132,8 @@ get_data_dependences_for(
     std::queue<const Value *> worklist;
     std::vector<std::pair<Type *, StringRef>> phiArguments;
 
+    std::set<Instruction *> toRemoveDeps;
+    toRemoveDeps.insert(&I);
     worklist.push(&I);
     deps.insert(&I);
     bool phiCrit = false;
@@ -151,6 +153,7 @@ get_data_dependences_for(
                             new Argument(U->getType(), U->getName());
                         deps.insert(arg);
                         deps.insert(&I);
+			toRemoveDeps.clear();
                         while (!worklist.empty()) worklist.pop();
                         phiCrit = true;
                         break;
@@ -201,7 +204,6 @@ ProgramSlice::ProgramSlice(Instruction &Initial, Function &F,
     _phiCrit = phiCrit;
     std::set<const Instruction *> instsInSlice;
     SmallVector<Argument *> depArgs;
-
     for (auto &val : valuesInSlice) {
         if (Argument *A = dyn_cast<Argument>(const_cast<Value *>(val))) {
             depArgs.push_back(A);
@@ -653,6 +655,7 @@ void ProgramSlice::populateBBsWithInsts(Function *F) {
         for (Instruction &origInst : BB) {
             if (_instsInSlice.count(&origInst)) {
                 Instruction *newInst = origInst.clone();
+		newInst->setName(origInst.getName());
                 _Imap.insert(std::make_pair(&origInst, newInst));
                 IRBuilder<> builder(_origToNewBBmap[&BB]);
                 builder.Insert(newInst);
@@ -767,6 +770,17 @@ ReturnInst *ProgramSlice::addReturnValue(Function *F) {
                               exit);
 }
 
+void recursiveRemoveUses(Instruction *I){
+    for(auto *K: I->users()){
+	if(auto M = dyn_cast<Instruction>(K)){
+	    dbgs() << "Removing: " << *M << '\n';
+	    recursiveRemoveUses(M);
+	}
+    }
+    // I->dropAllReferences();
+    I->eraseFromParent();
+}
+
 /// Outlines the given slice into a standalone Function, which
 /// encapsulates the computation of the original value in
 /// regards to which the slice was created.
@@ -833,11 +847,29 @@ std::pair<SmallVector<Argument *>, Function *> ProgramSlice::outline() {
     verifyFunction(*F);
     printFunctions(F);
 
+
+    // TODO: Remove instructions from slices ?
     // Remove from parent
-    for(BasicBlock &BB: *_parentFunction){
-	for(Instruction &origInst: BB){
-	    origInst.eraseFromParent();    
-	}
-    }
+    // dbgs() << "del insts: \n";
+ //    for(BasicBlock &BB: *_parentFunction){
+	// for(Instruction &origInst: BB){
+	//     origInst.print(dbgs() << "\n");
+	//     // origInst.eraseFromParent();
+	// }
+ //    }
+ //    Function *H = _initial->getParent()->getParent();
+ //    for(Instruction &I: instructions(F)){
+	// for(const Instruction *I2: _instsInSlice){
+	//     dbgs() << *I2 << "\n";
+	//     for(auto *K: I2->users()){
+	// 	dbgs() << "\t - " << *K << "\n";
+	// 	const Instruction *M = dyn_cast<Instruction>(K);
+	// 	if(!M || _instsInSlice.count(M)) continue;
+	// 	if(I.getName() == M->getName()){
+	// 	    recursiveRemoveUses(&I);
+	// 	}
+	//     }
+	// }
+ //    }
     return {_depArgs, F};
 }
