@@ -1,5 +1,5 @@
+#include "../include/wyvern/ProgramSlice.h"
 #include "../include/daedalus.h"
-#include "../include/wyvern/ProgramSlice.cpp"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/PostDominators.h"
 #include "llvm/Analysis/TargetLibraryInfo.h"
@@ -9,11 +9,8 @@
 #include "llvm/IR/PassManager.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/Debug.h"
-#include "llvm/Support/FileSystem.h"
-#include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Transforms/Utils/ValueMapper.h"
-#include <fstream>
 #include <memory>
 
 using namespace llvm;
@@ -56,17 +53,17 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
         for (Instruction *I : s) {
             if (!canSliceInstrType(*I)) continue;
 
-            LLVM_DEBUG(dbgs() << "\n Slicing Instruction: " << *I << '\n');
+            // LLVM_DEBUG(dbgs() << "\n Slicing Instruction: " << *I << '\n');
             ProgramSlice ps = ProgramSlice(*I, *F, PDT);
             if (!ps.canOutline()) continue;
 
-            LLVM_DEBUG(dbgs() << "\n Outlining instruction : " << *I << '\n');
+            // LLVM_DEBUG(dbgs() << "\n Outlining instruction : " << *I << '\n');
             auto [dps, G] = ps.outline();
-            LLVM_DEBUG(dbgs() << " === Outlined Funcion === \n" << *G << '\n');
+            // LLVM_DEBUG(dbgs() << " === Outlined Funcion === \n" << *G << '\n');
 
-            LLVM_DEBUG(dbgs()
-                       << "\n Making Function call to Instruction Slice: " << *I
-                       << '\n');
+            // LLVM_DEBUG(dbgs()
+            //            << "\n Making Function call to Instruction Slice: " << *I
+            //            << '\n');
             SmallVector<Value *> v = ps.getOrigFunctionArgs();
 
             /// Vector of Argument to pass to the callInst
@@ -101,7 +98,7 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
             Argument *argcall =
                 new Argument(callInst->getType(), callInst->getName());
             ArgtoArgcall[arg] = argcall;
-            LLVM_DEBUG(dbgs() << "\n Instruction Outlined: " << *I << '\n');
+            // LLVM_DEBUG(dbgs() << "\n Instruction Outlined: " << *I << '\n');
 
         }
         for (auto [I, callInst] : ItoCall) {
@@ -111,6 +108,6 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
     }
     module->print(dbgs(), nullptr);
 
-    return PreservedAnalyses::all();
+    return PreservedAnalyses::none();
 }
 } // namespace Daedalus

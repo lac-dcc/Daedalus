@@ -18,12 +18,12 @@ if.then:                                          ; preds = %entry
 
 if.else:                                          ; preds = %entry
   %mul1 = mul nsw i32 3, %argc
-  %mul21 = call i32 @_wyvern_slice_f_mul2_124671717(i32 %argc)
+  %mul21 = call i32 @_wyvern_slice_f_mul2_715891817(i32 %argc)
   %call3 = call i32 (ptr, ...) @printf(ptr noundef @.str, i32 noundef %mul21)
   br label %if.end
 
 if.end:                                           ; preds = %if.else, %if.then
-  %c.02 = call i32 @_wyvern_slice_f_c.0_483138304(i32 %argc)
+  %c.02 = call i32 @_wyvern_slice_f_c.0_523416590(i32 %argc)
   %call4 = call i32 (ptr, ...) @printf(ptr noundef @.str, i32 noundef %c.02)
   ret void
 }
@@ -43,24 +43,24 @@ if.then:                                          ; preds = %entry
 
 if.else:                                          ; preds = %entry
   %mul1 = mul nsw i32 3, %argc
-  %mul21 = call i32 @_wyvern_slice_main_mul2_109679600(i32 %argc)
+  %mul21 = call i32 @_wyvern_slice_main_mul2_131866947(i32 %argc)
   %call3 = call i32 (ptr, ...) @printf(ptr noundef @.str, i32 noundef %mul21)
   br label %if.end
 
 if.end:                                           ; preds = %if.else, %if.then
-  %c.02 = call i32 @_wyvern_slice_main_c.0_555259890(i32 %argc)
+  %c.02 = call i32 @_wyvern_slice_main_c.0_376925536(i32 %argc)
   %call4 = call i32 (ptr, ...) @printf(ptr noundef @.str, i32 noundef %c.02)
   ret i32 0
 }
 
-define internal i32 @_wyvern_slice_f_mul2_124671717(i32 %argc) {
+define internal i32 @_wyvern_slice_f_mul2_715891817(i32 %argc) {
 sliceclone_if.else:
   %0 = mul nsw i32 3, %argc
   %1 = mul nsw i32 %0, %argc
   ret i32 %1
 }
 
-define internal i32 @_wyvern_slice_f_c.0_483138304(i32 %argc) {
+define internal i32 @_wyvern_slice_f_c.0_523416590(i32 %argc) {
 sliceclone_entry:
   %0 = icmp sgt i32 %argc, 2
   br i1 %0, label %sliceclone_if.then, label %sliceclone_if.else
@@ -79,14 +79,14 @@ sliceclone_if.end:                                ; preds = %sliceclone_if.then,
   ret i32 %4
 }
 
-define internal i32 @_wyvern_slice_main_mul2_109679600(i32 %argc) {
+define internal i32 @_wyvern_slice_main_mul2_131866947(i32 %argc) {
 sliceclone_if.else:
   %0 = mul nsw i32 3, %argc
   %1 = mul nsw i32 %0, %argc
   ret i32 %1
 }
 
-define internal i32 @_wyvern_slice_main_c.0_555259890(i32 %argc) {
+define internal i32 @_wyvern_slice_main_c.0_376925536(i32 %argc) {
 sliceclone_entry:
   %0 = icmp sgt i32 %argc, 2
   br i1 %0, label %sliceclone_if.then, label %sliceclone_if.else
