@@ -781,7 +781,7 @@ void recursiveRemoveUses(Instruction *I){
 /// Outlines the given slice into a standalone Function, which
 /// encapsulates the computation of the original value in
 /// regards to which the slice was created.
-std::pair<SmallVector<Argument *>, Function *> ProgramSlice::outline() {
+Function* ProgramSlice::outline() {
     StructType *thunkStructType = getThunkStructType(false);
     PointerType *thunkStructPtrType = thunkStructType->getPointerTo();
 
@@ -843,6 +843,7 @@ std::pair<SmallVector<Argument *>, Function *> ProgramSlice::outline() {
     replaceArgs(F);
     verifyFunction(*F);
     printFunctions(F);
+    dbgs() << *F << '\n';
 
 
     // TODO: Remove instructions from slices ?
@@ -868,5 +869,9 @@ std::pair<SmallVector<Argument *>, Function *> ProgramSlice::outline() {
 	//     }
 	// }
  //    }
-    return {_depArgs, F};
+    return F;
+}
+
+std::set<const Instruction *> ProgramSlice::getInstructionInSlice(){
+    return _instsInSlice;
 }

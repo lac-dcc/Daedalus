@@ -33,8 +33,10 @@ public:
   /// lazification.
   StructType *getThunkStructType(bool memo = false);
 
+  std::set<const Instruction *> getInstructionInSlice();
+
   /// Returns the delegate function resulted from outlining the slice.
-  std::pair<SmallVector<Argument *>, Function *> outline();
+  Function * outline();
 
   /// Returns the delegate function resulted from outlining the slice, using
   /// memoization.
