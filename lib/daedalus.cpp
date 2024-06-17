@@ -29,6 +29,17 @@ bool canSliceInstrType(Instruction &I) {
     return true;
 }
 
+bool tryRemoveInstruction(Instruction *I, std::set<const Instruction *> &s) {
+    if(s.find(I) == s.end()) return false;
+    for(auto U: I->users()){
+	if(Instruction *u = dyn_cast<Instruction>(U))
+	    if(!tryRemoveInstruction(u, s)){
+		return false;
+	    }
+    }
+    dbgs() << "RM_REPORT: " << *I << " Can be removed!\n";
+    return true;
+}
 namespace Daedalus {
 
 PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
@@ -109,34 +120,48 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
             ArgtoArgcall[arg] = argcall;
             clearMemoryArgs.push_back(arg);
 
-
-	    // TODO: Can be removed, if its on slice instruction set AND all uses can be removed,
-	    //
+            // TODO: Can be removed, if its on slice instruction set AND all
+            // uses can be removed,
+            //
             dbgs() << "USES\n";
+	    for(auto K: I->users()){
+		auto L = dyn_cast<Instruction>(K);
+		dbgs() << *L << '\n';
+	    }
             auto K = ps.getInstructionInSlice();
-            for (auto X : K) {
-                dbgs() << "Instruction: " << *X << '\n';
-                bool flag = false;
-                dbgs() << "Usos:\n";
-                for (auto *x : X->users()) {
-                    dbgs() << '\t' << *x << '\n';
-                    /// If the use of instruction is not in the set of
-                    /// instruction of the slice, so we cant remove it!
-                    if (const Instruction *Kx = dyn_cast<Instruction>(x)) {
-                        if (K.find(Kx) == K.end()) {
-                            flag = true;
-                            break;
-                        }
-                    }
-                }
-                if (!flag) {
-		    for(auto &e: s){
-			if(e == X){
-			    // e->eraseFromParent();
-			}
-		    }
-                }
+            std::set<Instruction *> mutInstructSet;
+            for (auto &I : K)
+                for (auto J : s)
+                    if (I == J) mutInstructSet.insert(J);
+
+            for (auto I : mutInstructSet) {
+                bool result = tryRemoveInstruction(I, K);
             }
+            //          for (auto X : K) {
+            //              dbgs() << "Instruction: " << *X << '\n';
+            //              bool flag = false;
+            //              dbgs() << "Usos:\n";
+            //              for (auto *x : X->users()) {
+            //                  dbgs() << '\t' << *x << '\n';
+            //                  /// If the use of instruction is not in the set
+            //                  of
+            //                  /// instruction of the slice, so we cant remove
+            //                  it! if (const Instruction *Kx =
+            //                  dyn_cast<Instruction>(x)) {
+            //                      if (K.find(Kx) == K.end()) {
+            //                          flag = true;
+            //                          break;
+            //                      }
+            //                  }
+            //              }
+            //              if (!flag) {
+            //    for(auto &e: s){
+            // if(e == X){
+            //     // e->eraseFromParent();
+            // }
+            //    }
+            //              }
+            //          }
         }
         dbgs() << "Before: \n" << *F << '\n';
         for (auto [I, callInst] : ItoCall) {
