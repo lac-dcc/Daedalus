@@ -28,7 +28,7 @@ bool canSliceInstrType(Instruction &I) {
     if (isa<StoreInst>(I)) return false;
     return true;
 }
-
+// if number of remove instructions is < total instructial / 2 => not worth ? is this true, after merge?
 bool tryRemoveInstruction(Instruction *I, std::map<Instruction *, bool> &s,
                           Instruction *ini) {
     dbgs() << "In: " << *I << '\n';
@@ -85,7 +85,7 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
         for (Instruction *I : s) {
             if (!canSliceInstrType(*I)) continue;
             if (mainFlag) break;
-            if (I->getName() != "add") continue;
+            if (I->getName() != "add") continue; // TODO: define a criterio
             mainFlag = true;
 
             // LLVM_DEBUG(dbgs() << "\n Slicing Instruction: " << *I << '\n');
