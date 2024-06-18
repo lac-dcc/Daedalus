@@ -767,17 +767,6 @@ ReturnInst *ProgramSlice::addReturnValue(Function *F) {
                               exit);
 }
 
-void recursiveRemoveUses(Instruction *I){
-    for(auto *K: I->users()){
-	if(auto M = dyn_cast<Instruction>(K)){
-	    dbgs() << "Removing: " << *M << '\n';
-	    recursiveRemoveUses(M);
-	}
-    }
-    // I->dropAllReferences();
-    I->eraseFromParent();
-}
-
 /// Outlines the given slice into a standalone Function, which
 /// encapsulates the computation of the original value in
 /// regards to which the slice was created.
@@ -824,11 +813,12 @@ Function* ProgramSlice::outline() {
     // optimize calls to it
 
     // TODO: maybe not worth to add. Can i guarantee willReturn for instance?
-    // AttrBuilder builder(_parentFunction->getContext());
+    AttrBuilder builder(_parentFunction->getContext());
     // builder.addAttribute(Attribute::ReadOnly);
     // builder.addAttribute(Attribute::NoUnwind);
     // builder.addAttribute(Attribute::WillReturn);
-    // F->addFnAttrs(builder);
+    builder.addAttribute("Daedalus_Slice");
+    F->addFnAttrs(builder);
     F->setLinkage(GlobalValue::LinkageTypes::InternalLinkage);
 
     int i = 0;

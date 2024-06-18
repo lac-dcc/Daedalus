@@ -1,41 +1,16 @@
-; ModuleID = 'tests/test25.ll'
-source_filename = "tests/test25.c"
+; ModuleID = 'test24.ll'
+source_filename = "test24.c"
 target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-unknown-linux-gnu"
-
-; Function Attrs: noinline nounwind uwtable
-define dso_local i32 @f(i32 noundef %arg) #0 {
-entry:
-  %mul = mul nsw i32 %arg, %arg
-  %mul1 = mul nsw i32 %mul, 2
-  %mul2 = mul nsw i32 %mul1, 2
-  %mul3 = mul nsw i32 %mul2, 2
-  %mul4 = mul nsw i32 %mul3, 2
-  %mul5 = mul nsw i32 %mul4, 2
-  %mul6 = mul nsw i32 %mul5, 2
-  %mul7 = mul nsw i32 %mul6, 2
-  %add = add nsw i32 %mul7, 5
-  %mul8 = mul nsw i32 2, %add
-  %add9 = add nsw i32 %mul8, 2
-  ret i32 %add9
-}
 
 ; Function Attrs: noinline nounwind uwtable
 define dso_local i32 @main(i32 noundef %argc, ptr noundef %argv) #0 {
 entry:
   %mul = mul nsw i32 %argc, %argc
-  %mul1 = mul nsw i32 %mul, 2
-  %mul2 = mul nsw i32 %mul1, 2
-  %mul3 = mul nsw i32 %mul2, 2
-  %mul4 = mul nsw i32 %mul3, 2
-  %mul5 = mul nsw i32 %mul4, 2
-  %mul6 = mul nsw i32 %mul5, 2
-  %mul7 = mul nsw i32 %mul6, 2
-  %add = add nsw i32 %mul7, 5
-  %mul8 = mul nsw i32 2, %add
-  %add9 = add nsw i32 %mul8, 2
-  %call = call i32 @f(i32 noundef 2)
-  %sub = sub nsw i32 %call, 6
+  %mul1 = mul nsw i32 2, %mul
+  %add = add nsw i32 %mul1, 2
+  %mul2 = mul nsw i32 3, %mul
+  %sub = sub nsw i32 %mul2, 6
   ret i32 0
 }
 

@@ -31,27 +31,25 @@ bool canSliceInstrType(Instruction &I) {
 // if number of remove instructions is < total instructial / 2 => not worth ? is this true, after merge?
 bool tryRemoveInstruction(Instruction *I, std::map<Instruction *, bool> &s,
                           Instruction *ini) {
-    dbgs() << "In: " << *I << '\n';
+    // dbgs() << "In: " << *I << '\n';
     if (s.find(I) == s.end()) {
-        dbgs() << "Not in slice\n";
+        // dbgs() << "Not in slice\n";
         return false;
     }
-    //    else{
-    // dbgs() << "=========\n";
-    // for(auto [K,k]: s) dbgs() << *K << '\n';
-    // dbgs() << "=========\n";
-    //    }
     if (s[I]) return true;
+    StringRef Iname = I->getName();
     for (auto U : I->users()) {
         dbgs() << "U: " << *U << '\n';
         if (Instruction *u = dyn_cast<Instruction>(U))
-            if (tryRemoveInstruction(u, s, ini)) {
+            if (!tryRemoveInstruction(u, s, ini)) {
                 return false;
             }
+	if(I->users().empty()) break;
     }
-    dbgs() << "Removing: " << *I << '\n';
+    // dbgs() << "Removing: " << Iname << '\n';
     s[I] = true;
     if (I != ini) I->eraseFromParent(), s.erase(I);
+    // dbgs() << "Removed!: " << Iname << '\n';
     return true;
 }
 namespace Daedalus {
@@ -85,7 +83,8 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
         for (Instruction *I : s) {
             if (!canSliceInstrType(*I)) continue;
             if (mainFlag) break;
-            if (I->getName() != "add") continue; // TODO: define a criterio
+	    // if(F->getName() != "main") continue;
+            if (I->getName() != "add9") continue; // TODO: define a criterio
             mainFlag = true;
 
             // LLVM_DEBUG(dbgs() << "\n Slicing Instruction: " << *I << '\n');
@@ -143,11 +142,11 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
             // TODO: Can be removed, if its on slice instruction set AND all
             // uses can be removed,
             //
-            dbgs() << "USES\n";
-            for (auto K : I->users()) {
-                auto L = dyn_cast<Instruction>(K);
-                dbgs() << *L << '\n';
-            }
+            // dbgs() << "USES\n";
+            // for (auto K : I->users()) {
+            //     auto L = dyn_cast<Instruction>(K);
+            //     dbgs() << *L << '\n';
+            // }
 
             I->replaceAllUsesWith(callInst);
             I->eraseFromParent();
@@ -159,41 +158,42 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
                 for (auto J : s)
                     if (I == J) mutInstructSet.insert({J, false});
             // TODO: Clean all these debugs
-            dbgs() << "MS_set:\n";
-            for (auto [K, k] : mutInstructSet) {
-                if (K->getParent() == nullptr) dbgs() << "NULLPTR\n";
-                dbgs() << *K << '\n';
-            }
-
-            dbgs() << "F: " << *F << '\n';
+            // dbgs() << "MS_set:\n";
+            // for (auto [K, k] : mutInstructSet) {
+            //     if (K->getParent() == nullptr) dbgs() << "NULLPTR\n";
+            //     dbgs() << *K << '\n';
+            // }
+            //
+            // dbgs() << "F: " << *F << '\n';
             for (auto [J, j] : mutInstructSet) {
-                dbgs() << "======== try remove " << *J << "==========\n";
+                // dbgs() << "======== try remove " << *J << "==========\n";
                 if (!j) {
                     bool result = tryRemoveInstruction(J, mutInstructSet, I);
-                    if (!result)
-                        dbgs()
-                            << "======== not removed " << *J << "==========\n";
-                    else
-                        dbgs() << "============ REMOVED =============\n";
+                    // if (!result)
+                    //     dbgs()
+                    //         << "======== not removed " << *J << "==========\n";
+                    // else
+                    //     dbgs() << "============ REMOVED =============\n";
                 }
-                dbgs() << "NEW mutSet;";
-                for (auto [L, l] : mutInstructSet) {
-                    dbgs() << *L << '\n';
-                }
+		if(mutInstructSet.empty()) break;
+                // dbgs() << "NEW mutSet \t" << mutInstructSet.size() << '\n';
+                // for (auto [L, l] : mutInstructSet) {
+                //     dbgs() << *L << '\n';
+                // }
             }
-            dbgs() << "OUT\n";
+            // dbgs() << "OUT\n";
             dbgs() << "newF\n" << *F << '\n';
             dbgs() << *G << '\n';
             // TODO: After set the criterio will not be necessary check badref
             // anymore.
-            dbgs() << "S: \n";
-            for (auto [J, j] : mutInstructSet) {
-                if (j) {
-                    dbgs() << "BADREF\n";
-                    s.erase(J);
-                } else
-                    dbgs() << *J << '\n';
-            }
+            // dbgs() << "S: \n";
+            // for (auto [J, j] : mutInstructSet) {
+            //     if (j) {
+            //         dbgs() << "BADREF\n";
+            //         s.erase(J);
+            //     } else
+            //         dbgs() << *J << '\n';
+            // }
 
             //          for (auto X : K) {
             //              dbgs() << "Instruction: " << *X << '\n';
