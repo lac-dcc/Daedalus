@@ -28,28 +28,24 @@ bool canSliceInstrType(Instruction &I) {
     if (isa<StoreInst>(I)) return false;
     return true;
 }
-// if number of remove instructions is < total instructial / 2 => not worth ? is this true, after merge?
+// if number of remove instructions is < total instructial / 2 => not worth ? is
+// this true, after merge?
 bool tryRemoveInstruction(Instruction *I, std::map<Instruction *, bool> &s,
                           Instruction *ini) {
-    // dbgs() << "In: " << *I << '\n';
     if (s.find(I) == s.end()) {
-        // dbgs() << "Not in slice\n";
         return false;
     }
     if (s[I]) return true;
     StringRef Iname = I->getName();
     for (auto U : I->users()) {
-        dbgs() << "U: " << *U << '\n';
         if (Instruction *u = dyn_cast<Instruction>(U))
             if (!tryRemoveInstruction(u, s, ini)) {
                 return false;
             }
-	if(I->users().empty()) break;
+        if (I->users().empty()) break;
     }
-    // dbgs() << "Removing: " << Iname << '\n';
     s[I] = true;
     if (I != ini) I->eraseFromParent(), s.erase(I);
-    // dbgs() << "Removed!: " << Iname << '\n';
     return true;
 }
 namespace Daedalus {
@@ -83,24 +79,14 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
         for (Instruction *I : s) {
             if (!canSliceInstrType(*I)) continue;
             if (mainFlag) break;
-	    // if(F->getName() != "main") continue;
+            // if(F->getName() != "main") continue;
             if (I->getName() != "add9") continue; // TODO: define a criterio
             mainFlag = true;
 
-            // LLVM_DEBUG(dbgs() << "\n Slicing Instruction: " << *I << '\n');
             ProgramSlice ps = ProgramSlice(*I, *F, PDT);
             if (!ps.canOutline()) continue;
 
-            // LLVM_DEBUG(dbgs() << "\n Outlining instruction : " << *I <<
-            // '\n');
             Function *G = ps.outline();
-            // LLVM_DEBUG(dbgs() << " === Outlined Funcion === \n" << *G <<
-            // '\n');
-
-            // LLVM_DEBUG(dbgs()
-            //            << "\n Making Function call to Instruction Slice: " <<
-            //            *I
-            //            << '\n');
             SmallVector<Value *> v = ps.getOrigFunctionArgs();
 
             /// Vector of Argument to pass to the callInst
@@ -157,33 +143,14 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
             for (auto &I : K)
                 for (auto J : s)
                     if (I == J) mutInstructSet.insert({J, false});
-            // TODO: Clean all these debugs
-            // dbgs() << "MS_set:\n";
-            // for (auto [K, k] : mutInstructSet) {
-            //     if (K->getParent() == nullptr) dbgs() << "NULLPTR\n";
-            //     dbgs() << *K << '\n';
-            // }
-            //
-            // dbgs() << "F: " << *F << '\n';
+
             for (auto [J, j] : mutInstructSet) {
-                // dbgs() << "======== try remove " << *J << "==========\n";
                 if (!j) {
                     bool result = tryRemoveInstruction(J, mutInstructSet, I);
-                    // if (!result)
-                    //     dbgs()
-                    //         << "======== not removed " << *J << "==========\n";
-                    // else
-                    //     dbgs() << "============ REMOVED =============\n";
                 }
-		if(mutInstructSet.empty()) break;
-                // dbgs() << "NEW mutSet \t" << mutInstructSet.size() << '\n';
-                // for (auto [L, l] : mutInstructSet) {
-                //     dbgs() << *L << '\n';
-                // }
+                if (mutInstructSet.empty()) break;
             }
-            // dbgs() << "OUT\n";
-            dbgs() << "newF\n" << *F << '\n';
-            dbgs() << *G << '\n';
+
             // TODO: After set the criterio will not be necessary check badref
             // anymore.
             // dbgs() << "S: \n";
@@ -221,6 +188,12 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
             //              }
             //          }
         }
+        dbgs() << "new F:\n" << *F << '\n';
+
+        /// These replace all Instruction with function calls.
+        /// TODO: Only replace instruction which will be criterion after
+        /// funcmerge
+
         // dbgs() << "Before: \n" << *F << '\n';
         // for (auto [I, callInst] : ItoCall) {
         //     I->replaceAllUsesWith(callInst);
