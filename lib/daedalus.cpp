@@ -51,6 +51,7 @@ bool tryRemoveInstruction(Instruction *I, std::set<Instruction *> &s,
     if (I != ini) I->eraseFromParent(), s.erase(I);
     return true;
 }
+
 bool meetCriterion(Function *F, Instruction *I) {
     if (F->getName() != "f") return 0;
     if (I->hasName() && (I->getName() != "add9")) return 0;
@@ -68,7 +69,6 @@ namespace Daedalus {
 PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
     std::set<Function *> FtoMap;
     std::vector<iSlice> allSlices;
-    // std::map<Instruction *, Function *> allSlices;
     for (Function &F : M.getFunctionList()) FtoMap.insert(&F);
 
     std::unique_ptr<Module> module =
@@ -99,14 +99,17 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
         dbgs() << "new F:\n" << *F << '\n';
     }
     // TODO: Try to merge, if cant merge, delete the functions.
-    // let on allSlices, only the slice that is worth to merge.
+    // > let on allSlices, only the slice that is worth to merge.
     // ...
     //
     //
     //
+    
 
     // TODO: Substitute on original func
     // Check instruction with attribute and
+    
+    
 
     module->print(dbgs(), nullptr);
 
