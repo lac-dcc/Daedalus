@@ -290,11 +290,11 @@ void ProgramSlice::printSlice() {
 
 /// Print original and sliced function. Used for debugging.
 void ProgramSlice::printFunctions(Function *F) {
-    LLVM_DEBUG(errs() << "\n\n ==== Slicing instruction: [" << *_initial
+    dbgs() << "\n\n ==== Slicing instruction: [" << *_initial
                       << "] in function: " << _parentFunction->getName()
                       << " with size " << _parentFunction->size() << " ====\n"
                       << "\n======== SLICED FUNCTION ==========\n"
-                      << *F;);
+                      << *F;
 }
 
 /// Computes the attractor blocks (first dominator) for each basic block in the
@@ -555,8 +555,8 @@ bool ProgramSlice::canOutline() {
         }
     }
 
-    if (_instsInSlice.size() == 1) {
-        errs() << "Not outlined, Insufficient Numbers os instruction to "
+    if (_instsInSlice.size() <= 1) {
+        dbgs() << "Not outlined, Insufficient Numbers os instruction to "
                   "outline! \n";
         return false;
     }
@@ -833,32 +833,6 @@ Function* ProgramSlice::outline() {
     replaceArgs(F);
     verifyFunction(*F);
     printFunctions(F);
-    dbgs() << *F << '\n';
-
-
-    // TODO: Remove instructions from slices ?
-    // Remove from parent
-    // dbgs() << "del insts: \n";
- //    for(BasicBlock &BB: *_parentFunction){
-	// for(Instruction &origInst: BB){
-	//     origInst.print(dbgs() << "\n");
-	//     // origInst.eraseFromParent();
-	// }
- //    }
- //    Function *H = _initial->getParent()->getParent();
- //    for(Instruction &I: instructions(F)){
-	// for(const Instruction *I2: _instsInSlice){
-	//     dbgs() << *I2 << "\n";
-	//     for(auto *K: I2->users()){
-	// 	dbgs() << "\t - " << *K << "\n";
-	// 	const Instruction *M = dyn_cast<Instruction>(K);
-	// 	if(!M || _instsInSlice.count(M)) continue;
-	// 	if(I.getName() == M->getName()){
-	// 	    recursiveRemoveUses(&I);
-	// 	}
-	//     }
-	// }
- //    }
     return F;
 }
 

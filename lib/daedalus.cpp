@@ -9,6 +9,7 @@
 #include "llvm/IR/PassManager.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/NativeFormatting.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Transforms/Utils/ValueMapper.h"
 #include <memory>
@@ -18,8 +19,8 @@ using namespace llvm;
 
 #define DEBUG_TYPE "Daedalus"
 
+// These Instructions types will not be a slice criterion.
 bool canSliceInstrType(Instruction &I) {
-    // These Instruction will not be a slice criterion.
     if (isa<BranchInst>(I)) return false; // Branch Instruction have badref
     if (isa<ReturnInst>(I)) return false;
     if (isa<AllocaInst>(I)) return false; // No needed
@@ -28,23 +29,25 @@ bool canSliceInstrType(Instruction &I) {
     if (isa<StoreInst>(I)) return false;
     return true;
 }
-// if number of remove instructions is < total instructial / 2 => not worth ? is
-// this true, after merge?
-bool tryRemoveInstruction(Instruction *I, std::map<Instruction *, bool> &s,
+
+// Can be removed, if its on slice instruction set AND all
+// uses can be removed,
+bool tryRemoveInstruction(Instruction *I, std::set<Instruction *> &s,
+                          std::map<Instruction *, bool> &instMap,
                           Instruction *ini) {
     if (s.find(I) == s.end()) {
         return false;
     }
-    if (s[I]) return true;
+    if (instMap[I]) return true;
     StringRef Iname = I->getName();
     for (auto U : I->users()) {
         if (Instruction *u = dyn_cast<Instruction>(U))
-            if (!tryRemoveInstruction(u, s, ini)) {
+            if (!tryRemoveInstruction(u, s, instMap, ini)) {
                 return false;
             }
         if (I->users().empty()) break;
     }
-    s[I] = true;
+    instMap[I] = true;
     if (I != ini) I->eraseFromParent(), s.erase(I);
     return true;
 }
@@ -55,17 +58,20 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
     std::unordered_map<Instruction *, Function *> instr_Func;
 
     std::set<Function *> FtoMap;
+    std::set<Function *> allSlices;
     for (Function &F : M.getFunctionList()) FtoMap.insert(&F);
 
     std::unique_ptr<Module> module =
         std::make_unique<Module>("New_" + M.getName().str(), M.getContext());
+
+
     for (Function *F : FtoMap) {
 
         PostDominatorTree PDT;
         PDT.recalculate(*F);
 
-        std::set<Instruction *> s;
-        for (Instruction &I : instructions(F)) s.insert(&I);
+        std::set<Instruction *> S;
+        for (Instruction &I : instructions(F)) S.insert(&I);
 
         /// To replace all uses of I with the correpondent call
         std::map<Instruction *, CallInst *> ItoCall;
@@ -74,17 +80,17 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
         // TODO: Reoorganize everythign:
         // -- [ ] Set slice criterios for slices
         // -- [ ] Modularize search
-        // -- [ ] Remove mainFlag
-        bool mainFlag = 0;
-        for (Instruction *I : s) {
+        for (Instruction *I : S) {
             if (!canSliceInstrType(*I)) continue;
-            if (mainFlag) break;
-            // if(F->getName() != "main") continue;
-            if (I->getName() != "add9") continue; // TODO: define a criterio
-            mainFlag = true;
+            // if (F->getName() != "main") continue;
+            // if (I->hasName() &&
+            //     (I->getName() != "add9" && I->getName() != "mul8"))
+            //     continue; // TODO: define a criterio
 
+	    if(I->getName() == "add9") dbgs() << "INADD\n";
             ProgramSlice ps = ProgramSlice(*I, *F, PDT);
             if (!ps.canOutline()) continue;
+	    dbgs() << "PASS ADD\n";
 
             Function *G = ps.outline();
             SmallVector<Value *> v = ps.getOrigFunctionArgs();
@@ -98,9 +104,11 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
                 auto it = ArgtoArgcall.find(e);
                 if (it != ArgtoArgcall.end()) e = it->second;
             }
+
+            // TODO: commnet
             for (auto &e : v) {
                 bool flag = 0;
-                for (Instruction *K : s) {
+                for (Instruction *K : S) {
                     if (e->getName() == K->getName()) {
                         arr.push_back(K);
                         flag = 1;
@@ -117,6 +125,7 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
             callInst->moveAfter(I);
             ItoCall[I] = callInst;
 
+            // TODO: commnet
             Argument *arg = new Argument(I->getType(), I->getName());
             std::shared_ptr<Argument> arg3 =
                 std::make_shared<Argument>(I->getType(), I->getName());
@@ -125,68 +134,43 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
             ArgtoArgcall[arg] = argcall;
             clearMemoryArgs.push_back(arg);
 
-            // TODO: Can be removed, if its on slice instruction set AND all
-            // uses can be removed,
-            //
-            // dbgs() << "USES\n";
-            // for (auto K : I->users()) {
-            //     auto L = dyn_cast<Instruction>(K);
-            //     dbgs() << *L << '\n';
-            // }
-
             I->replaceAllUsesWith(callInst);
-            I->eraseFromParent();
-            s.erase(I);
+            // I->eraseFromParent();
+            // S.erase(I);
 
-            auto K = ps.getInstructionInSlice();
-            std::map<Instruction *, bool> mutInstructSet;
-            for (auto &I : K)
-                for (auto J : s)
-                    if (I == J) mutInstructSet.insert({J, false});
-
-            for (auto [J, j] : mutInstructSet) {
-                if (!j) {
-                    bool result = tryRemoveInstruction(J, mutInstructSet, I);
-                }
-                if (mutInstructSet.empty()) break;
-            }
-
-            // TODO: After set the criterio will not be necessary check badref
-            // anymore.
-            // dbgs() << "S: \n";
-            // for (auto [J, j] : mutInstructSet) {
-            //     if (j) {
-            //         dbgs() << "BADREF\n";
-            //         s.erase(J);
-            //     } else
-            //         dbgs() << *J << '\n';
+            // std::set<const Instruction *> constOriginalInstructions =
+            //     ps.getInstructionInSlice();
+            //
+            // // Fast check if Instrction was removed, if it is, it must to be
+            // // erase from s-set which we are interation over.
+            // // TODO: This will not be necessary anymore after we have a
+            // // criterion, cause we gonna iterate only over the instructions
+            // // which will be an criterion, and all these will be removed.
+            // std::map<Instruction *, bool> mutInstMap;
+            // std::set<Instruction *> mutInstSet;
+            //
+            // // Make a mutable reference to the instruction on original function.
+            // for (auto &I : constOriginalInstructions) {
+            //     for (auto J : S)
+            //         if (I == J) {
+            //             mutInstMap.insert({J, false});
+            //             mutInstSet.insert(J);
+            //         }
             // }
-
-            //          for (auto X : K) {
-            //              dbgs() << "Instruction: " << *X << '\n';
-            //              bool flag = false;
-            //              dbgs() << "Usos:\n";
-            //              for (auto *x : X->users()) {
-            //                  dbgs() << '\t' << *x << '\n';
-            //                  /// If the use of instruction is not in the set
-            //                  of
-            //                  /// instruction of the slice, so we cant remove
-            //                  it! if (const Instruction *Kx =
-            //                  dyn_cast<Instruction>(x)) {
-            //                      if (K.find(Kx) == K.end()) {
-            //                          flag = true;
-            //                          break;
-            //                      }
-            //                  }
-            //              }
-            //              if (!flag) {
-            //    for(auto &e: s){
-            // if(e == X){
-            //     // e->eraseFromParent();
+            //
+            // for (auto [J, isRemoved] : mutInstMap) {
+            //     if (!isRemoved)
+            //         tryRemoveInstruction(J, mutInstSet, mutInstMap, I);
+            //     if (mutInstMap.empty()) break;
             // }
-            //    }
-            //              }
-            //          }
+            //
+            // // If instructionn was removed, erase it from the the iteration
+            // // set.
+            // for (auto J : S)
+            //     if (mutInstMap[J]) S.erase(J);
+            // dbgs() << *F << '\n';
+            // dbgs() << "set S: " << S.size() << '\n';
+            // for (auto J : S) dbgs() << '\t' << *J << '\n';
         }
         dbgs() << "new F:\n" << *F << '\n';
 
@@ -199,9 +183,8 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
         //     I->replaceAllUsesWith(callInst);
         //     I->eraseFromParent();
         // }
-        // dbgs() << "After: \n" << *F << '\n';
-        // for (auto [e, f] : ArgtoArgcall) delete (f);
-        // for (auto e : clearMemoryArgs) delete e;
+        for (auto [e, f] : ArgtoArgcall) delete (f);
+        for (auto e : clearMemoryArgs) delete e;
     }
     module->print(dbgs(), nullptr);
 

@@ -6,33 +6,46 @@ target triple = "x86_64-unknown-linux-gnu"
 ; Function Attrs: noinline nounwind uwtable
 define dso_local i32 @f(i32 noundef %arg) #0 {
 entry:
-  %add91 = call i32 @_wyvern_slice_f_add9_879585236(i32 %arg)
-  ret i32 %add91
+  %mul = mul nsw i32 %arg, %arg
+  %mul1 = mul nsw i32 %mul, 2
+  %mul11 = call i32 @_wyvern_slice_f_mul1_935197057(i32 %arg)
+  %mul2 = mul nsw i32 %mul11, 2
+  %mul3 = mul nsw i32 %mul2, 2
+  %mul4 = mul nsw i32 %mul3, 2
+  %mul5 = mul nsw i32 %mul4, 2
+  %mul6 = mul nsw i32 %mul5, 2
+  %mul7 = mul nsw i32 %mul6, 2
+  %add = add nsw i32 %mul7, 5
+  %mul8 = mul nsw i32 2, %add
+  %add9 = add nsw i32 %mul8, 2
+  ret i32 %add9
 }
 
 ; Function Attrs: noinline nounwind uwtable
 define dso_local i32 @main(i32 noundef %argc, ptr noundef %argv) #0 {
 entry:
-  %add91 = call i32 @_wyvern_slice_f_add9_879585236(i32 %argc)
+  %mul = mul nsw i32 %argc, %argc
+  %mul1 = mul nsw i32 %mul, 2
+  %mul11 = call i32 @_wyvern_slice_f_mul1_935197057(i32 %argc)
+  %mul2 = mul nsw i32 %mul11, 2
+  %mul3 = mul nsw i32 %mul2, 2
+  %mul4 = mul nsw i32 %mul3, 2
+  %mul5 = mul nsw i32 %mul4, 2
+  %mul6 = mul nsw i32 %mul5, 2
+  %mul7 = mul nsw i32 %mul6, 2
+  %add = add nsw i32 %mul7, 5
+  %mul8 = mul nsw i32 2, %add
+  %add9 = add nsw i32 %mul8, 2
   %call = call i32 @f(i32 noundef 2)
   %sub = sub nsw i32 %call, 6
   ret i32 0
 }
 
-define internal i32 @_wyvern_slice_f_add9_879585236(i32 %arg) #1 {
+define internal i32 @_wyvern_slice_f_mul1_935197057(i32 %arg) #1 {
 sliceclone_entry:
   %0 = mul nsw i32 %arg, %arg
   %1 = mul nsw i32 %0, 2
-  %2 = mul nsw i32 %1, 2
-  %3 = mul nsw i32 %2, 2
-  %4 = mul nsw i32 %3, 2
-  %5 = mul nsw i32 %4, 2
-  %6 = mul nsw i32 %5, 2
-  %7 = mul nsw i32 %6, 2
-  %8 = add nsw i32 %7, 5
-  %9 = mul nsw i32 2, %8
-  %10 = add nsw i32 %9, 2
-  ret i32 %10
+  ret i32 %1
 }
 
 attributes #0 = { noinline nounwind uwtable "frame-pointer"="all" "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
