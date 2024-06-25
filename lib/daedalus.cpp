@@ -51,6 +51,13 @@ bool tryRemoveInstruction(Instruction *I, std::set<Instruction *> &s,
     if (I != ini) I->eraseFromParent(), s.erase(I);
     return true;
 }
+
+struct iSlice {
+    Instruction *I;
+    Function *F;
+    Instruction *iCall;
+};
+
 namespace Daedalus {
 
 PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
@@ -58,7 +65,8 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
     std::unordered_map<Instruction *, Function *> instr_Func;
 
     std::set<Function *> FtoMap;
-    std::set<Function *> allSlices;
+    std::vector<iSlice> allSlices;
+    // std::map<Instruction *, Function *> allSlices;
     for (Function &F : M.getFunctionList()) FtoMap.insert(&F);
 
     std::unique_ptr<Module> module =
@@ -82,18 +90,19 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
         // -- [ ] Modularize search
         for (Instruction *I : S) {
             if (!canSliceInstrType(*I)) continue;
-            // if (F->getName() != "main") continue;
+            // if (F->getName() != "f") continue;
             // if (I->hasName() &&
-            //     (I->getName() != "add9" && I->getName() != "mul8"))
-            //     continue; // TODO: define a criterio
+            //     (I->getName() != "add9"))
+                // continue; // TODO: define a criterio
 
-	    if(I->getName() == "add9") dbgs() << "INADD\n";
             ProgramSlice ps = ProgramSlice(*I, *F, PDT);
             if (!ps.canOutline()) continue;
-	    dbgs() << "PASS ADD\n";
 
             Function *G = ps.outline();
             SmallVector<Value *> v = ps.getOrigFunctionArgs();
+	    dbgs() << "ARGS\n";
+	    for(auto e: v) dbgs() << *e << '\n';
+	    dbgs() << "========\n";
 
             /// Vector of Argument to pass to the callInst
             SmallVector<Value *> arr;
@@ -105,36 +114,44 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
                 if (it != ArgtoArgcall.end()) e = it->second;
             }
 
-            // TODO: commnet
-            for (auto &e : v) {
+            // Since slices clone instructions, we need the original instructions
+	    // to make a reference on the arguments of new instructions.
+            for (auto &newArg : v) {
                 bool flag = 0;
-                for (Instruction *K : S) {
-                    if (e->getName() == K->getName()) {
-                        arr.push_back(K);
+                for (Instruction *originalArg : S) {
+                    if (newArg->getName() == originalArg->getName()) {
+                        arr.push_back(originalArg);
                         flag = 1;
                         break;
                     }
                 }
-                if (!flag) arr.push_back(e);
+                if (!flag) arr.push_back(newArg);
             }
 
+	    // TODO: Move after slices maded
             // Create callInst to the outlined slice, and move it next to the
             // original Func
             CallInst *callInst =
-                CallInst::Create(G, arr, I->getName(), I->getParent());
+                CallInst::Create(G, v, I->getName(), I->getParent());
             callInst->moveAfter(I);
             ItoCall[I] = callInst;
 
-            // TODO: commnet
+	    // If this instruction is an argument from another instruction
+	    // substitute the argument with the new callInst Arg.
             Argument *arg = new Argument(I->getType(), I->getName());
-            std::shared_ptr<Argument> arg3 =
-                std::make_shared<Argument>(I->getType(), I->getName());
             Argument *argcall =
                 new Argument(callInst->getType(), callInst->getName());
             ArgtoArgcall[arg] = argcall;
             clearMemoryArgs.push_back(arg);
 
-            I->replaceAllUsesWith(callInst);
+	    iSlice slice = {I, G, callInst};
+	    allSlices.push_back(slice);
+
+	    // // TODO: This will not be necessary anymore after we have a
+	    // // criterion, cause we gonna iterate only over the instructions
+	    // // which will be an criterion, and all these will be removed.
+
+            // I->replaceAllUsesWith(callInst);
             // I->eraseFromParent();
             // S.erase(I);
 
@@ -143,9 +160,6 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
             //
             // // Fast check if Instrction was removed, if it is, it must to be
             // // erase from s-set which we are interation over.
-            // // TODO: This will not be necessary anymore after we have a
-            // // criterion, cause we gonna iterate only over the instructions
-            // // which will be an criterion, and all these will be removed.
             // std::map<Instruction *, bool> mutInstMap;
             // std::set<Instruction *> mutInstSet;
             //
@@ -186,6 +200,11 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
         for (auto [e, f] : ArgtoArgcall) delete (f);
         for (auto e : clearMemoryArgs) delete e;
     }
+    // TODO: Try to merge, if cant merge, delete the functions.
+    // Check instruction with attribute and 
+
+
+
     module->print(dbgs(), nullptr);
 
     return PreservedAnalyses::none();
