@@ -815,8 +815,8 @@ Function* ProgramSlice::outline() {
     // TODO: maybe not worth to add. Can i guarantee willReturn for instance?
     AttrBuilder builder(_parentFunction->getContext());
     // builder.addAttribute(Attribute::ReadOnly);
-    // builder.addAttribute(Attribute::NoUnwind);
-    // builder.addAttribute(Attribute::WillReturn);
+    builder.addAttribute(Attribute::NoUnwind);
+    builder.addAttribute(Attribute::WillReturn);
     builder.addAttribute("Daedalus_Slice");
     F->addFnAttrs(builder);
     F->setLinkage(GlobalValue::LinkageTypes::InternalLinkage);
@@ -836,6 +836,6 @@ Function* ProgramSlice::outline() {
     return F;
 }
 
-std::set<const Instruction *> ProgramSlice::getInstructionInSlice(){
-    return _instsInSlice;
+std::map<Instruction *, Instruction *> ProgramSlice::getInstructionInSlice(){
+    return _Imap;
 }
