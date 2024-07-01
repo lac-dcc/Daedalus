@@ -33,7 +33,7 @@ public:
   /// lazification.
   StructType *getThunkStructType(bool memo = false);
 
-  std::set<const Instruction *> getInstructionInSlice();
+  std::map<Instruction *, Instruction *> getInstructionInSlice();
 
   /// Returns the delegate function resulted from outlining the slice.
   Function * outline();
