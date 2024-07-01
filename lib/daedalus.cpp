@@ -39,46 +39,45 @@ enum instState { UNVISITED, VISITED, DELETED };
 bool tryRemoveInstruction(Instruction *I, std::set<Instruction *> &s,
                           std::map<Instruction *, instState> &instMap,
                           Instruction *ini) {
-    dbgs() << "Removing:\t" << *I << '\n';
+    StringRef Iname = I->getName();
+    dbgs() << Iname << '\n';
+    dbgs() << *I << '\n';
     if (!I || instMap[I] == DELETED) return true;
     if (instMap[I] == VISITED) {
-        dbgs() << "replace\n";
         // I->replaceAllUsesWith(UndefValue::get(I->getType()));
-        dbgs() << "uses\n";
-        for (auto U : I->users()) {
-            dbgs() << '\t' << *U << '\n';
-        }
-        dbgs() << "END\n";
-        return true;
+        return false;
     }
     instMap[I] = VISITED;
     if (s.find(I) == s.end() || I->isTerminator()) return false;
 
-    StringRef Iname = I->getName();
-    for (auto U : I->users()) {
-	dbgs() << "User: " << *U << '\n';
-        if (!U) continue;
+    std::set<User *> allUsers;
+    for(auto U: I->users()) allUsers.insert(U);
+
+    for (auto U : allUsers) {
+	dbgs() << "NEW\n";
+        // if (U.getParent() == nullptr) continue;
+	if(U == nullptr){
+	    dbgs() << "NULL\n";
+	    if (I->users().empty() || allUsers.empty()) break;
+	    dbgs() << allUsers.size() <<"\n";
+	    continue;
+	};
         if (Instruction *u = dyn_cast<Instruction>(U)) {
+	    dbgs() << "INST\n";
+	    /// If cant remove one of its users, then cant remove it as well.
             if (!tryRemoveInstruction(u, s, instMap, ini)) {
                 return false;
             }
         }
-	dbgs() << "===\nuses\t";
-	dbgs() << I->getNumUses() << '\n';
-	for (auto k : I->users()) {
-	    dbgs() << '\t' << *k << '\n';
-	}
+	allUsers.erase(U);
         if (I->users().empty()) break;
     }
-    dbgs() << *I << " will be removed!\n";
-
     if (I != ini) {
         s.erase(I);
         I->replaceAllUsesWith(UndefValue::get(I->getType()));
         I->eraseFromParent();
         instMap[I] = DELETED;
     }
-    dbgs() << "was removed!\n";
     return true;
 }
 
@@ -180,6 +179,7 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
     // If it is worth to merge, then substitute the original instruction with
     // the corresponding function call, and removed unsed instructions from
     // original function.
+
     for (auto IS : allSlices) {
         auto [I, F, args, origInst, wasRemoved] = IS;
         if (wasRemoved) continue;
@@ -202,6 +202,11 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
             mutInstMap[inst] = UNVISITED;
             mutSet.insert(inst);
         }
+        dbgs() << "Instruction to remove:\n";
+        for (auto IS : mutSet) {
+            dbgs() << *IS << '\n';
+        }
+        dbgs() << "END\n";
         mutInstMap[I] = VISITED;
         for (auto [J, isRemoved] : mutInstMap) {
             if (!isRemoved) tryRemoveInstruction(J, mutSet, mutInstMap, I);
