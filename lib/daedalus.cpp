@@ -40,12 +40,10 @@ bool tryRemoveInstruction(Instruction *I, std::set<Instruction *> &s,
                           std::map<Instruction *, instState> &instMap,
                           Instruction *ini) {
     StringRef Iname = I->getName();
-    dbgs() << Iname << '\n';
-    dbgs() << *I << '\n';
     if (!I || instMap[I] == DELETED) return true;
     if (instMap[I] == VISITED) {
         // I->replaceAllUsesWith(UndefValue::get(I->getType()));
-        return false;
+        return true;
     }
     instMap[I] = VISITED;
     if (s.find(I) == s.end() || I->isTerminator()) return false;
@@ -54,16 +52,12 @@ bool tryRemoveInstruction(Instruction *I, std::set<Instruction *> &s,
     for(auto U: I->users()) allUsers.insert(U);
 
     for (auto U : allUsers) {
-	dbgs() << "NEW\n";
         // if (U.getParent() == nullptr) continue;
 	if(U == nullptr){
-	    dbgs() << "NULL\n";
 	    if (I->users().empty() || allUsers.empty()) break;
-	    dbgs() << allUsers.size() <<"\n";
 	    continue;
 	};
         if (Instruction *u = dyn_cast<Instruction>(U)) {
-	    dbgs() << "INST\n";
 	    /// If cant remove one of its users, then cant remove it as well.
             if (!tryRemoveInstruction(u, s, instMap, ini)) {
                 return false;
@@ -102,6 +96,7 @@ bool canProgramSlice(Instruction *I) {
 }
 
 bool meetCriterion(Function *F, Instruction *I) {
+    return (I->getName() == "a.0.lcssa");
     for (auto &BB : *F) {
         Instruction *terminator = BB.getTerminator();
         if (!terminator) {
@@ -147,7 +142,7 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
             if (!canSliceInstrType(*I)) continue;
             if (!canProgramSlice(I)) continue;
             if (!meetCriterion(F, I)) continue;
-            dbgs() << "I: \t" << *I << '\n';
+            dbgs() << "I: \t" << I->getName() << '\n';
 
             ProgramSlice ps = ProgramSlice(*I, *F, PDT);
             if (!ps.canOutline()) continue;
