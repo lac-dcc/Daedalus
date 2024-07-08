@@ -1,3 +1,9 @@
+/** 
+ *  @file   ProgramSlice.cpp
+ *  @brief  Daedalus' Program Slicer Source File
+ *  @author Compilers Lab (UFMG)
+ *  @date   2024-07-08
+ ***********************************************/
 #include "ProgramSlice.h"
 // #include "DebugUtils.h"
 
@@ -36,7 +42,17 @@
 
 using namespace llvm;
 
-/// Returns the block whose predicate should control the phi-functions in BB
+/**
+ * @brief Returns the block whose predicate should control the phi-functions in the given basic block.
+ * 
+ * @details This function determines the controlling block for the phi-functions in the specified basic block (BB).
+ * It traverses the dominator tree (DT) to find a block that does not dominate BB in the post-dominator tree (PDT).
+ * 
+ * @param BB The basic block for which to find the controlling block.
+ * @param DT The dominator tree.
+ * @param PDT The post-dominator tree.
+ * @return A pointer to the controlling basic block, or NULL if no such block is found.
+ */
 static const BasicBlock *getController(const BasicBlock *BB, DominatorTree &DT,
                                        PostDominatorTree &PDT) {
     const DomTreeNode *dom_node = DT.getNode(BB);
@@ -51,8 +67,16 @@ static const BasicBlock *getController(const BasicBlock *BB, DominatorTree &DT,
     return NULL;
 }
 
-/// Returns the predicate of the given basic block, which will be used to gate
-/// another basic block's phi-functions.
+/**
+ * @brief Returns the predicate of the given basic block, which will be used to gate another basic block's phi-functions.
+ * 
+ * @details This function retrieves the condition that will gate the phi-functions of another basic block.
+ * It examines the terminator instruction of the given basic block (BB) and extracts the condition from a conditional
+ * branch instruction or a switch instruction.
+ * 
+ * @param BB The basic block whose predicate is to be returned.
+ * @return A pointer to the condition value, or nullptr if no valid condition is found.
+ */
 static const Value *getGate(const BasicBlock *BB) {
     const Value *condition;
 
@@ -68,9 +92,17 @@ static const Value *getGate(const BasicBlock *BB) {
 
     return condition;
 }
-/// Computes the gates for all basic blocks in the slice. The data structure
-/// holding the gates data is a map of each basic block to a vector of its
-/// gates.
+
+/**
+ * @brief Computes the gates for all basic blocks in the slice.
+ * 
+ * @details This function calculates the gating conditions for each basic block in a function.
+ * It constructs a map where each basic block is associated with a vector of gating conditions.
+ * The gating conditions are derived from the dominator and post-dominator trees of the function.
+ * 
+ * @param F The function for which to compute the gates.
+ * @return An unordered map where each basic block is mapped to a vector of its gating conditions.
+ */
 static const std::unordered_map<const BasicBlock *, SmallVector<const Value *>>
 computeGates(Function &F) {
     std::unordered_map<const BasicBlock *, SmallVector<const Value *>> gates;
@@ -105,18 +137,34 @@ computeGates(Function &F) {
     return gates;
 }
 
-// PHI Nodes MUST to dominate the slice criteria. Otherwise it will be a
-// function argument
+/**
+ * @brief Determines if the given instruction post-dominates the slice criteria.
+ * 
+ * @details This function checks if the specified instruction post-dominates the slice criteria.
+ * PHI nodes must dominate the slice criteria, otherwise they will be considered as function arguments.
+ * 
+ * @param PDT The post-dominator tree.
+ * @param crit The slice criteria instruction.
+ * @param inst The instruction to check for post-domination.
+ * @return True if the instruction post-dominates the slice criteria, false otherwise.
+ */
 bool posDomCriteria(const PostDominatorTree &PDT, const Instruction *crit,
                     const Instruction *inst) {
     return (PDT.dominates(crit, inst));
 }
 
-/// Computes the backwards data dependences for the given instruction, to
-/// compute which instructions should be part of the slice. Using the
-/// phi-function gate information contained in gates, control dependencies can
-/// also be tracked as data dependences. Thus, this function is enough to
-/// compute all dependencies necessary to building a slice.
+/**
+ * @brief Computes the backwards data dependences for the given instruction.
+ * 
+ * @details This function determines which instructions should be part of the slice by computing the backwards data dependences 
+ * for the specified instruction. It uses phi-function gate information contained in the provided gates to track control dependencies 
+ * as data dependences. This comprehensive approach is sufficient to compute all dependencies necessary for building a slice.
+ * 
+ * @param I The instruction for which to compute data dependences.
+ * @param gates A map of basic blocks to their corresponding gating values.
+ * @param PDT The post-dominator tree.
+ * @return A tuple containing the set of basic blocks, the set of dependencies, the vector of phi-function arguments, and a boolean flag indicating if the criterion is a phi-node.
+ */
 static std::tuple<std::set<const BasicBlock *>, std::set<const Value *>,
                   std::vector<std::pair<Type *, StringRef>>, bool>
 get_data_dependences_for(
@@ -188,6 +236,19 @@ get_data_dependences_for(
     return std::make_tuple(BBs, deps, phiArguments, phiCrit);
 }
 
+
+/**
+ * @brief Constructs a ProgramSlice object.
+ *
+ * @details This constructor initializes a ProgramSlice object by computing the data and control dependencies of the given initial
+ * instruction within the context of the specified function and post-dominator tree. It sets up the necessary structures for
+ * representing the program slice, including the set of instructions in the slice, dependency arguments, phi-function types, and
+ * basic blocks in the slice. It also pre-computes struct types to avoid redundant type creation and computes attractor blocks.
+ *
+ * @param Initial The initial instruction to be sliced.
+ * @param F The function containing the initial instruction.
+ * @param PDT The post-dominator tree of the function.
+ */
 ProgramSlice::ProgramSlice(Instruction &Initial, Function &F,
                            PostDominatorTree &PDT)
     : _initial(&Initial), _parentFunction(&F) {
@@ -231,8 +292,17 @@ ProgramSlice::ProgramSlice(Instruction &Initial, Function &F,
     // LLVM_DEBUG(printSlice());
 }
 
-/// Computes the layout of the struct type that should be used to lazify
-/// instances of this delegate function.
+/**
+ * @brief Computes the layout of the struct type used to lazify instances of this delegate function.
+ *
+ * @details This function constructs and sets up the structure type that should be used to represent thunks (lazified instances)
+ * of the delegate function associated with this program slice. Depending on the `memo` parameter, it includes additional fields
+ * for memoization purposes, such as pointers to the delegate function, its return type, and a flag (if `memo` is true). It also
+ * includes types for dependency arguments used by the slice.
+ *
+ * @param memo Flag indicating whether to include memoization fields in the struct type.
+ * @return The computed StructType representing the thunk type for this program slice.
+ */
 StructType *ProgramSlice::computeStructType(bool memo) {
     Module *M = _initial->getParent()->getParent()->getParent();
     LLVMContext &Ctx = M->getContext();
@@ -260,6 +330,16 @@ StructType *ProgramSlice::computeStructType(bool memo) {
     return thunkStructType;
 }
 
+/**
+ * @brief Retrieves the struct type representing thunks (lazified instances) of this program slice's delegate function.
+ *
+ * @details This function returns either the memoized struct type (_memoizedThunkStructType) or the non-memoized struct type
+ * (_thunkStructType) based on the `memo` parameter. The struct type represents the layout used to lazify instances of the
+ * delegate function associated with this program slice.
+ *
+ * @param memo Flag indicating whether to retrieve the memoized struct type (`true`) or the non-memoized struct type (`false`).
+ * @return Pointer to the StructType representing the thunk type for this program slice.
+ */
 StructType *ProgramSlice::getThunkStructType(bool memo) {
     if (memo) {
         return _memoizedThunkStructType;
@@ -267,7 +347,13 @@ StructType *ProgramSlice::getThunkStructType(bool memo) {
     return _thunkStructType;
 }
 
-/// Prints the slice. Used for debugging.
+/**
+ * @brief Prints debugging information about the program slice.
+ *
+ * @details This function prints detailed information about the program slice, including the slicing instruction, the function
+ * it belongs to, the basic blocks in the slice, and the arguments used within the slice. This information is useful for debugging
+ * and understanding the composition of the program slice.
+ */
 void ProgramSlice::printSlice() {
     LLVM_DEBUG(dbgs() << "\n\n ==== Slicing instruction: [" << *_initial
                       << "] in function: " << _parentFunction->getName()
@@ -288,7 +374,15 @@ void ProgramSlice::printSlice() {
     LLVM_DEBUG(dbgs() << "============= \n\n");
 }
 
-/// Print original and sliced function. Used for debugging.
+/**
+ * @brief Prints the original and sliced functions for debugging purposes.
+ *
+ * @details This function prints debugging information about the original function from which the instruction is sliced,
+ * including the slicing instruction itself, the function it belongs to, and the size of the function. It also prints the
+ * sliced function provided as an argument `F`. This helps in understanding the context and effect of slicing on the function.
+ *
+ * @param F Pointer to the sliced function to be printed.
+ */
 void ProgramSlice::printFunctions(Function *F) {
     dbgs() << "\n\n ==== Slicing instruction: [" << *_initial
                       << "] in function: " << _parentFunction->getName()
@@ -297,9 +391,16 @@ void ProgramSlice::printFunctions(Function *F) {
                       << *F;
 }
 
-/// Computes the attractor blocks (first dominator) for each basic block in the
-/// original function. The map of basic blocks to their attractors is used to
-/// reroute control flow in the outlined delegate function.
+/**
+ * @brief Computes the attractor blocks (first dominator) for each basic block in the original function.
+ *
+ * @details This function calculates and stores the attractor blocks for each basic block in the original function `_parentFunction`.
+ * An attractor block is the immediate dominator (first dominator) of a basic block that controls the flow into the basic block.
+ * The computed map of basic blocks to their attractors is used to reroute control flow in the outlined delegate function.
+ * 
+ * @note The function assumes that `_BBsInSlice` contains the set of basic blocks that are part of the program slice.
+ * Post-dominator tree (`PDT`) is used to efficiently compute dominator information.
+ */
 void ProgramSlice::computeAttractorBlocks() {
     PostDominatorTree PDT;
     PDT.recalculate(*_parentFunction);
@@ -330,8 +431,17 @@ void ProgramSlice::computeAttractorBlocks() {
     _attractors = attractors;
 }
 
-/// Adds branches from immediate dominators which existed in the original
-/// function to the slice.
+/**
+ * @brief Adds branches from immediate dominators which existed in the original function to the slice.
+ *
+ * @details This function traverses the dominator tree starting from the current node `cur`. For each child node `child`,
+ * it recursively adds branches to the slice if both `child` and its parent are part of `_BBsInSlice`, indicating they are
+ * part of the program slice. It uses `_origToNewBBmap` to map original basic blocks to their corresponding new blocks in the slice.
+ *
+ * @param cur The current node in the dominator tree.
+ * @param parent The parent node in the dominator tree.
+ * @param visited Set of visited dominator tree nodes to avoid reprocessing.
+ */
 void ProgramSlice::addDomBranches(DomTreeNode *cur, DomTreeNode *parent,
                                   std::set<DomTreeNode *> &visited) {
     if (_BBsInSlice.count(cur->getBlock())) {
@@ -353,10 +463,15 @@ void ProgramSlice::addDomBranches(DomTreeNode *cur, DomTreeNode *parent,
     }
 }
 
-/// When cloning PHINodes from the original function, some PHIs may have
-/// leftover incoming blocks which were not included in the slice. Therefore,
-/// these blocks are now invalid, as they are not predecessors of the new PHI.
-/// This function removes these.
+/**
+ * @brief Updates PHINodes after cloning to remove incoming blocks not included in the slice.
+ *
+ * @details When cloning PHINodes from the original function to the new function (slice),
+ * some PHINodes may have leftover incoming blocks which were not included in the slice.
+ * This function removes these incoming blocks from PHINodes, ensuring consistency in the slice.
+ *
+ * @param F The function whose PHINodes need to be updated.
+ */
 void updatePHINodes(Function *F) {
     for (BasicBlock &BB : *F) {
         std::set<BasicBlock *> preds(pred_begin(&BB), pred_end(&BB));
@@ -377,9 +492,15 @@ void updatePHINodes(Function *F) {
     }
 }
 
-/// Reroutes branches in the slice, to properly build the control flow of the
-/// delegate function, once instructions and basic blocks from the original
-/// function have been possibly removed.
+/**
+ * @brief Reroutes branches in the slice to properly build control flow in the delegate function.
+ *
+ * @details This function reroutes branches in the sliced function to ensure that the control flow
+ * of the delegate function is correctly constructed after instructions and basic blocks from the
+ * original function have possibly been removed during slicing.
+ *
+ * @param F The function representing the sliced version of the original function.
+ */
 void ProgramSlice::rerouteBranches(Function *F) {
     DominatorTree DT(*_parentFunction);
     std::set<DomTreeNode *> visited;
@@ -525,6 +646,16 @@ void ProgramSlice::rerouteBranches(Function *F) {
     updatePHINodes(F);
 }
 
+/**
+ * @brief Checks if outlining the slice is feasible.
+ *
+ * @details Determines whether it is possible to outline the slice of code
+ * defined by `_instsInSlice` from the parent function `_parentFunction`.
+ * Checks include memory clobbering of allocas, presence of throwing
+ * instructions, sufficient number of instructions, and other criteria.
+ *
+ * @return true if outlining the slice is feasible, false otherwise.
+ */
 bool ProgramSlice::canOutline() {
     DominatorTree DT(*_parentFunction);
     LoopInfo LI = LoopInfo(DT);
@@ -616,6 +747,14 @@ bool ProgramSlice::canOutline() {
     return true;
 }
 
+/**
+ * @brief Retrieves the original function arguments as a SmallVector of Values.
+ *
+ * @details This function returns a SmallVector containing the original function arguments
+ * of the ProgramSlice instance.
+ *
+ * @return SmallVector<Value *> A vector containing the original function arguments.
+ */
 SmallVector<Value *> ProgramSlice::getOrigFunctionArgs() {
     SmallVector<Value *> args;
     for (auto &arg : _depArgs) {
@@ -624,9 +763,14 @@ SmallVector<Value *> ProgramSlice::getOrigFunctionArgs() {
     return args;
 }
 
-/// Inserts a new BasicBlock in Function @param F, corresponding
-/// to the @param originalBB from the original function being
-/// sliced.
+/**
+ * @brief Inserts a new BasicBlock in Function F corresponding to the originalBB from the original function being sliced.
+ *
+ * @details This function creates a new BasicBlock in the specified Function F, named after the original BasicBlock originalBB from the original function that is being sliced.
+ *
+ * @param originalBB The original BasicBlock from the original function to be sliced.
+ * @param F The Function where the new BasicBlock will be inserted.
+ */
 void ProgramSlice::insertNewBB(const BasicBlock *originalBB, Function *F) {
     auto originalName = originalBB->getName();
     std::string newBBName = "sliceclone_" + originalName.str();
@@ -636,17 +780,26 @@ void ProgramSlice::insertNewBB(const BasicBlock *originalBB, Function *F) {
     _newToOrigBBmap.insert(std::make_pair(newBB, originalBB));
 }
 
-/// Populates function @param F with BasicBlocks, corresponding
-/// to the BBs in the original function being sliced which
-/// contained instructions included in the slice.
+/**
+ * @brief Populates function F with BasicBlocks corresponding to the BBs in the original function being sliced which contained instructions included in the slice.
+ *
+ * @details This function iterates over the BasicBlocks (_BBsInSlice) that are part of the slice and inserts new BasicBlocks with corresponding mappings into the specified Function F.
+ *
+ * @param F The Function where the new BasicBlocks will be inserted.
+ */
 void ProgramSlice::populateFunctionWithBBs(Function *F) {
     for (const BasicBlock *BB : _BBsInSlice) {
         insertNewBB(BB, F);
     }
 }
 
-/// Adds slice instructions to function @param F, corresponding
-/// to instructions in the original function.
+/**
+ * @brief Adds slice instructions to function F, corresponding to instructions in the original function.
+ *
+ * @details This function iterates over all instructions in the original function (_parentFunction), checking if each instruction is included in the slice (_instsInSlice). If an instruction is part of the slice, a corresponding cloned instruction is added to the corresponding BasicBlock in function F.
+ *
+ * @param F The Function where the slice instructions will be populated.
+ */
 void ProgramSlice::populateBBsWithInsts(Function *F) {
     for (BasicBlock &BB : *_parentFunction) {
         for (Instruction &origInst : BB) {
@@ -661,9 +814,15 @@ void ProgramSlice::populateBBsWithInsts(Function *F) {
     }
 }
 
-/// Fixes the instruction/argument/BB uses in new function @param F,
-/// to use their corresponding versions in the sliced function, rather
-/// than the originals from whom they were cloned.
+/**
+ * @brief Fixes the instruction/argument/BB uses in new function F,
+ * to use their corresponding versions in the sliced function, rather
+ * than the originals from whom they were cloned.
+ *
+ * @details This function updates the uses of instructions, arguments, and basic blocks in the newly created function F. It replaces uses of original entities with their corresponding cloned entities from the slice (_Imap). For PHINodes, it updates incoming blocks to refer to the new basic blocks (_origToNewBBmap).
+ *
+ * @param F The Function where uses are reorganized to use cloned entities from the slice.
+ */
 void ProgramSlice::reorganizeUses(Function *F) {
     IRBuilder<> builder(F->getContext());
 
@@ -686,10 +845,19 @@ void ProgramSlice::reorganizeUses(Function *F) {
     }
 }
 
-/// Adds terminating branches to BasicBlocks in function @param F,
-/// for BBs whose branches were not included in the slice but
-/// which are necessary to replicate the control flow of the
-/// original function.
+/**
+ * @brief Adds terminating branches to BasicBlocks in function F,
+ * for BBs whose branches were not included in the slice but
+ * which are necessary to replicate the control flow of the
+ * original function.
+ *
+ * @details This function iterates through all BasicBlocks in the function F. If a BasicBlock
+ * does not already have a terminator instruction, it clones the corresponding
+ * terminator from the original BasicBlock (via _newToOrigBBmap) and inserts it
+ * into the BasicBlock in F.
+ *
+ * @param F The Function where missing terminators are added to replicate control flow.
+ */
 void ProgramSlice::addMissingTerminators(Function *F) {
     for (BasicBlock &BB : *F) {
         if (BB.getTerminator() == nullptr) {
@@ -702,11 +870,19 @@ void ProgramSlice::addMissingTerminators(Function *F) {
     }
 }
 
-/// Reorders basic blocks in the new function @param F, to make
-/// sure that the sliced function's entry block (the only one
-/// with no predecessors) is first in the layout. This is necessary
-/// because LLVM assumes the first block of a function is always its
-/// entry block.
+/**
+ * @brief Reorders basic blocks in the new function F, ensuring
+ * that the sliced function's entry block (the only one with no predecessors)
+ * is first in the layout. This is necessary because LLVM assumes the first
+ * block of a function is always its entry block.
+ *
+ * @details This function iterates through all BasicBlocks in the function F to find
+ * the one that has no predecessors, which is designated as the entry block
+ * of the sliced function. It then moves this block before the current entry
+ * block of F to adjust the layout.
+ *
+ * @param F The Function where basic blocks are reordered to place the entry block first.
+ */
 void ProgramSlice::reorderBlocks(Function *F) {
     BasicBlock *realEntry = nullptr;
     for (BasicBlock &BB : *F) {
@@ -717,8 +893,17 @@ void ProgramSlice::reorderBlocks(Function *F) {
     realEntry->moveBefore(&F->getEntryBlock());
 }
 
-/// Adjusting references between the function arguments and the operators
-/// of the Instructions
+/**
+ * @brief Adjusts references between the function arguments and the operands
+ * of the instructions in function F.
+ *
+ * @details This function iterates through all instructions in the function F. For each
+ * instruction, it iterates through its operands and compares their names with
+ * the names of the function arguments. If a match is found, it replaces the
+ * operand with the corresponding function argument.
+ *
+ * @param F The Function where references between arguments and instruction operands are adjusted.
+ */
 void ProgramSlice::replaceArgs(Function *F) {
     for (Instruction &I : instructions(F)) {
         for (int j = 0; j < I.getNumOperands(); ++j) {
@@ -731,8 +916,23 @@ void ProgramSlice::replaceArgs(Function *F) {
     };
 }
 
-/// Adds a return instruction to function @param F, which returns
-/// the value that is computed by the sliced function.
+/**
+ * @brief Adds a return instruction to function F, returning the computed value
+ * of the sliced function.
+ *
+ * @details This function inserts a return instruction into the exit block of function F.
+ * Depending on the type of the initial instruction (_initial), different return
+ * scenarios are handled:
+ * - If _initial is a ReturnInst, it creates a return instruction returning the
+ *   value computed by _initial.
+ * - If _initial is a CallInst, it checks if the called function has a void return
+ *   type; if so, it creates a return instruction with a nullptr return value.
+ * - If _phiCrit is set, it returns the argument corresponding to the phi instruction
+ *   criterion.
+ *
+ * @param F The Function where the return instruction is added.
+ * @return The newly created ReturnInst.
+ */
 ReturnInst *ProgramSlice::addReturnValue(Function *F) {
     BasicBlock *exit = _Imap[_initial]->getParent();
 
@@ -767,9 +967,18 @@ ReturnInst *ProgramSlice::addReturnValue(Function *F) {
                               exit);
 }
 
-/// Outlines the given slice into a standalone Function, which
-/// encapsulates the computation of the original value in
-/// regards to which the slice was created.
+/**
+ * @brief Outlines the given slice into a standalone Function.
+ *
+ * @details This function creates a new standalone function (delegate function) that encapsulates
+ * the computation of the original value with respect to which the slice was created.
+ * The delegate function is given a unique name to avoid naming conflicts, considering
+ * the original function and the initial instruction from which the slice was derived.
+ * The function type and arguments are derived from the dependencies (_depArgs) of the
+ * slice, and its return type is determined based on the type of the initial instruction.
+ *
+ * @return The newly created delegate Function that encapsulates the slice.
+ */
 Function* ProgramSlice::outline() {
     StructType *thunkStructType = getThunkStructType(false);
     PointerType *thunkStructPtrType = thunkStructType->getPointerTo();
@@ -836,6 +1045,17 @@ Function* ProgramSlice::outline() {
     return F;
 }
 
+/**
+ * @brief Retrieves the mapping of original instructions to their corresponding
+ *        instructions in the sliced function.
+ *
+ * @details This function returns a map where each key is an original instruction from the
+ * original function, and the corresponding value is the cloned instruction that
+ * exists in the sliced function.
+ *
+ * @return A map of original instructions to their corresponding instructions in
+ *         the sliced function.
+ */
 std::map<Instruction *, Instruction *> ProgramSlice::getInstructionInSlice(){
     return _Imap;
 }

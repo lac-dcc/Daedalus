@@ -1,3 +1,9 @@
+/** 
+ *  @file   DebugUtils.cpp
+ *  @brief  Daedalus' Debug Functions Source File
+ *  @author Compilers Lab (UFMG)
+ *  @date   2024-07-08
+ ***********************************************/
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/Instruction.h"
 
@@ -6,6 +12,17 @@
 
 namespace llvm {
 
+/**
+ * @brief Generates a call to the printf function and flushes the output buffer.
+ * 
+ * @details This function creates a call to the `printf` function using the given format string
+ * and arguments, and then calls `fflush` to ensure the output is written immediately.
+ * It leverages LLVM's `IRBuilder` to construct the necessary LLVM IR instructions.
+ * 
+ * @param fmt The format string to be used with `printf`.
+ * @param args A vector of LLVM values representing the arguments to be passed to `printf`.
+ * @param builder The LLVM IRBuilder used to generate the instructions.
+ */
 void generatePrintf(std::string_view fmt,
                            const std::vector<llvm::Value *> &args,
                            llvm::IRBuilder<> &builder) {
