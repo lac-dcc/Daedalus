@@ -24,7 +24,6 @@ for.inc:                                          ; preds = %for.body
 
 for.end:                                          ; preds = %for.cond
   %sum.0.lcssa = phi i32 [ %sum.0, %for.cond ]
-  %sum.0.lcssa1 = call i32 @_wyvern_slice_bar_sum.0.lcssa_216613573(i32 %x, i32 %N)
   ret i32 %sum.0.lcssa
 }
 
@@ -49,9 +48,7 @@ for.inc:                                          ; preds = %for.body
 
 for.end:                                          ; preds = %for.cond
   %sum.0.lcssa = phi i32 [ %sum.0, %for.cond ]
-  %sum.0.lcssa1 = call i32 @_wyvern_slice_bar_sum.0.lcssa_216613573(i32 %y, i32 %SIZE)
   %mul = mul nsw i32 %v, %sum.0.lcssa
-  %mul2 = call i32 @_wyvern_slice_bar_mul_335299988(i32 %y, i32 %SIZE, i32 %v)
   ret i32 %mul
 }
 
@@ -66,30 +63,32 @@ entry:
   ret i32 %add3
 }
 
-define internal i32 @_wyvern_slice_bar_sum.0.lcssa_216613573(i32 %y, i32 %SIZE) #1 {
+; Function Attrs: nounwind willreturn
+define internal i32 @_wyvern_slice_foo_sum.0.lcssa_596626377(i32 %x, i32 %N) #1 {
 sliceclone_entry:
   br label %sliceclone_for.cond
 
-sliceclone_for.cond:                              ; preds = %sliceclone_for.inc, %sliceclone_entry
-  %0 = phi i32 [ 0, %sliceclone_entry ], [ %4, %sliceclone_for.inc ]
-  %1 = phi i32 [ 0, %sliceclone_entry ], [ %3, %sliceclone_for.inc ]
-  %2 = icmp slt i32 %1, %SIZE
-  br i1 %2, label %sliceclone_for.body, label %sliceclone_for.end
-
 sliceclone_for.inc:                               ; preds = %sliceclone_for.body
-  %3 = add nsw i32 %1, 1
+  %0 = add nsw i32 %2, 1
   br label %sliceclone_for.cond
 
+sliceclone_for.cond:                              ; preds = %sliceclone_for.inc, %sliceclone_entry
+  %1 = phi i32 [ 0, %sliceclone_entry ], [ %4, %sliceclone_for.inc ]
+  %2 = phi i32 [ 0, %sliceclone_entry ], [ %0, %sliceclone_for.inc ]
+  %3 = icmp slt i32 %2, %N
+  br i1 %3, label %sliceclone_for.body, label %sliceclone_for.end
+
 sliceclone_for.body:                              ; preds = %sliceclone_for.cond
-  %4 = add nsw i32 %0, %y
+  %4 = add nsw i32 %1, %x
   br label %sliceclone_for.inc
 
 sliceclone_for.end:                               ; preds = %sliceclone_for.cond
-  %5 = phi i32 [ %0, %sliceclone_for.cond ]
+  %5 = phi i32 [ %1, %sliceclone_for.cond ]
   ret i32 %5
 }
 
-define internal i32 @_wyvern_slice_bar_mul_335299988(i32 %y, i32 %SIZE, i32 %v) #1 {
+; Function Attrs: nounwind willreturn
+define internal i32 @_wyvern_slice_bar_mul_493945839(i32 %y, i32 %SIZE, i32 %v) #1 {
 sliceclone_entry:
   br label %sliceclone_for.cond
 
@@ -114,7 +113,7 @@ sliceclone_for.end:                               ; preds = %sliceclone_for.cond
 }
 
 attributes #0 = { noinline nounwind uwtable "frame-pointer"="all" "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
-attributes #1 = { "Daedalus_Slice" }
+attributes #1 = { nounwind willreturn "Daedalus_Slice" }
 
 !llvm.module.flags = !{!0, !1, !2, !3, !4}
 !llvm.ident = !{!5}

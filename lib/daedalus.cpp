@@ -34,8 +34,8 @@ bool canSliceInstrType(Instruction &I) {
 
 enum instState { UNVISITED, VISITED, DELETED };
 
-// Can be removed, if its on slice instruction set AND all
-// uses can be removed,
+// Can be removed if: wasnt removed, its on slice instruction set AND all
+// uses can be removed.
 bool tryRemoveInstruction(Instruction *I, std::set<Instruction *> &s,
                           std::map<Instruction *, instState> &instMap,
                           Instruction *ini) {
@@ -49,21 +49,21 @@ bool tryRemoveInstruction(Instruction *I, std::set<Instruction *> &s,
     if (s.find(I) == s.end() || I->isTerminator()) return false;
 
     std::set<User *> allUsers;
-    for(auto U: I->users()) allUsers.insert(U);
+    for (auto U : I->users()) allUsers.insert(U);
 
     for (auto U : allUsers) {
         // if (U.getParent() == nullptr) continue;
-	if(U == nullptr){
-	    if (I->users().empty() || allUsers.empty()) break;
-	    continue;
-	};
+        if (U == nullptr) {
+            if (I->users().empty() || allUsers.empty()) break;
+            continue;
+        };
         if (Instruction *u = dyn_cast<Instruction>(U)) {
-	    /// If cant remove one of its users, then cant remove it as well.
+            /// If cant remove one of its users, then cant remove it as well.
             if (!tryRemoveInstruction(u, s, instMap, ini)) {
                 return false;
             }
         }
-	allUsers.erase(U);
+        allUsers.erase(U);
         if (I->users().empty()) break;
     }
     if (I != ini) {
@@ -95,20 +95,44 @@ bool canProgramSlice(Instruction *I) {
     return true;
 }
 
-bool meetCriterion(Function *F, Instruction *I) {
-    return (I->getName() == "a.0.lcssa");
+/* prob Not use anymore */
+// bool meetCriterion(Function *F, Instruction *I) {
+//     for (auto &BB : *F) {
+//         Instruction *terminator = BB.getTerminator();
+//         if (!terminator) {
+//             dbgs() << "not tem terminal\n";
+//             return false;
+//         }
+//         if (terminator->getNumOperands() == 0) return false; // void inst
+//         if (Instruction *inst = dyn_cast<ReturnInst>(terminator))
+//             for (auto &it : inst->operands())
+//                 if (I == it) return true;
+//     }
+//     return false;
+// }
+
+std::set<Instruction *> instSetMeetCriterion(Function *F) {
+    std::set<Instruction *> S;
     for (auto &BB : *F) {
-        Instruction *terminator = BB.getTerminator();
-        if (!terminator) {
-            dbgs() << "not tem terminal\n";
-            return false;
-        }
-        if (terminator->getNumOperands() == 0) return false; // void inst
-        if (Instruction *inst = dyn_cast<ReturnInst>(terminator))
-            for (auto &it : inst->operands())
-                if (I == it) return true;
+        Instruction *term = BB.getTerminator();
+        if (!term || term->getNumOperands() == 0) continue;
+        if (Instruction *retValue = dyn_cast<ReturnInst>(term))
+            for (auto &it : retValue->operands())
+                if (Instruction *Iit = dyn_cast<Instruction>(it)) S.insert(Iit);
     }
-    return false;
+    for (auto &BB : *F)
+        for (Instruction &I : BB)
+            if (isa<StoreInst>(I)) {
+                for (auto &p : I.operands())
+                    if (auto *Iit = dyn_cast<Instruction>(p)) S.insert(Iit);
+            }
+    // if (isa<BinaryOperator>(I)) {
+    //     S.insert(&I);
+    // }
+    // if(I.getName() == "add39"){
+    //  S.insert(&I);
+    // }
+    return S;
 }
 
 struct iSlice {
@@ -134,18 +158,27 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
         PostDominatorTree PDT;
         PDT.recalculate(*F);
 
-        std::set<Instruction *> S;
-        for (Instruction &I : instructions(F)) S.insert(&I);
+        // All instruction Set
+        std::set<Instruction *> R;
+        for (Instruction &I : instructions(F)) R.insert(&I);
+
+        // Criterion Set
+        std::set<Instruction *> S = instSetMeetCriterion(F);
+        // for (auto &e : S) dbgs() << *e << '\n';
 
         /// To replace all uses of I with the correpondent call
         for (Instruction *I : S) {
             if (!canSliceInstrType(*I)) continue;
             if (!canProgramSlice(I)) continue;
-            if (!meetCriterion(F, I)) continue;
-            dbgs() << "I: \t" << I->getName() << '\n';
+            dbgs() << "Instruction:\t" << I->getName() << "\t...\t";
 
+            dbgs() << "\033[31;1;4m";
             ProgramSlice ps = ProgramSlice(*I, *F, PDT);
-            if (!ps.canOutline()) continue;
+            if (!ps.canOutline()) {
+                dbgs() << "\033[0m";
+                continue;
+            }
+            dbgs() << "\033[0m";
 
             Function *G = ps.outline();
             SmallVector<Value *> funcArgs = ps.getOrigFunctionArgs();
@@ -161,6 +194,10 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
 
             iSlice slice = {I, G, funcArgs, originInstructionSet, false};
             allSlices.push_back(slice);
+
+            dbgs() << "\033[32;1;4m";
+            dbgs() << "outlined!\n";
+            dbgs() << "\033[0m";
         }
     }
     // TODO: Try to merge, if cant merge, delete the functions.
@@ -170,12 +207,13 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
     //
     //
 
-    dbgs() << "Removing inst\n";
+      dbgs() << "Removing inst\n";
     // If it is worth to merge, then substitute the original instruction with
     // the corresponding function call, and removed unsed instructions from
     // original function.
 
     for (auto IS : allSlices) {
+        // dbgs() << *IS.I << '\n';
         auto [I, F, args, origInst, wasRemoved] = IS;
         if (wasRemoved) continue;
 
@@ -197,11 +235,11 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
             mutInstMap[inst] = UNVISITED;
             mutSet.insert(inst);
         }
-        dbgs() << "Instruction to remove:\n";
-        for (auto IS : mutSet) {
-            dbgs() << *IS << '\n';
-        }
-        dbgs() << "END\n";
+        // dbgs() << "Instruction to remove:\n";
+        // for (auto IS : mutSet) {
+        //     dbgs() << *IS << '\n';
+        // }
+        // dbgs() << "END\n";
         mutInstMap[I] = VISITED;
         for (auto [J, isRemoved] : mutInstMap) {
             if (!isRemoved) tryRemoveInstruction(J, mutSet, mutInstMap, I);

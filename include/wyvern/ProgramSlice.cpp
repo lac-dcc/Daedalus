@@ -162,7 +162,6 @@ get_data_dependences_for(
                         Argument *arg =
                             new Argument(U->getType(), U->getName());
                         deps.insert(arg);
-                        dbgs() << "ARGS: " << *arg << '\n';
                         visited.insert(U);
                         continue;
                     }
@@ -562,14 +561,14 @@ bool ProgramSlice::canOutline() {
     }
 
     for (const Instruction *I : _instsInSlice) {
-        if (I->mayThrow()) {
+        if (I->mayThrow()) { // dep
             errs() << "Cannot outline slice because inst may throw: " << *I
                    << "\n";
             return false;
         }
 
         if (const CallBase *CB = dyn_cast<CallBase>(I)) {
-            if (!CB->getCalledFunction()) {
+            if (!CB->getCalledFunction()) { // dep
                 errs()
                     << "Cannot outline slice because instruction calls unknown "
                        "function: "
@@ -592,13 +591,6 @@ bool ProgramSlice::canOutline() {
             return false;
         }
     }
-
-    if (isa<AllocaInst>(_initial)) {
-        LLVM_DEBUG((dbgs() << "Cannot outline slice due to slicing criteria "
-                              "being an alloca!\n"));
-        return false;
-    }
-
     // LCSSA may insert PHINodes with only a single incoming block. In some
     // cases, these PHINodes can be added into the slice, but the conditional
     // for the loop that generated them is not. When eliminating the PHINode,
@@ -832,7 +824,7 @@ Function* ProgramSlice::outline() {
     reorderBlocks(F);
     replaceArgs(F);
     verifyFunction(*F);
-    printFunctions(F);
+    // printFunctions(F);
     return F;
 }
 

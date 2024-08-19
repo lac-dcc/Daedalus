@@ -1,7 +1,9 @@
-; ModuleID = 'tests/test22_F.ll'
-source_filename = "tests/test19.c"
+; ModuleID = 'test21.ll'
+source_filename = "test21.c"
 target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-unknown-linux-gnu"
+
+@.str = private unnamed_addr constant [4 x i8] c"%d\0A\00", align 1
 
 ; Function Attrs: noinline nounwind uwtable
 define dso_local i32 @main(i32 noundef %argc, ptr noundef %argv) #0 {
@@ -9,40 +11,29 @@ entry:
   br label %for.cond
 
 for.cond:                                         ; preds = %for.inc, %entry
-  %v1 = phi i32 [ 0, %entry ], [ %v2, %for.inc ]
-  %p0 = icmp slt i32 %v1, %argc
-  br i1 %p0, label %for.inc, label %for.end
+  %a.0 = phi i32 [ 0, %entry ], [ %add, %for.inc ]
+  %i.0 = phi i32 [ 0, %entry ], [ %inc, %for.inc ]
+  %cmp = icmp slt i32 %i.0, %argc
+  br i1 %cmp, label %for.body, label %for.end
 
-for.inc:                                          ; preds = %for.cond
-  %v2 = add nsw i32 %v1, 1
+for.body:                                         ; preds = %for.cond
+  %add = add nsw i32 %a.0, %i.0
+  br label %for.inc
+
+for.inc:                                          ; preds = %for.body
+  %inc = add nsw i32 %i.0, 1
   br label %for.cond, !llvm.loop !6
 
 for.end:                                          ; preds = %for.cond
-  %v3 = phi i32 [ %v1, %for.cond ]
-  ret i32 %v3
+  %a.0.lcssa = phi i32 [ %a.0, %for.cond ]
+  %call = call i32 (ptr, ...) @printf(ptr noundef @.str, i32 noundef %a.0.lcssa)
+  ret i32 0
 }
 
-; Function Attrs: nounwind willreturn
-define internal i32 @_wyvern_slice_main_v3_142273518(i32 %argc) #1 {
-sliceclone_entry:
-  br label %sliceclone_for.cond
-
-sliceclone_for.inc:                               ; preds = %sliceclone_for.cond
-  %0 = add nsw i32 %1, 1
-  br label %sliceclone_for.cond
-
-sliceclone_for.cond:                              ; preds = %sliceclone_for.inc, %sliceclone_entry
-  %1 = phi i32 [ 0, %sliceclone_entry ], [ %0, %sliceclone_for.inc ]
-  %2 = icmp slt i32 %1, %argc
-  br i1 %2, label %sliceclone_for.inc, label %sliceclone_for.end
-
-sliceclone_for.end:                               ; preds = %sliceclone_for.cond
-  %3 = phi i32 [ %1, %sliceclone_for.cond ]
-  ret i32 %3
-}
+declare i32 @printf(ptr noundef, ...) #1
 
 attributes #0 = { noinline nounwind uwtable "frame-pointer"="all" "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
-attributes #1 = { nounwind willreturn "Daedalus_Slice" }
+attributes #1 = { "frame-pointer"="all" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 
 !llvm.module.flags = !{!0, !1, !2, !3, !4}
 !llvm.ident = !{!5}

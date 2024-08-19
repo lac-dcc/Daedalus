@@ -9,19 +9,21 @@ entry:
   br label %for.cond
 
 for.cond:                                         ; preds = %for.inc, %entry
-  %p0 = icmp slt i32 undef, %argc
+  %v1 = phi i32 [ 0, %entry ], [ %v2, %for.inc ]
+  %p0 = icmp slt i32 %v1, %argc
   br i1 %p0, label %for.inc, label %for.end
 
 for.inc:                                          ; preds = %for.cond
+  %v2 = add nsw i32 %v1, 1
   br label %for.cond, !llvm.loop !6
 
 for.end:                                          ; preds = %for.cond
-  %v31 = call i32 @_wyvern_slice_main_v3_615902772(i32 %argc)
-  ret i32 undef
+  %v3 = phi i32 [ %v1, %for.cond ]
+  ret i32 %v3
 }
 
 ; Function Attrs: nounwind willreturn
-define internal i32 @_wyvern_slice_main_v3_615902772(i32 %argc) #1 {
+define internal i32 @_wyvern_slice_main_v3_142273518(i32 %argc) #1 {
 sliceclone_entry:
   br label %sliceclone_for.cond
 
