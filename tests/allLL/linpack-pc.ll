@@ -1,4 +1,4 @@
-; ModuleID = 'tests/linpack-pc_F.ll'
+; ModuleID = 'linpack-pc.ll'
 source_filename = "linpack-pc.c"
 target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-unknown-linux-gnu"
@@ -43,7 +43,7 @@ target triple = "x86_64-unknown-linux-gnu"
 ; Function Attrs: noinline nounwind uwtable
 define dso_local float @second() #0 {
 entry:
-  %call = call i64 @clock() #6
+  %call = call i64 @clock() #5
   %conv = sitofp i64 %call to float
   %div = fdiv float %conv, 1.000000e+06
   ret float %div
@@ -2254,31 +2254,12 @@ return:                                           ; preds = %for.end30, %for.end
 ; Function Attrs: nocallback nofree nosync nounwind speculatable willreturn memory(none)
 declare float @llvm.fmuladd.f32(float, float, float) #4
 
-; Function Attrs: nounwind willreturn
-define internal i32 @_wyvern_slice_matgen_add39_112292999(i32 %lda, i32 %i.2, i32 %j.1) #5 {
-sliceclone_for.body35:
-  %0 = mul nsw i32 %lda, %j.1
-  %1 = add nsw i32 %0, %i.2
-  ret i32 %1
-}
-
-; Function Attrs: nounwind willreturn
-define internal i32 @_wyvern_slice_dgesl_add39_802849984(i32 %lda, i32 %n, i32 %kb.0) #5 {
-sliceclone_for.body25:
-  %0 = add nsw i32 %kb.0, 1
-  %1 = sub nsw i32 %n, %0
-  %2 = mul nsw i32 %lda, %1
-  %3 = add nsw i32 %2, 0
-  ret i32 %3
-}
-
 attributes #0 = { noinline nounwind uwtable "frame-pointer"="all" "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 attributes #1 = { nounwind "frame-pointer"="all" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 attributes #2 = { nocallback nofree nounwind willreturn memory(argmem: write) }
 attributes #3 = { "frame-pointer"="all" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 attributes #4 = { nocallback nofree nosync nounwind speculatable willreturn memory(none) }
-attributes #5 = { nounwind willreturn "Daedalus_Slice" }
-attributes #6 = { nounwind }
+attributes #5 = { nounwind }
 
 !llvm.module.flags = !{!0, !1, !2, !3, !4}
 !llvm.ident = !{!5}

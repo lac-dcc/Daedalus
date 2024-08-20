@@ -1,7 +1,4 @@
 #include <stdio.h>
-
-
-
 int sliceAndDice(int s, int e, int r, int* num_elements) {
   int count = 0;
   int sum = 0;

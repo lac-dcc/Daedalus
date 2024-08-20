@@ -9,22 +9,19 @@ entry:
   br label %for.cond
 
 for.cond:                                         ; preds = %for.inc, %entry
-  %sum.0 = phi i32 [ 0, %entry ], [ %add, %for.inc ]
-  %i.0 = phi i32 [ 0, %entry ], [ %inc, %for.inc ]
+  %i.0 = phi i32 [ 0, %entry ], [ undef, %for.inc ]
   %cmp = icmp slt i32 %i.0, %N
   br i1 %cmp, label %for.body, label %for.end
 
 for.body:                                         ; preds = %for.cond
-  %add = add nsw i32 %sum.0, %x
   br label %for.inc
 
 for.inc:                                          ; preds = %for.body
-  %inc = add nsw i32 %i.0, 1
   br label %for.cond, !llvm.loop !6
 
 for.end:                                          ; preds = %for.cond
-  %sum.0.lcssa = phi i32 [ %sum.0, %for.cond ]
-  ret i32 %sum.0.lcssa
+  %sum.0.lcssa1 = call i32 @_wyvern_slice_foo_sum.0.lcssa_151467161(i32 %x, i32 %N)
+  ret i32 %sum.0.lcssa1
 }
 
 ; Function Attrs: noinline nounwind uwtable
@@ -33,23 +30,19 @@ entry:
   br label %for.cond
 
 for.cond:                                         ; preds = %for.inc, %entry
-  %sum.0 = phi i32 [ 0, %entry ], [ %add, %for.inc ]
-  %i.0 = phi i32 [ 0, %entry ], [ %inc, %for.inc ]
+  %i.0 = phi i32 [ 0, %entry ], [ undef, %for.inc ]
   %cmp = icmp slt i32 %i.0, %SIZE
   br i1 %cmp, label %for.body, label %for.end
 
 for.body:                                         ; preds = %for.cond
-  %add = add nsw i32 %sum.0, %y
   br label %for.inc
 
 for.inc:                                          ; preds = %for.body
-  %inc = add nsw i32 %i.0, 1
   br label %for.cond, !llvm.loop !8
 
 for.end:                                          ; preds = %for.cond
-  %sum.0.lcssa = phi i32 [ %sum.0, %for.cond ]
-  %mul = mul nsw i32 %v, %sum.0.lcssa
-  ret i32 %mul
+  %mul1 = call i32 @_wyvern_slice_bar_mul_121818992(i32 %y, i32 %SIZE, i32 %v)
+  ret i32 %mul1
 }
 
 ; Function Attrs: noinline nounwind uwtable
@@ -64,7 +57,7 @@ entry:
 }
 
 ; Function Attrs: nounwind willreturn
-define internal i32 @_wyvern_slice_foo_sum.0.lcssa_596626377(i32 %x, i32 %N) #1 {
+define internal i32 @_wyvern_slice_foo_sum.0.lcssa_151467161(i32 %x, i32 %N) #1 {
 sliceclone_entry:
   br label %sliceclone_for.cond
 
@@ -88,7 +81,7 @@ sliceclone_for.end:                               ; preds = %sliceclone_for.cond
 }
 
 ; Function Attrs: nounwind willreturn
-define internal i32 @_wyvern_slice_bar_mul_493945839(i32 %y, i32 %SIZE, i32 %v) #1 {
+define internal i32 @_wyvern_slice_bar_mul_121818992(i32 %y, i32 %SIZE, i32 %v) #1 {
 sliceclone_entry:
   br label %sliceclone_for.cond
 

@@ -166,6 +166,7 @@ get_data_dependences_for(
                         continue;
                     }
                 }
+		// Cannot have side effects.
                 visited.insert(U);
                 worklist.push(U);
             }

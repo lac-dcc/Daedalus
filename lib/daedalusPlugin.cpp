@@ -9,11 +9,18 @@ bool registerPipeline(StringRef Name, ModulePassManager &MPM,
     if (Name == "daedalus") {
 	MPM.addPass(createModuleToFunctionPassAdaptor(LCSSAPass()));
 	MPM.addPass(Daedalus::DaedalusPass());
+	// MPM.addPass(FuncMerge());
+	// MPM.addPass(Daedalus::Clean());
         return true;
     }
     return false;
 }
+/*
+slice -> rem -> merg -> inline
 
+slice -> merg -> rem
+ *
+ * */
 PassPluginLibraryInfo DaedalusPluginInfo() {
     return {LLVM_PLUGIN_API_VERSION, "Daedalus", LLVM_VERSION_STRING,
             [](PassBuilder &PB) {
