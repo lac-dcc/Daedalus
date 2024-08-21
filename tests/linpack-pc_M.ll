@@ -1,5 +1,5 @@
 ; ModuleID = 'tests/linpack-pc_F.ll'
-source_filename = "tests/linpack-pc.c"
+source_filename = "linpack-pc.c"
 target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-unknown-linux-gnu"
 
@@ -43,7 +43,7 @@ target triple = "x86_64-unknown-linux-gnu"
 ; Function Attrs: noinline nounwind uwtable
 define dso_local float @second() #0 {
 entry:
-  %call = call i64 @clock() #5
+  %call = call i64 @clock() #6
   %conv = sitofp i64 %call to float
   %div = fdiv float %conv, 1.000000e+06
   ret float %div
@@ -2254,12 +2254,429 @@ return:                                           ; preds = %for.end30, %for.end
 ; Function Attrs: nocallback nofree nosync nounwind speculatable willreturn memory(none)
 declare float @llvm.fmuladd.f32(float, float, float) #4
 
+; Function Attrs: nounwind willreturn
+define internal float @_wyvern_slice_main_add_862135109() #5 {
+sliceclone_entry:
+  %0 = load float, ptr @atime, align 16
+  %1 = load float, ptr getelementptr inbounds ([9 x [15 x float]], ptr @atime, i64 0, i64 1), align 4
+  %2 = fadd float %0, %1
+  ret float %2
+}
+
+; Function Attrs: nounwind willreturn
+define internal ptr @_wyvern_slice_main_arrayidx18_900431019() #5 {
+sliceclone_for.body:
+  %0 = load i32, ptr @main.i, align 4
+  %1 = sext i32 %0 to i64
+  %2 = getelementptr inbounds [200 x float], ptr @main.x, i64 0, i64 %1
+  ret ptr %2
+}
+
+; Function Attrs: nounwind willreturn
+define internal float @_wyvern_slice_main_fneg_557676911() #5 {
+sliceclone_for.body22:
+  %0 = load i32, ptr @main.i, align 4
+  %1 = sext i32 %0 to i64
+  %2 = getelementptr inbounds [200 x float], ptr @main.b, i64 0, i64 %1
+  %3 = load float, ptr %2, align 4
+  %4 = fneg float %3
+  ret float %4
+}
+
+; Function Attrs: nounwind willreturn
+define internal ptr @_wyvern_slice_main_arrayidx26_42013250() #5 {
+sliceclone_for.body22:
+  %0 = load i32, ptr @main.i, align 4
+  %1 = sext i32 %0 to i64
+  %2 = getelementptr inbounds [200 x float], ptr @main.b, i64 0, i64 %1
+  ret ptr %2
+}
+
+; Function Attrs: nounwind willreturn
+define internal ptr @_wyvern_slice_main_arrayidx174_767478712() #5 {
+sliceclone_for.end167:
+  %0 = load i32, ptr @main.j, align 4
+  %1 = sext i32 %0 to i64
+  %2 = getelementptr inbounds [15 x float], ptr @atime, i64 0, i64 %1
+  ret ptr %2
+}
+
+; Function Attrs: nounwind willreturn
+define internal float @_wyvern_slice_main_conv96_225566089() #5 {
+sliceclone_if.then:
+  %0 = load float, ptr getelementptr inbounds ([9 x [15 x float]], ptr @atime, i64 0, i64 3), align 4
+  %1 = fpext float %0 to double
+  %2 = fdiv double 2.000000e+00, %1
+  %3 = fptrunc double %2 to float
+  ret float %3
+}
+
+; Function Attrs: nounwind willreturn
+define internal float @_wyvern_slice_main_div97_327035670() #5 {
+sliceclone_entry:
+  %0 = load float, ptr @atime, align 16
+  %1 = load float, ptr getelementptr inbounds ([9 x [15 x float]], ptr @atime, i64 0, i64 1), align 4
+  %2 = fadd float %0, %1
+  br label %sliceclone_if.end
+
+sliceclone_if.end:                                ; preds = %sliceclone_entry
+  %3 = fdiv float %2, 0x3FACAC0840000000
+  ret float %3
+}
+
+; Function Attrs: nounwind willreturn
+define internal i32 @_wyvern_slice_main_inc106_997039285() #5 {
+sliceclone_for.inc105:
+  %0 = load i32, ptr @main.i, align 4
+  %1 = add nsw i32 %0, 1
+  ret i32 %1
+}
+
+; Function Attrs: nounwind willreturn
+define internal i32 @_wyvern_slice_main_mul140_952258250() #5 {
+sliceclone_if.then139:
+  %0 = load i32, ptr @main.ntimes, align 4
+  %1 = mul nsw i32 %0, 2
+  ret i32 %1
+}
+
+; Function Attrs: nounwind willreturn
+define internal ptr @_wyvern_slice_main_arrayidx188_843242304() #5 {
+sliceclone_for.end182:
+  %0 = load i32, ptr @main.j, align 4
+  %1 = sext i32 %0 to i64
+  %2 = getelementptr inbounds [15 x float], ptr getelementptr inbounds ([9 x [15 x float]], ptr @atime, i64 0, i64 1), i64 0, i64 %1
+  ret ptr %2
+}
+
+; Function Attrs: nounwind willreturn
+define internal float @_wyvern_slice_main_add193_229358166() #5 {
+sliceclone_for.end182:
+  %0 = load i32, ptr @main.j, align 4
+  %1 = sext i32 %0 to i64
+  %2 = getelementptr inbounds [15 x float], ptr @atime, i64 0, i64 %1
+  %3 = load float, ptr %2, align 4
+  %4 = load i32, ptr @main.j, align 4
+  %5 = sext i32 %4 to i64
+  %6 = getelementptr inbounds [15 x float], ptr getelementptr inbounds ([9 x [15 x float]], ptr @atime, i64 0, i64 1), i64 0, i64 %5
+  %7 = load float, ptr %6, align 4
+  %8 = fadd float %3, %7
+  ret float %8
+}
+
+; Function Attrs: nounwind willreturn
+define internal ptr @_wyvern_slice_main_arrayidx195_525031257() #5 {
+sliceclone_for.end182:
+  %0 = load i32, ptr @main.j, align 4
+  %1 = sext i32 %0 to i64
+  %2 = getelementptr inbounds [15 x float], ptr getelementptr inbounds ([9 x [15 x float]], ptr @atime, i64 0, i64 2), i64 0, i64 %1
+  ret ptr %2
+}
+
+; Function Attrs: nounwind willreturn
+define internal ptr @_wyvern_slice_main_arrayidx202_151448550() #5 {
+sliceclone_for.end182:
+  %0 = load i32, ptr @main.j, align 4
+  %1 = sext i32 %0 to i64
+  %2 = getelementptr inbounds [15 x float], ptr getelementptr inbounds ([9 x [15 x float]], ptr @atime, i64 0, i64 3), i64 0, i64 %1
+  ret ptr %2
+}
+
+; Function Attrs: nounwind willreturn
+define internal float @_wyvern_slice_main_conv207_450546025() #5 {
+sliceclone_for.end182:
+  %0 = load i32, ptr @main.j, align 4
+  %1 = sext i32 %0 to i64
+  %2 = getelementptr inbounds [15 x float], ptr getelementptr inbounds ([9 x [15 x float]], ptr @atime, i64 0, i64 3), i64 0, i64 %1
+  %3 = load float, ptr %2, align 4
+  %4 = fpext float %3 to double
+  %5 = fdiv double 2.000000e+00, %4
+  %6 = fptrunc double %5 to float
+  ret float %6
+}
+
+; Function Attrs: nounwind willreturn
+define internal ptr @_wyvern_slice_main_arrayidx209_272497104() #5 {
+sliceclone_for.end182:
+  %0 = load i32, ptr @main.j, align 4
+  %1 = sext i32 %0 to i64
+  %2 = getelementptr inbounds [15 x float], ptr getelementptr inbounds ([9 x [15 x float]], ptr @atime, i64 0, i64 4), i64 0, i64 %1
+  ret ptr %2
+}
+
+; Function Attrs: nounwind willreturn
+define internal float @_wyvern_slice_main_div210_852540609() #5 {
+sliceclone_for.end182:
+  %0 = load i32, ptr @main.j, align 4
+  %1 = sext i32 %0 to i64
+  %2 = getelementptr inbounds [15 x float], ptr @atime, i64 0, i64 %1
+  %3 = load float, ptr %2, align 4
+  %4 = load i32, ptr @main.j, align 4
+  %5 = sext i32 %4 to i64
+  %6 = getelementptr inbounds [15 x float], ptr getelementptr inbounds ([9 x [15 x float]], ptr @atime, i64 0, i64 1), i64 0, i64 %5
+  %7 = load float, ptr %6, align 4
+  %8 = fadd float %3, %7
+  %9 = fdiv float %8, 0x3FACAC0840000000
+  ret float %9
+}
+
+; Function Attrs: nounwind willreturn
+define internal ptr @_wyvern_slice_main_arrayidx212_310861349() #5 {
+sliceclone_for.end182:
+  %0 = load i32, ptr @main.j, align 4
+  %1 = sext i32 %0 to i64
+  %2 = getelementptr inbounds [15 x float], ptr getelementptr inbounds ([9 x [15 x float]], ptr @atime, i64 0, i64 5), i64 0, i64 %1
+  ret ptr %2
+}
+
+; Function Attrs: nounwind willreturn
+define internal float @_wyvern_slice_main_add215_619283802() #5 {
+sliceclone_for.end182:
+  %0 = load float, ptr getelementptr inbounds ([9 x [15 x float]], ptr @atime, i64 0, i64 3, i64 6), align 4
+  %1 = load i32, ptr @main.j, align 4
+  %2 = sext i32 %1 to i64
+  %3 = getelementptr inbounds [15 x float], ptr getelementptr inbounds ([9 x [15 x float]], ptr @atime, i64 0, i64 3), i64 0, i64 %2
+  %4 = load float, ptr %3, align 4
+  %5 = fadd float %0, %4
+  ret float %5
+}
+
+; Function Attrs: nounwind willreturn
+define internal i32 @_wyvern_slice_main_inc217_999255799() #5 {
+sliceclone_for.inc216:
+  %0 = load i32, ptr @main.j, align 4
+  %1 = add nsw i32 %0, 1
+  ret i32 %1
+}
+
+; Function Attrs: nounwind willreturn
+define internal float @_wyvern_slice_main_conv221_552469510() #5 {
+sliceclone_for.end218:
+  %0 = load float, ptr getelementptr inbounds ([9 x [15 x float]], ptr @atime, i64 0, i64 3, i64 6), align 4
+  %1 = fpext float %0 to double
+  %2 = fdiv double %1, 5.000000e+00
+  %3 = fptrunc double %2 to float
+  ret float %3
+}
+
+; Function Attrs: nounwind willreturn
+define internal float @_wyvern_slice_main_add303_581583548() #5 {
+sliceclone_for.end270:
+  %0 = load float, ptr getelementptr inbounds ([9 x [15 x float]], ptr @atime, i64 0, i64 3, i64 12), align 4
+  %1 = load i32, ptr @main.j, align 4
+  %2 = sext i32 %1 to i64
+  %3 = getelementptr inbounds [15 x float], ptr getelementptr inbounds ([9 x [15 x float]], ptr @atime, i64 0, i64 3), i64 0, i64 %2
+  %4 = load float, ptr %3, align 4
+  %5 = fadd float %0, %4
+  ret float %5
+}
+
+; Function Attrs: nounwind willreturn
+define internal float @_wyvern_slice_main_conv309_256223191() #5 {
+sliceclone_for.end306:
+  %0 = load float, ptr getelementptr inbounds ([9 x [15 x float]], ptr @atime, i64 0, i64 3, i64 12), align 4
+  %1 = fpext float %0 to double
+  %2 = fdiv double %1, 5.000000e+00
+  %3 = fptrunc double %2 to float
+  ret float %3
+}
+
+; Function Attrs: nounwind willreturn
+define internal float @_wyvern_slice_matgen_conv4_242987913(i32 %init.1) #5 {
+sliceclone_for.body3:
+  %0 = mul nsw i32 3125, %init.1
+  %1 = srem i32 %0, 65536
+  %2 = sitofp i32 %1 to double
+  %3 = fsub double %2, 3.276800e+04
+  %4 = fdiv double %3, 1.638400e+04
+  %5 = fptrunc double %4 to float
+  ret float %5
+}
+
+; Function Attrs: nounwind willreturn
+define internal float @_wyvern_slice_matgen_cond_403067716(ptr %a, i32 %lda, ptr %norma, i32 %i.0, i32 %j.0) #5 {
+sliceclone_for.body3:
+  %0 = mul nsw i32 %lda, %j.0
+  %1 = add nsw i32 %0, %i.0
+  %2 = sext i32 %1 to i64
+  %3 = getelementptr inbounds float, ptr %a, i64 %2
+  %4 = load float, ptr %3, align 4
+  %5 = load float, ptr %norma, align 4
+  %6 = fcmp ogt float %4, %5
+  br i1 %6, label %sliceclone_cond.true, label %sliceclone_cond.false
+
+sliceclone_cond.true:                             ; preds = %sliceclone_for.body3
+  %7 = mul nsw i32 %lda, %j.0
+  %8 = add nsw i32 %7, %i.0
+  %9 = sext i32 %8 to i64
+  %10 = getelementptr inbounds float, ptr %a, i64 %9
+  %11 = load float, ptr %10, align 4
+  br label %sliceclone_cond.end
+
+sliceclone_cond.false:                            ; preds = %sliceclone_for.body3
+  %12 = load float, ptr %norma, align 4
+  br label %sliceclone_cond.end
+
+sliceclone_cond.end:                              ; preds = %sliceclone_cond.false, %sliceclone_cond.true
+  %13 = phi float [ %11, %sliceclone_cond.true ], [ %12, %sliceclone_cond.false ]
+  ret float %13
+}
+
+; Function Attrs: nounwind willreturn
+define internal float @_wyvern_slice_matgen_add42_263129310(ptr %a, i32 %lda, ptr %b, i32 %i.2, i32 %j.1) #5 {
+sliceclone_for.body35:
+  %0 = sext i32 %i.2 to i64
+  %1 = getelementptr inbounds float, ptr %b, i64 %0
+  %2 = load float, ptr %1, align 4
+  %3 = mul nsw i32 %lda, %j.1
+  %4 = add nsw i32 %3, %i.2
+  %5 = sext i32 %4 to i64
+  %6 = getelementptr inbounds float, ptr %a, i64 %5
+  %7 = load float, ptr %6, align 4
+  %8 = fadd float %2, %7
+  ret float %8
+}
+
+; Function Attrs: nounwind willreturn
+define internal ptr @_wyvern_slice_dgefa_arrayidx6_975945153(ptr %ipvt, i32 %k.0) #5 {
+sliceclone_for.body:
+  %0 = sext i32 %k.0 to i64
+  %1 = getelementptr inbounds i32, ptr %ipvt, i64 %0
+  ret ptr %1
+}
+
+; Function Attrs: nounwind willreturn
+define internal ptr @_wyvern_slice_dgefa_arrayidx32_810223730(ptr %a, i32 %lda, i32 %k.0) #5 {
+sliceclone_if.then16:
+  %0 = mul nsw i32 %lda, %k.0
+  %1 = add nsw i32 %0, %k.0
+  %2 = sext i32 %1 to i64
+  %3 = getelementptr inbounds float, ptr %a, i64 %2
+  ret ptr %3
+}
+
+; Function Attrs: nounwind willreturn
+define internal ptr @_wyvern_slice_dgefa_arrayidx68_192441102(ptr %a, i32 %lda, i32 %j.0, i32 %k.0) #5 {
+sliceclone_if.then56:
+  %0 = mul nsw i32 %lda, %j.0
+  %1 = add nsw i32 %0, %k.0
+  %2 = sext i32 %1 to i64
+  %3 = getelementptr inbounds float, ptr %a, i64 %2
+  ret ptr %3
+}
+
+; Function Attrs: nounwind willreturn
+define internal ptr @_wyvern_slice_dgefa_arrayidx90_651927418(i32 %n, ptr %ipvt) #5 {
+sliceclone_if.end86:
+  %0 = sub nsw i32 %n, 1
+  %1 = sext i32 %0 to i64
+  %2 = getelementptr inbounds i32, ptr %ipvt, i64 %1
+  ret ptr %2
+}
+
+; Function Attrs: nounwind willreturn
+define internal ptr @_wyvern_slice_dgesl_arrayidx11_115190491(ptr %ipvt, ptr %b, i32 %k.0) #5 {
+sliceclone_for.body:
+  %0 = sext i32 %k.0 to i64
+  %1 = getelementptr inbounds i32, ptr %ipvt, i64 %0
+  %2 = load i32, ptr %1, align 4
+  br label %sliceclone_if.then7
+
+sliceclone_if.then7:                              ; preds = %sliceclone_for.body
+  %3 = sext i32 %2 to i64
+  %4 = getelementptr inbounds float, ptr %b, i64 %3
+  ret ptr %4
+}
+
+; Function Attrs: nounwind willreturn
+define internal float @_wyvern_slice_dgesl_div_106730558(ptr %a, i32 %lda, i32 %n, ptr %b, i32 %kb.0) #5 {
+sliceclone_for.body25:
+  %0 = add nsw i32 %kb.0, 1
+  %1 = sub nsw i32 %n, %0
+  %2 = sext i32 %1 to i64
+  %3 = getelementptr inbounds float, ptr %b, i64 %2
+  %4 = load float, ptr %3, align 4
+  %5 = mul nsw i32 %lda, %1
+  %6 = add nsw i32 %5, %1
+  %7 = sext i32 %6 to i64
+  %8 = getelementptr inbounds float, ptr %a, i64 %7
+  %9 = load float, ptr %8, align 4
+  %10 = fdiv float %4, %9
+  ret float %10
+}
+
+; Function Attrs: nounwind willreturn
+define internal ptr @_wyvern_slice_dgesl_arrayidx35_914447419(i32 %n, ptr %b, i32 %kb.0) #5 {
+sliceclone_for.body25:
+  %0 = add nsw i32 %kb.0, 1
+  %1 = sub nsw i32 %n, %0
+  %2 = sext i32 %1 to i64
+  %3 = getelementptr inbounds float, ptr %b, i64 %2
+  ret ptr %3
+}
+
+; Function Attrs: nounwind willreturn
+define internal ptr @_wyvern_slice_dgesl_arrayidx99_100443247(i32 %n, ptr %ipvt, ptr %b, i32 %kb.1) #5 {
+sliceclone_for.body71:
+  %0 = add nsw i32 %kb.1, 1
+  %1 = sub nsw i32 %n, %0
+  %2 = sext i32 %1 to i64
+  %3 = getelementptr inbounds i32, ptr %ipvt, i64 %2
+  %4 = load i32, ptr %3, align 4
+  br label %sliceclone_if.then93
+
+sliceclone_if.then93:                             ; preds = %sliceclone_for.body71
+  %5 = sext i32 %4 to i64
+  %6 = getelementptr inbounds float, ptr %b, i64 %5
+  ret ptr %6
+}
+
+; Function Attrs: nounwind willreturn
+define internal ptr @_wyvern_slice_dgesl_arrayidx101_308247561(i32 %n, ptr %b, i32 %kb.1) #5 {
+sliceclone_for.body71:
+  %0 = add nsw i32 %kb.1, 1
+  %1 = sub nsw i32 %n, %0
+  br label %sliceclone_if.then93
+
+sliceclone_if.then93:                             ; preds = %sliceclone_for.body71
+  %2 = sext i32 %1 to i64
+  %3 = getelementptr inbounds float, ptr %b, i64 %2
+  ret ptr %3
+}
+
+; Function Attrs: nounwind willreturn
+define internal ptr @_wyvern_slice_dscal_arrayidx6_939872498(i32 %i.0, ptr %dx) #5 {
+sliceclone_for.body:
+  %0 = sext i32 %i.0 to i64
+  %1 = getelementptr inbounds float, ptr %dx, i64 %0
+  ret ptr %1
+}
+
+; Function Attrs: nounwind willreturn
+define internal float @_wyvern_slice_dscal_mul13_757231998(i32 %i.1, float %da, ptr %dx) #5 {
+sliceclone_for.body10:
+  %0 = sext i32 %i.1 to i64
+  %1 = getelementptr inbounds float, ptr %dx, i64 %0
+  %2 = load float, ptr %1, align 4
+  %3 = fmul float %da, %2
+  ret float %3
+}
+
+; Function Attrs: nounwind willreturn
+define internal ptr @_wyvern_slice_daxpy_arrayidx27_948038846(ptr %dy, i32 %iy.1) #5 {
+sliceclone_for.body:
+  %0 = sext i32 %iy.1 to i64
+  %1 = getelementptr inbounds float, ptr %dy, i64 %0
+  ret ptr %1
+}
+
 attributes #0 = { noinline nounwind uwtable "frame-pointer"="all" "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 attributes #1 = { nounwind "frame-pointer"="all" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 attributes #2 = { nocallback nofree nounwind willreturn memory(argmem: write) }
 attributes #3 = { "frame-pointer"="all" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 attributes #4 = { nocallback nofree nosync nounwind speculatable willreturn memory(none) }
-attributes #5 = { nounwind }
+attributes #5 = { nounwind willreturn "Daedalus_Slice" }
+attributes #6 = { nounwind }
 
 !llvm.module.flags = !{!0, !1, !2, !3, !4}
 !llvm.ident = !{!5}

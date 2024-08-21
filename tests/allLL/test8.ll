@@ -1,45 +1,31 @@
-; ModuleID = 'tests/test6.ll'
-source_filename = "tests/test6.c"
+; ModuleID = './tests/test8.ll'
+source_filename = "./tests/test8.c"
 target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-unknown-linux-gnu"
 
 @.str = private unnamed_addr constant [4 x i8] c"%d\0A\00", align 1
 
 ; Function Attrs: noinline nounwind uwtable
-define dso_local i32 @sliceAndDice(i32 noundef %s, i32 noundef %e, i32 noundef %r, i32* noundef %num_elements) #0 {
+define dso_local i32 @main(i32 noundef %argc, i8** noundef %argv) #0 {
 entry:
   br label %for.cond
 
 for.cond:                                         ; preds = %for.inc, %entry
-  %count.0 = phi i32 [ 0, %entry ], [ %inc, %for.inc ]
-  %sum.0 = phi i32 [ 0, %entry ], [ %add, %for.inc ]
-  %i.0 = phi i32 [ %s, %entry ], [ %add1, %for.inc ]
-  %cmp = icmp slt i32 %i.0, %e
+  %i.0 = phi i32 [ %argc, %entry ], [ %inc, %for.inc ]
+  %add = add nsw i32 %argc, 3
+  %cmp = icmp slt i32 %i.0, %add
   br i1 %cmp, label %for.body, label %for.end
 
 for.body:                                         ; preds = %for.cond
-  %inc = add nsw i32 %count.0, 1
-  %add = add nsw i32 %sum.0, %i.0
+  %call = call i32 (i8*, ...) @printf(i8* noundef getelementptr inbounds ([4 x i8], [4 x i8]* @.str, i64 0, i64 0), i32 noundef %i.0)
   br label %for.inc
 
 for.inc:                                          ; preds = %for.body
-  %add1 = add nsw i32 %i.0, %r
+  %inc = add nsw i32 %i.0, 1
   br label %for.cond, !llvm.loop !4
 
 for.end:                                          ; preds = %for.cond
-  store i32 %count.0, i32* %num_elements, align 4
-  ret i32 %sum.0
-}
-
-; Function Attrs: noinline nounwind uwtable
-define dso_local i32 @main(i32 noundef %argc, i8** noundef %argv) #0 {
-entry:
-  %count = alloca i32, align 4
-  %add = add nsw i32 %argc, 3
-  %call = call i32 @sliceAndDice(i32 noundef %argc, i32 noundef %add, i32 noundef 1, i32* noundef %count)
-  %call1 = call i32 (i8*, ...) @printf(i8* noundef getelementptr inbounds ([4 x i8], [4 x i8]* @.str, i64 0, i64 0), i32 noundef %call)
-  %0 = load i32, i32* %count, align 4
-  ret i32 %0
+  ret i32 0
 }
 
 declare dso_local i32 @printf(i8* noundef, ...) #1

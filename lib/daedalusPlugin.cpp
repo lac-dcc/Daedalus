@@ -26,6 +26,8 @@ bool registerPipeline(StringRef Name, ModulePassManager &MPM,
     if (Name == "daedalus") {
 	MPM.addPass(createModuleToFunctionPassAdaptor(LCSSAPass()));
 	MPM.addPass(Daedalus::DaedalusPass());
+	// MPM.addPass(FuncMerge());
+	// MPM.addPass(Daedalus::Clean());
         return true;
     }
     return false;
