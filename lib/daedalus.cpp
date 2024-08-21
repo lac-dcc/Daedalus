@@ -171,6 +171,14 @@ bool canProgramSlice(Instruction *I) {
 //     return false;
 // }
 
+/**
+ * @brief TODO
+ *
+ * @details TODO
+ *
+ * @param F TODO
+ * @return TODO
+ */
 std::set<Instruction *> instSetMeetCriterion(Function *F) {
     std::set<Instruction *> S;
     for (auto &BB : *F) {
@@ -270,71 +278,71 @@ namespace Daedalus {
                 dbgs() << "outlined!\n";
                 dbgs() << "\033[0m";
             }
-            // TODO: Try to merge, if cant merge, delete the functions.
-            // > let on allSlices, only the slice that is worth to merge.
-            // ...
-            //
-            //
-            //
-
-            dbgs() << "Removing inst\n";
-            // If it is worth to merge, then substitute the original instruction
-            // with the corresponding function call, and removed unsed instructions
-            // from original function.
-
-            for (auto IS : allSlices) {
-                auto [I, F, args, origInst, wasRemoved] = IS;
-                dbgs() << "Removing: " << *I << '\n';
-                dbgs() << "Slice: " << *F << '\n';
-
-                if (wasRemoved) continue;
-
-                CallInst *callInst =
-                    CallInst::Create(F, args, I->getName(), I->getParent());
-
-                Instruction *moveTo = I;
-                if (I && isa<PHINode>(I)) moveTo = I->getParent()->getFirstNonPHI();
-                callInst->moveBefore(moveTo);
-
-                // Check if can remove inst, and removed it.
-                std::map<Instruction *, instState>
-                    mutInstMap; // If instruction I was removed;
-                std::map<Instruction *, bool>
-                    visit; // If instruction I was visited;
-                std::set<Instruction *>
-                    mutSet; // a mutable set of instruction on slice.
-
-                for (auto inst : origInst) {
-                    mutInstMap[inst] = UNVISITED;
-                    mutSet.insert(inst);
-                }
-                // dbgs() << "Instruction to remove:\n";
-                // for (auto IS : mutSet) {
-                //     dbgs() << *IS << '\n';
-                // }
-                // dbgs() << "END\n";
-                mutInstMap[I] = VISITED;
-                for (auto [J, isRemoved] : mutInstMap) {
-                    if (J->getParent() == nullptr) continue;
-                    if (isRemoved != DELETED)
-                        tryRemoveInstruction(J, mutSet, mutInstMap, I);
-                    dbgs() << "REMO\n";
-                    if (mutInstMap.empty()) break;
-                }
-                dbgs() << "Orig\n";
-
-                I->replaceAllUsesWith(callInst);
-                I->eraseFromParent();
-                origInst.erase(I);
-            }
-            dbgs() << "ENDFILE\n";
-            for (Function &F : M.getFunctionList()) {
-                dbgs() << F << '\n';
-            }
-
-            module->print(dbgs(), nullptr);
-
-            return PreservedAnalyses::none();
         }
+        // TODO: Try to merge, if cant merge, delete the functions.
+        // > let on allSlices, only the slice that is worth to merge.
+        // ...
+        //
+        //
+        //
+
+        dbgs() << "Removing inst\n";
+        // If it is worth to merge, then substitute the original instruction
+        // with the corresponding function call, and removed unsed instructions
+        // from original function.
+
+        for (auto IS : allSlices) {
+            auto [I, F, args, origInst, wasRemoved] = IS;
+            dbgs() << "Removing: " << *I << '\n';
+            dbgs() << "Slice: " << *F << '\n';
+
+            if (wasRemoved) continue;
+
+            CallInst *callInst =
+                CallInst::Create(F, args, I->getName(), I->getParent());
+
+            Instruction *moveTo = I;
+            if (I && isa<PHINode>(I)) moveTo = I->getParent()->getFirstNonPHI();
+            callInst->moveBefore(moveTo);
+
+            // Check if can remove inst, and removed it.
+            std::map<Instruction *, instState>
+                mutInstMap; // If instruction I was removed;
+            std::map<Instruction *, bool>
+                visit; // If instruction I was visited;
+            std::set<Instruction *>
+                mutSet; // a mutable set of instruction on slice.
+
+            for (auto inst : origInst) {
+                mutInstMap[inst] = UNVISITED;
+                mutSet.insert(inst);
+            }
+            // dbgs() << "Instruction to remove:\n";
+            // for (auto IS : mutSet) {
+            //     dbgs() << *IS << '\n';
+            // }
+            // dbgs() << "END\n";
+            mutInstMap[I] = VISITED;
+            for (auto [J, isRemoved] : mutInstMap) {
+                if (J->getParent() == nullptr) continue;
+                if (isRemoved != DELETED)
+                    tryRemoveInstruction(J, mutSet, mutInstMap, I);
+                dbgs() << "REMO\n";
+                if (mutInstMap.empty()) break;
+            }
+            dbgs() << "Orig\n";
+
+            I->replaceAllUsesWith(callInst);
+            I->eraseFromParent();
+            origInst.erase(I);
+        }
+        dbgs() << "ENDFILE\n";
+        for (Function &F : M.getFunctionList()) {
+            dbgs() << F << '\n';
+        }
+
+        module->print(dbgs(), nullptr);
+
+        return PreservedAnalyses::none();
     }
 } // namespace Daedalus
