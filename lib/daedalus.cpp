@@ -232,6 +232,7 @@ namespace Daedalus {
         std::unique_ptr<Module> module =
             std::make_unique<Module>("New_" + M.getName().str(), M.getContext());
 
+        auto &FAM = MAM.getResult<FunctionAnalysisManagerModuleProxy>(M).getManager();
         for (Function *F : FtoMap) {
 
             PostDominatorTree PDT;
@@ -259,7 +260,7 @@ namespace Daedalus {
                 }
                 dbgs() << "\033[0m";
 
-                Function *G = ps.outline();
+                Function *G = ps.outline(FAM);
                 SmallVector<Value *> funcArgs = ps.getOrigFunctionArgs();
 
                 // Get the original instruction, before clone on slice, to check if

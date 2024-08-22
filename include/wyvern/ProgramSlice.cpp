@@ -35,6 +35,9 @@
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Analysis/TargetTransformInfo.h"
+#include "llvm/Analysis/AssumptionCache.h"
+#include "llvm/Transforms/Utils/SimplifyCFGOptions.h"
 
 #include <random>
 
@@ -910,6 +913,24 @@ void ProgramSlice::replaceArgs(Function *F) {
 }
 
 /**
+ * @brief TODO
+ *
+ * @details TODO
+ *
+ * @param F TODO
+ */
+void ProgramSlice::simplifyCfg(Function *F, FunctionAnalysisManager &AM) {
+    auto &TTI = AM.getResult<TargetIRAnalysis>(*F);
+    SimplifyCFGOptions Options = SimplifyCFGOptions();
+    Options.AC = &AM.getResult<AssumptionAnalysis>(*F);
+    
+    DominatorTree *DT = nullptr;
+    if (!simplifyFunctionCFG(*F, TTI, DT, Options))
+        return;
+}
+
+
+/**
  * @brief Adds a return instruction to function F, returning the computed value
  * of the sliced function.
  *
@@ -972,7 +993,7 @@ ReturnInst *ProgramSlice::addReturnValue(Function *F) {
  *
  * @return The newly created delegate Function that encapsulates the slice.
  */
-Function* ProgramSlice::outline() {
+Function* ProgramSlice::outline(FunctionAnalysisManager &FAM) {
     StructType *thunkStructType = getThunkStructType(false);
     PointerType *thunkStructPtrType = thunkStructType->getPointerTo();
 
@@ -1033,6 +1054,7 @@ Function* ProgramSlice::outline() {
     addReturnValue(F);
     reorderBlocks(F);
     replaceArgs(F);
+    simplifyCfg(F, FAM);
     verifyFunction(*F);
     // printFunctions(F);
     return F;
