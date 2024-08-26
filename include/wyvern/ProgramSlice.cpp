@@ -1,4 +1,4 @@
-/** 
+/**
  *  @file   ProgramSlice.cpp
  *  @brief  Daedalus' Program Slicer Source File
  *  @author Compilers Lab (UFMG)
@@ -35,9 +35,7 @@
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Analysis/TargetTransformInfo.h"
-#include "llvm/Analysis/AssumptionCache.h"
-#include "llvm/Transforms/Utils/SimplifyCFGOptions.h"
+#include "llvm/Transforms/Scalar/SimplifyCFG.h"
 
 #include <random>
 
@@ -47,10 +45,10 @@ using namespace llvm;
 
 /**
  * @brief Returns the block whose predicate should control the phi-functions in the given basic block.
- * 
+ *
  * @details This function determines the controlling block for the phi-functions in the specified basic block (BB).
  * It traverses the dominator tree (DT) to find a block that does not dominate BB in the post-dominator tree (PDT).
- * 
+ *
  * @param BB The basic block for which to find the controlling block.
  * @param DT The dominator tree.
  * @param PDT The post-dominator tree.
@@ -72,11 +70,11 @@ static const BasicBlock *getController(const BasicBlock *BB, DominatorTree &DT,
 
 /**
  * @brief Returns the predicate of the given basic block, which will be used to gate another basic block's phi-functions.
- * 
+ *
  * @details This function retrieves the condition that will gate the phi-functions of another basic block.
  * It examines the terminator instruction of the given basic block (BB) and extracts the condition from a conditional
  * branch instruction or a switch instruction.
- * 
+ *
  * @param BB The basic block whose predicate is to be returned.
  * @return A pointer to the condition value, or nullptr if no valid condition is found.
  */
@@ -98,11 +96,11 @@ static const Value *getGate(const BasicBlock *BB) {
 
 /**
  * @brief Computes the gates for all basic blocks in the slice.
- * 
+ *
  * @details This function calculates the gating conditions for each basic block in a function.
  * It constructs a map where each basic block is associated with a vector of gating conditions.
  * The gating conditions are derived from the dominator and post-dominator trees of the function.
- * 
+ *
  * @param F The function for which to compute the gates.
  * @return An unordered map where each basic block is mapped to a vector of its gating conditions.
  */
@@ -142,10 +140,10 @@ computeGates(Function &F) {
 
 /**
  * @brief Determines if the given instruction post-dominates the slice criteria.
- * 
+ *
  * @details This function checks if the specified instruction post-dominates the slice criteria.
  * PHI nodes must dominate the slice criteria, otherwise they will be considered as function arguments.
- * 
+ *
  * @param PDT The post-dominator tree.
  * @param crit The slice criteria instruction.
  * @param inst The instruction to check for post-domination.
@@ -158,11 +156,11 @@ bool posDomCriteria(const PostDominatorTree &PDT, const Instruction *crit,
 
 /**
  * @brief Computes the backwards data dependences for the given instruction.
- * 
- * @details This function determines which instructions should be part of the slice by computing the backwards data dependences 
- * for the specified instruction. It uses phi-function gate information contained in the provided gates to track control dependencies 
+ *
+ * @details This function determines which instructions should be part of the slice by computing the backwards data dependences
+ * for the specified instruction. It uses phi-function gate information contained in the provided gates to track control dependencies
  * as data dependences. This comprehensive approach is sufficient to compute all dependencies necessary for building a slice.
- * 
+ *
  * @param I The instruction for which to compute data dependences.
  * @param gates A map of basic blocks to their corresponding gating values.
  * @param PDT The post-dominator tree.
@@ -400,7 +398,7 @@ void ProgramSlice::printFunctions(Function *F) {
  * @details This function calculates and stores the attractor blocks for each basic block in the original function `_parentFunction`.
  * An attractor block is the immediate dominator (first dominator) of a basic block that controls the flow into the basic block.
  * The computed map of basic blocks to their attractors is used to reroute control flow in the outlined delegate function.
- * 
+ *
  * @note The function assumes that `_BBsInSlice` contains the set of basic blocks that are part of the program slice.
  * Post-dominator tree (`PDT`) is used to efficiently compute dominator information.
  */
@@ -920,15 +918,9 @@ void ProgramSlice::replaceArgs(Function *F) {
  * @param F TODO
  */
 void ProgramSlice::simplifyCfg(Function *F, FunctionAnalysisManager &AM) {
-    auto &TTI = AM.getResult<TargetIRAnalysis>(*F);
-    SimplifyCFGOptions Options = SimplifyCFGOptions();
-    Options.AC = &AM.getResult<AssumptionAnalysis>(*F);
-    
-    DominatorTree *DT = nullptr;
-    if (!simplifyFunctionCFG(*F, TTI, DT, Options))
-        return;
+    SimplifyCFGPass simplifyCFGPass;
+    simplifyCFGPass.run(*F, AM);
 }
-
 
 /**
  * @brief Adds a return instruction to function F, returning the computed value
@@ -1054,7 +1046,7 @@ Function* ProgramSlice::outline(FunctionAnalysisManager &FAM) {
     addReturnValue(F);
     reorderBlocks(F);
     replaceArgs(F);
-    simplifyCfg(F, FAM);
+    // simplifyCfg(F, FAM);
     verifyFunction(*F);
     // printFunctions(F);
     return F;

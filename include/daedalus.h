@@ -19,6 +19,9 @@
 #include <llvm/Analysis/AliasAnalysis.h>
 #include <llvm/Pass.h>
 
+#include "llvm/IR/Function.h"
+#include "llvm/IR/PassManager.h"
+
 /**
  * @brief Attempts to remove an instruction if it meets specific criteria.
  */

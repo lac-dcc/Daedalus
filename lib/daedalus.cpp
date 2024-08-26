@@ -19,6 +19,7 @@
 #include "llvm/Support/NativeFormatting.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Transforms/Utils/ValueMapper.h"
+#include "llvm/Transforms/Scalar/SimplifyCFG.h"
 #include <exception>
 #include <memory>
 
@@ -233,6 +234,7 @@ namespace Daedalus {
             std::make_unique<Module>("New_" + M.getName().str(), M.getContext());
 
         auto &FAM = MAM.getResult<FunctionAnalysisManagerModuleProxy>(M).getManager();
+
         for (Function *F : FtoMap) {
 
             PostDominatorTree PDT;
@@ -338,7 +340,9 @@ namespace Daedalus {
             origInst.erase(I);
         }
         dbgs() << "ENDFILE\n";
+        SimplifyCFGPass simplifyCFGPass;
         for (Function &F : M.getFunctionList()) {
+            simplifyCFGPass.run(F, FAM);
             dbgs() << F << '\n';
         }
 

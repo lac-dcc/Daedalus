@@ -30,7 +30,7 @@ You can do the following to compile and install it as a library:
 ```shell
 $ mkdir build
 $ cd build
-$ cmake -DLLVM_DIR=/home/rafackstein/src/github/llvm-project ../
+$ cmake -DLLVM_DIR={path_to_llvm_project} ../
 $ make
 $ cd ..
 $ opt -load-pass-plugin build/lib/libdaedalus.so -passes=daedalus -disable-output tests/test1.ll
