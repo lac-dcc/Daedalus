@@ -10,6 +10,7 @@
 #include "llvm/Analysis/PostDominators.h"
 #include "llvm/Analysis/TargetLibraryInfo.h"
 #include "llvm/IR/Constants.h"
+#include "llvm/IR/Function.h"
 #include "llvm/IR/InstIterator.h"
 #include "llvm/IR/InstrTypes.h"
 #include "llvm/IR/Instructions.h"
@@ -342,8 +343,11 @@ namespace Daedalus {
         dbgs() << "ENDFILE\n";
         SimplifyCFGPass simplifyCFGPass;
         for (Function &F : M.getFunctionList()) {
-            simplifyCFGPass.run(F, FAM);
-            dbgs() << F << '\n';
+            for (auto & BB: F) { // TODO: change to llvmish way
+                simplifyCFGPass.run(F, FAM);
+                dbgs() << F << '\n';
+                break;
+            }
         }
 
         module->print(dbgs(), nullptr);
