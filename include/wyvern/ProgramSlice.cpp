@@ -157,6 +157,11 @@ get_data_dependences_for(
                     }
                     continue;
                 }
+		if(isa<StoreInst>(U)){
+		    dbgs() << "LIMAO\n";
+		    visited.insert(U);
+		    // continue;
+		}
                 if (const PHINode *u = dyn_cast<PHINode>(U)) {
                     if (!posDomCriteria(PDT, &I, u)) {
                         Argument *arg =

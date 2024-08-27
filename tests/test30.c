@@ -2,9 +2,11 @@
 
 int main(int argc, char **argv){
     int a = argc * argc;
-    if(a > 5){
-	int b = argc*2 + 3;
-	printf("%d\n", b);
+    int b = 2;
+    int c = 3;
+    if(argc > 5){
+	b = argc*2 + 3;
+	if(argc > 6) c = argc*3 + 2;
     }
-    return  a *argc;
+    return  a * argc * b * c;
 }
