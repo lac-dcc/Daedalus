@@ -6,107 +6,103 @@ target triple = "x86_64-unknown-linux-gnu"
 ; Function Attrs: noinline nounwind uwtable
 define dso_local i32 @foo(i32 noundef %x, i32 noundef %N) #0 {
 entry:
+  %x.addr = alloca i32, align 4
+  %N.addr = alloca i32, align 4
+  %sum = alloca i32, align 4
+  %i = alloca i32, align 4
+  store i32 %x, ptr %x.addr, align 4
+  store i32 %N, ptr %N.addr, align 4
+  store i32 0, ptr %sum, align 4
+  store i32 0, ptr %i, align 4
   br label %for.cond
 
 for.cond:                                         ; preds = %for.inc, %entry
-  %i.0 = phi i32 [ 0, %entry ], [ undef, %for.inc ]
-  %cmp = icmp slt i32 %i.0, %N
+  %0 = load i32, ptr %i, align 4
+  %1 = load i32, ptr %N.addr, align 4
+  %cmp = icmp slt i32 %0, %1
   br i1 %cmp, label %for.body, label %for.end
 
 for.body:                                         ; preds = %for.cond
+  %2 = load i32, ptr %x.addr, align 4
+  %3 = load i32, ptr %sum, align 4
+  %add = add nsw i32 %3, %2
+  store i32 %add, ptr %sum, align 4
   br label %for.inc
 
 for.inc:                                          ; preds = %for.body
+  %4 = load i32, ptr %i, align 4
+  %inc = add nsw i32 %4, 1
+  store i32 %inc, ptr %i, align 4
   br label %for.cond, !llvm.loop !6
 
 for.end:                                          ; preds = %for.cond
-  %sum.0.lcssa1 = call i32 @_wyvern_slice_foo_sum.0.lcssa_151467161(i32 %x, i32 %N)
-  ret i32 %sum.0.lcssa1
+  %5 = load i32, ptr %sum, align 4
+  ret i32 %5
 }
 
 ; Function Attrs: noinline nounwind uwtable
 define dso_local i32 @bar(i32 noundef %y, i32 noundef %SIZE, i32 noundef %v) #0 {
 entry:
+  %y.addr = alloca i32, align 4
+  %SIZE.addr = alloca i32, align 4
+  %v.addr = alloca i32, align 4
+  %sum = alloca i32, align 4
+  %i = alloca i32, align 4
+  store i32 %y, ptr %y.addr, align 4
+  store i32 %SIZE, ptr %SIZE.addr, align 4
+  store i32 %v, ptr %v.addr, align 4
+  store i32 0, ptr %sum, align 4
+  store i32 0, ptr %i, align 4
   br label %for.cond
 
 for.cond:                                         ; preds = %for.inc, %entry
-  %i.0 = phi i32 [ 0, %entry ], [ undef, %for.inc ]
-  %cmp = icmp slt i32 %i.0, %SIZE
+  %0 = load i32, ptr %i, align 4
+  %1 = load i32, ptr %SIZE.addr, align 4
+  %cmp = icmp slt i32 %0, %1
   br i1 %cmp, label %for.body, label %for.end
 
 for.body:                                         ; preds = %for.cond
+  %2 = load i32, ptr %y.addr, align 4
+  %3 = load i32, ptr %sum, align 4
+  %add = add nsw i32 %3, %2
+  store i32 %add, ptr %sum, align 4
   br label %for.inc
 
 for.inc:                                          ; preds = %for.body
+  %4 = load i32, ptr %i, align 4
+  %inc = add nsw i32 %4, 1
+  store i32 %inc, ptr %i, align 4
   br label %for.cond, !llvm.loop !8
 
 for.end:                                          ; preds = %for.cond
-  %mul1 = call i32 @_wyvern_slice_bar_mul_121818992(i32 %y, i32 %SIZE, i32 %v)
-  ret i32 %mul1
+  %5 = load i32, ptr %v.addr, align 4
+  %6 = load i32, ptr %sum, align 4
+  %mul = mul nsw i32 %5, %6
+  ret i32 %mul
 }
 
 ; Function Attrs: noinline nounwind uwtable
 define dso_local i32 @main(i32 noundef %argc, ptr noundef %argv) #0 {
 entry:
-  %add = add nsw i32 %argc, 10
-  %call = call i32 @foo(i32 noundef %argc, i32 noundef %add)
-  %add1 = add nsw i32 %argc, 20
-  %call2 = call i32 @bar(i32 noundef %argc, i32 noundef %add1, i32 noundef 2)
+  %retval = alloca i32, align 4
+  %argc.addr = alloca i32, align 4
+  %argv.addr = alloca ptr, align 8
+  store i32 0, ptr %retval, align 4
+  store i32 %argc, ptr %argc.addr, align 4
+  store ptr %argv, ptr %argv.addr, align 8
+  %0 = load i32, ptr %argc.addr, align 4
+  %1 = load i32, ptr %argc.addr, align 4
+  %add = add nsw i32 %1, 10
+  %call = call i32 @foo(i32 noundef %0, i32 noundef %add)
+  %2 = load i32, ptr %argc.addr, align 4
+  %3 = load i32, ptr %argc.addr, align 4
+  %add1 = add nsw i32 %3, 20
+  %call2 = call i32 @bar(i32 noundef %2, i32 noundef %add1, i32 noundef 2)
   %add3 = add nsw i32 %call, %call2
   ret i32 %add3
 }
 
-; Function Attrs: nounwind willreturn
-define internal i32 @_wyvern_slice_foo_sum.0.lcssa_151467161(i32 %x, i32 %N) #1 {
-sliceclone_entry:
-  br label %sliceclone_for.cond
-
-sliceclone_for.inc:                               ; preds = %sliceclone_for.body
-  %0 = add nsw i32 %2, 1
-  br label %sliceclone_for.cond
-
-sliceclone_for.cond:                              ; preds = %sliceclone_for.inc, %sliceclone_entry
-  %1 = phi i32 [ 0, %sliceclone_entry ], [ %4, %sliceclone_for.inc ]
-  %2 = phi i32 [ 0, %sliceclone_entry ], [ %0, %sliceclone_for.inc ]
-  %3 = icmp slt i32 %2, %N
-  br i1 %3, label %sliceclone_for.body, label %sliceclone_for.end
-
-sliceclone_for.body:                              ; preds = %sliceclone_for.cond
-  %4 = add nsw i32 %1, %x
-  br label %sliceclone_for.inc
-
-sliceclone_for.end:                               ; preds = %sliceclone_for.cond
-  %5 = phi i32 [ %1, %sliceclone_for.cond ]
-  ret i32 %5
-}
-
-; Function Attrs: nounwind willreturn
-define internal i32 @_wyvern_slice_bar_mul_121818992(i32 %y, i32 %SIZE, i32 %v) #1 {
-sliceclone_entry:
-  br label %sliceclone_for.cond
-
-sliceclone_for.cond:                              ; preds = %sliceclone_for.inc, %sliceclone_entry
-  %0 = phi i32 [ 0, %sliceclone_entry ], [ %4, %sliceclone_for.inc ]
-  %1 = phi i32 [ 0, %sliceclone_entry ], [ %3, %sliceclone_for.inc ]
-  %2 = icmp slt i32 %1, %SIZE
-  br i1 %2, label %sliceclone_for.body, label %sliceclone_for.end
-
-sliceclone_for.inc:                               ; preds = %sliceclone_for.body
-  %3 = add nsw i32 %1, 1
-  br label %sliceclone_for.cond
-
-sliceclone_for.body:                              ; preds = %sliceclone_for.cond
-  %4 = add nsw i32 %0, %y
-  br label %sliceclone_for.inc
-
-sliceclone_for.end:                               ; preds = %sliceclone_for.cond
-  %5 = phi i32 [ %0, %sliceclone_for.cond ]
-  %6 = mul nsw i32 %v, %5
-  ret i32 %6
-}
-
 attributes #0 = { noinline nounwind uwtable "frame-pointer"="all" "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
-attributes #1 = { nounwind willreturn "Daedalus_Slice" }
 
 !llvm.module.flags = !{!0, !1, !2, !3, !4}
 !llvm.ident = !{!5}

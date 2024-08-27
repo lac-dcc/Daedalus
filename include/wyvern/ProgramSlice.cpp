@@ -545,24 +545,24 @@ bool ProgramSlice::canOutline() {
         }
     }
 
-    for (BasicBlock &BB : *_parentFunction) {
-        for (Instruction &I : BB) {
-            if (StoreInst *SI = dyn_cast<StoreInst>(&I)) {
-                Value *underlying =
-                    getUnderlyingObject(SI->getPointerOperand());
-                if (allocasInSlice.contains(underlying)) {
-                    errs()
-                        << "Cannot outline slice because alloca is clobbered: "
-                        << *underlying << "\n";
-                    return false;
-                }
-            }
-        }
-    }
+    // for (BasicBlock &BB : *_parentFunction) {
+    //     for (Instruction &I : BB) {
+    //         if (StoreInst *SI = dyn_cast<StoreInst>(&I)) {
+    //             Value *underlying =
+    //                 getUnderlyingObject(SI->getPointerOperand());
+    //             if (allocasInSlice.contains(underlying)) {
+    //                 errs()
+    //                     << "Cannot outline slice because alloca is clobbered: "
+    //                     << *underlying << "\n";
+    //                 return false;
+    //             }
+    //         }
+    //     }
+    // }
 
     if (_instsInSlice.size() <= 1) {
-        dbgs() << "Not outlined, Insufficient Numbers os instruction to "
-                  "outline! \n";
+        LLVM_DEBUG(dbgs() << "Not outlined, Insufficient Numbers os instruction to "
+                  "outline! \n";);
         return false;
     }
 

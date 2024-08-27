@@ -19,7 +19,13 @@
 using namespace llvm;
 #include <llvm/Pass.h>
 
-#define DEBUG_TYPE "Daedalus"
+#define DEBUG_TYPE "daedalus"
+
+namespace COLOR {
+const std::string RED = "\033[31m";
+const std::string CLEAN = "\033[0m";
+const std::string GREEN = "\033[32m";
+}; // namespace COLOR
 
 // These Instructions types will not be a slice criterion.
 bool canSliceInstrType(Instruction &I) {
@@ -41,10 +47,8 @@ bool tryRemoveInstruction(Instruction *I, std::set<Instruction *> &s,
                           Instruction *ini) {
     if (I->getParent() == nullptr) return true;
     StringRef Iname = I->getName();
-    dbgs() << Iname << '\n';
     if (!I || instMap[I] == DELETED) return true;
     if (instMap[I] == VISITED) {
-        dbgs() << "VISITED\n";
         // I->replaceAllUsesWith(UndefValue::get(I->getType()));
         return true;
     }
@@ -55,14 +59,10 @@ bool tryRemoveInstruction(Instruction *I, std::set<Instruction *> &s,
     for (auto U : I->users()) allUsers.insert(U);
 
     for (auto U : allUsers) {
-        dbgs() << "from: " << Iname << '\n';
         if (!U || U == nullptr) {
-            dbgs() << "NOT USER!\n";
             if (I->users().empty() || allUsers.empty()) break;
             continue;
         };
-        dbgs() << "use: ";
-        U->print(dbgs());
         /// If cant remove one of its users, then cant remove it as well.
         if (Instruction *u = dyn_cast<Instruction>(U)) {
             // if(u->getParent() == nullptr) return true;
@@ -73,15 +73,12 @@ bool tryRemoveInstruction(Instruction *I, std::set<Instruction *> &s,
         // allUsers.erase(U);
         if (I->users().empty()) break;
     }
-    dbgs() << "HERE2\n";
     if (I->getParent() != nullptr && instMap[I] != DELETED && I != ini) {
-        dbgs() << *I << " = Deleted!\n";
         s.erase(I);
         I->replaceAllUsesWith(UndefValue::get(I->getType()));
         I->eraseFromParent();
         instMap[I] = DELETED;
     }
-    dbgs() << "HERE\n";
     return true;
 }
 
@@ -95,9 +92,13 @@ bool canProgramSlice(Instruction *I) {
         for (User *use : phi->users()) {
             if (Instruction *Iuse = dyn_cast<Instruction>(use))
                 if (isa<PHINode>(Iuse) && Iuse->getParent() == I->getParent()) {
-                    dbgs() << "Criterion is a phi-node which at least one of "
-                              "it's users are a Phi-Node and are in the same "
-                              "basic block!\n";
+                    LLVM_DEBUG(
+                        dbgs()
+                        << COLOR::RED
+                        << "Criterion is a phi-node which at least one of "
+                           "it's users are a Phi-Node and are in the same "
+                           "basic block!\n"
+                        << COLOR::CLEAN);
                     return false;
                 }
         }
@@ -139,9 +140,6 @@ std::set<Instruction *> instSetMeetCriterion(Function *F) {
     // if (isa<BinaryOperator>(I)) {
     //     S.insert(&I);
     // }
-    // if(I.getName() == "add39"){
-    //  S.insert(&I);
-    // }
     return S;
 }
 
@@ -174,21 +172,28 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
 
         // Criterion Set
         std::set<Instruction *> S = instSetMeetCriterion(F);
-        // for (auto &e : S) dbgs() << *e << '\n';
 
         /// To replace all uses of I with the correpondent call
         for (Instruction *I : S) {
             if (!canSliceInstrType(*I)) continue;
             if (!canProgramSlice(I)) continue;
-            dbgs() << "Instruction:\t" << I->getName() << "\t...\t";
-
-            dbgs() << "\033[31;1;4m";
+            LLVM_DEBUG(dbgs() << "Instruction:\t" << *I << '\n');
+            LLVM_DEBUG(dbgs() << COLOR::RED);
             ProgramSlice ps = ProgramSlice(*I, *F, PDT);
-            if (!ps.canOutline()) {
-                dbgs() << "\033[0m";
+            if (ps.getInstructionInSlice().size() <= 1) {
+                LLVM_DEBUG(
+                    dbgs()
+                    << COLOR::RED
+                    << "Not outlined, Insufficient Numbers os instruction to "
+                       "outline! \n"
+                    << COLOR::CLEAN);
                 continue;
             }
-            dbgs() << "\033[0m";
+            // if (!ps.canOutline()) {
+            //     dbgs() << "\033[0m";
+            //     continue;
+            // }
+            LLVM_DEBUG(dbgs() << COLOR::CLEAN);
 
             Function *G = ps.outline();
             SmallVector<Value *> funcArgs = ps.getOrigFunctionArgs();
@@ -205,9 +210,7 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
             iSlice slice = {I, G, funcArgs, originInstructionSet, false};
             allSlices.push_back(slice);
 
-            dbgs() << "\033[32;1;4m";
-            dbgs() << "outlined!\n";
-            dbgs() << "\033[0m";
+            LLVM_DEBUG(dbgs() << COLOR::GREEN << "outlined!" << COLOR::CLEAN);
         }
     }
     // TODO: Try to merge, if cant merge, delete the functions.
@@ -217,15 +220,13 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
     //
     //
 
-    dbgs() << "Removing inst\n";
+    LLVM_DEBUG(dbgs() << "Removing inst\n");
     // If it is worth to merge, then substitute the original instruction with
     // the corresponding function call, and removed unsed instructions from
     // original function.
 
     for (auto IS : allSlices) {
         auto [I, F, args, origInst, wasRemoved] = IS;
-        dbgs() << "Removing: " << *I << '\n';
-        dbgs() << "Slice: " << *F << '\n';
 
         if (wasRemoved) continue;
 
@@ -247,30 +248,22 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
             mutInstMap[inst] = UNVISITED;
             mutSet.insert(inst);
         }
-        // dbgs() << "Instruction to remove:\n";
-        // for (auto IS : mutSet) {
-        //     dbgs() << *IS << '\n';
-        // }
-        // dbgs() << "END\n";
         mutInstMap[I] = VISITED;
         for (auto [J, isRemoved] : mutInstMap) {
             if (J->getParent() == nullptr) continue;
-	    dbgs() << "OK\n";
             if (isRemoved != DELETED)
                 tryRemoveInstruction(J, mutSet, mutInstMap, I);
-            dbgs() << "REMO\n";
             if (mutInstMap.empty()) break;
         }
-        dbgs() << "Orig\n";
 
         I->replaceAllUsesWith(callInst);
         I->eraseFromParent();
         origInst.erase(I);
     }
-    dbgs() << "ENDFILE\n";
-    for (Function &F : M.getFunctionList()) {
-        dbgs() << F << '\n';
-    }
+    // dbgs() << "ENDFILE\n";
+    // for (Function &F : M.getFunctionList()) {
+    //     dbgs() << F << '\n';
+    // }
 
     module->print(dbgs(), nullptr);
 
