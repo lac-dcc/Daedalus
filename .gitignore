@@ -3,3 +3,4 @@ compile_commands.json
 .cache/
 .obsidian-notes
 docs/
+*.d.*

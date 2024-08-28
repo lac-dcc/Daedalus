@@ -1046,7 +1046,9 @@ Function* ProgramSlice::outline(FunctionAnalysisManager &FAM) {
     addReturnValue(F);
     reorderBlocks(F);
     replaceArgs(F);
-    // simplifyCfg(F, FAM);
+    
+    simplifyCfg(F, FAM); // TODO: apply on original func
+    
     verifyFunction(*F);
     // printFunctions(F);
     return F;

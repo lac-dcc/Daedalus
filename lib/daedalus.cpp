@@ -341,12 +341,12 @@ namespace Daedalus {
             origInst.erase(I);
         }
         dbgs() << "ENDFILE\n";
+
         SimplifyCFGPass simplifyCFGPass;
         for (Function &F : M.getFunctionList()) {
-            for (auto & BB: F) { // TODO: change to llvmish way
-                simplifyCFGPass.run(F, FAM);
+            if (!F.empty()) {
+                simplifyCFGPass.run(F, FAM); // TODO: use llvm::simplifyCFG
                 dbgs() << F << '\n';
-                break;
             }
         }
 
