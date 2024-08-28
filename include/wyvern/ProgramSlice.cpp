@@ -23,6 +23,7 @@
 #include "llvm/Analysis/TargetLibraryInfo.h"
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/IR/Argument.h"
+#include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/CFG.h"
 #include "llvm/IR/Dominators.h"
 #include "llvm/IR/Function.h"
@@ -35,7 +36,8 @@
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Transforms/Scalar/SimplifyCFG.h"
+#include "llvm/Analysis/TargetTransformInfo.h"
+#include "llvm/Transforms/Utils/Local.h"
 
 #include <random>
 
@@ -918,8 +920,22 @@ void ProgramSlice::replaceArgs(Function *F) {
  * @param F TODO
  */
 void ProgramSlice::simplifyCfg(Function *F, FunctionAnalysisManager &AM) {
-    SimplifyCFGPass simplifyCFGPass;
-    simplifyCFGPass.run(*F, AM);
+    auto &TTI = AM.getResult<TargetIRAnalysis>(*F);
+    bool changed = false;
+    bool localChange = true;
+
+    unsigned iterationsCounter = 0;
+    while (localChange) {
+        assert(iterationsCounter++ < 1000 && "Iterative simplification didn't converge!");
+        localChange = false;
+        for (Function::iterator BBIt = F->begin(); BBIt != F->end();) {
+            BasicBlock &BB = *BBIt++;
+            if (llvm::simplifyCFG(&BB, TTI)) {
+                localChange = true;
+            }
+        }
+        changed |= localChange;
+    }
 }
 
 /**
@@ -985,7 +1001,7 @@ ReturnInst *ProgramSlice::addReturnValue(Function *F) {
  *
  * @return The newly created delegate Function that encapsulates the slice.
  */
-Function* ProgramSlice::outline(FunctionAnalysisManager &FAM) {
+Function* ProgramSlice::outline() {
     StructType *thunkStructType = getThunkStructType(false);
     PointerType *thunkStructPtrType = thunkStructType->getPointerTo();
 
@@ -1046,9 +1062,6 @@ Function* ProgramSlice::outline(FunctionAnalysisManager &FAM) {
     addReturnValue(F);
     reorderBlocks(F);
     replaceArgs(F);
-    
-    simplifyCfg(F, FAM); // TODO: apply on original func
-    
     verifyFunction(*F);
     // printFunctions(F);
     return F;

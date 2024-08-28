@@ -52,11 +52,16 @@ namespace llvm {
     /**
      * @brief Outlines the given slice into a standalone Function.
      */
-    Function * outline(FunctionAnalysisManager &FAM);
+    Function * outline();
 
     /// Returns the delegate function resulted from outlining the slice, using
     /// memoization.
     Function *memoizedOutline();
+
+    /**
+     * @brief TODO
+     */
+    static void simplifyCfg(Function *F, FunctionAnalysisManager &AM);
 
   private:
     void insertLoadForThunkParams(Function *F, bool memo);
@@ -102,11 +107,6 @@ namespace llvm {
      * of the instructions in function F.
      */
     void replaceArgs(Function *F);
-
-    /**
-     * @brief TODO
-     */
-    void simplifyCfg(Function *F, FunctionAnalysisManager &AM);
 
     /**
      * @brief Populates function F with BasicBlocks corresponding to the BBs in the original function being sliced which contained instructions included in the slice.

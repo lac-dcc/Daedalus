@@ -20,7 +20,6 @@
 #include "llvm/Support/NativeFormatting.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Transforms/Utils/ValueMapper.h"
-#include "llvm/Transforms/Scalar/SimplifyCFG.h"
 #include <exception>
 #include <memory>
 
@@ -207,6 +206,7 @@ std::set<Instruction *> instSetMeetCriterion(Function *F) {
 
 struct iSlice {
     Instruction *I;
+    Function *originalF;
     Function *F;
     SmallVector<Value *> args;
     std::set<Instruction *> constOriginalInst;
@@ -234,10 +234,7 @@ namespace Daedalus {
         std::unique_ptr<Module> module =
             std::make_unique<Module>("New_" + M.getName().str(), M.getContext());
 
-        auto &FAM = MAM.getResult<FunctionAnalysisManagerModuleProxy>(M).getManager();
-
         for (Function *F : FtoMap) {
-
             PostDominatorTree PDT;
             PDT.recalculate(*F);
 
@@ -263,7 +260,7 @@ namespace Daedalus {
                 }
                 dbgs() << "\033[0m";
 
-                Function *G = ps.outline(FAM);
+                Function *G = ps.outline();
                 SmallVector<Value *> funcArgs = ps.getOrigFunctionArgs();
 
                 // Get the original instruction, before clone on slice, to check if
@@ -275,7 +272,7 @@ namespace Daedalus {
                 for (auto &e : constOriginalInst)
                     originInstructionSet.insert(e.first);
 
-                iSlice slice = {I, G, funcArgs, originInstructionSet, false};
+                iSlice slice = {I, F, G, funcArgs, originInstructionSet, false};
                 allSlices.push_back(slice);
 
                 dbgs() << "\033[32;1;4m";
@@ -295,10 +292,15 @@ namespace Daedalus {
         // with the corresponding function call, and removed unsed instructions
         // from original function.
 
+        auto &FAM = MAM.getResult<FunctionAnalysisManagerModuleProxy>(M).getManager();
+        std::set<Function *> originalFunctions;
+        std::set<Function *> outlinedFunctions;
         for (auto IS : allSlices) {
-            auto [I, F, args, origInst, wasRemoved] = IS;
+            auto [I, originalF, F, args, origInst, wasRemoved] = IS;
+            originalFunctions.insert(originalF);
+            outlinedFunctions.insert(F);
             dbgs() << "Removing: " << *I << '\n';
-            dbgs() << "Slice: " << *F << '\n';
+            dbgs() << "Slice: \n" << *F << '\n';
 
             if (wasRemoved) continue;
 
@@ -340,14 +342,16 @@ namespace Daedalus {
             I->eraseFromParent();
             origInst.erase(I);
         }
+        for (auto F : outlinedFunctions) {
+            llvm::ProgramSlice::simplifyCfg(F, FAM);
+        }
+        for (auto originalF : originalFunctions) {
+            llvm::ProgramSlice::simplifyCfg(originalF, FAM);
+        }
         dbgs() << "ENDFILE\n";
 
-        SimplifyCFGPass simplifyCFGPass;
         for (Function &F : M.getFunctionList()) {
-            if (!F.empty()) {
-                simplifyCFGPass.run(F, FAM); // TODO: use llvm::simplifyCFG
-                dbgs() << F << '\n';
-            }
+            dbgs() << F << '\n';
         }
 
         module->print(dbgs(), nullptr);
