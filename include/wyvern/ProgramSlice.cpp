@@ -913,11 +913,14 @@ void ProgramSlice::replaceArgs(Function *F) {
 }
 
 /**
- * @brief TODO
+ * @brief A function to simplify basic blocks of a function using the same method as the SimplifyCFGPass
  *
- * @details TODO
+ * @details This function iteratively simplifies the CFG by visiting each basic block
+ * and applying the llvm::simplifyCFG function. The process stops when no more changes
+ * are made, or up to a maximum of 1000 iterations, whichever comes first.
  *
- * @param F TODO
+ * @param F Pointer to the Function to be simplified.
+ * @param AM Reference to the FunctionAnalysisManager used to retrieve TargetIRAnalysis result.
  */
 void ProgramSlice::simplifyCfg(Function *F, FunctionAnalysisManager &AM) {
     auto &TTI = AM.getResult<TargetIRAnalysis>(*F);

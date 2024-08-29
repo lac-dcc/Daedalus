@@ -146,39 +146,17 @@ bool canProgramSlice(Instruction *I) {
 }
 
 /**
- * @brief Checks if a given instruction meets specific slicing criteria.
+ * @brief Checks if a given instruction meets the slicing criteria.
  *
- * @details This function checks if the given instruction meets the criteria for
- * slicing, specifically if it has a specific name or is used as an operand in a
- * return instruction.
+ * @details For each BasicBlock in the given Function, it checks the terminator instruction.
+ * If the terminator is a ReturnInst and has operands, it adds these operands to the set if
+ * they are Instructions. Then, for each Instruction within each BasicBlock, if the
+ * instruction is a StoreInst, it collects its operands into the set if they are Instructions.
  *
- * @param F The function containing the instruction.
- * @param I The instruction to check.
- * @return True if the instruction meets the criteria, false otherwise.
- */
-/* prob Not use anymore */
-// bool meetCriterion(Function *F, Instruction *I) {
-//     for (auto &BB : *F) {
-//         Instruction *terminator = BB.getTerminator();
-//         if (!terminator) {
-//             dbgs() << "not tem terminal\n";
-//             return false;
-//         }
-//         if (terminator->getNumOperands() == 0) return false; // void inst
-//         if (Instruction *inst = dyn_cast<ReturnInst>(terminator))
-//             for (auto &it : inst->operands())
-//                 if (I == it) return true;
-//     }
-//     return false;
-// }
-
-/**
- * @brief TODO
- *
- * @details TODO
- *
- * @param F TODO
- * @return TODO
+ * @param F Pointer to a LLVM function
+ * @return A std::set containing Instruction* which meet specific criteria:
+ * 1. The instruction is an operand of a ReturnInst.
+ * 2. The instruction is an operand of a StoreInst.
  */
 std::set<Instruction *> instSetMeetCriterion(Function *F) {
     std::set<Instruction *> S;

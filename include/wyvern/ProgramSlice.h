@@ -59,7 +59,7 @@ namespace llvm {
     Function *memoizedOutline();
 
     /**
-     * @brief TODO
+     * @brief A function to simplify basic blocks of a function using the same method as the SimplifyCFGPass
      */
     static void simplifyCfg(Function *F, FunctionAnalysisManager &AM);
 
