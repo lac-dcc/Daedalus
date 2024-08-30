@@ -1,26 +1,45 @@
+/**
+ *  @file   daedalus.cpp
+ *  @brief  Daedalus Pass Source File
+ *  @author Compilers Lab (UFMG)
+ *  @date   2024-07-08
+ ***********************************************/
 #include "../include/daedalus.h"
-#include "../include/wyvern/ProgramSlice.cpp"
+#include "../include/wyvern/ProgramSlice.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/PostDominators.h"
 #include "llvm/Analysis/TargetLibraryInfo.h"
+#include "llvm/IR/Constants.h"
+#include "llvm/IR/Function.h"
 #include "llvm/IR/InstIterator.h"
 #include "llvm/IR/InstrTypes.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/PassManager.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/Debug.h"
-#include "llvm/Support/FileSystem.h"
-#include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/NativeFormatting.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Transforms/Utils/ValueMapper.h"
-#include <fstream>
+#include <exception>
 #include <memory>
 
 using namespace llvm;
 #include <llvm/Pass.h>
 
+#define DEBUG_TYPE "Daedalus"
+
+/**
+ * @brief Determines if an instruction type can be sliced.
+ *
+ * @details This function checks if the given instruction is one of several
+ * types that should not be considered for slicing, such as branch instructions,
+ * return instructions, alloca instructions, comparison instructions, load
+ * instructions, and store instructions.
+ *
+ * @param I The instruction to check.
+ * @return True if the instruction type can be sliced, false otherwise.
+ */
 bool canSliceInstrType(Instruction &I) {
-    // These Instruction will not be a slice criterion.
     if (isa<BranchInst>(I)) return false; // Branch Instruction have badref
     if (isa<ReturnInst>(I)) return false;
     if (isa<AllocaInst>(I)) return false; // No needed
@@ -30,87 +49,291 @@ bool canSliceInstrType(Instruction &I) {
     return true;
 }
 
-namespace Daedalus {
+enum instState { UNVISITED, VISITED, DELETED };
 
-PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
+/**
+ * @brief Attempts to remove an instruction if it meets specific criteria.
+ *
+ * @details This function attempts to remove an instruction from the given set
+ * of instructions if it can be safely removed. It recursively checks if all
+ * users of the instruction can be removed.
+ *
+ * @param I The instruction to attempt to remove.
+ * @param s The set of instructions to be considered.
+ * @param instMap A map tracking the state of each instruction.
+ * @param ini The initial instruction for context.
+ * @return True if the instruction was successfully removed, false otherwise.
+ */
+bool tryRemoveInstruction(Instruction *I, std::set<Instruction *> &s,
+                          std::map<Instruction *, instState> &instMap,
+                          Instruction *ini) {
+    if (I->getParent() == nullptr) return true;
+    StringRef Iname = I->getName();
+    dbgs() << Iname << '\n';
+    if (!I || instMap[I] == DELETED) return true;
+    if (instMap[I] == VISITED) {
+        dbgs() << "VISITED\n";
+        // I->replaceAllUsesWith(UndefValue::get(I->getType()));
+        return true;
+    }
+    instMap[I] = VISITED;
+    if (s.find(I) == s.end() || I->isTerminator()) return false;
 
-    std::unordered_map<Instruction *, Function *> instr_Func;
+    std::set<User *> allUsers;
+    for (auto U : I->users()) allUsers.insert(U);
 
-    std::set<Function *> FtoMap;
-    for (Function &F : M.getFunctionList()) FtoMap.insert(&F);
-
-    std::unique_ptr<Module> module =
-        std::make_unique<Module>("New_" + M.getName().str(), M.getContext());
-    for (Function *F : FtoMap) {
-
-        PostDominatorTree PDT;
-        PDT.recalculate(*F);
-
-        std::set<Instruction *> s;
-        /// To replace all uses of I with the correpondent call
-        std::map<Instruction *, CallInst *> ItoCall;
-        std::map<Value *, Argument *> ArgtoArgcall;
-
-        for (Instruction &I : instructions(F)) s.insert(&I);
-
-        for (Instruction *I : s) {
-            if (!canSliceInstrType(*I)) continue;
-
-            LLVM_DEBUG(dbgs() << "\n Slicing Instruction: " << *I << '\n');
-            ProgramSlice ps = ProgramSlice(*I, *F, PDT);
-            if (!ps.canOutline()) continue;
-
-            LLVM_DEBUG(dbgs() << "\n Outlining instruction : " << *I << '\n');
-            auto [dps, G] = ps.outline();
-            LLVM_DEBUG(dbgs() << " === Outlined Funcion === \n" << *G << '\n');
-
-            LLVM_DEBUG(dbgs()
-                       << "\n Making Function call to Instruction Slice: " << *I
-                       << '\n');
-            SmallVector<Value *> v = ps.getOrigFunctionArgs();
-
-            /// Vector of Argument to pass to the callInst
-            SmallVector<Value *> arr;
-
-            for (auto &e : v) {
-                auto it = ArgtoArgcall.find(e);
-                if (it != ArgtoArgcall.end()) e = it->second;
+    for (auto U : allUsers) {
+        dbgs() << "from: " << Iname << '\n';
+        if (!U || U == nullptr) {
+            dbgs() << "NOT USER!\n";
+            if (I->users().empty() || allUsers.empty()) break;
+            continue;
+        };
+        dbgs() << "use: ";
+        U->print(dbgs());
+        /// If cant remove one of its users, then cant remove it as well.
+        if (Instruction *u = dyn_cast<Instruction>(U)) {
+            // if(u->getParent() == nullptr) return true;
+            if (!tryRemoveInstruction(u, s, instMap, ini)) {
+                return false;
             }
-            for (auto &e : v) {
-                bool flag = 0;
-                for (Instruction *K : s) {
-                    if (e->getName() == K->getName()) {
-                        arr.push_back(K);
-                        flag = 1;
-                        break;
-                    }
-                }
-                if (!flag) arr.push_back(e);
-            }
-
-           // if (ps._phiCrit) continue;
-
-            // Create callInst to the outlined slice, and move it next to the
-            // original Func
-            CallInst *callInst =
-                CallInst::Create(G, arr, I->getName(), I->getParent());
-            callInst->moveAfter(I);
-            ItoCall[I] = callInst;
-
-            Argument *arg = new Argument(I->getType(), I->getName());
-            Argument *argcall =
-                new Argument(callInst->getType(), callInst->getName());
-            ArgtoArgcall[arg] = argcall;
-            LLVM_DEBUG(dbgs() << "\n Instruction Outlined: " << *I << '\n');
-
         }
-        for (auto [I, callInst] : ItoCall) {
-            I->replaceAllUsesWith(callInst);
-            I->eraseFromParent();
+        // allUsers.erase(U);
+        if (I->users().empty()) break;
+    }
+    dbgs() << "HERE2\n";
+    if (I->getParent() != nullptr && instMap[I] != DELETED && I != ini) {
+        dbgs() << *I << " = Deleted!\n";
+        s.erase(I);
+        I->replaceAllUsesWith(UndefValue::get(I->getType()));
+        I->eraseFromParent();
+        instMap[I] = DELETED;
+    }
+    dbgs() << "HERE\n";
+    return true;
+}
+
+/**
+ * @brief Checks if a program slice can be created for an instruction.
+ *
+ * @details This function determines if a given instruction can be part of a
+ * program slice. Specifically, it ensures that if the instruction is a PHI
+ * node, it must not have users that are also PHI nodes within the same basic
+ * block.
+ *
+ * @param I The instruction to check.
+ * @return True if the instruction can be part of a program slice, false
+ * otherwise.
+ */
+bool canProgramSlice(Instruction *I) {
+    /// PHINode MUST to be at top of basic blocks. If our criterion
+    /// is a phi-node it will be replace by an callsite, then all the phi-nodes
+    /// under it, MUST to be moved above our criterion. But if at least one
+    /// of these phi-nodes is an user of our criterion, then it will not
+    /// dominate all the uses. In this case, we cant replace it.
+    if (PHINode *phi = dyn_cast<PHINode>(I)) {
+        for (User *use : phi->users()) {
+            if (Instruction *Iuse = dyn_cast<Instruction>(use))
+                if (isa<PHINode>(Iuse) && Iuse->getParent() == I->getParent()) {
+                    dbgs() << "Criterion is a phi-node which at least one of "
+                              "it's users are a Phi-Node and are in the same "
+                              "basic block!\n";
+                    return false;
+                }
         }
     }
-    module->print(dbgs(), nullptr);
-
-    return PreservedAnalyses::all();
+    return true;
 }
+
+/**
+ * @brief Checks if a given instruction meets the slicing criteria.
+ *
+ * @details For each BasicBlock in the given Function, it checks the terminator instruction.
+ * If the terminator is a ReturnInst and has operands, it adds these operands to the set if
+ * they are Instructions. Then, for each Instruction within each BasicBlock, if the
+ * instruction is a StoreInst, it collects its operands into the set if they are Instructions.
+ *
+ * @param F Pointer to a LLVM function
+ * @return A std::set containing Instruction* which meet specific criteria:
+ * 1. The instruction is an operand of a ReturnInst.
+ * 2. The instruction is an operand of a StoreInst.
+ */
+std::set<Instruction *> instSetMeetCriterion(Function *F) {
+    std::set<Instruction *> S;
+    for (auto &BB : *F) {
+        Instruction *term = BB.getTerminator();
+        if (!term || term->getNumOperands() == 0) continue;
+        if (Instruction *retValue = dyn_cast<ReturnInst>(term))
+            for (auto &it : retValue->operands())
+                if (Instruction *Iit = dyn_cast<Instruction>(it)) S.insert(Iit);
+    }
+    for (auto &BB : *F)
+        for (Instruction &I : BB)
+            if (isa<StoreInst>(I)) {
+                for (auto &p : I.operands())
+                    if (auto *Iit = dyn_cast<Instruction>(p)) S.insert(Iit);
+            }
+    // if (isa<BinaryOperator>(I)) {
+    //     S.insert(&I);
+    // }
+    // if(I.getName() == "add39"){
+    //  S.insert(&I);
+    // }
+    return S;
+}
+
+struct iSlice {
+    Instruction *I;
+    Function *originalF;
+    Function *F;
+    SmallVector<Value *> args;
+    std::set<Instruction *> constOriginalInst;
+    bool wasRemoved;
+};
+
+namespace Daedalus {
+    /**
+    * @brief Runs the Daedalus LLVM pass on a given module.
+    *
+    * @details This function performs slicing on the given module, creating and
+    * outlining program slices, and removing instructions that meet specific
+    * criteria. It attempts to merge slices and remove unused instructions from the
+    * original functions.
+    *
+    * @param M The module to run the pass on.
+    * @param MAM The module analysis manager.
+    * @return The preserved analyses after running the pass.
+    */
+    PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
+        std::set<Function *> FtoMap;
+        std::vector<iSlice> allSlices;
+        for (Function &F : M.getFunctionList()) FtoMap.insert(&F);
+
+        std::unique_ptr<Module> module =
+            std::make_unique<Module>("New_" + M.getName().str(), M.getContext());
+
+        for (Function *F : FtoMap) {
+            PostDominatorTree PDT;
+            PDT.recalculate(*F);
+
+            // All instruction Set
+            std::set<Instruction *> R;
+            for (Instruction &I : instructions(F)) R.insert(&I);
+
+            // Criterion Set
+            std::set<Instruction *> S = instSetMeetCriterion(F);
+            // for (auto &e : S) dbgs() << *e << '\n';
+
+            /// To replace all uses of I with the correpondent call
+            for (Instruction *I : S) {
+                if (!canSliceInstrType(*I)) continue;
+                if (!canProgramSlice(I)) continue;
+                dbgs() << "Instruction:\t" << I->getName() << "\t...\t";
+
+                dbgs() << "\033[31;1;4m";
+                ProgramSlice ps = ProgramSlice(*I, *F, PDT);
+                if (!ps.canOutline()) {
+                    dbgs() << "\033[0m";
+                    continue;
+                }
+                dbgs() << "\033[0m";
+
+                Function *G = ps.outline();
+                SmallVector<Value *> funcArgs = ps.getOrigFunctionArgs();
+
+                // Get the original instruction, before clone on slice, to check if
+                // it can be removed
+                std::map<Instruction *, Instruction *> constOriginalInst =
+                    ps.getInstructionInSlice();
+
+                std::set<Instruction *> originInstructionSet;
+                for (auto &e : constOriginalInst)
+                    originInstructionSet.insert(e.first);
+
+                iSlice slice = {I, F, G, funcArgs, originInstructionSet, false};
+                allSlices.push_back(slice);
+
+                dbgs() << "\033[32;1;4m";
+                dbgs() << "outlined!\n";
+                dbgs() << "\033[0m";
+            }
+        }
+        // TODO: Try to merge, if cant merge, delete the functions.
+        // > let on allSlices, only the slice that is worth to merge.
+        // ...
+        //
+        //
+        //
+
+        dbgs() << "Removing inst\n";
+        // If it is worth to merge, then substitute the original instruction
+        // with the corresponding function call, and removed unsed instructions
+        // from original function.
+
+        auto &FAM = MAM.getResult<FunctionAnalysisManagerModuleProxy>(M).getManager();
+        std::set<Function *> originalFunctions;
+        std::set<Function *> outlinedFunctions;
+        for (auto IS : allSlices) {
+            auto [I, originalF, F, args, origInst, wasRemoved] = IS;
+            originalFunctions.insert(originalF);
+            outlinedFunctions.insert(F);
+            dbgs() << "Removing: " << *I << '\n';
+            dbgs() << "Slice: \n" << *F << '\n';
+
+            if (wasRemoved) continue;
+
+            CallInst *callInst =
+                CallInst::Create(F, args, I->getName(), I->getParent());
+
+            Instruction *moveTo = I;
+            if (I && isa<PHINode>(I)) moveTo = I->getParent()->getFirstNonPHI();
+            callInst->moveBefore(moveTo);
+
+            // Check if can remove inst, and removed it.
+            std::map<Instruction *, instState>
+                mutInstMap; // If instruction I was removed;
+            std::map<Instruction *, bool>
+                visit; // If instruction I was visited;
+            std::set<Instruction *>
+                mutSet; // a mutable set of instruction on slice.
+
+            for (auto inst : origInst) {
+                mutInstMap[inst] = UNVISITED;
+                mutSet.insert(inst);
+            }
+            // dbgs() << "Instruction to remove:\n";
+            // for (auto IS : mutSet) {
+            //     dbgs() << *IS << '\n';
+            // }
+            // dbgs() << "END\n";
+            mutInstMap[I] = VISITED;
+            for (auto [J, isRemoved] : mutInstMap) {
+                if (J->getParent() == nullptr) continue;
+                if (isRemoved != DELETED)
+                    tryRemoveInstruction(J, mutSet, mutInstMap, I);
+                dbgs() << "REMO\n";
+                if (mutInstMap.empty()) break;
+            }
+            dbgs() << "Orig\n";
+
+            I->replaceAllUsesWith(callInst);
+            I->eraseFromParent();
+            origInst.erase(I);
+        }
+        for (auto F : outlinedFunctions) {
+            llvm::ProgramSlice::simplifyCfg(F, FAM);
+        }
+        for (auto originalF : originalFunctions) {
+            llvm::ProgramSlice::simplifyCfg(originalF, FAM);
+        }
+        dbgs() << "ENDFILE\n";
+
+        for (Function &F : M.getFunctionList()) {
+            dbgs() << F << '\n';
+        }
+
+        module->print(dbgs(), nullptr);
+
+        return PreservedAnalyses::none();
+    }
 } // namespace Daedalus

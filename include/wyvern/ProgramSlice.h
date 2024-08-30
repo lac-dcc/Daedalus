@@ -1,3 +1,9 @@
+/** 
+ *  @file   ProgramSlice.h
+ *  @brief  Daedalus' Program Slicer Header File
+ *  @author Compilers Lab (UFMG)
+ *  @date   2024-07-08
+ ***********************************************/
 #include <map>
 #include <set>
 
@@ -10,103 +16,185 @@
 
 namespace llvm {
 
-class ProgramSlice {
-public:
-  /// Creates a backward slice of function F in terms of slice criterion I,
-  /// which is passed as a parameter in call CallSite. Optionally, receives the
-  /// result of an Alias Analysis in AA to perform memory safety analysis.
-  ProgramSlice(Instruction &I, Function &F, PostDominatorTree &PDT);
+  class ProgramSlice {
+  public:
+    /**
+     * @brief Constructs a ProgramSlice object.
+     */
+    ProgramSlice(Instruction &I, Function &F, PostDominatorTree &PDT);
 
-  /// Returns whether the slice can be safely outlined into a delegate function.
-  bool canOutline();
-  bool newcanOutline();
+    /**
+     * @brief Checks if outlining the slice is feasible.
+     */
+    bool canOutline();
+    bool newcanOutline();
 
-  /// if a phi-function is the criterion and dont post dominates all phi in your slice
-  bool _phiCrit;
+    /**
+     * @brief if a phi-function is the criterion and dont post dominates all phi in your slice
+     */
+    bool _phiCrit;
 
-  /// Returns the set of arguments of the slice's parent function. Used to
-  /// initialize the environment for thunks that use the slice as their delegate
-  /// function.
-  SmallVector<Value *> getOrigFunctionArgs();
+    /**
+     * @brief Retrieves the original function arguments as a SmallVector of Values.
+     */
+    SmallVector<Value *> getOrigFunctionArgs();
 
-  /// Returns the struct type of the slice's corresponding thunk used for
-  /// lazification.
-  StructType *getThunkStructType(bool memo = false);
+    /**
+     * @brief Retrieves the struct type representing thunks (lazified instances) of this program slice's delegate function.
+     */
+    StructType *getThunkStructType(bool memo = false);
 
-  /// Returns the delegate function resulted from outlining the slice.
-  std::pair<SmallVector<Argument *>, Function *> outline();
+    /**
+     * @brief Retrieves the mapping of original instructions to their corresponding instructions in the sliced function.
+     */
+    std::map<Instruction *, Instruction *> getInstructionInSlice();
 
-  /// Returns the delegate function resulted from outlining the slice, using
-  /// memoization.
-  Function *memoizedOutline();
+    /**
+     * @brief Outlines the given slice into a standalone Function.
+     */
+    Function * outline();
 
-private:
-  void insertLoadForThunkParams(Function *F, bool memo);
-  void printFunctions(Function *F);
-  void reorderBlocks(Function *F);
-  void rerouteBranches(Function *F);
-  ReturnInst *addReturnValue(Function *F);
-  void reorganizeUses(Function *F);
-  void populateBBsWithInsts(Function *F);
-  void replaceArgs(Function *F);
-  void populateFunctionWithBBs(Function *F);
-  void addMissingTerminators(Function *F);
-  void addMemoizationCode(Function *F, ReturnInst *new_ret);
-  void insertNewBB(const BasicBlock *originalBB, Function *F);
-  void printSlice();
-  void computeAttractorBlocks();
-  void addDomBranches(DomTreeNode *cur, DomTreeNode *parent,
-                      std::set<DomTreeNode *> &visited);
-  void size();
-  StructType *computeStructType(bool memo);
+    /// Returns the delegate function resulted from outlining the slice, using
+    /// memoization.
+    Function *memoizedOutline();
 
-  /// pointer to the Instruction used as slice criterion
-  Instruction *_initial;
+    /**
+     * @brief A function to simplify basic blocks of a function using the same method as the SimplifyCFGPass
+     */
+    static void simplifyCfg(Function *F, FunctionAnalysisManager &AM);
 
-  Instruction *_instRetValue;
+  private:
+    void insertLoadForThunkParams(Function *F, bool memo);
 
-  /// function being sliced
-  Function *_parentFunction;
+    /**
+     * @brief Prints the original and sliced functions for debugging purposes.
+     */
+    void printFunctions(Function *F);
+    
+    /**
+     * @brief Reorders basic blocks in the new function F, ensuring
+     * that the sliced function's entry block (the only one with no predecessors)
+     * is first in the layout. This is necessary because LLVM assumes the first
+     * block of a function is always its entry block.
+     */
+    void reorderBlocks(Function *F);
 
-  /// list of formal arguments on which the slice depends on (if any)
-  SmallVector<Argument *> _depArgs;
-  std::vector<std::pair<Type *, StringRef> > _phiDepArgs;
+    /**
+     * @brief Reroutes branches in the slice to properly build control flow in the delegate function.
+     */
+    void rerouteBranches(Function *F);
 
-  /// set of instructions that must be in the slice, accordingto dependence
-  /// analysis
-  std::set<const Instruction *> _instsInSlice;
+    /**
+     * @brief Adds a return instruction to function F, returning the computed value
+     * of the sliced function.
+     */
+    ReturnInst *addReturnValue(Function *F);
 
-  /// set of BasicBLocks that must be in the slice, according to dependence
-  /// analysis
-  std::set<const BasicBlock *> _BBsInSlice;
+    /**
+     * @brief Fixes the instruction/argument/BB uses in new function F,
+     * to use their corresponding versions in the sliced function, rather
+     * than the originals from whom they were cloned.
+     */
+    void reorganizeUses(Function *F);
 
-  /// function call being lazified
+    /**
+     * @brief Adds slice instructions to function F, corresponding to instructions in the original function.
+     */
+    void populateBBsWithInsts(Function *F);
 
-  // @_Imap ->
-  /// maps each BasicBlock to its attractor (its first  dominator), used for
-  /// rearranging control flow
-  std::map<const BasicBlock *, const BasicBlock *> _attractors;
+    /**
+     * @brief Adjusts references between the function arguments and the operands
+     * of the instructions in function F.
+     */
+    void replaceArgs(Function *F);
 
-  /// maps original function arguments to new counterparts in the slice function
-  std::map<Argument *, Value *> _argMap;
+    /**
+     * @brief Populates function F with BasicBlocks corresponding to the BBs in the original function being sliced which contained instructions included in the slice.
+     */
+    void populateFunctionWithBBs(Function *F);
 
-  size_t _size;
+    /**
+     * @brief Adds terminating branches to BasicBlocks in function F,
+     * for BBs whose branches were not included in the slice but
+     * which are necessary to replicate the control flow of the
+     * original function.
+     */
+    void addMissingTerminators(Function *F);
 
-  /// maps BasicBlocks in the original function to their new cloned counterparts
-  /// in the slice
-  std::map<const BasicBlock *, BasicBlock *> _origToNewBBmap;
 
-  /// same as above, but in the opposite direction
-  std::map<BasicBlock *, const BasicBlock *> _newToOrigBBmap;
+    void addMemoizationCode(Function *F, ReturnInst *new_ret);
+    
+    /**
+     * @brief Inserts a new BasicBlock in Function F corresponding to the originalBB from the original function being sliced.
+     */
+    void insertNewBB(const BasicBlock *originalBB, Function *F);
+    
+    /**
+     * @brief Prints debugging information about the program slice.
+     */
+    void printSlice();
 
-  /// maps Instructions in the original function to their cloned counterparts in
-  /// the slice
-  std::map<Instruction *, Instruction *> _Imap;
+    /**
+     * @brief Computes the attractor blocks (first dominator) for each basic block in the original function.
+     */
+    void computeAttractorBlocks();
 
-  /// We store the slice's thunk types, because LLVM does not cache types based
-  /// on structure
-  StructType *_thunkStructType;
-  StructType *_memoizedThunkStructType;
+    /**
+     * @brief Adds branches from immediate dominators which existed in the original function to the slice.
+     */
+    void addDomBranches(DomTreeNode *cur, DomTreeNode *parent,
+                        std::set<DomTreeNode *> &visited);
+    
+    void size();
+    StructType *computeStructType(bool memo);
 
-};
+    /// pointer to the Instruction used as slice criterion
+    Instruction *_initial;
+
+    Instruction *_instRetValue;
+
+    /// function being sliced
+    Function *_parentFunction;
+
+    /// list of formal arguments on which the slice depends on (if any)
+    SmallVector<Argument *> _depArgs;
+    std::vector<std::pair<Type *, StringRef> > _phiDepArgs;
+
+    /// set of instructions that must be in the slice, accordingto dependence
+    /// analysis
+    std::set<const Instruction *> _instsInSlice;
+
+    /// set of BasicBLocks that must be in the slice, according to dependence
+    /// analysis
+    std::set<const BasicBlock *> _BBsInSlice;
+
+    /// function call being lazified
+
+    // @_Imap ->
+    /// maps each BasicBlock to its attractor (its first  dominator), used for
+    /// rearranging control flow
+    std::map<const BasicBlock *, const BasicBlock *> _attractors;
+
+    /// maps original function arguments to new counterparts in the slice function
+    std::map<Argument *, Value *> _argMap;
+
+    size_t _size;
+
+    /// maps BasicBlocks in the original function to their new cloned counterparts
+    /// in the slice
+    std::map<const BasicBlock *, BasicBlock *> _origToNewBBmap;
+
+    /// same as above, but in the opposite direction
+    std::map<BasicBlock *, const BasicBlock *> _newToOrigBBmap;
+
+    /// maps Instructions in the original function to their cloned counterparts in
+    /// the slice
+    std::map<Instruction *, Instruction *> _Imap;
+
+    /// We store the slice's thunk types, because LLVM does not cache types based
+    /// on structure
+    StructType *_thunkStructType;
+    StructType *_memoizedThunkStructType;
+
+  };
 } // namespace llvm

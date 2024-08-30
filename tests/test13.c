@@ -1,4 +1,11 @@
 #include <stdio.h>
+int f(int argc){
+	int a4 = 1;
+	for(int a5 = 0;a5 < argc; ++a5){
+		a4 *= (a5+1);
+	}
+	return a4*a4;
+}
 
 int main(int argc, char **argv){
 	int a2;
@@ -21,29 +28,3 @@ int main(int argc, char **argv){
 	return a4*a4; // slice_a4(i32 argc);
 }
 
-
-ps_a6: set -> {
-	int a5 = 1;
-	for(int a5 = 0;a5 < argc; ++a5){
-		a4 *= (a5+1);
-	}
-	return a6*a6;
-} #
-
-}
-
-ps_a4: set -> {
-	int a4 = 1;
-	for(int a5 = 0;a5 < argc; ++a5){
-		a4 *= (a5+1);
-	}
-	return a4*a4;
-} #
-
-int f(int argc){
-	int a4 = 1;
-	for(int a5 = 0;a5 < argc; ++a5){
-		a4 *= (a5+1);
-	}
-	return a4*a4;
-}
