@@ -155,7 +155,7 @@ get_data_dependences_for(
                         phiCrit = true;
                         break;
                     }
-		    continue;
+                    continue;
                 }
                 if (isa<StoreInst>(U)) {
                     visited.insert(U);
