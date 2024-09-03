@@ -13,18 +13,14 @@ entry:
 
 if.then:                                          ; preds = %entry
   %mul = mul nsw i32 2, %argc
-  %call = call i32 (ptr, ...) @printf(ptr noundef @.str, i32 noundef %mul)
   br label %if.end
 
 if.else:                                          ; preds = %entry
-  %mul1 = mul nsw i32 3, %argc
-  %mul2 = mul nsw i32 %mul1, %argc
-  %call3 = call i32 (ptr, ...) @printf(ptr noundef @.str, i32 noundef %mul2)
   br label %if.end
 
 if.end:                                           ; preds = %if.else, %if.then
-  %c.0 = phi i32 [ %mul, %if.then ], [ %mul2, %if.else ]
-  %call4 = call i32 (ptr, ...) @printf(ptr noundef @.str, i32 noundef %c.0)
+  %c.01 = call i32 @_wyvern_slice_f_c.0_731256138(i32 %argc)
+  %call = call i32 (ptr, ...) @printf(ptr noundef @.str, i32 noundef %c.01)
   ret void
 }
 
@@ -38,23 +34,41 @@ entry:
 
 if.then:                                          ; preds = %entry
   %mul = mul nsw i32 2, %argc
-  %call = call i32 (ptr, ...) @printf(ptr noundef @.str, i32 noundef %mul)
   br label %if.end
 
 if.else:                                          ; preds = %entry
-  %mul1 = mul nsw i32 3, %argc
-  %mul2 = mul nsw i32 %mul1, %argc
-  %call3 = call i32 (ptr, ...) @printf(ptr noundef @.str, i32 noundef %mul2)
   br label %if.end
 
 if.end:                                           ; preds = %if.else, %if.then
-  %c.0 = phi i32 [ %mul, %if.then ], [ %mul2, %if.else ]
-  %call4 = call i32 (ptr, ...) @printf(ptr noundef @.str, i32 noundef %c.0)
+  %c.01 = call i32 @_wyvern_slice_f_c.0_731256138(i32 %argc)
+  %mul3 = mul nsw i32 %c.01, %c.01
+  %call = call i32 (ptr, ...) @printf(ptr noundef @.str, i32 noundef %c.01)
   ret i32 0
+}
+
+; Function Attrs: nounwind willreturn
+define internal i32 @_wyvern_slice_f_c.0_731256138(i32 %argc) #2 {
+sliceclone_entry:
+  %0 = icmp sgt i32 %argc, 2
+  br i1 %0, label %sliceclone_if.then, label %sliceclone_if.else
+
+sliceclone_if.else:                               ; preds = %sliceclone_entry
+  %1 = mul nsw i32 3, %argc
+  %2 = mul nsw i32 %1, %argc
+  br label %sliceclone_if.end
+
+sliceclone_if.then:                               ; preds = %sliceclone_entry
+  %3 = mul nsw i32 2, %argc
+  br label %sliceclone_if.end
+
+sliceclone_if.end:                                ; preds = %sliceclone_if.then, %sliceclone_if.else
+  %4 = phi i32 [ %3, %sliceclone_if.then ], [ %2, %sliceclone_if.else ]
+  ret i32 %4
 }
 
 attributes #0 = { noinline nounwind uwtable "frame-pointer"="all" "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 attributes #1 = { "frame-pointer"="all" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+attributes #2 = { nounwind willreturn "Daedalus_Slice" }
 
 !llvm.module.flags = !{!0, !1, !2, !3, !4}
 !llvm.ident = !{!5}

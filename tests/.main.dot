@@ -1,30 +1,5 @@
 digraph "CFG for 'main' function" {
 	label="CFG for 'main' function";
 
-	Node0x647af579f1e0 [shape=record,color="#3d50c3ff", style=filled, fillcolor="#88abfd70",label="{entry}"];
-	Node0x647af579f1e0 -> Node0x647af579f230;
-	Node0x647af579f230 [shape=record,color="#3d50c3ff", style=filled, fillcolor="#f3c7b170",label="{for.cond|{<s0>T|<s1>F}}"];
-	Node0x647af579f230:s0 -> Node0x647af579f4f0;
-	Node0x647af579f230:s1 -> Node0x647af579f5d0;
-	Node0x647af579f4f0 [shape=record,color="#3d50c3ff", style=filled, fillcolor="#f3c7b170",label="{for.body}"];
-	Node0x647af579f4f0 -> Node0x647af579f760;
-	Node0x647af579f760 [shape=record,color="#b70d28ff", style=filled, fillcolor="#b70d2870",label="{for.cond1|{<s0>T|<s1>F}}"];
-	Node0x647af579f760:s0 -> Node0x647af579fc90;
-	Node0x647af579f760:s1 -> Node0x647af579fd70;
-	Node0x647af579fc90 [shape=record,color="#b70d28ff", style=filled, fillcolor="#b70d2870",label="{for.body3|{<s0>T|<s1>F}}"];
-	Node0x647af579fc90:s0 -> Node0x647af57a05e0;
-	Node0x647af579fc90:s1 -> Node0x647af57a0650;
-	Node0x647af57a05e0 [shape=record,color="#3d50c3ff", style=filled, fillcolor="#d24b4070",label="{if.then}"];
-	Node0x647af57a05e0 -> Node0x647af57a08e0;
-	Node0x647af57a0650 [shape=record,color="#3d50c3ff", style=filled, fillcolor="#d24b4070",label="{if.else}"];
-	Node0x647af57a0650 -> Node0x647af57a08e0;
-	Node0x647af57a08e0 [shape=record,color="#b70d28ff", style=filled, fillcolor="#b70d2870",label="{if.end}"];
-	Node0x647af57a08e0 -> Node0x647af579f8a0;
-	Node0x647af579f8a0 [shape=record,color="#b70d28ff", style=filled, fillcolor="#b70d2870",label="{for.inc}"];
-	Node0x647af579f8a0 -> Node0x647af579f760;
-	Node0x647af579fd70 [shape=record,color="#3d50c3ff", style=filled, fillcolor="#f3c7b170",label="{for.end}"];
-	Node0x647af579fd70 -> Node0x647af579f350;
-	Node0x647af579f350 [shape=record,color="#3d50c3ff", style=filled, fillcolor="#f3c7b170",label="{for.inc5}"];
-	Node0x647af579f350 -> Node0x647af579f230;
-	Node0x647af579f5d0 [shape=record,color="#3d50c3ff", style=filled, fillcolor="#88abfd70",label="{for.end7}"];
+	Node0x5dca07ea6290 [shape=record,color="#b70d28ff", style=filled, fillcolor="#b70d2870",label="{entry:\l  %count = alloca i32, align 4\l  %add = add nsw i32 %argc, 3\l  %call = call i32 @sliceAndDice(i32 noundef %argc, i32 noundef %add, i32\l... noundef 1, ptr noundef %count)\l  %call1 = call i32 (ptr, ...) @printf(ptr noundef @.str, i32 noundef %call)\l  %0 = load i32, ptr %count, align 4\l  ret i32 %0\l}"];
 }

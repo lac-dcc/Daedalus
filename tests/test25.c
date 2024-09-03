@@ -26,4 +26,5 @@ int main(int argc, char **argv){
     int a = a8 + 5;
     int b = 2*a + 2;
     int c = f(2)-6;
+    return b;
 }
