@@ -760,7 +760,6 @@ ReturnInst *ProgramSlice::addReturnValue(Function *F) {
                                           exit);
             }
         }
-        // return ReturnInst::Create(F->getParent()->getContext(), )//
     }
     return ReturnInst::Create(F->getParent()->getContext(), _Imap[_initial],
                               exit);

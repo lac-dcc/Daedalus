@@ -56,7 +56,7 @@ bool newRemover(Instruction *I, Instruction *ini,
     vis.insert(I);
 
     for (auto U : I->users()) {
-        if (!U || U->use_empty()) continue;
+        if (!U) continue;
         if (Instruction *J = dyn_cast<Instruction>(U))
             if (!newRemover(J, ini, constOriginalInst, vis)) return false;
     }
@@ -95,15 +95,16 @@ std::set<Instruction *> instSetMeetCriterion(Function *F) {
             LLVM_DEBUG(dbgs()
                        << "Error: Found function with no terminators:\n");
             LLVM_DEBUG(dbgs() << *F << '\n');
+	    continue;
         };
-        if (Instruction *retValue = dyn_cast<ReturnInst>(term))
-            for (auto &it : retValue->operands())
-                if (Instruction *Iit = dyn_cast<Instruction>(it)) S.insert(Iit);
+        // if (Instruction *retValue = dyn_cast<ReturnInst>(term))
+        //     for (auto &it : retValue->operands())
+        //         if (Instruction *Iit = dyn_cast<Instruction>(it)) S.insert(Iit);
 
-        // for (Instruction &I : BB) {
-        //     if (isa<BinaryOperator>(I)) S.insert(&I);
-        // }
-        //
+        for (Instruction &I : BB) {
+            if (isa<BinaryOperator>(I)) S.insert(&I);
+        }
+
         // for (Instruction &I : BB) {
         //     if (isa<StoreInst>(I)) {
         //         for (auto &p : I.operands())
@@ -125,6 +126,8 @@ struct iSlice {
 };
 
 namespace Daedalus {
+
+    std::map<int,int> a;
 
 PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
     std::set<Function *> FtoMap;
