@@ -153,14 +153,14 @@ std::set<Instruction *> instSetMeetCriterion(Function *F) {
             LLVM_DEBUG(dbgs() << *F << '\n');
             continue;
         };
-        // if (Instruction *retValue = dyn_cast<ReturnInst>(term))
-        //     for (auto &it : retValue->operands())
-        //         if (Instruction *Iit = dyn_cast<Instruction>(it))
-        //         S.insert(Iit);
+        if (Instruction *retValue = dyn_cast<ReturnInst>(term))
+            for (auto &it : retValue->operands())
+                if (Instruction *Iit = dyn_cast<Instruction>(it))
+                S.insert(Iit);
 
-        for (Instruction &I : BB) {
-            if (isa<BinaryOperator>(I)) S.insert(&I);
-        }
+        // for (Instruction &I : BB) {
+        //     if (isa<BinaryOperator>(I)) S.insert(&I);
+        // }
 
         // for (Instruction &I : BB) {
         //     if (isa<StoreInst>(I)) {
