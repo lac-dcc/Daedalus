@@ -1,9 +1,16 @@
+/**
+ *  @file   daedalus.cpp
+ *  @brief  Daedalus Pass Source File
+ *  @author Compilers Lab (UFMG)
+ *  @date   2024-07-08
+ ***********************************************/
 #include "../include/daedalus.h"
 #include "../include/wyvern/ProgramSlice.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/PostDominators.h"
 #include "llvm/Analysis/TargetLibraryInfo.h"
 #include "llvm/IR/Constants.h"
+#include "llvm/IR/Function.h"
 #include "llvm/IR/InstIterator.h"
 #include "llvm/IR/InstrTypes.h"
 #include "llvm/IR/Instructions.h"
@@ -27,7 +34,17 @@ const std::string GREEN = "\033[32m";
 const std::string CLEAN = "\033[0m";
 }; // namespace COLOR
 
-// These Instructions types will not be a slice criterion.
+/**
+ * @brief Determines if an instruction type can be sliced.
+ *
+ * @details This function checks if the given instruction is one of several
+ * types that should not be considered for slicing, such as branch instructions,
+ * return instructions, alloca instructions, comparison instructions, load
+ * instructions, and store instructions.
+ *
+ * @param I The instruction to check.
+ * @return True if the instruction type can be sliced, false otherwise.
+ */
 bool canSliceInstrType(Instruction &I) {
     if (isa<BranchInst>(I)) return false; // Branch Instruction have badref
     if (isa<ReturnInst>(I)) return false;
@@ -38,6 +55,19 @@ bool canSliceInstrType(Instruction &I) {
     return true;
 }
 
+/**
+ * @brief Attempts to remove an instruction if it meets specific criteria.
+ *
+ * @details This function attempts to remove an instruction from the given set
+ * of instructions if it can be safely removed. It recursively checks if all
+ * users of the instruction can be removed.
+ *
+ * @param I The instruction to attempt to remove.
+ * @param s The set of instructions to be considered.
+ * @param instMap A map tracking the state of each instruction.
+ * @param ini The initial instruction for context.
+ * @return True if the instruction was successfully removed, false otherwise.
+ */
 bool newRemover(Instruction *I, Instruction *ini,
                 std::set<Instruction *> &constOriginalInst,
                 std::set<Instruction *> &vis) {
@@ -63,6 +93,18 @@ bool newRemover(Instruction *I, Instruction *ini,
     return true;
 }
 
+/**
+ * @brief Checks if a program slice can be created for an instruction.
+ *
+ * @details This function determines if a given instruction can be part of a
+ * program slice. Specifically, it ensures that if the instruction is a PHI
+ * node, it must not have users that are also PHI nodes within the same basic
+ * block.
+ *
+ * @param I The instruction to check.
+ * @return True if the instruction can be part of a program slice, false
+ * otherwise.
+ */
 bool canProgramSlice(Instruction *I) {
     /// PHINode MUST to be at top of basic blocks. If our criterion
     /// is a phi-node it will be replace by an callsite, then all the phi-nodes
@@ -87,6 +129,20 @@ bool canProgramSlice(Instruction *I) {
     return true;
 }
 
+/**
+ * @brief Checks if a given instruction meets the slicing criteria.
+ *
+ * @details For each BasicBlock in the given Function, it checks the terminator
+ * instruction. If the terminator is a ReturnInst and has operands, it adds
+ * these operands to the set if they are Instructions. Then, for each
+ * Instruction within each BasicBlock, if the instruction is a StoreInst, it
+ * collects its operands into the set if they are Instructions.
+ *
+ * @param F Pointer to a LLVM function
+ * @return A std::set containing Instruction* which meet specific criteria:
+ * 1. The instruction is an operand of a ReturnInst.
+ * 2. The instruction is an operand of a StoreInst.
+ */
 std::set<Instruction *> instSetMeetCriterion(Function *F) {
     std::set<Instruction *> S;
     for (auto &BB : *F) {
@@ -95,11 +151,12 @@ std::set<Instruction *> instSetMeetCriterion(Function *F) {
             LLVM_DEBUG(dbgs()
                        << "Error: Found function with no terminators:\n");
             LLVM_DEBUG(dbgs() << *F << '\n');
-	    continue;
+            continue;
         };
         // if (Instruction *retValue = dyn_cast<ReturnInst>(term))
         //     for (auto &it : retValue->operands())
-        //         if (Instruction *Iit = dyn_cast<Instruction>(it)) S.insert(Iit);
+        //         if (Instruction *Iit = dyn_cast<Instruction>(it))
+        //         S.insert(Iit);
 
         for (Instruction &I : BB) {
             if (isa<BinaryOperator>(I)) S.insert(&I);
@@ -126,9 +183,18 @@ struct iSlice {
 };
 
 namespace Daedalus {
-
-    std::map<int,int> a;
-
+/**
+ * @brief Runs the Daedalus LLVM pass on a given module.
+ *
+ * @details This function performs slicing on the given module, creating and
+ * outlining program slices, and removing instructions that meet specific
+ * criteria. It attempts to merge slices and remove unused instructions from the
+ * original functions.
+ *
+ * @param M The module to run the pass on.
+ * @param MAM The module analysis manager.
+ * @return The preserved analyses after running the pass.
+ */
 PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
     std::set<Function *> FtoMap;
     std::vector<iSlice> allSlices;
@@ -145,7 +211,6 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
 
     LLVM_DEBUG(dbgs() << "== OUTLINING INST PHASE ==\n");
     for (Function *F : FtoMap) {
-
         PostDominatorTree PDT;
         PDT.recalculate(*F);
 
@@ -196,10 +261,17 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
     // with the corresponding function call, and removed unsed instructions
     // from original function.
     //
-
+    auto &FAM =
+        MAM.getResult<FunctionAnalysisManagerModuleProxy>(M).getManager();
+    std::set<Function *> originalFunctions;
+    std::set<Function *> outlinedFunctions;
     std::set<Instruction *> toRemove;
     for (auto IS : allSlices) {
         auto [I, F, args, origInst, wasRemoved] = IS;
+	Function *originalF = I->getParent()->getParent();
+        originalFunctions.insert(originalF);
+        outlinedFunctions.insert(F);
+
         if (I->getParent() == nullptr) continue; // I could may be removed
         // by a previous slice;
 
@@ -227,6 +299,12 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
         I->replaceAllUsesWith(callInst);
         I->eraseFromParent();
         toRemove.insert(I);
+    }
+    for (auto F : outlinedFunctions) {
+        llvm::ProgramSlice::simplifyCfg(F, FAM);
+    }
+    for (auto originalF : originalFunctions) {
+        llvm::ProgramSlice::simplifyCfg(originalF, FAM);
     }
     dbgs() << "ENDFILE\n";
     for (Function &F : M.getFunctionList()) dbgs() << F << '\n';
