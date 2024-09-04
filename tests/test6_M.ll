@@ -11,21 +11,24 @@ entry:
   br label %for.cond
 
 for.cond:                                         ; preds = %for.inc, %entry
-  %i.0 = phi i32 [ %s, %entry ], [ undef, %for.inc ]
+  %count.0 = phi i32 [ 0, %entry ], [ %inc, %for.inc ]
+  %i.0 = phi i32 [ %s, %entry ], [ %add1, %for.inc ]
   %cmp = icmp slt i32 %i.0, %e
   br i1 %cmp, label %for.body, label %for.end
 
 for.body:                                         ; preds = %for.cond
+  %inc = add nsw i32 %count.0, 1
   br label %for.inc
 
 for.inc:                                          ; preds = %for.body
+  %add1 = add nsw i32 %i.0, %r
   br label %for.cond, !llvm.loop !4
 
 for.end:                                          ; preds = %for.cond
-  %sum.0.lcssa2 = call i32 @_wyvern_slice_sliceAndDice_sum.0.lcssa_719454105(i32 %s, i32 %e, i32 %r)
-  %count.0.lcssa1 = call i32 @_wyvern_slice_sliceAndDice_count.0.lcssa_644816642(i32 %s, i32 %e, i32 %r)
-  store i32 %count.0.lcssa1, ptr %num_elements, align 4
-  ret i32 %sum.0.lcssa2
+  %count.0.lcssa = phi i32 [ %count.0, %for.cond ]
+  %sum.0.lcssa1 = call i32 @_wyvern_slice_sliceAndDice_sum.0.lcssa_707923801(i32 %s, i32 %e, i32 %r)
+  store i32 %count.0.lcssa, ptr %num_elements, align 4
+  ret i32 %sum.0.lcssa1
 }
 
 ; Function Attrs: noinline nounwind uwtable
@@ -42,31 +45,7 @@ entry:
 declare dso_local i32 @printf(ptr noundef, ...) #1
 
 ; Function Attrs: nounwind willreturn
-define internal i32 @_wyvern_slice_sliceAndDice_count.0.lcssa_644816642(i32 %s, i32 %e, i32 %r) #2 {
-sliceclone_entry:
-  br label %sliceclone_for.cond
-
-sliceclone_for.inc:                               ; preds = %sliceclone_for.body
-  %0 = add nsw i32 %2, %r
-  br label %sliceclone_for.cond
-
-sliceclone_for.cond:                              ; preds = %sliceclone_for.inc, %sliceclone_entry
-  %1 = phi i32 [ 0, %sliceclone_entry ], [ %4, %sliceclone_for.inc ]
-  %2 = phi i32 [ %s, %sliceclone_entry ], [ %0, %sliceclone_for.inc ]
-  %3 = icmp slt i32 %2, %e
-  br i1 %3, label %sliceclone_for.body, label %sliceclone_for.end
-
-sliceclone_for.body:                              ; preds = %sliceclone_for.cond
-  %4 = add nsw i32 %1, 1
-  br label %sliceclone_for.inc
-
-sliceclone_for.end:                               ; preds = %sliceclone_for.cond
-  %5 = phi i32 [ %1, %sliceclone_for.cond ]
-  ret i32 %5
-}
-
-; Function Attrs: nounwind willreturn
-define internal i32 @_wyvern_slice_sliceAndDice_sum.0.lcssa_719454105(i32 %s, i32 %e, i32 %r) #2 {
+define internal i32 @_wyvern_slice_sliceAndDice_sum.0.lcssa_707923801(i32 %s, i32 %e, i32 %r) #2 {
 sliceclone_entry:
   br label %sliceclone_for.cond
 

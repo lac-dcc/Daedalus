@@ -2255,7 +2255,25 @@ return:                                           ; preds = %for.end30, %for.end
 declare float @llvm.fmuladd.f32(float, float, float) #4
 
 ; Function Attrs: nounwind willreturn
-define internal float @_wyvern_slice_main_add_862135109() #5 {
+define internal ptr @_wyvern_slice_main__490413963() #5 {
+sliceclone_entry:
+  %0 = alloca [9 x [80 x i8]], align 16
+  %1 = getelementptr inbounds <{ [80 x i8], [8 x [80 x i8]] }>, ptr %0, i32 0, i32 0
+  %2 = getelementptr inbounds [80 x i8], ptr %1, i32 0, i32 0
+  ret ptr %2
+}
+
+; Function Attrs: nounwind willreturn
+define internal float @_wyvern_slice_main_sub15_133107574() #5 {
+sliceclone_entry:
+  %0 = call float @second()
+  %1 = call float @second()
+  %2 = fsub float %1, %0
+  ret float %2
+}
+
+; Function Attrs: nounwind willreturn
+define internal float @_wyvern_slice_main_add_77570374() #5 {
 sliceclone_entry:
   %0 = load float, ptr @atime, align 16
   %1 = load float, ptr getelementptr inbounds ([9 x [15 x float]], ptr @atime, i64 0, i64 1), align 4
@@ -2264,7 +2282,7 @@ sliceclone_entry:
 }
 
 ; Function Attrs: nounwind willreturn
-define internal ptr @_wyvern_slice_main_arrayidx18_900431019() #5 {
+define internal ptr @_wyvern_slice_main_arrayidx18_774158242() #5 {
 sliceclone_for.body:
   %0 = load i32, ptr @main.i, align 4
   %1 = sext i32 %0 to i64
@@ -2273,7 +2291,7 @@ sliceclone_for.body:
 }
 
 ; Function Attrs: nounwind willreturn
-define internal float @_wyvern_slice_main_fneg_557676911() #5 {
+define internal float @_wyvern_slice_main_fneg_6669646() #5 {
 sliceclone_for.body22:
   %0 = load i32, ptr @main.i, align 4
   %1 = sext i32 %0 to i64
@@ -2284,7 +2302,7 @@ sliceclone_for.body22:
 }
 
 ; Function Attrs: nounwind willreturn
-define internal ptr @_wyvern_slice_main_arrayidx26_42013250() #5 {
+define internal ptr @_wyvern_slice_main_arrayidx26_205370056() #5 {
 sliceclone_for.body22:
   %0 = load i32, ptr @main.i, align 4
   %1 = sext i32 %0 to i64
@@ -2293,7 +2311,36 @@ sliceclone_for.body22:
 }
 
 ; Function Attrs: nounwind willreturn
-define internal ptr @_wyvern_slice_main_arrayidx174_767478712() #5 {
+define internal float @_wyvern_slice_main_div172_334268079(float %sub109.lcssa, i32 %loop.1.lcssa) #5 {
+sliceclone_do.end:
+  %0 = fpext float %sub109.lcssa to double
+  %1 = sitofp i32 %loop.1.lcssa to double
+  %2 = fdiv double %0, %1
+  %3 = fptrunc double %2 to float
+  br label %sliceclone_if.end149
+
+sliceclone_if.end149:                             ; preds = %sliceclone_do.end
+  %4 = load i32, ptr @main.ntimes, align 4
+  %5 = sitofp i32 %4 to float
+  %6 = fmul float %5, %3
+  br label %sliceclone_for.body159
+
+sliceclone_for.body159:                           ; preds = %sliceclone_if.end149
+  %7 = call float @second()
+  br label %sliceclone_for.end167
+
+sliceclone_for.end167:                            ; preds = %sliceclone_for.body159
+  %8 = call float @second()
+  %9 = fsub float %8, %7
+  %10 = fsub float %9, %6
+  %11 = load i32, ptr @main.ntimes, align 4
+  %12 = sitofp i32 %11 to float
+  %13 = fdiv float %10, %12
+  ret float %13
+}
+
+; Function Attrs: nounwind willreturn
+define internal ptr @_wyvern_slice_main_arrayidx174_721392777() #5 {
 sliceclone_for.end167:
   %0 = load i32, ptr @main.j, align 4
   %1 = sext i32 %0 to i64
@@ -2302,7 +2349,38 @@ sliceclone_for.end167:
 }
 
 ; Function Attrs: nounwind willreturn
-define internal float @_wyvern_slice_main_conv96_225566089() #5 {
+define internal float @_wyvern_slice_main_conv93_589367163() #5 {
+sliceclone_entry:
+  %0 = load i32, ptr @main.n, align 4
+  %1 = load i32, ptr @main.n, align 4
+  %2 = mul nsw i32 %0, %1
+  %3 = load i32, ptr @main.n, align 4
+  %4 = mul nsw i32 %2, %3
+  %5 = sitofp i32 %4 to double
+  %6 = fmul double 2.000000e+00, %5
+  %7 = fdiv double %6, 3.000000e+00
+  %8 = load i32, ptr @main.n, align 4
+  %9 = load i32, ptr @main.n, align 4
+  %10 = mul nsw i32 %8, %9
+  %11 = sitofp i32 %10 to double
+  %12 = call double @llvm.fmuladd.f64(double 2.000000e+00, double %11, double %7)
+  %13 = fptrunc double %12 to float
+  %14 = load float, ptr @atime, align 16
+  %15 = load float, ptr getelementptr inbounds ([9 x [15 x float]], ptr @atime, i64 0, i64 1), align 4
+  %16 = fadd float %14, %15
+  br label %sliceclone_if.then
+
+sliceclone_if.then:                               ; preds = %sliceclone_entry
+  %17 = fpext float %13 to double
+  %18 = fpext float %16 to double
+  %19 = fmul double 1.000000e+06, %18
+  %20 = fdiv double %17, %19
+  %21 = fptrunc double %20 to float
+  ret float %21
+}
+
+; Function Attrs: nounwind willreturn
+define internal float @_wyvern_slice_main_conv96_472423102() #5 {
 sliceclone_if.then:
   %0 = load float, ptr getelementptr inbounds ([9 x [15 x float]], ptr @atime, i64 0, i64 3), align 4
   %1 = fpext float %0 to double
@@ -2312,7 +2390,7 @@ sliceclone_if.then:
 }
 
 ; Function Attrs: nounwind willreturn
-define internal float @_wyvern_slice_main_div97_327035670() #5 {
+define internal float @_wyvern_slice_main_div97_762145805() #5 {
 sliceclone_entry:
   %0 = load float, ptr @atime, align 16
   %1 = load float, ptr getelementptr inbounds ([9 x [15 x float]], ptr @atime, i64 0, i64 1), align 4
@@ -2325,7 +2403,7 @@ sliceclone_if.end:                                ; preds = %sliceclone_entry
 }
 
 ; Function Attrs: nounwind willreturn
-define internal i32 @_wyvern_slice_main_inc106_997039285() #5 {
+define internal i32 @_wyvern_slice_main_inc106_9827080() #5 {
 sliceclone_for.inc105:
   %0 = load i32, ptr @main.i, align 4
   %1 = add nsw i32 %0, 1
@@ -2333,7 +2411,7 @@ sliceclone_for.inc105:
 }
 
 ; Function Attrs: nounwind willreturn
-define internal i32 @_wyvern_slice_main_mul140_952258250() #5 {
+define internal i32 @_wyvern_slice_main_mul140_616128799() #5 {
 sliceclone_if.then139:
   %0 = load i32, ptr @main.ntimes, align 4
   %1 = mul nsw i32 %0, 2
@@ -2341,7 +2419,22 @@ sliceclone_if.then139:
 }
 
 ; Function Attrs: nounwind willreturn
-define internal ptr @_wyvern_slice_main_arrayidx188_843242304() #5 {
+define internal float @_wyvern_slice_main_div186_716942012() #5 {
+sliceclone_for.end167:
+  %0 = call float @second()
+  br label %sliceclone_for.end182
+
+sliceclone_for.end182:                            ; preds = %sliceclone_for.end167
+  %1 = call float @second()
+  %2 = fsub float %1, %0
+  %3 = load i32, ptr @main.ntimes, align 4
+  %4 = sitofp i32 %3 to float
+  %5 = fdiv float %2, %4
+  ret float %5
+}
+
+; Function Attrs: nounwind willreturn
+define internal ptr @_wyvern_slice_main_arrayidx188_268325680() #5 {
 sliceclone_for.end182:
   %0 = load i32, ptr @main.j, align 4
   %1 = sext i32 %0 to i64
@@ -2350,7 +2443,7 @@ sliceclone_for.end182:
 }
 
 ; Function Attrs: nounwind willreturn
-define internal float @_wyvern_slice_main_add193_229358166() #5 {
+define internal float @_wyvern_slice_main_add193_178440618() #5 {
 sliceclone_for.end182:
   %0 = load i32, ptr @main.j, align 4
   %1 = sext i32 %0 to i64
@@ -2365,7 +2458,7 @@ sliceclone_for.end182:
 }
 
 ; Function Attrs: nounwind willreturn
-define internal ptr @_wyvern_slice_main_arrayidx195_525031257() #5 {
+define internal ptr @_wyvern_slice_main_arrayidx195_739553223() #5 {
 sliceclone_for.end182:
   %0 = load i32, ptr @main.j, align 4
   %1 = sext i32 %0 to i64
@@ -2374,7 +2467,44 @@ sliceclone_for.end182:
 }
 
 ; Function Attrs: nounwind willreturn
-define internal ptr @_wyvern_slice_main_arrayidx202_151448550() #5 {
+define internal float @_wyvern_slice_main_conv200_82803726() #5 {
+sliceclone_entry:
+  %0 = load i32, ptr @main.n, align 4
+  %1 = load i32, ptr @main.n, align 4
+  %2 = mul nsw i32 %0, %1
+  %3 = load i32, ptr @main.n, align 4
+  %4 = mul nsw i32 %2, %3
+  %5 = sitofp i32 %4 to double
+  %6 = fmul double 2.000000e+00, %5
+  %7 = fdiv double %6, 3.000000e+00
+  %8 = load i32, ptr @main.n, align 4
+  %9 = load i32, ptr @main.n, align 4
+  %10 = mul nsw i32 %8, %9
+  %11 = sitofp i32 %10 to double
+  %12 = call double @llvm.fmuladd.f64(double 2.000000e+00, double %11, double %7)
+  %13 = fptrunc double %12 to float
+  br label %sliceclone_for.end182
+
+sliceclone_for.end182:                            ; preds = %sliceclone_entry
+  %14 = load i32, ptr @main.j, align 4
+  %15 = sext i32 %14 to i64
+  %16 = getelementptr inbounds [15 x float], ptr @atime, i64 0, i64 %15
+  %17 = load float, ptr %16, align 4
+  %18 = load i32, ptr @main.j, align 4
+  %19 = sext i32 %18 to i64
+  %20 = getelementptr inbounds [15 x float], ptr getelementptr inbounds ([9 x [15 x float]], ptr @atime, i64 0, i64 1), i64 0, i64 %19
+  %21 = load float, ptr %20, align 4
+  %22 = fadd float %17, %21
+  %23 = fpext float %13 to double
+  %24 = fpext float %22 to double
+  %25 = fmul double 1.000000e+06, %24
+  %26 = fdiv double %23, %25
+  %27 = fptrunc double %26 to float
+  ret float %27
+}
+
+; Function Attrs: nounwind willreturn
+define internal ptr @_wyvern_slice_main_arrayidx202_56580521() #5 {
 sliceclone_for.end182:
   %0 = load i32, ptr @main.j, align 4
   %1 = sext i32 %0 to i64
@@ -2383,7 +2513,7 @@ sliceclone_for.end182:
 }
 
 ; Function Attrs: nounwind willreturn
-define internal float @_wyvern_slice_main_conv207_450546025() #5 {
+define internal float @_wyvern_slice_main_conv207_231308651() #5 {
 sliceclone_for.end182:
   %0 = load i32, ptr @main.j, align 4
   %1 = sext i32 %0 to i64
@@ -2396,7 +2526,7 @@ sliceclone_for.end182:
 }
 
 ; Function Attrs: nounwind willreturn
-define internal ptr @_wyvern_slice_main_arrayidx209_272497104() #5 {
+define internal ptr @_wyvern_slice_main_arrayidx209_621236900() #5 {
 sliceclone_for.end182:
   %0 = load i32, ptr @main.j, align 4
   %1 = sext i32 %0 to i64
@@ -2405,7 +2535,7 @@ sliceclone_for.end182:
 }
 
 ; Function Attrs: nounwind willreturn
-define internal float @_wyvern_slice_main_div210_852540609() #5 {
+define internal float @_wyvern_slice_main_div210_54934781() #5 {
 sliceclone_for.end182:
   %0 = load i32, ptr @main.j, align 4
   %1 = sext i32 %0 to i64
@@ -2421,7 +2551,7 @@ sliceclone_for.end182:
 }
 
 ; Function Attrs: nounwind willreturn
-define internal ptr @_wyvern_slice_main_arrayidx212_310861349() #5 {
+define internal ptr @_wyvern_slice_main_arrayidx212_613110662() #5 {
 sliceclone_for.end182:
   %0 = load i32, ptr @main.j, align 4
   %1 = sext i32 %0 to i64
@@ -2430,7 +2560,7 @@ sliceclone_for.end182:
 }
 
 ; Function Attrs: nounwind willreturn
-define internal float @_wyvern_slice_main_add215_619283802() #5 {
+define internal float @_wyvern_slice_main_add215_597936052() #5 {
 sliceclone_for.end182:
   %0 = load float, ptr getelementptr inbounds ([9 x [15 x float]], ptr @atime, i64 0, i64 3, i64 6), align 4
   %1 = load i32, ptr @main.j, align 4
@@ -2442,7 +2572,7 @@ sliceclone_for.end182:
 }
 
 ; Function Attrs: nounwind willreturn
-define internal i32 @_wyvern_slice_main_inc217_999255799() #5 {
+define internal i32 @_wyvern_slice_main_inc217_160870064() #5 {
 sliceclone_for.inc216:
   %0 = load i32, ptr @main.j, align 4
   %1 = add nsw i32 %0, 1
@@ -2450,7 +2580,7 @@ sliceclone_for.inc216:
 }
 
 ; Function Attrs: nounwind willreturn
-define internal float @_wyvern_slice_main_conv221_552469510() #5 {
+define internal float @_wyvern_slice_main_conv221_5923329() #5 {
 sliceclone_for.end218:
   %0 = load float, ptr getelementptr inbounds ([9 x [15 x float]], ptr @atime, i64 0, i64 3, i64 6), align 4
   %1 = fpext float %0 to double
@@ -2460,7 +2590,39 @@ sliceclone_for.end218:
 }
 
 ; Function Attrs: nounwind willreturn
-define internal float @_wyvern_slice_main_add303_581583548() #5 {
+define internal float @_wyvern_slice_main_div260_152410888(i32 %loop.1.lcssa) #5 {
+sliceclone_for.end218:
+  %0 = call float @second()
+  br label %sliceclone_for.end231
+
+sliceclone_for.end231:                            ; preds = %sliceclone_for.end218
+  %1 = call float @second()
+  %2 = fsub float %1, %0
+  %3 = fpext float %2 to double
+  %4 = sitofp i32 %loop.1.lcssa to double
+  %5 = fdiv double %3, %4
+  %6 = fptrunc double %5 to float
+  %7 = load i32, ptr @main.ntimes, align 4
+  %8 = sitofp i32 %7 to float
+  %9 = fmul float %8, %6
+  br label %sliceclone_for.body247
+
+sliceclone_for.body247:                           ; preds = %sliceclone_for.end231
+  %10 = call float @second()
+  br label %sliceclone_for.end255
+
+sliceclone_for.end255:                            ; preds = %sliceclone_for.body247
+  %11 = call float @second()
+  %12 = fsub float %11, %10
+  %13 = fsub float %12, %9
+  %14 = load i32, ptr @main.ntimes, align 4
+  %15 = sitofp i32 %14 to float
+  %16 = fdiv float %13, %15
+  ret float %16
+}
+
+; Function Attrs: nounwind willreturn
+define internal float @_wyvern_slice_main_add303_784360527() #5 {
 sliceclone_for.end270:
   %0 = load float, ptr getelementptr inbounds ([9 x [15 x float]], ptr @atime, i64 0, i64 3, i64 12), align 4
   %1 = load i32, ptr @main.j, align 4
@@ -2472,7 +2634,7 @@ sliceclone_for.end270:
 }
 
 ; Function Attrs: nounwind willreturn
-define internal float @_wyvern_slice_main_conv309_256223191() #5 {
+define internal float @_wyvern_slice_main_conv309_221960624() #5 {
 sliceclone_for.end306:
   %0 = load float, ptr getelementptr inbounds ([9 x [15 x float]], ptr @atime, i64 0, i64 3, i64 12), align 4
   %1 = fpext float %0 to double
@@ -2482,7 +2644,7 @@ sliceclone_for.end306:
 }
 
 ; Function Attrs: nounwind willreturn
-define internal float @_wyvern_slice_matgen_conv4_242987913(i32 %init.1) #5 {
+define internal float @_wyvern_slice_matgen_conv4_476139536(i32 %init.1) #5 {
 sliceclone_for.body3:
   %0 = mul nsw i32 3125, %init.1
   %1 = srem i32 %0, 65536
@@ -2494,7 +2656,7 @@ sliceclone_for.body3:
 }
 
 ; Function Attrs: nounwind willreturn
-define internal float @_wyvern_slice_matgen_cond_403067716(ptr %a, i32 %lda, ptr %norma, i32 %i.0, i32 %j.0) #5 {
+define internal float @_wyvern_slice_matgen_cond_196056204(i32 %i.0, i32 %j.0, ptr %a, i32 %lda, ptr %norma) #5 {
 sliceclone_for.body3:
   %0 = mul nsw i32 %lda, %j.0
   %1 = add nsw i32 %0, %i.0
@@ -2523,7 +2685,7 @@ sliceclone_cond.end:                              ; preds = %sliceclone_cond.fal
 }
 
 ; Function Attrs: nounwind willreturn
-define internal float @_wyvern_slice_matgen_add42_263129310(ptr %a, i32 %lda, ptr %b, i32 %i.2, i32 %j.1) #5 {
+define internal float @_wyvern_slice_matgen_add42_462675329(ptr %a, i32 %lda, ptr %b, i32 %i.2, i32 %j.1) #5 {
 sliceclone_for.body35:
   %0 = sext i32 %i.2 to i64
   %1 = getelementptr inbounds float, ptr %b, i64 %0
@@ -2538,7 +2700,20 @@ sliceclone_for.body35:
 }
 
 ; Function Attrs: nounwind willreturn
-define internal ptr @_wyvern_slice_dgefa_arrayidx6_975945153(ptr %ipvt, i32 %k.0) #5 {
+define internal i32 @_wyvern_slice_dgefa_add4_172631938(ptr %a, i32 %lda, i32 %n, i32 %k.0) #5 {
+sliceclone_for.body:
+  %0 = sub nsw i32 %n, %k.0
+  %1 = mul nsw i32 %lda, %k.0
+  %2 = add nsw i32 %1, %k.0
+  %3 = sext i32 %2 to i64
+  %4 = getelementptr inbounds float, ptr %a, i64 %3
+  %5 = call i32 @idamax(i32 noundef %0, ptr noundef %4, i32 noundef 1)
+  %6 = add nsw i32 %5, %k.0
+  ret i32 %6
+}
+
+; Function Attrs: nounwind willreturn
+define internal ptr @_wyvern_slice_dgefa_arrayidx6_92567816(ptr %ipvt, i32 %k.0) #5 {
 sliceclone_for.body:
   %0 = sext i32 %k.0 to i64
   %1 = getelementptr inbounds i32, ptr %ipvt, i64 %0
@@ -2546,7 +2721,27 @@ sliceclone_for.body:
 }
 
 ; Function Attrs: nounwind willreturn
-define internal ptr @_wyvern_slice_dgefa_arrayidx32_810223730(ptr %a, i32 %lda, i32 %k.0) #5 {
+define internal ptr @_wyvern_slice_dgefa_arrayidx28_2698484(ptr %a, i32 %lda, i32 %n, i32 %k.0) #5 {
+sliceclone_for.body:
+  %0 = sub nsw i32 %n, %k.0
+  %1 = mul nsw i32 %lda, %k.0
+  %2 = add nsw i32 %1, %k.0
+  %3 = sext i32 %2 to i64
+  %4 = getelementptr inbounds float, ptr %a, i64 %3
+  %5 = call i32 @idamax(i32 noundef %0, ptr noundef %4, i32 noundef 1)
+  %6 = add nsw i32 %5, %k.0
+  br label %sliceclone_if.then16
+
+sliceclone_if.then16:                             ; preds = %sliceclone_for.body
+  %7 = mul nsw i32 %lda, %k.0
+  %8 = add nsw i32 %7, %6
+  %9 = sext i32 %8 to i64
+  %10 = getelementptr inbounds float, ptr %a, i64 %9
+  ret ptr %10
+}
+
+; Function Attrs: nounwind willreturn
+define internal ptr @_wyvern_slice_dgefa_arrayidx32_166853404(ptr %a, i32 %lda, i32 %k.0) #5 {
 sliceclone_if.then16:
   %0 = mul nsw i32 %lda, %k.0
   %1 = add nsw i32 %0, %k.0
@@ -2556,7 +2751,27 @@ sliceclone_if.then16:
 }
 
 ; Function Attrs: nounwind willreturn
-define internal ptr @_wyvern_slice_dgefa_arrayidx68_192441102(ptr %a, i32 %lda, i32 %j.0, i32 %k.0) #5 {
+define internal ptr @_wyvern_slice_dgefa_arrayidx64_561840748(ptr %a, i32 %lda, i32 %n, i32 %j.0, i32 %k.0) #5 {
+sliceclone_for.body:
+  %0 = sub nsw i32 %n, %k.0
+  %1 = mul nsw i32 %lda, %k.0
+  %2 = add nsw i32 %1, %k.0
+  %3 = sext i32 %2 to i64
+  %4 = getelementptr inbounds float, ptr %a, i64 %3
+  %5 = call i32 @idamax(i32 noundef %0, ptr noundef %4, i32 noundef 1)
+  %6 = add nsw i32 %5, %k.0
+  br label %sliceclone_if.then56
+
+sliceclone_if.then56:                             ; preds = %sliceclone_for.body
+  %7 = mul nsw i32 %lda, %j.0
+  %8 = add nsw i32 %7, %6
+  %9 = sext i32 %8 to i64
+  %10 = getelementptr inbounds float, ptr %a, i64 %9
+  ret ptr %10
+}
+
+; Function Attrs: nounwind willreturn
+define internal ptr @_wyvern_slice_dgefa_arrayidx68_68628466(ptr %a, i32 %lda, i32 %k.0, i32 %j.0) #5 {
 sliceclone_if.then56:
   %0 = mul nsw i32 %lda, %j.0
   %1 = add nsw i32 %0, %k.0
@@ -2566,7 +2781,7 @@ sliceclone_if.then56:
 }
 
 ; Function Attrs: nounwind willreturn
-define internal ptr @_wyvern_slice_dgefa_arrayidx90_651927418(i32 %n, ptr %ipvt) #5 {
+define internal ptr @_wyvern_slice_dgefa_arrayidx90_319514452(i32 %n, ptr %ipvt) #5 {
 sliceclone_if.end86:
   %0 = sub nsw i32 %n, 1
   %1 = sext i32 %0 to i64
@@ -2575,7 +2790,7 @@ sliceclone_if.end86:
 }
 
 ; Function Attrs: nounwind willreturn
-define internal ptr @_wyvern_slice_dgesl_arrayidx11_115190491(ptr %ipvt, ptr %b, i32 %k.0) #5 {
+define internal ptr @_wyvern_slice_dgesl_arrayidx11_385729501(ptr %ipvt, ptr %b, i32 %k.0) #5 {
 sliceclone_for.body:
   %0 = sext i32 %k.0 to i64
   %1 = getelementptr inbounds i32, ptr %ipvt, i64 %0
@@ -2589,7 +2804,7 @@ sliceclone_if.then7:                              ; preds = %sliceclone_for.body
 }
 
 ; Function Attrs: nounwind willreturn
-define internal float @_wyvern_slice_dgesl_div_106730558(ptr %a, i32 %lda, i32 %n, ptr %b, i32 %kb.0) #5 {
+define internal float @_wyvern_slice_dgesl_div_161306230(ptr %a, i32 %lda, i32 %n, ptr %b, i32 %kb.0) #5 {
 sliceclone_for.body25:
   %0 = add nsw i32 %kb.0, 1
   %1 = sub nsw i32 %n, %0
@@ -2606,7 +2821,7 @@ sliceclone_for.body25:
 }
 
 ; Function Attrs: nounwind willreturn
-define internal ptr @_wyvern_slice_dgesl_arrayidx35_914447419(i32 %n, ptr %b, i32 %kb.0) #5 {
+define internal ptr @_wyvern_slice_dgesl_arrayidx35_644407341(i32 %n, ptr %b, i32 %kb.0) #5 {
 sliceclone_for.body25:
   %0 = add nsw i32 %kb.0, 1
   %1 = sub nsw i32 %n, %0
@@ -2616,7 +2831,52 @@ sliceclone_for.body25:
 }
 
 ; Function Attrs: nounwind willreturn
-define internal ptr @_wyvern_slice_dgesl_arrayidx99_100443247(i32 %n, ptr %ipvt, ptr %b, i32 %kb.1) #5 {
+define internal float @_wyvern_slice_dgesl_div61_747505569(ptr %a, i32 %lda, ptr %b, i32 %k.1) #5 {
+sliceclone_for.body48:
+  %0 = mul nsw i32 %lda, %k.1
+  %1 = add nsw i32 %0, 0
+  %2 = sext i32 %1 to i64
+  %3 = getelementptr inbounds float, ptr %a, i64 %2
+  %4 = getelementptr inbounds float, ptr %b, i64 0
+  %5 = call float @ddot(i32 noundef %k.1, ptr noundef %3, i32 noundef 1, ptr noundef %4, i32 noundef 1)
+  %6 = sext i32 %k.1 to i64
+  %7 = getelementptr inbounds float, ptr %b, i64 %6
+  %8 = load float, ptr %7, align 4
+  %9 = fsub float %8, %5
+  %10 = mul nsw i32 %lda, %k.1
+  %11 = add nsw i32 %10, %k.1
+  %12 = sext i32 %11 to i64
+  %13 = getelementptr inbounds float, ptr %a, i64 %12
+  %14 = load float, ptr %13, align 4
+  %15 = fdiv float %9, %14
+  ret float %15
+}
+
+; Function Attrs: nounwind willreturn
+define internal float @_wyvern_slice_dgesl_add87_204333321(ptr %a, i32 %lda, i32 %n, ptr %b, i32 %kb.1) #5 {
+sliceclone_for.body71:
+  %0 = add nsw i32 %kb.1, 1
+  %1 = sub nsw i32 %n, %0
+  %2 = sext i32 %1 to i64
+  %3 = getelementptr inbounds float, ptr %b, i64 %2
+  %4 = load float, ptr %3, align 4
+  %5 = add nsw i32 %1, 1
+  %6 = sub nsw i32 %n, %5
+  %7 = mul nsw i32 %lda, %1
+  %8 = add nsw i32 %7, %1
+  %9 = add nsw i32 %8, 1
+  %10 = sext i32 %9 to i64
+  %11 = getelementptr inbounds float, ptr %a, i64 %10
+  %12 = add nsw i32 %1, 1
+  %13 = sext i32 %12 to i64
+  %14 = getelementptr inbounds float, ptr %b, i64 %13
+  %15 = call float @ddot(i32 noundef %6, ptr noundef %11, i32 noundef 1, ptr noundef %14, i32 noundef 1)
+  %16 = fadd float %4, %15
+  ret float %16
+}
+
+; Function Attrs: nounwind willreturn
+define internal ptr @_wyvern_slice_dgesl_arrayidx99_590198478(i32 %n, ptr %ipvt, ptr %b, i32 %kb.1) #5 {
 sliceclone_for.body71:
   %0 = add nsw i32 %kb.1, 1
   %1 = sub nsw i32 %n, %0
@@ -2632,7 +2892,7 @@ sliceclone_if.then93:                             ; preds = %sliceclone_for.body
 }
 
 ; Function Attrs: nounwind willreturn
-define internal ptr @_wyvern_slice_dgesl_arrayidx101_308247561(i32 %n, ptr %b, i32 %kb.1) #5 {
+define internal ptr @_wyvern_slice_dgesl_arrayidx101_437690281(i32 %n, ptr %b, i32 %kb.1) #5 {
 sliceclone_for.body71:
   %0 = add nsw i32 %kb.1, 1
   %1 = sub nsw i32 %n, %0
@@ -2645,15 +2905,415 @@ sliceclone_if.then93:                             ; preds = %sliceclone_for.body
 }
 
 ; Function Attrs: nounwind willreturn
-define internal ptr @_wyvern_slice_dscal_arrayidx6_939872498(i32 %i.0, ptr %dx) #5 {
-sliceclone_for.body:
-  %0 = sext i32 %i.0 to i64
-  %1 = getelementptr inbounds float, ptr %dx, i64 %0
-  ret ptr %1
+define internal float @_wyvern_slice_dmxpy__539084272(ptr %y, i32 %n2, i32 %ldm, ptr %x, ptr %m, i32 %i.1) #5 {
+sliceclone_if.end:
+  %0 = srem i32 %n2, 4
+  br label %sliceclone_if.then11
+
+sliceclone_if.then11:                             ; preds = %sliceclone_if.end
+  %1 = sub nsw i32 %0, 1
+  br label %sliceclone_for.body15
+
+sliceclone_for.body15:                            ; preds = %sliceclone_if.then11
+  %2 = sext i32 %i.1 to i64
+  %3 = getelementptr inbounds float, ptr %y, i64 %2
+  %4 = load float, ptr %3, align 4
+  %5 = sub nsw i32 %1, 1
+  %6 = sext i32 %5 to i64
+  %7 = getelementptr inbounds float, ptr %x, i64 %6
+  %8 = load float, ptr %7, align 4
+  %9 = sub nsw i32 %1, 1
+  %10 = mul nsw i32 %ldm, %9
+  %11 = add nsw i32 %10, %i.1
+  %12 = sext i32 %11 to i64
+  %13 = getelementptr inbounds float, ptr %m, i64 %12
+  %14 = load float, ptr %13, align 4
+  %15 = call float @llvm.fmuladd.f32(float %8, float %14, float %4)
+  %16 = sext i32 %1 to i64
+  %17 = getelementptr inbounds float, ptr %x, i64 %16
+  %18 = load float, ptr %17, align 4
+  %19 = mul nsw i32 %ldm, %1
+  %20 = add nsw i32 %19, %i.1
+  %21 = sext i32 %20 to i64
+  %22 = getelementptr inbounds float, ptr %m, i64 %21
+  %23 = load float, ptr %22, align 4
+  %24 = call float @llvm.fmuladd.f32(float %18, float %23, float %15)
+  ret float %24
 }
 
 ; Function Attrs: nounwind willreturn
-define internal float @_wyvern_slice_dscal_mul13_757231998(i32 %i.1, float %da, ptr %dx) #5 {
+define internal float @_wyvern_slice_dmxpy__386070129(ptr %y, i32 %n2, i32 %ldm, ptr %x, ptr %m, i32 %i.0) #5 {
+sliceclone_entry:
+  %0 = srem i32 %n2, 2
+  br label %sliceclone_if.then
+
+sliceclone_if.then:                               ; preds = %sliceclone_entry
+  %1 = sub nsw i32 %0, 1
+  br label %sliceclone_for.body
+
+sliceclone_for.body:                              ; preds = %sliceclone_if.then
+  %2 = sext i32 %i.0 to i64
+  %3 = getelementptr inbounds float, ptr %y, i64 %2
+  %4 = load float, ptr %3, align 4
+  %5 = sext i32 %1 to i64
+  %6 = getelementptr inbounds float, ptr %x, i64 %5
+  %7 = load float, ptr %6, align 4
+  %8 = mul nsw i32 %ldm, %1
+  %9 = add nsw i32 %8, %i.0
+  %10 = sext i32 %9 to i64
+  %11 = getelementptr inbounds float, ptr %m, i64 %10
+  %12 = load float, ptr %11, align 4
+  %13 = call float @llvm.fmuladd.f32(float %7, float %12, float %4)
+  ret float %13
+}
+
+; Function Attrs: nounwind willreturn
+define internal float @_wyvern_slice_dmxpy__239041526(ptr %y, i32 %n2, i32 %ldm, ptr %x, ptr %m, i32 %i.2) #5 {
+sliceclone_if.end39:
+  %0 = srem i32 %n2, 8
+  br label %sliceclone_if.then42
+
+sliceclone_if.then42:                             ; preds = %sliceclone_if.end39
+  %1 = sub nsw i32 %0, 1
+  br label %sliceclone_for.body46
+
+sliceclone_for.body46:                            ; preds = %sliceclone_if.then42
+  %2 = sext i32 %i.2 to i64
+  %3 = getelementptr inbounds float, ptr %y, i64 %2
+  %4 = load float, ptr %3, align 4
+  %5 = sub nsw i32 %1, 3
+  %6 = sext i32 %5 to i64
+  %7 = getelementptr inbounds float, ptr %x, i64 %6
+  %8 = load float, ptr %7, align 4
+  %9 = sub nsw i32 %1, 3
+  %10 = mul nsw i32 %ldm, %9
+  %11 = add nsw i32 %10, %i.2
+  %12 = sext i32 %11 to i64
+  %13 = getelementptr inbounds float, ptr %m, i64 %12
+  %14 = load float, ptr %13, align 4
+  %15 = call float @llvm.fmuladd.f32(float %8, float %14, float %4)
+  %16 = sub nsw i32 %1, 2
+  %17 = sext i32 %16 to i64
+  %18 = getelementptr inbounds float, ptr %x, i64 %17
+  %19 = load float, ptr %18, align 4
+  %20 = sub nsw i32 %1, 2
+  %21 = mul nsw i32 %ldm, %20
+  %22 = add nsw i32 %21, %i.2
+  %23 = sext i32 %22 to i64
+  %24 = getelementptr inbounds float, ptr %m, i64 %23
+  %25 = load float, ptr %24, align 4
+  %26 = call float @llvm.fmuladd.f32(float %19, float %25, float %15)
+  %27 = sub nsw i32 %1, 1
+  %28 = sext i32 %27 to i64
+  %29 = getelementptr inbounds float, ptr %x, i64 %28
+  %30 = load float, ptr %29, align 4
+  %31 = sub nsw i32 %1, 1
+  %32 = mul nsw i32 %ldm, %31
+  %33 = add nsw i32 %32, %i.2
+  %34 = sext i32 %33 to i64
+  %35 = getelementptr inbounds float, ptr %m, i64 %34
+  %36 = load float, ptr %35, align 4
+  %37 = call float @llvm.fmuladd.f32(float %30, float %36, float %26)
+  %38 = sext i32 %1 to i64
+  %39 = getelementptr inbounds float, ptr %x, i64 %38
+  %40 = load float, ptr %39, align 4
+  %41 = mul nsw i32 %ldm, %1
+  %42 = add nsw i32 %41, %i.2
+  %43 = sext i32 %42 to i64
+  %44 = getelementptr inbounds float, ptr %m, i64 %43
+  %45 = load float, ptr %44, align 4
+  %46 = call float @llvm.fmuladd.f32(float %40, float %45, float %37)
+  ret float %46
+}
+
+; Function Attrs: nounwind willreturn
+define internal float @_wyvern_slice_dmxpy__670285694(ptr %y, i32 %n2, i32 %ldm, ptr %x, ptr %m, i32 %i.3) #5 {
+sliceclone_if.end88:
+  %0 = srem i32 %n2, 16
+  br label %sliceclone_if.then91
+
+sliceclone_if.then91:                             ; preds = %sliceclone_if.end88
+  %1 = sub nsw i32 %0, 1
+  br label %sliceclone_for.body95
+
+sliceclone_for.body95:                            ; preds = %sliceclone_if.then91
+  %2 = sext i32 %i.3 to i64
+  %3 = getelementptr inbounds float, ptr %y, i64 %2
+  %4 = load float, ptr %3, align 4
+  %5 = sub nsw i32 %1, 7
+  %6 = sext i32 %5 to i64
+  %7 = getelementptr inbounds float, ptr %x, i64 %6
+  %8 = load float, ptr %7, align 4
+  %9 = sub nsw i32 %1, 7
+  %10 = mul nsw i32 %ldm, %9
+  %11 = add nsw i32 %10, %i.3
+  %12 = sext i32 %11 to i64
+  %13 = getelementptr inbounds float, ptr %m, i64 %12
+  %14 = load float, ptr %13, align 4
+  %15 = call float @llvm.fmuladd.f32(float %8, float %14, float %4)
+  %16 = sub nsw i32 %1, 6
+  %17 = sext i32 %16 to i64
+  %18 = getelementptr inbounds float, ptr %x, i64 %17
+  %19 = load float, ptr %18, align 4
+  %20 = sub nsw i32 %1, 6
+  %21 = mul nsw i32 %ldm, %20
+  %22 = add nsw i32 %21, %i.3
+  %23 = sext i32 %22 to i64
+  %24 = getelementptr inbounds float, ptr %m, i64 %23
+  %25 = load float, ptr %24, align 4
+  %26 = call float @llvm.fmuladd.f32(float %19, float %25, float %15)
+  %27 = sub nsw i32 %1, 5
+  %28 = sext i32 %27 to i64
+  %29 = getelementptr inbounds float, ptr %x, i64 %28
+  %30 = load float, ptr %29, align 4
+  %31 = sub nsw i32 %1, 5
+  %32 = mul nsw i32 %ldm, %31
+  %33 = add nsw i32 %32, %i.3
+  %34 = sext i32 %33 to i64
+  %35 = getelementptr inbounds float, ptr %m, i64 %34
+  %36 = load float, ptr %35, align 4
+  %37 = call float @llvm.fmuladd.f32(float %30, float %36, float %26)
+  %38 = sub nsw i32 %1, 4
+  %39 = sext i32 %38 to i64
+  %40 = getelementptr inbounds float, ptr %x, i64 %39
+  %41 = load float, ptr %40, align 4
+  %42 = sub nsw i32 %1, 4
+  %43 = mul nsw i32 %ldm, %42
+  %44 = add nsw i32 %43, %i.3
+  %45 = sext i32 %44 to i64
+  %46 = getelementptr inbounds float, ptr %m, i64 %45
+  %47 = load float, ptr %46, align 4
+  %48 = call float @llvm.fmuladd.f32(float %41, float %47, float %37)
+  %49 = sub nsw i32 %1, 3
+  %50 = sext i32 %49 to i64
+  %51 = getelementptr inbounds float, ptr %x, i64 %50
+  %52 = load float, ptr %51, align 4
+  %53 = sub nsw i32 %1, 3
+  %54 = mul nsw i32 %ldm, %53
+  %55 = add nsw i32 %54, %i.3
+  %56 = sext i32 %55 to i64
+  %57 = getelementptr inbounds float, ptr %m, i64 %56
+  %58 = load float, ptr %57, align 4
+  %59 = call float @llvm.fmuladd.f32(float %52, float %58, float %48)
+  %60 = sub nsw i32 %1, 2
+  %61 = sext i32 %60 to i64
+  %62 = getelementptr inbounds float, ptr %x, i64 %61
+  %63 = load float, ptr %62, align 4
+  %64 = sub nsw i32 %1, 2
+  %65 = mul nsw i32 %ldm, %64
+  %66 = add nsw i32 %65, %i.3
+  %67 = sext i32 %66 to i64
+  %68 = getelementptr inbounds float, ptr %m, i64 %67
+  %69 = load float, ptr %68, align 4
+  %70 = call float @llvm.fmuladd.f32(float %63, float %69, float %59)
+  %71 = sub nsw i32 %1, 1
+  %72 = sext i32 %71 to i64
+  %73 = getelementptr inbounds float, ptr %x, i64 %72
+  %74 = load float, ptr %73, align 4
+  %75 = sub nsw i32 %1, 1
+  %76 = mul nsw i32 %ldm, %75
+  %77 = add nsw i32 %76, %i.3
+  %78 = sext i32 %77 to i64
+  %79 = getelementptr inbounds float, ptr %m, i64 %78
+  %80 = load float, ptr %79, align 4
+  %81 = call float @llvm.fmuladd.f32(float %74, float %80, float %70)
+  %82 = sext i32 %1 to i64
+  %83 = getelementptr inbounds float, ptr %x, i64 %82
+  %84 = load float, ptr %83, align 4
+  %85 = mul nsw i32 %ldm, %1
+  %86 = add nsw i32 %85, %i.3
+  %87 = sext i32 %86 to i64
+  %88 = getelementptr inbounds float, ptr %m, i64 %87
+  %89 = load float, ptr %88, align 4
+  %90 = call float @llvm.fmuladd.f32(float %84, float %89, float %81)
+  ret float %90
+}
+
+; Function Attrs: nounwind willreturn
+define internal float @_wyvern_slice_dmxpy__731506497(ptr %y, i32 %ldm, ptr %x, ptr %m, i32 %i.4, i32 %j.0) #5 {
+sliceclone_for.body182:
+  %0 = sext i32 %i.4 to i64
+  %1 = getelementptr inbounds float, ptr %y, i64 %0
+  %2 = load float, ptr %1, align 4
+  %3 = sub nsw i32 %j.0, 15
+  %4 = sext i32 %3 to i64
+  %5 = getelementptr inbounds float, ptr %x, i64 %4
+  %6 = load float, ptr %5, align 4
+  %7 = sub nsw i32 %j.0, 15
+  %8 = mul nsw i32 %ldm, %7
+  %9 = add nsw i32 %8, %i.4
+  %10 = sext i32 %9 to i64
+  %11 = getelementptr inbounds float, ptr %m, i64 %10
+  %12 = load float, ptr %11, align 4
+  %13 = call float @llvm.fmuladd.f32(float %6, float %12, float %2)
+  %14 = sub nsw i32 %j.0, 14
+  %15 = sext i32 %14 to i64
+  %16 = getelementptr inbounds float, ptr %x, i64 %15
+  %17 = load float, ptr %16, align 4
+  %18 = sub nsw i32 %j.0, 14
+  %19 = mul nsw i32 %ldm, %18
+  %20 = add nsw i32 %19, %i.4
+  %21 = sext i32 %20 to i64
+  %22 = getelementptr inbounds float, ptr %m, i64 %21
+  %23 = load float, ptr %22, align 4
+  %24 = call float @llvm.fmuladd.f32(float %17, float %23, float %13)
+  %25 = sub nsw i32 %j.0, 13
+  %26 = sext i32 %25 to i64
+  %27 = getelementptr inbounds float, ptr %x, i64 %26
+  %28 = load float, ptr %27, align 4
+  %29 = sub nsw i32 %j.0, 13
+  %30 = mul nsw i32 %ldm, %29
+  %31 = add nsw i32 %30, %i.4
+  %32 = sext i32 %31 to i64
+  %33 = getelementptr inbounds float, ptr %m, i64 %32
+  %34 = load float, ptr %33, align 4
+  %35 = call float @llvm.fmuladd.f32(float %28, float %34, float %24)
+  %36 = sub nsw i32 %j.0, 12
+  %37 = sext i32 %36 to i64
+  %38 = getelementptr inbounds float, ptr %x, i64 %37
+  %39 = load float, ptr %38, align 4
+  %40 = sub nsw i32 %j.0, 12
+  %41 = mul nsw i32 %ldm, %40
+  %42 = add nsw i32 %41, %i.4
+  %43 = sext i32 %42 to i64
+  %44 = getelementptr inbounds float, ptr %m, i64 %43
+  %45 = load float, ptr %44, align 4
+  %46 = call float @llvm.fmuladd.f32(float %39, float %45, float %35)
+  %47 = sub nsw i32 %j.0, 11
+  %48 = sext i32 %47 to i64
+  %49 = getelementptr inbounds float, ptr %x, i64 %48
+  %50 = load float, ptr %49, align 4
+  %51 = sub nsw i32 %j.0, 11
+  %52 = mul nsw i32 %ldm, %51
+  %53 = add nsw i32 %52, %i.4
+  %54 = sext i32 %53 to i64
+  %55 = getelementptr inbounds float, ptr %m, i64 %54
+  %56 = load float, ptr %55, align 4
+  %57 = call float @llvm.fmuladd.f32(float %50, float %56, float %46)
+  %58 = sub nsw i32 %j.0, 10
+  %59 = sext i32 %58 to i64
+  %60 = getelementptr inbounds float, ptr %x, i64 %59
+  %61 = load float, ptr %60, align 4
+  %62 = sub nsw i32 %j.0, 10
+  %63 = mul nsw i32 %ldm, %62
+  %64 = add nsw i32 %63, %i.4
+  %65 = sext i32 %64 to i64
+  %66 = getelementptr inbounds float, ptr %m, i64 %65
+  %67 = load float, ptr %66, align 4
+  %68 = call float @llvm.fmuladd.f32(float %61, float %67, float %57)
+  %69 = sub nsw i32 %j.0, 9
+  %70 = sext i32 %69 to i64
+  %71 = getelementptr inbounds float, ptr %x, i64 %70
+  %72 = load float, ptr %71, align 4
+  %73 = sub nsw i32 %j.0, 9
+  %74 = mul nsw i32 %ldm, %73
+  %75 = add nsw i32 %74, %i.4
+  %76 = sext i32 %75 to i64
+  %77 = getelementptr inbounds float, ptr %m, i64 %76
+  %78 = load float, ptr %77, align 4
+  %79 = call float @llvm.fmuladd.f32(float %72, float %78, float %68)
+  %80 = sub nsw i32 %j.0, 8
+  %81 = sext i32 %80 to i64
+  %82 = getelementptr inbounds float, ptr %x, i64 %81
+  %83 = load float, ptr %82, align 4
+  %84 = sub nsw i32 %j.0, 8
+  %85 = mul nsw i32 %ldm, %84
+  %86 = add nsw i32 %85, %i.4
+  %87 = sext i32 %86 to i64
+  %88 = getelementptr inbounds float, ptr %m, i64 %87
+  %89 = load float, ptr %88, align 4
+  %90 = call float @llvm.fmuladd.f32(float %83, float %89, float %79)
+  %91 = sub nsw i32 %j.0, 7
+  %92 = sext i32 %91 to i64
+  %93 = getelementptr inbounds float, ptr %x, i64 %92
+  %94 = load float, ptr %93, align 4
+  %95 = sub nsw i32 %j.0, 7
+  %96 = mul nsw i32 %ldm, %95
+  %97 = add nsw i32 %96, %i.4
+  %98 = sext i32 %97 to i64
+  %99 = getelementptr inbounds float, ptr %m, i64 %98
+  %100 = load float, ptr %99, align 4
+  %101 = call float @llvm.fmuladd.f32(float %94, float %100, float %90)
+  %102 = sub nsw i32 %j.0, 6
+  %103 = sext i32 %102 to i64
+  %104 = getelementptr inbounds float, ptr %x, i64 %103
+  %105 = load float, ptr %104, align 4
+  %106 = sub nsw i32 %j.0, 6
+  %107 = mul nsw i32 %ldm, %106
+  %108 = add nsw i32 %107, %i.4
+  %109 = sext i32 %108 to i64
+  %110 = getelementptr inbounds float, ptr %m, i64 %109
+  %111 = load float, ptr %110, align 4
+  %112 = call float @llvm.fmuladd.f32(float %105, float %111, float %101)
+  %113 = sub nsw i32 %j.0, 5
+  %114 = sext i32 %113 to i64
+  %115 = getelementptr inbounds float, ptr %x, i64 %114
+  %116 = load float, ptr %115, align 4
+  %117 = sub nsw i32 %j.0, 5
+  %118 = mul nsw i32 %ldm, %117
+  %119 = add nsw i32 %118, %i.4
+  %120 = sext i32 %119 to i64
+  %121 = getelementptr inbounds float, ptr %m, i64 %120
+  %122 = load float, ptr %121, align 4
+  %123 = call float @llvm.fmuladd.f32(float %116, float %122, float %112)
+  %124 = sub nsw i32 %j.0, 4
+  %125 = sext i32 %124 to i64
+  %126 = getelementptr inbounds float, ptr %x, i64 %125
+  %127 = load float, ptr %126, align 4
+  %128 = sub nsw i32 %j.0, 4
+  %129 = mul nsw i32 %ldm, %128
+  %130 = add nsw i32 %129, %i.4
+  %131 = sext i32 %130 to i64
+  %132 = getelementptr inbounds float, ptr %m, i64 %131
+  %133 = load float, ptr %132, align 4
+  %134 = call float @llvm.fmuladd.f32(float %127, float %133, float %123)
+  %135 = sub nsw i32 %j.0, 3
+  %136 = sext i32 %135 to i64
+  %137 = getelementptr inbounds float, ptr %x, i64 %136
+  %138 = load float, ptr %137, align 4
+  %139 = sub nsw i32 %j.0, 3
+  %140 = mul nsw i32 %ldm, %139
+  %141 = add nsw i32 %140, %i.4
+  %142 = sext i32 %141 to i64
+  %143 = getelementptr inbounds float, ptr %m, i64 %142
+  %144 = load float, ptr %143, align 4
+  %145 = call float @llvm.fmuladd.f32(float %138, float %144, float %134)
+  %146 = sub nsw i32 %j.0, 2
+  %147 = sext i32 %146 to i64
+  %148 = getelementptr inbounds float, ptr %x, i64 %147
+  %149 = load float, ptr %148, align 4
+  %150 = sub nsw i32 %j.0, 2
+  %151 = mul nsw i32 %ldm, %150
+  %152 = add nsw i32 %151, %i.4
+  %153 = sext i32 %152 to i64
+  %154 = getelementptr inbounds float, ptr %m, i64 %153
+  %155 = load float, ptr %154, align 4
+  %156 = call float @llvm.fmuladd.f32(float %149, float %155, float %145)
+  %157 = sub nsw i32 %j.0, 1
+  %158 = sext i32 %157 to i64
+  %159 = getelementptr inbounds float, ptr %x, i64 %158
+  %160 = load float, ptr %159, align 4
+  %161 = sub nsw i32 %j.0, 1
+  %162 = mul nsw i32 %ldm, %161
+  %163 = add nsw i32 %162, %i.4
+  %164 = sext i32 %163 to i64
+  %165 = getelementptr inbounds float, ptr %m, i64 %164
+  %166 = load float, ptr %165, align 4
+  %167 = call float @llvm.fmuladd.f32(float %160, float %166, float %156)
+  %168 = sext i32 %j.0 to i64
+  %169 = getelementptr inbounds float, ptr %x, i64 %168
+  %170 = load float, ptr %169, align 4
+  %171 = mul nsw i32 %ldm, %j.0
+  %172 = add nsw i32 %171, %i.4
+  %173 = sext i32 %172 to i64
+  %174 = getelementptr inbounds float, ptr %m, i64 %173
+  %175 = load float, ptr %174, align 4
+  %176 = call float @llvm.fmuladd.f32(float %170, float %175, float %167)
+  ret float %176
+}
+
+; Function Attrs: nounwind willreturn
+define internal float @_wyvern_slice_dscal_mul13_582025319(float %da, ptr %dx, i32 %i.1) #5 {
 sliceclone_for.body10:
   %0 = sext i32 %i.1 to i64
   %1 = getelementptr inbounds float, ptr %dx, i64 %0
@@ -2663,7 +3323,33 @@ sliceclone_for.body10:
 }
 
 ; Function Attrs: nounwind willreturn
-define internal ptr @_wyvern_slice_daxpy_arrayidx27_948038846(ptr %dy, i32 %iy.1) #5 {
+define internal float @_wyvern_slice_daxpy__718381898(float %da, ptr %dx, ptr %dy, i32 %i.1) #5 {
+sliceclone_for.body34:
+  %0 = sext i32 %i.1 to i64
+  %1 = getelementptr inbounds float, ptr %dy, i64 %0
+  %2 = load float, ptr %1, align 4
+  %3 = sext i32 %i.1 to i64
+  %4 = getelementptr inbounds float, ptr %dx, i64 %3
+  %5 = load float, ptr %4, align 4
+  %6 = call float @llvm.fmuladd.f32(float %da, float %5, float %2)
+  ret float %6
+}
+
+; Function Attrs: nounwind willreturn
+define internal float @_wyvern_slice_daxpy__173796572(float %da, ptr %dx, ptr %dy, i32 %ix.1, i32 %iy.1) #5 {
+sliceclone_for.body:
+  %0 = sext i32 %iy.1 to i64
+  %1 = getelementptr inbounds float, ptr %dy, i64 %0
+  %2 = load float, ptr %1, align 4
+  %3 = sext i32 %ix.1 to i64
+  %4 = getelementptr inbounds float, ptr %dx, i64 %3
+  %5 = load float, ptr %4, align 4
+  %6 = call float @llvm.fmuladd.f32(float %da, float %5, float %2)
+  ret float %6
+}
+
+; Function Attrs: nounwind willreturn
+define internal ptr @_wyvern_slice_daxpy_arrayidx27_990649308(ptr %dy, i32 %iy.1) #5 {
 sliceclone_for.body:
   %0 = sext i32 %iy.1 to i64
   %1 = getelementptr inbounds float, ptr %dy, i64 %0

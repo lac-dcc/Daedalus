@@ -13,18 +13,16 @@ entry:
 
 if.then:                                          ; preds = %entry
   %mul = mul nsw i32 2, %argc
-  %call = call i32 (ptr, ...) @printf(ptr noundef @.str, i32 noundef %mul)
   br label %if.end
 
 if.else:                                          ; preds = %entry
   %mul1 = mul nsw i32 3, %argc
   %mul2 = mul nsw i32 %mul1, %argc
-  %call3 = call i32 (ptr, ...) @printf(ptr noundef @.str, i32 noundef %mul2)
   br label %if.end
 
 if.end:                                           ; preds = %if.else, %if.then
   %c.0 = phi i32 [ %mul, %if.then ], [ %mul2, %if.else ]
-  %call4 = call i32 (ptr, ...) @printf(ptr noundef @.str, i32 noundef %c.0)
+  %call = call i32 (ptr, ...) @printf(ptr noundef @.str, i32 noundef %c.0)
   ret void
 }
 
@@ -38,18 +36,17 @@ entry:
 
 if.then:                                          ; preds = %entry
   %mul = mul nsw i32 2, %argc
-  %call = call i32 (ptr, ...) @printf(ptr noundef @.str, i32 noundef %mul)
   br label %if.end
 
 if.else:                                          ; preds = %entry
   %mul1 = mul nsw i32 3, %argc
   %mul2 = mul nsw i32 %mul1, %argc
-  %call3 = call i32 (ptr, ...) @printf(ptr noundef @.str, i32 noundef %mul2)
   br label %if.end
 
 if.end:                                           ; preds = %if.else, %if.then
   %c.0 = phi i32 [ %mul, %if.then ], [ %mul2, %if.else ]
-  %call4 = call i32 (ptr, ...) @printf(ptr noundef @.str, i32 noundef %c.0)
+  %mul3 = mul nsw i32 %c.0, %c.0
+  %call = call i32 (ptr, ...) @printf(ptr noundef @.str, i32 noundef %c.0)
   ret i32 0
 }
 

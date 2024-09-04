@@ -11,6 +11,7 @@ int f(int arg){
     int a8 = a7*2;
     int a = a8 + 5;
     int b = 2*a + 2;
+    printf("On f: %d\n", b);
     return b;
 }
 
@@ -26,4 +27,6 @@ int main(int argc, char **argv){
     int a = a8 + 5;
     int b = 2*a + 2;
     int c = f(2)-6;
+    printf("On main: %d\n", b);
+    return b;
 }
