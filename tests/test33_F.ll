@@ -1,46 +1,39 @@
-; ModuleID = 'tests/test25_F.ll'
-source_filename = "test25.c"
+; ModuleID = 'tests/test33.ll'
+source_filename = "tests/test33.c"
 target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-unknown-linux-gnu"
 
-@.str = private unnamed_addr constant [10 x i8] c"On f: %d\0A\00", align 1
-@.str.1 = private unnamed_addr constant [13 x i8] c"On main: %d\0A\00", align 1
+@.str = private unnamed_addr constant [3 x i8] c"%d\00", align 1
+@a = internal global i32 2, align 4
+@b = internal global i32 2, align 4
 
 ; Function Attrs: noinline nounwind uwtable
-define dso_local i32 @f(i32 noundef %arg) #0 {
+define dso_local i32 @main() #0 {
 entry:
-  %add91 = call i32 @_wyvern_slice_f_add9_471309198(i32 %arg)
-  %call = call i32 (ptr, ...) @printf(ptr noundef @.str, i32 noundef %add91)
-  ret i32 %add91
+  %add2 = call i32 @_wyvern_slice_main_add_133803692()
+  %call = call i32 (ptr, ...) @printf(ptr noundef @.str, i32 noundef %add2)
+  %add13 = call i32 @_wyvern_slice_main_add1_71843268()
+  ret i32 %add13
 }
 
 declare i32 @printf(ptr noundef, ...) #1
 
-; Function Attrs: noinline nounwind uwtable
-define dso_local i32 @main(i32 noundef %argc, ptr noundef %argv) #0 {
-entry:
-  %add91 = call i32 @_wyvern_slice_f_add9_471309198(i32 %argc)
-  %call = call i32 @f(i32 noundef 2)
-  %sub = sub nsw i32 %call, 6
-  %call10 = call i32 (ptr, ...) @printf(ptr noundef @.str.1, i32 noundef %add91)
-  ret i32 %add91
+; Function Attrs: nounwind willreturn
+define internal i32 @_wyvern_slice_main_add_133803692() #2 {
+sliceclone_entry:
+  %0 = load i32, ptr @a, align 4
+  %1 = load i32, ptr @b, align 4
+  %2 = add nsw i32 %0, %1
+  ret i32 %2
 }
 
 ; Function Attrs: nounwind willreturn
-define internal i32 @_wyvern_slice_f_add9_471309198(i32 %arg) #2 {
+define internal i32 @_wyvern_slice_main_add1_71843268() #2 {
 sliceclone_entry:
-  %0 = mul nsw i32 %arg, %arg
-  %1 = mul nsw i32 %0, 2
-  %2 = mul nsw i32 %1, 2
-  %3 = mul nsw i32 %2, 2
-  %4 = mul nsw i32 %3, 2
-  %5 = mul nsw i32 %4, 2
-  %6 = mul nsw i32 %5, 2
-  %7 = mul nsw i32 %6, 2
-  %8 = add nsw i32 %7, 5
-  %9 = mul nsw i32 2, %8
-  %10 = add nsw i32 %9, 2
-  ret i32 %10
+  %0 = load i32, ptr @a, align 4
+  %1 = load i32, ptr @b, align 4
+  %2 = add nsw i32 %0, %1
+  ret i32 %2
 }
 
 attributes #0 = { noinline nounwind uwtable "frame-pointer"="all" "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }

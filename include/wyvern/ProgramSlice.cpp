@@ -193,19 +193,23 @@ get_data_dependences_for(
         if (const Instruction *dep = dyn_cast<Instruction>(cur)) {
             BBs.insert(dep->getParent());
             for (const Use &U : dep->operands()) {
-                if ((!isa<Instruction>(U) && !isa<Argument>(U)) ||
-                    visited.count(U)) {
-                    if (visited.count(U) && isa<PHINode>(U) && U == &I) {
+                if (!isa<Instruction>(U) && !isa<Argument>(U)) continue;
+                if (visited.count(U)) {
+                    if (isa<PHINode>(U) && U == &I) {
                         deps.clear();
                         Argument *arg =
                             new Argument(U->getType(), U->getName());
                         deps.insert(arg);
                         deps.insert(&I);
-			toRemoveDeps.clear();
+                        toRemoveDeps.clear();
                         while (!worklist.empty()) worklist.pop();
                         phiCrit = true;
                         break;
                     }
+                    continue;
+                }
+                if (isa<StoreInst>(U)) {
+                    visited.insert(U);
                     continue;
                 }
                 if (const PHINode *u = dyn_cast<PHINode>(U)) {
@@ -217,7 +221,7 @@ get_data_dependences_for(
                         continue;
                     }
                 }
-		// Cannot have side effects.
+                // Cannot have side effects.
                 visited.insert(U);
                 worklist.push(U);
             }
@@ -388,10 +392,10 @@ void ProgramSlice::printSlice() {
  */
 void ProgramSlice::printFunctions(Function *F) {
     dbgs() << "\n\n ==== Slicing instruction: [" << *_initial
-                      << "] in function: " << _parentFunction->getName()
-                      << " with size " << _parentFunction->size() << " ====\n"
-                      << "\n======== SLICED FUNCTION ==========\n"
-                      << *F;
+           << "] in function: " << _parentFunction->getName() << " with size "
+           << _parentFunction->size() << " ====\n"
+           << "\n======== SLICED FUNCTION ==========\n"
+           << *F;
 }
 
 /**
@@ -674,24 +678,26 @@ bool ProgramSlice::canOutline() {
         }
     }
 
-    for (BasicBlock &BB : *_parentFunction) {
-        for (Instruction &I : BB) {
-            if (StoreInst *SI = dyn_cast<StoreInst>(&I)) {
-                Value *underlying =
-                    getUnderlyingObject(SI->getPointerOperand());
-                if (allocasInSlice.contains(underlying)) {
-                    errs()
-                        << "Cannot outline slice because alloca is clobbered: "
-                        << *underlying << "\n";
-                    return false;
-                }
-            }
-        }
-    }
+    // for (BasicBlock &BB : *_parentFunction) {
+    //     for (Instruction &I : BB) {
+    //         if (StoreInst *SI = dyn_cast<StoreInst>(&I)) {
+    //             Value *underlying =
+    //                 getUnderlyingObject(SI->getPointerOperand());
+    //             if (allocasInSlice.contains(underlying)) {
+    //                 errs()
+    //                     << "Cannot outline slice because alloca is clobbered:
+    //                     "
+    //                     << *underlying << "\n";
+    //                 return false;
+    //             }
+    //         }
+    //     }
+    // }
 
     if (_instsInSlice.size() <= 1) {
-        dbgs() << "Not outlined, Insufficient Numbers os instruction to "
-                  "outline! \n";
+        LLVM_DEBUG(
+            dbgs() << "Not outlined, Insufficient Numbers os instruction to "
+                      "outline! \n";);
         return false;
     }
 
@@ -801,7 +807,7 @@ void ProgramSlice::populateBBsWithInsts(Function *F) {
         for (Instruction &origInst : BB) {
             if (_instsInSlice.count(&origInst)) {
                 Instruction *newInst = origInst.clone();
-		newInst->setName(origInst.getName());
+                newInst->setName(origInst.getName());
                 _Imap.insert(std::make_pair(&origInst, newInst));
                 IRBuilder<> builder(_origToNewBBmap[&BB]);
                 builder.Insert(newInst);
@@ -986,7 +992,6 @@ ReturnInst *ProgramSlice::addReturnValue(Function *F) {
                                           exit);
             }
         }
-        // return ReturnInst::Create(F->getParent()->getContext(), )//
     }
     return ReturnInst::Create(F->getParent()->getContext(), _Imap[_initial],
                               exit);
@@ -1005,6 +1010,14 @@ ReturnInst *ProgramSlice::addReturnValue(Function *F) {
  * @return The newly created delegate Function that encapsulates the slice.
  */
 Function* ProgramSlice::outline() {
+    if (_instsInSlice.size() <= 1) {
+        LLVM_DEBUG(
+            dbgs() << "\033[31m"
+                   << "Not outlined, Insufficient Numbers os instruction to "
+                      "outline! \n"
+                   << "\033[0m");
+        return NULL;
+    }
     StructType *thunkStructType = getThunkStructType(false);
     PointerType *thunkStructPtrType = thunkStructType->getPointerTo();
 
