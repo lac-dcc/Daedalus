@@ -948,6 +948,18 @@ void ProgramSlice::simplifyCfg(Function *F, FunctionAnalysisManager &AM) {
 }
 
 /**
+ * @brief A function to merge two other functions using func-merging pass
+ *
+ * @details This function runs the MergeFunctions function from the func-merging
+ *
+ * @param F1 First pointer to the first Function to be merged.
+ * @param F2 Second pointer to the first Function to be merged.
+ */
+void ProgramSlice::mergeFunctions(Function *F1, Function *F2) {
+    MergeFunctions(F1, F2);
+}
+
+/**
  * @brief Adds a return instruction to function F, returning the computed value
  * of the sliced function.
  *

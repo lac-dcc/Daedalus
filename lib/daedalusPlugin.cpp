@@ -24,10 +24,8 @@ using namespace llvm;
 bool registerPipeline(StringRef Name, ModulePassManager &MPM,
                       ArrayRef<PassBuilder::PipelineElement>) {
     if (Name == "daedalus") {
-	MPM.addPass(createModuleToFunctionPassAdaptor(LCSSAPass()));
-	MPM.addPass(Daedalus::DaedalusPass());
-	// MPM.addPass(FuncMerge());
-	// MPM.addPass(Daedalus::Clean());
+        MPM.addPass(createModuleToFunctionPassAdaptor(LCSSAPass()));
+        MPM.addPass(Daedalus::DaedalusPass());
         return true;
     }
     return false;
