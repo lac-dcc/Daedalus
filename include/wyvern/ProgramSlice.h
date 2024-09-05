@@ -14,6 +14,8 @@
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Instructions.h"
 
+#include "llvm/Transforms/IPO/FunctionMerging.h"
+
 namespace llvm {
 
   class ProgramSlice {
@@ -62,6 +64,11 @@ namespace llvm {
      * @brief A function to simplify basic blocks of a function using the same method as the SimplifyCFGPass
      */
     static void simplifyCfg(Function *F, FunctionAnalysisManager &AM);
+
+    /*
+     * @brief A function to merge two other functions using func-merging pass
+    */
+    static void mergeFunctions(Function *F1, Function *F2);
 
   private:
     void insertLoadForThunkParams(Function *F, bool memo);

@@ -18,6 +18,7 @@
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/NativeFormatting.h"
+#include "llvm/Transforms/IPO/FunctionMerging.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Transforms/Utils/ValueMapper.h"
 #include <exception>
@@ -248,6 +249,15 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
         }
     }
 
+    std::set<Function *> originalFunctions;
+    std::set<Function *> outlinedFunctions;
+    for (auto IS : allSlices) {
+        auto [I, F, args, origInst, wasRemoved] = IS;
+	    Function *originalF = I->getParent()->getParent();
+        originalFunctions.insert(originalF);
+        outlinedFunctions.insert(F);
+    }
+
     LLVM_DEBUG(dbgs() << "== REMOVING MERGE PHASE ==\n");
     // TODO: Try to merge, if cant merge, delete the functions.
     // > let on allSlices, only the slice that is worth to merge.
@@ -255,6 +265,11 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
     //
     //
     //
+    for (auto F : outlinedFunctions) {
+        for (auto G : outlinedFunctions) {
+            llvm::ProgramSlice::mergeFunctions(F, G);
+        }
+    }
 
     LLVM_DEBUG(dbgs() << "== REMOVING INST PHASE ==\n");
     // If it is worth to merge, then substitute the original instruction
@@ -263,14 +278,9 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
     //
     auto &FAM =
         MAM.getResult<FunctionAnalysisManagerModuleProxy>(M).getManager();
-    std::set<Function *> originalFunctions;
-    std::set<Function *> outlinedFunctions;
     std::set<Instruction *> toRemove;
     for (auto IS : allSlices) {
         auto [I, F, args, origInst, wasRemoved] = IS;
-	Function *originalF = I->getParent()->getParent();
-        originalFunctions.insert(originalF);
-        outlinedFunctions.insert(F);
 
         if (I->getParent() == nullptr) continue; // I could may be removed
         // by a previous slice;
