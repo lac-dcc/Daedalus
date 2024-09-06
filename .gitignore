@@ -4,3 +4,4 @@ compile_commands.json
 .obsidian-notes
 docs/
 tests/*.ll
+tests/*.bin
