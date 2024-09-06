@@ -2,10 +2,18 @@
 #
 #   Script to generate .ll files for each test's source file
 #
-set -e
+#set -e
 
-clang -S -Xclang -disable-O0-optnone -emit-llvm "$1.c" -o "$1.ll"
+for i in ./*.c; do
+    FILENAME=$(basename "$i")
+    LLFILENAME="$(basename "$i" | tr -d 'c$')ll"
+    printf "\nTest file name: %s\n" "${FILENAME}"
+    clang -S -Xclang -disable-O0-optnone -emit-llvm "${FILENAME}" -o "${LLFILENAME}"
+    opt -S -passes=mem2reg,lcssa "${LLFILENAME}" -o "${LLFILENAME}"
+done
 
-opt -S -passes=mem2reg,lcssa "$1.ll" -o "$1.ll"
-
-opt -debug-only=daedalus -passes=daedalus -load-pass-plugin=../build/lib/libdaedalus.so "$1.ll" -o "$1.d.ll" 2>&1
+# for i in ./*.ll; do
+#     FILENAME=$(basename "$i")
+#     LLFILENAME="$(basename "$i" | tr -d 'd$')"
+#     opt -debug-only=daedalus -passes=daedalus -load-pass-plugin=../build/lib/libdaedalus.so "${LLFILENAME}" -o "${LLFILENAME}.d.ll" 2>&1
+# done

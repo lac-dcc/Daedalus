@@ -31,9 +31,7 @@ You can do the following to compile and install it as a library:
 $ mkdir build
 $ cd build
 $ cmake -DLLVM_DIR={path_to_llvm_project} ../
-$ make
-$ cd ..
-$ opt -load-pass-plugin build/lib/libdaedalus.so -passes=daedalus -disable-output tests/test1.ll
+$ cmake --build .
 ```
 
 ## Running
