@@ -1,10 +1,10 @@
 #include <stdio.h>
 
-bool f(int a){
+int f(int a){
 	return a==0;
 }
 
-bool slice_for_cond(){
+int slice_for_cond(){
 	int a = 2;
 	return f(a);
 }

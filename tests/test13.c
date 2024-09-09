@@ -24,7 +24,7 @@ int main(int argc, char **argv){
 	}
 	printf("%d\n", a3);
 	a4 = f(2);
-	a6 = f(3);
+	int a6 = f(3);
 	return a4*a4; // slice_a4(i32 argc);
 }
 
