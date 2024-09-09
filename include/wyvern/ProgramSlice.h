@@ -15,6 +15,8 @@
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/PassManager.h"
 
+#include "llvm/Transforms/IPO/FunctionMerging.h"
+
 namespace llvm {
 
   class ProgramSlice {
@@ -67,7 +69,7 @@ namespace llvm {
     /*
      * @brief A function to merge two other functions using func-merging pass
     */
-    static void mergeFunctions(Module *M, ModuleAnalysisManager *AM);
+    static FunctionMergeResult mergeFunctions(Function *F1, Function *F2);
 
   private:
     void insertLoadForThunkParams(Function *F, bool memo);

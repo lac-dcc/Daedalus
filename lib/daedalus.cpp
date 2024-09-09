@@ -251,8 +251,7 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
 
     std::set<Function *> originalFunctions;
     std::set<Function *> outlinedFunctions;
-    for (auto IS : allSlices) {
-        auto [I, F, args, origInst, wasRemoved] = IS;
+    for (auto [I, F, args, origInst, wasRemoved] : allSlices) {
 	    Function *originalF = I->getParent()->getParent();
         originalFunctions.insert(originalF);
         outlinedFunctions.insert(F);
@@ -262,55 +261,61 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
     // Try to merge, if cant merge, delete the functions.
     // let on allSlices, only the slice that is worth to merge.
     //
-    llvm::ProgramSlice::mergeFunctions(&M, &MAM);
+    std::set<Function *> combinedFunctions;
+    std::set<Function *> mergedFunctions;
+    for (auto [I, F, args, origInst, wasRemoved] : allSlices) {
+        for (auto [I, G, args, origInst, wasRemoved] : allSlices) {
+            if (F == G)
+                continue;
+            if (combinedFunctions.count(F) > 0 || combinedFunctions.count(G) > 0)
+                continue;
+            FunctionMergeResult fmResult = llvm::ProgramSlice::mergeFunctions(F, G);
+            if (fmResult.getMergedFunction() != nullptr) {
+                combinedFunctions.insert(F);
+                combinedFunctions.insert(G);
+                mergedFunctions.insert(fmResult.getMergedFunction());
+            }
+            LLVM_DEBUG(dbgs() << "-Merged function: "<< fmResult.getMergedFunction()->getName() << "\n");
+        }
+    };
 
     LLVM_DEBUG(dbgs() << "== REMOVING INST PHASE ==\n");
     // If it is worth to merge, then substitute the original instruction
     // with the corresponding function call, and removed unsed instructions
     // from original function.
     //
-    auto &FAM =
-        MAM.getResult<FunctionAnalysisManagerModuleProxy>(M).getManager();
-    // std::set<Instruction *> toRemove;
-    // for (auto IS : allSlices) {
-    //     auto [I, F, args, origInst, wasRemoved] = IS;
-
-    //     if (I->getParent() == nullptr) continue; // I could may be removed
-    //     // by a previous slice;
-
-    //     CallInst *callInst =
-    //         CallInst::Create(F, args, I->getName(), I->getParent());
-    //     //
-    //     Instruction *moveTo = I;
-    //     if (I && isa<PHINode>(I)) moveTo = I->getParent()->getFirstNonPHI();
-    //     callInst->moveBefore(moveTo);
-    //     //
-    //     std::set<Instruction *>
-    //         constOriginalInst; // set of instruction in original function
-
-    //     for (Instruction *J : origInst) {
-    //         if (J->getParent() == nullptr) continue;
-    //         std::set<Instruction *> vis;
-    //         if (I != J && newRemover(J, I, origInst, vis)) {
-    //             J->replaceAllUsesWith(UndefValue::get(J->getType()));
-    //             J->eraseFromParent();
-    //             toRemove.insert(J);
-    //         }
-    //     }
-    //     origInst.clear();
-
-    //     I->replaceAllUsesWith(callInst);
-    //     I->eraseFromParent();
-    //     toRemove.insert(I);
-    // }
-    // for (auto F : outlinedFunctions) {
-    //     llvm::ProgramSlice::simplifyCfg(F, FAM);
-    // }
-    // for (auto originalF : originalFunctions) {
-    //     llvm::ProgramSlice::simplifyCfg(originalF, FAM);
-    // }
+    auto &FAM = MAM.getResult<FunctionAnalysisManagerModuleProxy>(M).getManager();
+    std::set<Instruction *> toRemove;
+    for (auto [I, F, args, origInst, wasRemoved] : allSlices) {
+        if (I->getParent() == nullptr) continue; // I could may be removed by a previous slice;
+        CallInst *callInst = CallInst::Create(F, args, I->getName(), I->getParent());
+        Instruction *moveTo = I;
+        if (I && isa<PHINode>(I)) moveTo = I->getParent()->getFirstNonPHI();
+        callInst->moveBefore(moveTo);
+        std::set<Instruction *> constOriginalInst; // set of instructions in original function
+        for (Instruction *J : origInst) {
+            if (J->getParent() == nullptr) continue;
+            std::set<Instruction *> vis;
+            if (I != J && newRemover(J, I, origInst, vis)) {
+                J->replaceAllUsesWith(UndefValue::get(J->getType()));
+                J->eraseFromParent();
+                toRemove.insert(J);
+            }
+        }
+        origInst.clear();
+        I->replaceAllUsesWith(callInst);
+        I->eraseFromParent();
+        toRemove.insert(I);
+    }
+    for (auto F : outlinedFunctions) {
+        llvm::ProgramSlice::simplifyCfg(F, FAM);
+    }
+    for (auto originalF : originalFunctions) {
+        llvm::ProgramSlice::simplifyCfg(originalF, FAM);
+    }
     dbgs() << "ENDFILE\n";
-    for (Function &F : M.getFunctionList()) dbgs() << F << '\n';
+    for (Function &F : M.getFunctionList())
+        dbgs() << F << '\n';
 
     module->print(dbgs(), nullptr);
 
