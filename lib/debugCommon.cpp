@@ -4,7 +4,6 @@
 using namespace llvm;
 
 #define DEBUG_TYPE "daedalus"
-
 template <typename T>
 void debugContainerOfInstructions(T &instContainer, std::string msg) {
     uint lineCounter = 0;
