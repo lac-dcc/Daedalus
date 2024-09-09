@@ -1,18 +1,18 @@
 # Daedalus
 
 <p align="center">
-  <img alt="Daedulus drawing" src="assets/images/BannerDaedulus.png" width="95%" height="auto"/></br>
+  <img alt="Daedalus drawing" src="assets/images/BannerDaedalus.png" width="95%" height="auto"/></br>
 </p>
 
-Daedalus is an LLVM Pass that maps Instructions to Program Slices. Our end goal is to use program slices as a unit of program compression, by outlining common slices; hence, making code shorter.
+Daedalus is an LLVM pass that maps instructions to program slices. Our goal is to use program slices as a unit of program compression by outlining common slices, thereby making code shorter.
 
 # Table of Contents
 
-- [Documentation](#docs)
+- [Documentation](#documentation)
 - [Building](#building)
 - [Running](#running)
 
-## Docs
+## Documentation
 
 To generate the project's documentation, execute the following command from the root directory of the repository:
 
@@ -20,12 +20,11 @@ To generate the project's documentation, execute the following command from the 
 $ doxygen
 ```
 
-The complete documentation will be generated inside the ```docs/``` folder. To view it, open ```docs/html/index.html``` in your web browser.
+The complete documentation will be generated inside the `docs/` folder. To view it, open `docs/html/index.html` in your web browser.
 
 ## Building
 
-The preferred way to build Daedalus is as an out-of-tree LLVM pass.
-You can do the following to compile and install it as a library:
+Daedalus is an out-of-tree LLVM pass. Therefore, you can compile and install it as a library by doing the following:
 
 ```shell
 $ mkdir build
@@ -36,25 +35,25 @@ $ cmake --build .
 
 ## Running
 
-After building Daedalus, you can extract program slices using a script we
-have: `comp.sh`. This script will compile a C program and invoke Daedalus on
-it:
+After building Daedalus, you can test it using the source files inside the `tests/` folder. Run the following sequence of commands in bash to generate test executables and IR files:
 
-``` shell
-$ chmod +x comp.sh
-$ ./comp.sh {path_to_test_file}
-# ex
-$ ./comp.sh tests/test1.ll
+```shell
+$ cd tests
+$ ./generate_tests.sh -q
 ```
 
-If, otherwise, you prefer to load and run the pass directly, you can simply
-do:
+For a given test file name (without its extension), the following files are created:
 
-``` shell
-$ cd build
-$ make
-$ cd ..
-$ opt -load-pass-plugin build/lib/libdaedalus.so -passes=daedalus -disable-output {path_to_test_file}
+Test Name: `test6.c`
+- `test6.ll`: IR file created before running Daedalus;
+- `test6.d.ll`: IR file created after running Daedalus;
+- `test6.bin`: executable created before running Daedalus;
+- `test6.d.bin`: executable created after running Daedalus;
+
+If you prefer to run the pass directly, you can simply do the following:
+
+```shell
+$ clang -S -Xclang -disable-O0-optnone -emit-llvm {path_to_ll_file} -o {path_to_output_ll_file}
+$ opt -S -passes=mem2reg,lcssa {path_to_output_ll_file} -o {path_to_output_ll_file}
+$ opt -debug-only=daedalus -passes=daedalus -load-pass-plugin=path/to/lib/libdaedalus.so {path_to_ll_file} -o {path_to_output_ll_file} 2>&1
 ```
-
-But, in this last case, remember that you must apply Daedalus onto a program written in the [LLVM IR](https://llvm.org/docs/LangRef.html).

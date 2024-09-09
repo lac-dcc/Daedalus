@@ -9,8 +9,8 @@ print_usage() {
     echo ""
     echo "Options:"
     echo "  -h    Display this help message"
-    echo "  -v    Increase verbosity"
-    echo "  -q    Decrease verbosity"
+    echo "  -v    Print verbose info. into terminal"
+    echo "  -q    Print verbose info. into file (tests_gen_stderr.log)"
     echo ""
     echo "Description:"
     echo "This script generates IR and executable files by running Daedalus pass over the source codes."
@@ -52,8 +52,8 @@ for i in ./*.ll; do
     DLLFILENAME="${FILENAMEWEXT}.d.ll"
 
     if [ "$1" == "-q" ]; then
-        rm ./tests_gen_stderr.log
-        opt -debug-only=daedalus -passes=daedalus -load-pass-plugin=../build/lib/libdaedalus.so "${FULLFILENAME}" -o "${DLLFILENAME}" 2>> tests_gen_stderr.log
+        rm ./"${FILENAMEWEXT}_gen.log"
+        opt -debug-only=daedalus -passes=daedalus -load-pass-plugin=../build/lib/libdaedalus.so "${FULLFILENAME}" -o "${DLLFILENAME}" &>> "${FILENAMEWEXT}_gen.log"
     fi
 
     if [ "$1" == "-v" ]; then
