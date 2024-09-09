@@ -13,8 +13,7 @@
 #include "llvm/IR/Dominators.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Instructions.h"
-
-#include "llvm/Transforms/IPO/FunctionMerging.h"
+#include "llvm/IR/PassManager.h"
 
 namespace llvm {
 
@@ -68,7 +67,7 @@ namespace llvm {
     /*
      * @brief A function to merge two other functions using func-merging pass
     */
-    static void mergeFunctions(Function *F1, Function *F2);
+    static void mergeFunctions(Module *M, ModuleAnalysisManager *AM);
 
   private:
     void insertLoadForThunkParams(Function *F, bool memo);

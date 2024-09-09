@@ -38,6 +38,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/Transforms/Utils/Local.h"
+#include "llvm/Transforms/IPO/FunctionMerging.h"
 
 #include <random>
 
@@ -955,8 +956,9 @@ void ProgramSlice::simplifyCfg(Function *F, FunctionAnalysisManager &AM) {
  * @param F1 First pointer to the first Function to be merged.
  * @param F2 Second pointer to the first Function to be merged.
  */
-void ProgramSlice::mergeFunctions(Function *F1, Function *F2) {
-    MergeFunctions(F1, F2);
+void ProgramSlice::mergeFunctions(Module *M, ModuleAnalysisManager *AM) {
+    FunctionMergingPass fmPass;
+    fmPass.run(*M, *AM);
 }
 
 /**
