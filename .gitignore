@@ -3,4 +3,6 @@ compile_commands.json
 .cache/
 .obsidian-notes
 docs/
-*.d.*
+tests/*.ll
+tests/*.bin
+tests/*.log
