@@ -39,7 +39,7 @@ After building Daedalus, you can test it using the source files inside the `test
 
 ```shell
 $ cd tests
-$ ./generate_tests.sh -q
+$ ./generate_tests.sh -v
 ```
 
 For a given test file name (without its extension), the following files are created:
