@@ -17,7 +17,7 @@ message(
 )
 
 include_directories(${LLVM_INCLUDE_DIRS})
-include_directories("include/") # TODO: Dynamic Include
+include_directories("include/")
 link_directories(${LLVM_LIBRARY_DIRS})
 add_definitions(${LLVM_DEFINITIONS})
 
