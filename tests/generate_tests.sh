@@ -1,74 +1,96 @@
 #!/bin/bash
 #
-#   Script to generate .ll files for each test's source file
+#   Script to generate .ll and .bin files for each test file
 #
+TESTFILENAME=(./*.{c,h,cpp})
+VERBOSE=0
+
+remove_old_file() {
+    local FILENAME
+    FILENAME="$1"
+    if [ -e "${FILENAME}" ]; then
+        rm "${FILENAME}"
+        printf "Old %s file removed...\n" "${FILENAME}"
+    fi
+}
 
 print_usage() {
-    local script_name=$(basename "$0")
-    echo "Usage: $script_name [OPTIONS]..."
+    local script_name
+    script_name=$(basename "$0")
+    echo "Usage: $script_name [-v] [-t TESTFILENAME]..."
     echo ""
     echo "Options:"
-    echo "  -h    Display this help message"
-    echo "  -v    Print verbose info. into terminal"
-    echo "  -q    Print verbose info. into file (tests_gen_stderr.log)"
+    echo "  -h                 Display this help message"
+    echo "  -v                 Print verbose info. into terminal"
+    echo "  -t TESTFILENAME    Generate files for a specific test. FILE is the test's source file name"
     echo ""
     echo "Description:"
     echo "This script generates IR and executable files by running Daedalus pass over the source codes."
+    echo ""
+    echo "The script shall print verbose information into a file named after its test, if -v option is"
+    echo "not passed."
 }
 
-if [ "$#" == 0 ]; then
-    print_usage
-    exit
-fi
+while getopts "t:hv" opt; do
+    case ${opt} in
+        v) VERBOSE=1 ;;
+        t) TESTFILENAME=("$OPTARG") ;;
+        h)
+            print_usage
+            exit 0
+            ;;
+        \?)
+            echo "Invalid option: -$OPTARG" >&2
+            print_usage
+            exit 1
+            ;;
+        :)
+            echo "Option -$OPTARG requires an argument." >&2
+            print_usage
+            exit 1
+            ;;
+    esac
+done
 
-if [ "$1" == "-h" ]; then
-    print_usage
-    exit
-fi
-
-rm ./*.{bin,ll}
-for i in ./*.{c,h,cpp}; do
+for i in "${TESTFILENAME[@]}"; do
     FULLFILENAME=$(basename "$i")
-    if [ "${FULLFILENAME##*.}" == "c" ]; then
-        FILENAMEWEXT=${FULLFILENAME%.c}
-    fi
-    if [ "${FULLFILENAME##*.}" == "cpp" ]; then
-        FILENAMEWEXT=${FULLFILENAME%.cpp}
-    fi
-    if [ "${FULLFILENAME##*.}" == "h" ]; then
-        FILENAMEWEXT=${FULLFILENAME%.h}
-    fi
+    EXT="${FULLFILENAME##*.}"
+    case "$EXT" in
+        c) FILENAMEWEXT="${FULLFILENAME%.c}" ;;
+        cpp) FILENAMEWEXT="${FULLFILENAME%.cpp}" ;;
+        h) FILENAMEWEXT="${FULLFILENAME%.h}" ;;
+    esac
     LLFILENAME="${FILENAMEWEXT}.ll"
+    DLLFILENAME="${FILENAMEWEXT}.d.ll"
+    
     printf "\nTest source file name: %s" "${FULLFILENAME}"
     printf "\nTest IR file name: %s\n" "${LLFILENAME}"
+    printf "Test IR file name (after Daedalus): %s\n" "${LLFILENAME}"
+    
     clang -S -Xclang -disable-O0-optnone -emit-llvm "${FULLFILENAME}" -o "${LLFILENAME}"
-    opt -S -passes=mem2reg,lcssa "${LLFILENAME}" -o "${LLFILENAME}"
-    clang "${LLFILENAME}" -o "${FILENAMEWEXT}.bin"
-done
-
-for i in ./*.ll; do
-    FULLFILENAME=$(basename "$i")
-    FILENAMEWEXT=${FULLFILENAME%.ll}
-    DLLFILENAME="${FILENAMEWEXT}.d.ll"
-
-    if [ "$1" == "-q" ]; then
-        if [ -e "${FILENAMEWEXT}_gen.log" ]; then
-            rm ./"${FILENAMEWEXT}_gen.log"
+    if [ -e "${LLFILENAME}" ]; then
+        opt -S -passes=mem2reg,lcssa "${LLFILENAME}" -o "${LLFILENAME}"
+        
+        remove_old_file "${FILENAMEWEXT}.bin"
+        clang "${LLFILENAME}" -o "${FILENAMEWEXT}.bin"
+        
+        if [ $VERBOSE == 0 ]; then
+            TESTLOGNAME="${FILENAMEWEXT}_gen.log"
+            remove_old_file "${TESTLOGNAME}"
+            opt -debug-only=daedalus -passes=daedalus -load-pass-plugin=../build/lib/libdaedalus.so -S "${LLFILENAME}" -o "${DLLFILENAME}" &>> "${TESTLOGNAME}"
+        else
+            opt -debug-only=daedalus -passes=daedalus -load-pass-plugin=../build/lib/libdaedalus.so -S "${LLFILENAME}" -o "${DLLFILENAME}" 2>&1
         fi
-        opt -debug-only=daedalus -passes=daedalus -load-pass-plugin=../build/lib/libdaedalus.so "${FULLFILENAME}" -o "${DLLFILENAME}" &>> "${FILENAMEWEXT}_gen.log"
+        
+        if [ -e "${DLLFILENAME}" ]; then
+            remove_old_file "${FILENAMEWEXT}.d.bin"
+            clang "${DLLFILENAME}" -o "${FILENAMEWEXT}.d.bin"
+        fi
     fi
-
-    if [ "$1" == "-v" ]; then
-        opt -debug-only=daedalus -passes=daedalus -load-pass-plugin=../build/lib/libdaedalus.so "${FULLFILENAME}" -o "${DLLFILENAME}" 2>&1
-    fi
-
-    clang "${DLLFILENAME}" -o "${FILENAMEWEXT}.d.bin"
 done
 
-if [ "$1" == "-q" ]; then
+if [ $VERBOSE == 0 ]; then
     printf "\nOpt's stderrs appended to .log files\n"
-fi
-
-if [ "$1" == "-v" ]; then
+else
     printf "\nOpt's stderrs appended to terminal\n"
 fi

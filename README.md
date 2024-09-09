@@ -55,5 +55,5 @@ If you prefer to run the pass directly, you can simply do the following:
 ```shell
 $ clang -S -Xclang -disable-O0-optnone -emit-llvm {path_to_ll_file} -o {path_to_output_ll_file}
 $ opt -S -passes=mem2reg,lcssa {path_to_output_ll_file} -o {path_to_output_ll_file}
-$ opt -debug-only=daedalus -passes=daedalus -load-pass-plugin=path/to/lib/libdaedalus.so {path_to_ll_file} -o {path_to_output_ll_file} 2>&1
+$ opt -debug-only=daedalus -passes=daedalus -load-pass-plugin=path/to/lib/libdaedalus.so -S {path_to_ll_file} -o {path_to_output_ll_file} 2>&1
 ```
