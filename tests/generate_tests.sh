@@ -52,7 +52,9 @@ for i in ./*.ll; do
     DLLFILENAME="${FILENAMEWEXT}.d.ll"
 
     if [ "$1" == "-q" ]; then
-        rm ./"${FILENAMEWEXT}_gen.log"
+        if [ -e "${FILENAMEWEXT}_gen.log" ]; then
+            rm ./"${FILENAMEWEXT}_gen.log"
+        fi
         opt -debug-only=daedalus -passes=daedalus -load-pass-plugin=../build/lib/libdaedalus.so "${FULLFILENAME}" -o "${DLLFILENAME}" &>> "${FILENAMEWEXT}_gen.log"
     fi
 
@@ -64,7 +66,7 @@ for i in ./*.ll; do
 done
 
 if [ "$1" == "-q" ]; then
-    printf "\nOpt's stderrs appended to tests_gen_stderr.log\n"
+    printf "\nOpt's stderrs appended to .log files\n"
 fi
 
 if [ "$1" == "-v" ]; then
