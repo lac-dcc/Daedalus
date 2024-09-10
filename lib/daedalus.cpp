@@ -313,17 +313,12 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
             }
         }
         origInst.clear();
-
         I->replaceAllUsesWith(callInst);
         toRemove.insert(I);
     }
-    dbgs() << "TO remove:\n";
     for (auto &e : toRemove) {
-        dbgs() << '\t' << *e
-               << " from: " << (e->getParent()->getParent())->getName() << '\n';
         e->replaceAllUsesWith(UndefValue::get(e->getType()));
         e->eraseFromParent();
-        dbgs() << "removed!\n" << '\n';
     }
 
     for (auto F : outlinedFunctions) {
@@ -332,9 +327,8 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
     for (auto originalF : originalFunctions) {
         llvm::ProgramSlice::simplifyCfg(originalF, FAM);
     }
-    dbgs() << "ENDFILE\n";
     for (Function &F : M.getFunctionList()) {
-        dbgs() << F << '\n';
+        LLVM_DEBUG(dbgs() << F << '\n');
     }
 
     module->print(dbgs(), nullptr);

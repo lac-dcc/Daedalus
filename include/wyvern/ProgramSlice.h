@@ -165,7 +165,7 @@ namespace llvm {
     Function *_parentFunction;
 
     /// list of formal arguments on which the slice depends on (if any)
-    SmallVector<Argument *> _depArgs;
+    SmallVector<Value *> _depArgs;
     std::vector<std::pair<Type *, StringRef> > _phiDepArgs;
 
     /// set of instructions that must be in the slice, accordingto dependence
