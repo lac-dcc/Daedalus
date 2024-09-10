@@ -294,7 +294,7 @@ ProgramSlice::ProgramSlice(Instruction &Initial, Function &F,
             instsInSlice.insert(I);
         }
     }
-    for (auto &val : phiOnArgs) depArgs.push_back(val);
+    for(auto &val : phiOnArgs) depArgs.push_back(val);
     if (isa<ReturnInst>(_initial)) {
         Value *FreturnValue = dyn_cast<ReturnInst>(_initial)->getReturnValue();
         _instRetValue = dyn_cast<Instruction>(FreturnValue);
@@ -964,7 +964,6 @@ ReturnInst *ProgramSlice::addReturnValue(Function *F) {
     if (exit->getTerminator()) {
         exit->getTerminator()->eraseFromParent();
     }
-    dbgs() << *_initial << '\n';
     if (isa<ReturnInst>(_initial)) {
         if (Value *retType = dyn_cast<ReturnInst>(_initial)->getReturnValue()) {
             return ReturnInst::Create(F->getParent()->getContext(), retType,
