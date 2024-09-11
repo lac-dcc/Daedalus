@@ -77,9 +77,9 @@ for i in "${TESTFILENAME[@]}"; do
         if [ $VERBOSE == 0 ]; then
             TESTLOGNAME="${FILENAMEWEXT}_gen.log"
             remove_old_file "${TESTLOGNAME}"
-            opt -debug-only=daedalus -passes=daedalus -load-pass-plugin=../build/lib/libdaedalus.so -S "${LLFILENAME}" -o "${DLLFILENAME}" &>> "${TESTLOGNAME}"
+            opt -debug-only=daedalus -debug-only=MergeFuncDaedalus -passes=daedalus -load-pass-plugin=../build/lib/libdaedalus.so -S "${LLFILENAME}" -o "${DLLFILENAME}" &>> "${TESTLOGNAME}"
         else
-            opt -debug-only=daedalus -passes=daedalus -load-pass-plugin=../build/lib/libdaedalus.so -S "${LLFILENAME}" -o "${DLLFILENAME}" 2>&1
+            opt -debug-only=daedalus -debug-only=MergeFuncDaedalus -passes=daedalus -load-pass-plugin=../build/lib/libdaedalus.so -S "${LLFILENAME}" -o "${DLLFILENAME}" 2>&1
         fi
         
         if [ -e "${DLLFILENAME}" ]; then

@@ -954,6 +954,7 @@ void ProgramSlice::simplifyCfg(Function *F, FunctionAnalysisManager &AM) {
  *
  * @param F1 First pointer to the first Function to be merged.
  * @param F2 Second pointer to the first Function to be merged.
+ * @return Function Merging Result object
  */
 FunctionMergeResult ProgramSlice::mergeFunctions(Function *F1, Function *F2) {
     if (F1->getParent() != F2->getParent())
