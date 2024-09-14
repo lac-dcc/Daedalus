@@ -67,8 +67,10 @@ bool canSliceInstrType(Instruction &I) {
  */
 bool canRemove(Instruction *I, Instruction *ini,
                std::set<Instruction *> &constOriginalInst,
-               std::set<Instruction *> &vis) {
+               std::set<Instruction *> &vis,
+               std::set<Instruction *> &toRemove) {
     if (ini == I) return true;
+    if (toRemove.find(I) != toRemove.end()) return true;
 
     if (constOriginalInst.find(I) == constOriginalInst.end()) return false;
 
@@ -85,8 +87,9 @@ bool canRemove(Instruction *I, Instruction *ini,
     for (auto U : I->users()) {
         if (!U) continue;
         if (Instruction *J = dyn_cast<Instruction>(U))
-            if (!canRemove(J, ini, constOriginalInst, vis)) return false;
+            if (!canRemove(J, ini, constOriginalInst, vis, toRemove)) return false;
     }
+    toRemove.insert(I);
     return true;
 }
 
@@ -285,9 +288,11 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
     //
     auto &FAM =
         MAM.getResult<FunctionAnalysisManagerModuleProxy>(M).getManager();
+
     std::set<Instruction *> toRemove;
     for (auto IS : allSlices) {
         auto [I, F, args, origInst, wasRemoved] = IS;
+        // if() if F in not sliced insts, continue;
         Function *originalF = I->getParent()->getParent();
         originalFunctions.insert(originalF);
         outlinedFunctions.insert(F);
