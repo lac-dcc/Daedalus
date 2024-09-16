@@ -294,7 +294,7 @@ ProgramSlice::ProgramSlice(Instruction &Initial, Function &F,
             instsInSlice.insert(I);
         }
     }
-    for(auto &val : phiOnArgs) depArgs.push_back(val);
+    for (auto &val : phiOnArgs) depArgs.push_back(val);
     if (isa<ReturnInst>(_initial)) {
         Value *FreturnValue = dyn_cast<ReturnInst>(_initial)->getReturnValue();
         _instRetValue = dyn_cast<Instruction>(FreturnValue);
@@ -931,13 +931,14 @@ void ProgramSlice::simplifyCfg(Function *F, FunctionAnalysisManager &AM) {
  * @param F2 Second pointer to the first Function to be merged.
  * @return Function Merging Result object
  */
-FunctionMergeResult ProgramSlice::mergeFunctions(Function *F1, Function *F2) {
-    if (F1->getParent() != F2->getParent())
-        return FunctionMergeResult(F1, F2, nullptr);
-    FunctionMerger Merger(F1->getParent());
-    FunctionMergingOptions Options = FunctionMergingOptions();
-    return Merger.merge(F1, F2, "", Options);
-}
+// FunctionMergeResult ProgramSlice::mergeFunctions(Function *F1, Function *F2)
+// {
+//     if (F1->getParent() != F2->getParent())
+//         return FunctionMergeResult(F1, F2, nullptr);
+//     FunctionMerger Merger(F1->getParent());
+//     FunctionMergingOptions Options = FunctionMergingOptions();
+//     return Merger.merge(F1, F2, "", Options);
+// }
 
 /**
  * @brief Adds a return instruction to function F, returning the computed value
@@ -963,9 +964,14 @@ ReturnInst *ProgramSlice::addReturnValue(Function *F) {
     if (exit->getTerminator()) {
         exit->getTerminator()->eraseFromParent();
     }
-    if (Value *retType = dyn_cast<ReturnInst>(_initial)->getReturnValue()) { 
-        return ReturnInst::Create(F->getParent()->getContext(), retType, exit);
+    dbgs() << *_initial << '\n';
+    if (isa<ReturnInst>(_initial)) {
+        if (Value *retType = dyn_cast<ReturnInst>(_initial)->getReturnValue()) {
+            return ReturnInst::Create(F->getParent()->getContext(), retType,
+                                      exit);
+        }
     }
+    dbgs() << *_initial << '\n';
     if (auto *callInst = dyn_cast<CallInst>(_initial)) {
         Function *ftype = callInst->getCalledFunction();
         if (ftype) {

@@ -40,6 +40,7 @@
 #include <set>
 #include <utility>
 #include <vector>
+#include <map>
 
 namespace llvm {
 
@@ -71,7 +72,7 @@ namespace llvm {
     MergeFunc() : FnTree(FunctionNodeCmp(&GlobalNumbers)) {
     }
 
-    bool runOnSet(std::set<Function *> &SF);
+    std::pair<bool, std::map<Function *, Function *>> runOnSet(std::set<Function *> &SF);
 
   private:
     // The function comparison operator is provided here so that FunctionNodes do
@@ -103,7 +104,7 @@ namespace llvm {
 
     /// Insert a ComparableFunction into the FnTree, or merge it away if it's
     /// equal to one that's already present.
-    bool insert(Function *NewFunction);
+    std::pair<bool, std::pair<Function *, Function *> > insert(Function *NewFunction);
 
     /// Remove a Function from the FnTree and queue it up for a second sweep of
     /// analysis.

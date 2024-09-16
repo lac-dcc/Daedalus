@@ -29,7 +29,7 @@
 using namespace llvm;
 #include <llvm/Pass.h>
 
-#define DEBUG_TYPE "daedalus"
+#define DEBUG_TYPE "Daedalus"
 
 /**
  * @brief Determines if an instruction type can be sliced.
@@ -87,7 +87,8 @@ bool canRemove(Instruction *I, Instruction *ini,
     for (auto U : I->users()) {
         if (!U) continue;
         if (Instruction *J = dyn_cast<Instruction>(U))
-            if (!canRemove(J, ini, constOriginalInst, vis, toRemove)) return false;
+            if (!canRemove(J, ini, constOriginalInst, vis, toRemove))
+                return false;
     }
     toRemove.insert(I);
     return true;
@@ -153,14 +154,13 @@ std::set<Instruction *> instSetMeetCriterion(Function *F) {
             LLVM_DEBUG(dbgs() << *F << '\n');
             continue;
         };
-        // if (Instruction *retValue = dyn_cast<ReturnInst>(term))
-        //     for (auto &it : retValue->operands())
-        //         if (Instruction *Iit = dyn_cast<Instruction>(it))
-        //         S.insert(Iit);
+        if (Instruction *retValue = dyn_cast<ReturnInst>(term))
+            for (auto &it : retValue->operands())
+                if (Instruction *Iit = dyn_cast<Instruction>(it)) S.insert(Iit);
 
-        for (Instruction &I : BB) {
-            if (isa<BinaryOperator>(I)) S.insert(&I);
-        }
+        // for (Instruction &I : BB) {
+        //     if (isa<BinaryOperator>(I)) S.insert(&I);
+        // }
 
         // for (Instruction &I : BB) {
         //     if (isa<StoreInst>(I)) {
@@ -213,9 +213,10 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
             if (!canSliceInstrType(*I)) continue;
             if (!canProgramSlice(I)) continue;
             LLVM_DEBUG(dbgs() << "Instruction:\t" << *I << '\n');
+            dbgs() << (isa<ReturnInst>(I) ? "YEP" : "NO") << '\n';
+
             LLVM_DEBUG(dbgs() << COLOR::RED);
             ProgramSlice ps = ProgramSlice(*I, *F, PDT);
-
             LLVM_DEBUG(dbgs() << COLOR::CLEAN);
 
             Function *G = ps.outline();
@@ -254,7 +255,8 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
 
     // mergefunc impl.
     MergeFunc mf;
-    if (mf.runOnSet(outlinedFunctions))
+    auto [mergeFunc, delToNewFunc] = mf.runOnSet(outlinedFunctions);
+    if (mergeFunc)
         LLVM_DEBUG(dbgs() << "MergeFunc returned true!\n");
     else
         LLVM_DEBUG(dbgs() << "MergeFunc returned false...\n");
@@ -289,13 +291,24 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
     auto &FAM =
         MAM.getResult<FunctionAnalysisManagerModuleProxy>(M).getManager();
 
+    std::set<Function *> mergeTo;
+    for(auto [A,B]: delToNewFunc){
+	if(B == nullptr) continue;
+	mergeTo.insert(B);
+    }
+
     std::set<Instruction *> toRemove;
+    std::set<Function *> toSimplify;
     for (auto IS : allSlices) {
         auto [I, F, args, origInst, wasRemoved] = IS;
-        // if() if F in not sliced insts, continue;
-        Function *originalF = I->getParent()->getParent();
-        originalFunctions.insert(originalF);
-        outlinedFunctions.insert(F);
+	if(delToNewFunc.find(F) != delToNewFunc.end()){
+	    F = delToNewFunc[F];
+	}
+	if(mergeTo.count(F) == 0){
+	    F->eraseFromParent();
+	    continue;
+	}
+	toSimplify.insert(F);
 
         if (I->getParent() == nullptr) continue; // I could may be removed
         // by a previous slice;
@@ -313,11 +326,10 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
         for (Instruction *J : origInst) {
             if (J->getParent() == nullptr) continue;
             std::set<Instruction *> vis;
-            if (I != J && canRemove(J, I, origInst, vis)) {
+            if (I != J && canRemove(J, I, origInst, vis, toRemove)) {
                 toRemove.insert(J);
             }
         }
-        origInst.clear();
         I->replaceAllUsesWith(callInst);
         toRemove.insert(I);
     }
@@ -326,10 +338,11 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
         e->eraseFromParent();
     }
 
-    for (auto F : outlinedFunctions) {
+    for (auto F : toSimplify) {
         llvm::ProgramSlice::simplifyCfg(F, FAM);
     }
-    for (auto originalF : originalFunctions) {
+    // TODO: Check if still works, when merge a non-slice function that was not selected on merge.
+    for (auto originalF : originalFunctions) { 
         llvm::ProgramSlice::simplifyCfg(originalF, FAM);
     }
     for (Function &F : M.getFunctionList()) {

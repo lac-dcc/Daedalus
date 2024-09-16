@@ -14,6 +14,9 @@ int f(int arg){
     printf("On f: %d\n", b);
     return b;
 }
+int g(int a){
+    return a*25+25+5;
+}
 
 int main(int argc, char **argv){
     int a1 = argc*argc;
