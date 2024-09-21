@@ -333,6 +333,12 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
     e->eraseFromParent();
   }
 
+  for (auto &[callInst, F] : newCalls) {
+    if (callInst->users().empty()) {
+      callInst->eraseFromParent();
+      if (F->users().empty()) F->eraseFromParent();
+    }
+  }
   for (auto F : toSimplify) {
     llvm::ProgramSlice::simplifyCfg(F, FAM);
   }
@@ -340,12 +346,6 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
   // selected on merge.
   for (auto originalF : originalFunctions) {
     llvm::ProgramSlice::simplifyCfg(originalF, FAM);
-  }
-  for (auto &[callInst, F] : newCalls) {
-    if (callInst->users().empty()) {
-      callInst->eraseFromParent();
-      if (F->users().empty()) F->eraseFromParent();
-    }
   }
   for (Function &F : M.getFunctionList()) {
     LLVM_DEBUG(dbgs() << F << '\n');
