@@ -291,6 +291,7 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
   }
 
   std::set<Instruction *> toRemove;
+  std::map<Instruction *, Function *> newCalls;
   std::set<Function *> toSimplify;
   for (auto IS : allSlices) {
     auto [I, F, args, origInst, wasRemoved] = IS;
@@ -313,6 +314,7 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
     if (I && isa<PHINode>(I)) moveTo = I->getParent()->getFirstNonPHI();
     callInst->moveBefore(moveTo);
     //
+    newCalls[callInst] = F;
     std::set<Instruction *>
         constOriginalInst; // set of instruction in original function
 
@@ -339,12 +341,15 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
   for (auto originalF : originalFunctions) {
     llvm::ProgramSlice::simplifyCfg(originalF, FAM);
   }
+  for (auto &[callInst, F] : newCalls) {
+    if (callInst->users().empty()) {
+      callInst->eraseFromParent();
+      if (F->users().empty()) F->eraseFromParent();
+    }
+  }
   for (Function &F : M.getFunctionList()) {
     LLVM_DEBUG(dbgs() << F << '\n');
   }
-
-  module->print(dbgs(), nullptr);
-
   return PreservedAnalyses::none();
 }
 } // namespace Daedalus
