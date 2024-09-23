@@ -308,7 +308,6 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
     if (I->getParent() == nullptr) continue; // I could may be removed
     // by a previous slice;
 
-
     CallInst *callInst =
         CallInst::Create(F, args, I->getName(), I->getParent());
     //
@@ -334,27 +333,23 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
     e->replaceAllUsesWith(UndefValue::get(e->getType()));
     e->eraseFromParent();
   }
-  for (auto &[callInst, F] : newCalls) {
-    if (callInst->users().empty() && F->users().empty()) {
-      callInst->eraseFromParent();
-      F->eraseFromParent();
-    }
-  }
 
   for (auto &[callInst, F] : newCalls) {
     if (callInst->users().empty()) {
+      toSimplify.erase(F);
       callInst->eraseFromParent();
       if (F->users().empty()) F->eraseFromParent();
     }
   }
+  for (Function &F : M.getFunctionList()) {
+    LLVM_DEBUG(dbgs() << F << '\n');
+  }
+
   for (auto F : toSimplify) {
     llvm::ProgramSlice::simplifyCfg(F, FAM);
   }
   for (auto originalF : originalFunctions) {
     llvm::ProgramSlice::simplifyCfg(originalF, FAM);
-  }
-  for (Function &F : M.getFunctionList()) {
-    LLVM_DEBUG(dbgs() << F << '\n');
   }
 
   return PreservedAnalyses::none();
