@@ -150,13 +150,13 @@ std::set<Instruction *> instSetMeetCriterion(Function *F) {
       LLVM_DEBUG(dbgs() << *F << '\n');
       continue;
     };
-    if (Instruction *retValue = dyn_cast<ReturnInst>(term))
-      for (auto &it : retValue->operands())
-        if (Instruction *Iit = dyn_cast<Instruction>(it)) S.insert(Iit);
+    // if (Instruction *retValue = dyn_cast<ReturnInst>(term))
+    //   for (auto &it : retValue->operands())
+    //     if (Instruction *Iit = dyn_cast<Instruction>(it)) S.insert(Iit);
 
-    // for (Instruction &I : BB) {
-    //     if (isa<BinaryOperator>(I)) S.insert(&I);
-    // }
+    for (Instruction &I : BB) {
+      if (isa<BinaryOperator>(I)) S.insert(&I);
+    }
 
     // for (Instruction &I : BB) {
     //     if (isa<StoreInst>(I)) {
@@ -209,7 +209,6 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
       if (!canSliceInstrType(*I)) continue;
       if (!canProgramSlice(I)) continue;
       LLVM_DEBUG(dbgs() << "Instruction:\t" << *I << '\n');
-      dbgs() << (isa<ReturnInst>(I) ? "YEP" : "NO") << '\n';
 
       LLVM_DEBUG(dbgs() << COLOR::RED);
       ProgramSlice ps = ProgramSlice(*I, *F, PDT);
@@ -293,9 +292,11 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
   std::set<Instruction *> toRemove;
   std::map<Instruction *, Function *> newCalls;
   std::set<Function *> toSimplify;
+
   for (auto IS : allSlices) {
     auto [I, F, args, origInst, wasRemoved] = IS;
-    if (delToNewFunc.find(F) != delToNewFunc.end()) {
+    if (F == NULL) continue;
+    while(delToNewFunc.find(F) != delToNewFunc.end()) {
       F = delToNewFunc[F];
     }
     if (mergeTo.count(F) == 0) {
@@ -306,6 +307,7 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
 
     if (I->getParent() == nullptr) continue; // I could may be removed
     // by a previous slice;
+
 
     CallInst *callInst =
         CallInst::Create(F, args, I->getName(), I->getParent());
@@ -332,24 +334,24 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
     e->replaceAllUsesWith(UndefValue::get(e->getType()));
     e->eraseFromParent();
   }
+  for (auto &[callInst, F] : newCalls) {
+    if (callInst->users().empty() && F->users().empty()) {
+      callInst->eraseFromParent();
+      F->eraseFromParent();
+    }
+  }
 
   for (auto F : toSimplify) {
     llvm::ProgramSlice::simplifyCfg(F, FAM);
   }
-  // TODO: Check if still works, when merge a non-slice function that was not
-  // selected on merge.
   for (auto originalF : originalFunctions) {
     llvm::ProgramSlice::simplifyCfg(originalF, FAM);
   }
-  for (auto &[callInst, F] : newCalls) {
-    if (callInst->users().empty()) {
-      callInst->eraseFromParent();
-      if (F->users().empty()) F->eraseFromParent();
-    }
-  }
+
   for (Function &F : M.getFunctionList()) {
     LLVM_DEBUG(dbgs() << F << '\n');
   }
+
   return PreservedAnalyses::none();
 }
 } // namespace Daedalus
