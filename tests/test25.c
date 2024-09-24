@@ -10,9 +10,14 @@ int f(int arg){
     int a7 = a6*2;
     int a8 = a7*2;
     int a = a8 + 5;
+    int c = a5 * 5;
     int b = 2*a + 2;
     printf("On f: %d\n", b);
+    printf("On f: %d\n", c);
     return b;
+}
+int g(int a){
+    return a*25+25+5;
 }
 
 int main(int argc, char **argv){
