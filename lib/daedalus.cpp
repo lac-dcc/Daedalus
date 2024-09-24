@@ -5,10 +5,8 @@
  *  @date   2024-07-08
  ***********************************************/
 #include "../include/daedalus.h"
-#include "../include/MergeFunc/MergeFunc.h"
 #include "../include/debugCommon.h"
 #include "../include/wyvern/ProgramSlice.h"
-#include "../include/MergeFunc/MergeFunc.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/PostDominators.h"
 #include "llvm/Analysis/TargetLibraryInfo.h"
@@ -21,6 +19,7 @@
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/NativeFormatting.h"
+#include "llvm/Transforms/IPO/MergeFunctions.h"
 // #include "llvm/Transforms/IPO/FunctionMerging.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Transforms/Utils/ValueMapper.h"
@@ -248,8 +247,7 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
   //
 
   // mergefunc impl.
-  MergeFunc mf;
-  auto [mergeFunc, delToNewFunc] = mf.runOnSet(outlinedFunctions);
+  auto [mergeFunc, delToNewFunc] = MergeFunctionsPass::runOn(outlinedFunctions);
   if (mergeFunc)
     LLVM_DEBUG(dbgs() << "MergeFunc returned true!\n");
   else
