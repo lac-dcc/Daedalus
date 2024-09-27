@@ -247,7 +247,7 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
   //
 
   // mergefunc impl.
-  auto [mergeFunc, delToNewFunc] = MergeFunctionsPass::runOn(outlinedFunctions);
+  auto [mergeFunc, delToNewFunc] = MergeFunctionsPass::runOnFunctions(outlinedFunctions);
   if (mergeFunc)
     LLVM_DEBUG(dbgs() << "MergeFunc returned true!\n");
   else
