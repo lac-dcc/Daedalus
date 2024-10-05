@@ -210,9 +210,7 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
       if (!canProgramSlice(I)) continue;
       LLVM_DEBUG(dbgs() << "Instruction:\t" << *I << '\n');
 
-      LLVM_DEBUG(dbgs() << COLOR::RED);
       ProgramSlice ps = ProgramSlice(*I, *F, PDT);
-      LLVM_DEBUG(dbgs() << COLOR::CLEAN);
 
       Function *G = ps.outline();
       if (G == NULL) continue;
