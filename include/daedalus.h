@@ -1,4 +1,4 @@
-/** 
+/**
  *  @file   daedalus.h
  *  @brief  Daedalus Pass Header File
  *  @author Compilers Lab (UFMG)
@@ -25,27 +25,42 @@
 /**
  * @brief Attempts to remove an instruction if it meets specific criteria.
  */
-bool tryRemoveInstruction(llvm::Instruction *,
-                          std::set<llvm::Instruction *> &,
-                          std::map<llvm::Instruction *, bool> &,
-                          llvm::Instruction *);
-
+bool canRemove(llvm::Instruction *I, llvm::Instruction *ini,
+               std::set<llvm::Instruction *> &constOriginalInst,
+               std::set<llvm::Instruction *> &vis);
 /**
  * @brief Determines if an instruction type can be sliced.
  */
 bool canSliceInstrType(llvm::Instruction &I);
 
-namespace Daedalus {
-    struct DaedalusPass : public llvm::PassInfoMixin<DaedalusPass> {
-        //		explicit DaedalusPass(llvm::raw_ostream &OS):OS(OS){} // TODO
-        //Maybe remove this?
+/**
+ * @brief Checks if a program slice can be created for an instruction.
+ */
+bool canProgramSlice(llvm::Instruction *I);
 
-        /**
-         * @brief Runs the Daedalus LLVM pass on a given module.
-         */
-        llvm::PreservedAnalyses run(llvm::Module &M,
-                                    llvm::ModuleAnalysisManager &MAM);
-    };
+/**
+ * @brief Checks if a given instruction meets the slicing criteria.
+ */
+std::set<llvm::Instruction *> instSetMeetCriterion(llvm::Function *F);
+
+struct iSlice {
+    llvm::Instruction *I; // Criterion
+    llvm::Function *F;    // Slice
+    llvm::SmallVector<llvm::Value *>
+        args; // Arguments to pass on new function call
+    std::set<llvm::Instruction *>
+        constOriginalInst; // set of instruction in original function
+    bool wasRemoved;
+};
+
+namespace Daedalus {
+struct DaedalusPass : public llvm::PassInfoMixin<DaedalusPass> {
+    /**
+     * @brief Runs the Daedalus LLVM pass on a given module.
+     */
+    llvm::PreservedAnalyses run(llvm::Module &M,
+                                llvm::ModuleAnalysisManager &MAM);
+};
 }; // namespace Daedalus
 
 #endif

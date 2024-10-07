@@ -11,7 +11,7 @@ int main(int argc, char **argv){
 	int r = c+d;
 	printf("%d\n", r);
 }
-int foo(){
+int foo(char **argv){
 	int a = atoi(argv[1]);
 	int b = 0;
 	for(int i=0;i<a;++i) b += i;
@@ -20,10 +20,5 @@ int foo(){
 	int d = b*2;
 	int r = c+d;
 	printf("%d\n", r);
+	return r;
 }
-
-/*
-
-
-
- * */

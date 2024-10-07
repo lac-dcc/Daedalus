@@ -21,6 +21,7 @@ int main(int argc, char **argv){
 	c = b;
     }
     int c1 = c*c;
+    f(argc);
     printf("%d", c);
 }
 

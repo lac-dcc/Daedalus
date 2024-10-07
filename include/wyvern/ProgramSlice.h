@@ -13,6 +13,9 @@
 #include "llvm/IR/Dominators.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Instructions.h"
+#include "llvm/IR/PassManager.h"
+
+// #include "llvm/Transforms/IPO/FunctionMerging.h"
 
 namespace llvm {
 
@@ -62,6 +65,11 @@ namespace llvm {
      * @brief A function to simplify basic blocks of a function using the same method as the SimplifyCFGPass
      */
     static void simplifyCfg(Function *F, FunctionAnalysisManager &AM);
+
+    /*
+     * @brief A function to merge two other functions using func-merging pass
+    */
+    // static FunctionMergeResult mergeFunctions(Function *F1, Function *F2);
 
   private:
     void insertLoadForThunkParams(Function *F, bool memo);
@@ -157,7 +165,7 @@ namespace llvm {
     Function *_parentFunction;
 
     /// list of formal arguments on which the slice depends on (if any)
-    SmallVector<Argument *> _depArgs;
+    SmallVector<Value *> _depArgs;
     std::vector<std::pair<Type *, StringRef> > _phiDepArgs;
 
     /// set of instructions that must be in the slice, accordingto dependence
