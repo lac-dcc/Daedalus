@@ -54,6 +54,10 @@ done
 
 for i in "${TESTFILENAME[@]}"; do
     FULLFILENAME=$(basename "$i")
+    FILENAME="${FULLFILENAME%.*}"
+    if [ "$FILENAME" = "*" ]; then
+        continue;
+    fi
     EXT="${FULLFILENAME##*.}"
     case "$EXT" in
         c) FILENAMEWEXT="${FULLFILENAME%.c}" ;;
