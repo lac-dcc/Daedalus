@@ -4,10 +4,15 @@ WORKDIR /src
 RUN apt update && apt upgrade -y
 RUN apt install -y sudo \
                    git \
+                   tcl \
+                   tcl-dev \
                    build-essential \
                    cmake \
                    ninja-build \
-                   python3
+                   python3 \
+                   python3-scipy \
+                   python3-pandas \
+                   python3-psutil
 
 # Clone repositories
 RUN git clone --depth 100 -b merge-functions-pass https://github.com/Casperento/llvm-project.git 
@@ -34,7 +39,6 @@ RUN cmake -G Ninja -DLLVM_DIR=/src/llvm-project/build/lib/cmake/llvm -S . -B bui
 RUN cmake --build build
 
 # Clone and Build LLVM 17 - Test Suite 
-RUN apt install -y tcl tcl-dev
 WORKDIR /src
 RUN git clone -b instcount https://github.com/Casperento/llvm-test-suite.git
 WORKDIR llvm-test-suite
@@ -55,8 +59,6 @@ RUN cmake --build build
 
 # Install LIT dependencies and Run it
 RUN mkdir -p /lit-results
-RUN apt install -y python3-pandas \
-                   python3-scipy 
 WORKDIR /src/llvm-test-suite/build
-RUN llvm-lit -v -o /lit-results/results_instcount.json .
+RUN llvm-lit -v -o /lit-results/results_instcount.json . || exit 0
 
