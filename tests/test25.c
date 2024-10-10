@@ -13,7 +13,6 @@ int f(int arg){
     int c = a5 * 5;
     int b = 2*a + 2;
     printf("On f: %d\n", b);
-    printf("On f: %d\n", c);
     return b;
 }
 int g(int a){

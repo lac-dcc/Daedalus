@@ -278,7 +278,6 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
   // with the corresponding function call, and removed unsed instructions
   // from original function.
   //
-  auto &FAM = MAM.getResult<FunctionAnalysisManagerModuleProxy>(M).getManager();
 
   std::set<Function *> mergeTo;
   for (auto [A, B] : delToNewFunc) {
@@ -296,7 +295,7 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
     while(delToNewFunc.find(F) != delToNewFunc.end()) {
       F = delToNewFunc[F];
     }
-    if (mergeTo.count(F) == 0) {
+    if (mergeTo.count(F) == 0) { // || I->getNumUses() > 1) {
       F->eraseFromParent();
       continue;
     }
@@ -326,27 +325,36 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
     I->replaceAllUsesWith(callInst);
     toRemove.insert(I);
   }
-  for (auto &e : toRemove) {
-    e->replaceAllUsesWith(UndefValue::get(e->getType()));
-    e->eraseFromParent();
-  }
+    for (auto &e : toRemove) {
+      e->replaceAllUsesWith(UndefValue::get(e->getType()));
+      e->eraseFromParent();
+    }
 
   for (auto &[callInst, F] : newCalls) {
-    if (callInst->users().empty()) {
+    bool stillUsed = false;
+    for(auto U: callInst->users()){
+      if(isa<BinaryOperator>(U)){
+	stillUsed = true;
+	break;
+      }
+    }
+    if (callInst->users().empty() || stillUsed) {
       toSimplify.erase(F);
+      callInst->replaceAllUsesWith(UndefValue::get(callInst->getType()));
       callInst->eraseFromParent();
       if (F->users().empty()) F->eraseFromParent();
     }
   }
-  for (Function &F : M.getFunctionList()) {
-    LLVM_DEBUG(dbgs() << F << '\n');
-  }
 
+  auto &FAM = MAM.getResult<FunctionAnalysisManagerModuleProxy>(M).getManager();
   for (auto F : toSimplify) {
     llvm::ProgramSlice::simplifyCfg(F, FAM);
   }
   for (auto originalF : originalFunctions) {
     llvm::ProgramSlice::simplifyCfg(originalF, FAM);
+  }
+  for (Function &F : M.getFunctionList()) {
+    LLVM_DEBUG(dbgs() << F << '\n');
   }
 
   return PreservedAnalyses::none();
