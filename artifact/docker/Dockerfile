@@ -6,6 +6,7 @@ RUN apt install -y sudo \
                    git \
                    tcl \
                    tcl-dev \
+                   vim \
                    build-essential \
                    cmake \
                    ninja-build \
@@ -14,10 +15,8 @@ RUN apt install -y sudo \
                    python3-pandas \
                    python3-psutil
 
-# Clone repositories
-RUN git clone --depth 100 -b merge-functions-pass https://github.com/Casperento/llvm-project.git 
-
 # Clone and Build LLVM 17
+RUN git clone --depth 100 -b merge-functions-pass https://github.com/Casperento/llvm-project.git 
 WORKDIR llvm-project
 RUN mkdir -p build
 RUN cmake -G Ninja \
@@ -40,10 +39,11 @@ RUN cmake --build build
 
 # Clone and Build LLVM 17 - Test Suite 
 WORKDIR /src
-RUN git clone -b instcount https://github.com/Casperento/llvm-test-suite.git
+RUN git clone -b daedalus https://github.com/Casperento/llvm-test-suite.git
 WORKDIR llvm-test-suite
 RUN mkdir -p build
-RUN cmake -G Ninja \
+
+RUN cmake -G "Ninja" \
           -DCMAKE_C_COMPILER=clang \
           -DCMAKE_CXX_COMPILER=clang++ \
           -DCMAKE_C_FLAGS="-flto" \
@@ -53,12 +53,13 @@ RUN cmake -G Ninja \
           -DTEST_SUITE_PASSES_ARGS= \
           -DTEST_SUITE_COLLECT_COMPILE_TIME=OFF \
           -DCMAKE_EXE_LINKER_FLAGS="-flto -fuse-ld=lld -Wl,--plugin-opt=-lto-embed-bitcode=post-merge-pre-opt" \
-          -C cmake/caches/O1.cmake \
+          "-DTEST_SUITE_SUBDIRS=SingleSource;MultiSource" \
+          -C "cmake/caches/O1.cmake" \
           -S . -B build
+
 RUN cmake --build build
 
-# Install LIT dependencies and Run it
+# Run LIT
 RUN mkdir -p /lit-results
 WORKDIR /src/llvm-test-suite/build
 RUN llvm-lit -v -o /lit-results/results_instcount.json . || exit 0
-
