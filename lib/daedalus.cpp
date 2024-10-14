@@ -332,25 +332,25 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
   }
 
   for (auto &[callInst, F] : newCalls) {
-    bool stillUsed = false;
-    for (auto U : callInst->users()) {
-      if (isa<BinaryOperator>(U)) {
-        stillUsed = true;
-        break;
-      }
-    }
-    if (callInst->users().empty() || stillUsed) {
+    // bool stillUsed = false;
+    // for (auto U : callInst->users()) {
+    //   if (isa<BinaryOperator>(U)) {
+    //     stillUsed = true;
+    //     break;
+    //   }
+    // }
+    if (callInst->users().empty()){ //|| stillUsed) {
+   //    if (callInst->getNumUses()) {
+   //      for (auto h : callInst->users()) {
+	  // if(h->getNumUses() == 0){
+	  //   if(Instruction *I = dyn_cast<Instruction>(h)){
+	  //     I->eraseFromParent();
+	  //     break;
+	  //   }
+	  // }
+   //      }
+   //    }
       toSimplify.erase(F);
-      if (callInst->getNumUses()) {
-        for (auto h : callInst->users()) {
-	  if(h->getNumUses() == 0){
-	    if(Instruction *I = dyn_cast<Instruction>(h)){
-	      I->eraseFromParent();
-	      break;
-	    }
-	  }
-        }
-      }
       callInst->replaceAllUsesWith(UndefValue::get(callInst->getType()));
       callInst->eraseFromParent();
       if (F->users().empty()) F->eraseFromParent();
