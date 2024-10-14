@@ -245,7 +245,8 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
   //
 
   // mergefunc impl.
-  auto [mergeFunc, delToNewFunc] = MergeFunctionsPass::runOnFunctions(outlinedFunctions);
+  auto [mergeFunc, delToNewFunc] =
+      MergeFunctionsPass::runOnFunctions(outlinedFunctions);
   if (mergeFunc)
     LLVM_DEBUG(dbgs() << "MergeFunc returned true!\n");
   else
@@ -292,7 +293,7 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
   for (auto IS : allSlices) {
     auto [I, F, args, origInst, wasRemoved] = IS;
     if (F == NULL) continue;
-    while(delToNewFunc.find(F) != delToNewFunc.end()) {
+    while (delToNewFunc.find(F) != delToNewFunc.end()) {
       F = delToNewFunc[F];
     }
     if (mergeTo.count(F) == 0) { // || I->getNumUses() > 1) {
@@ -325,21 +326,31 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
     I->replaceAllUsesWith(callInst);
     toRemove.insert(I);
   }
-    for (auto &e : toRemove) {
-      e->replaceAllUsesWith(UndefValue::get(e->getType()));
-      e->eraseFromParent();
-    }
+  for (auto &e : toRemove) {
+    e->replaceAllUsesWith(UndefValue::get(e->getType()));
+    e->eraseFromParent();
+  }
 
   for (auto &[callInst, F] : newCalls) {
     bool stillUsed = false;
-    for(auto U: callInst->users()){
-      if(isa<BinaryOperator>(U)){
-	stillUsed = true;
-	break;
+    for (auto U : callInst->users()) {
+      if (isa<BinaryOperator>(U)) {
+        stillUsed = true;
+        break;
       }
     }
     if (callInst->users().empty() || stillUsed) {
       toSimplify.erase(F);
+      if (callInst->getNumUses()) {
+        for (auto h : callInst->users()) {
+	  if(h->getNumUses() == 0){
+	    if(Instruction *I = dyn_cast<Instruction>(h)){
+	      I->eraseFromParent();
+	      break;
+	    }
+	  }
+        }
+      }
       callInst->replaceAllUsesWith(UndefValue::get(callInst->getType()));
       callInst->eraseFromParent();
       if (F->users().empty()) F->eraseFromParent();
