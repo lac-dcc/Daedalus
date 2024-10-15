@@ -26,7 +26,7 @@ RUN cmake -G Ninja \
           -DLLVM_TARGETS_TO_BUILD=X86 \
           -DLLVM_ENABLE_ASSERTIONS=On \
           -S llvm -B build
-RUN cmake --build build
+RUN cmake --build build -- -j 12
 ENV PATH="/src/llvm-project/build/bin:$PATH"
 
 # Clone and Build Daedalus
@@ -35,7 +35,7 @@ RUN git clone -b dev1 https://github.com/lac-dcc/Daedalus.git
 WORKDIR Daedalus
 RUN mkdir -p build
 RUN cmake -G Ninja -DLLVM_DIR=/src/llvm-project/build/lib/cmake/llvm -S . -B build
-RUN cmake --build build
+RUN cmake --build build -- -j 12
 
 # Clone and Build LLVM 17 - Test Suite 
 WORKDIR /src
@@ -57,7 +57,7 @@ RUN cmake -G "Ninja" \
           -C "cmake/caches/O1.cmake" \
           -S . -B build
 
-RUN cmake --build build
+RUN cmake --build build -- -j 12
 
 # Run LIT
 RUN mkdir -p /lit-results
