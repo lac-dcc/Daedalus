@@ -43,21 +43,41 @@ RUN git clone -b daedalus https://github.com/Casperento/llvm-test-suite.git
 WORKDIR llvm-test-suite
 RUN mkdir -p build
 
-RUN cmake -G "Ninja" \
-          -DCMAKE_C_COMPILER=clang \
-          -DCMAKE_CXX_COMPILER=clang++ \
-          -DCMAKE_C_FLAGS="-flto" \
-          -DCMAKE_CXX_FLAGS="-flto" \
-          -DTEST_SUITE_COLLECT_INSTCOUNT=ON \
-          -DTEST_SUITE_SELECTED_PASSES= \
-          -DTEST_SUITE_PASSES_ARGS= \
-          -DTEST_SUITE_COLLECT_COMPILE_TIME=OFF \
-          -DCMAKE_EXE_LINKER_FLAGS="-flto -fuse-ld=lld -Wl,--plugin-opt=-lto-embed-bitcode=post-merge-pre-opt" \
-          "-DTEST_SUITE_SUBDIRS=SingleSource;MultiSource" \
-          -C "cmake/caches/O1.cmake" \
-          -S . -B build
+RUN cmake --fresh -G "Ninja" \
+    -DCMAKE_VERBOSE_MAKEFILE=On \
+    -DCMAKE_C_COMPILER=clang \
+    -DCMAKE_CXX_COMPILER=clang++ \
+    -DCMAKE_C_FLAGS="-flto" \
+    -DCMAKE_CXX_FLAGS="-flto" \
+    -DTEST_SUITE_COLLECT_INSTCOUNT=ON \
+    -DTEST_SUITE_SELECTED_PASSES= \
+    -DTEST_SUITE_PASSES_ARGS= \
+    -DTEST_SUITE_COLLECT_COMPILE_TIME=OFF \
+    -DCMAKE_EXE_LINKER_FLAGS="-flto -fuse-ld=lld -Wl,--plugin-opt=-lto-embed-bitcode=post-merge-pre-opt" \
+    "-DTEST_SUITE_SUBDIRS=SingleSource;MultiSource" \
+    -C "../cmake/caches/Os.cmake" \
+    -S .. -B . &&
+    cmake --build . -- -j 16 &&
+    llvm-lit --timeout 100 -j 16 -s -v -o ~/lit-results/baseline_Os.json .
 
-RUN cmake --build build -- -j 12
+RUN cmake --fresh -G "Ninja" \
+    -DCMAKE_VERBOSE_MAKEFILE=On \
+    -DCMAKE_C_COMPILER=clang \
+    -DCMAKE_CXX_COMPILER=clang++ \
+    -DCMAKE_C_FLAGS="-flto" \
+    -DCMAKE_CXX_FLAGS="-flto" \
+    -DTEST_SUITE_COLLECT_INSTCOUNT=ON \
+    -DTEST_SUITE_SELECTED_PASSES=daedalus \
+    "-DTEST_SUITE_PASSES_ARGS=-load-pass-plugin=/home/rafackstein/src/github/Daedalus/build/lib/libdaedalus.so" \
+    -DTEST_SUITE_COLLECT_COMPILE_TIME=OFF \
+    -DCMAKE_EXE_LINKER_FLAGS="-flto -fuse-ld=lld -Wl,--plugin-opt=-lto-embed-bitcode=post-merge-pre-opt" \
+    "-DTEST_SUITE_SUBDIRS=SingleSource;MultiSource" \
+    -C "../cmake/caches/Os.cmake" \
+    -S .. -B . &&
+    cmake --build . -- -k 0 -j 16 > ~/failed.log &&
+    llvm-lit --timeout 100 -j 16 -s -v -o ~/lit-results/daedalus_Os.json .
+
+RUN python3 ../utils/compare.py --full --diff -m instcount -m size..text ~/lit-results/baseline_Os.json ~/lit-results/daedalus_Os.json > ~/results.txt
 
 # Run LIT
 RUN mkdir -p /lit-results
