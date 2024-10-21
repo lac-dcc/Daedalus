@@ -26,7 +26,7 @@ RUN cmake -G Ninja \
           -DLLVM_TARGETS_TO_BUILD=X86 \
           -DLLVM_ENABLE_ASSERTIONS=On \
           -S llvm -B build
-RUN cmake --build build -- -j 12
+RUN cmake --build build -- -j 16
 ENV PATH="/src/llvm-project/build/bin:$PATH"
 
 # Clone and Build Daedalus
@@ -35,13 +35,14 @@ RUN git clone -b dev1 https://github.com/lac-dcc/Daedalus.git
 WORKDIR Daedalus
 RUN mkdir -p build
 RUN cmake -G Ninja -DLLVM_DIR=/src/llvm-project/build/lib/cmake/llvm -S . -B build
-RUN cmake --build build -- -j 12
+RUN cmake --build build -- -j 16
 
 # Clone and Build LLVM 17 - Test Suite 
 WORKDIR /src
 RUN git clone -b daedalus https://github.com/Casperento/llvm-test-suite.git
 WORKDIR llvm-test-suite
 RUN mkdir -p build
+RUN mkdir -p /lit-results
 
 RUN cmake --fresh -G "Ninja" \
     -DCMAKE_VERBOSE_MAKEFILE=On \
@@ -55,10 +56,10 @@ RUN cmake --fresh -G "Ninja" \
     -DTEST_SUITE_COLLECT_COMPILE_TIME=OFF \
     -DCMAKE_EXE_LINKER_FLAGS="-flto -fuse-ld=lld -Wl,--plugin-opt=-lto-embed-bitcode=post-merge-pre-opt" \
     "-DTEST_SUITE_SUBDIRS=SingleSource;MultiSource" \
-    -C "../cmake/caches/Os.cmake" \
-    -S .. -B . &&
-    cmake --build . -- -j 16 &&
-    llvm-lit --timeout 100 -j 16 -s -v -o ~/lit-results/baseline_Os.json .
+    -C "cmake/caches/Os.cmake" \
+    -S . -B build
+RUN cmake --build build -- -j 16
+RUN llvm-lit --timeout 100 -j 16 -o /lit-results/baseline_Os.json build
 
 RUN cmake --fresh -G "Ninja" \
     -DCMAKE_VERBOSE_MAKEFILE=On \
@@ -72,14 +73,9 @@ RUN cmake --fresh -G "Ninja" \
     -DTEST_SUITE_COLLECT_COMPILE_TIME=OFF \
     -DCMAKE_EXE_LINKER_FLAGS="-flto -fuse-ld=lld -Wl,--plugin-opt=-lto-embed-bitcode=post-merge-pre-opt" \
     "-DTEST_SUITE_SUBDIRS=SingleSource;MultiSource" \
-    -C "../cmake/caches/Os.cmake" \
-    -S .. -B . &&
-    cmake --build . -- -k 0 -j 16 > ~/failed.log &&
-    llvm-lit --timeout 100 -j 16 -s -v -o ~/lit-results/daedalus_Os.json .
+    -C "cmake/caches/Os.cmake" \
+    -S . -B build
+RUN cmake --build build -- -k 0 -j 16 > /lit-results/failed.log
+RUN llvm-lit --timeout 100 -j 16 -o /lit-results/daedalus_Os.json build
 
-RUN python3 ../utils/compare.py --full --diff -m instcount -m size..text ~/lit-results/baseline_Os.json ~/lit-results/daedalus_Os.json > ~/results.txt
-
-# Run LIT
-RUN mkdir -p /lit-results
-WORKDIR /src/llvm-test-suite/build
-RUN llvm-lit -v -o /lit-results/results_instcount.json . || exit 0
+RUN python3 utils/compare.py --full --diff -m instcount -m size..text /lit-results/baseline_Os.json /lit-results/daedalus_Os.json > /results.txt
