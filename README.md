@@ -33,6 +33,8 @@ $ cmake -DLLVM_DIR={path_to_llvm_project} ../
 $ cmake --build .
 ```
 
+**Disclaimer**: This pass depends on a custom fork of [LLVM 17](https://github.com/Casperento/llvm-project/tree/merge-functions-pass).
+
 ## Running
 
 After building Daedalus, you can test it using the source files inside the `tests/` folder. Run the following sequence of commands in bash to generate test executables and IR files:
