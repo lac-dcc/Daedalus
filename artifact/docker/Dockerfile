@@ -43,38 +43,36 @@ WORKDIR llvm-test-suite
 RUN mkdir -p build
 RUN mkdir -p /lit-results
 
-RUN cmake -G Ninja \
-    -DCMAKE_C_COMPILER=clang \
-    -DCMAKE_CXX_COMPILER=clang++ \
-    -DCMAKE_C_FLAGS="-flto" \
-    -DCMAKE_CXX_FLAGS="-flto" \
-    -DTEST_SUITE_COLLECT_INSTCOUNT=ON \
-    -DTEST_SUITE_SELECTED_PASSES=daedalus \
-    "-DTEST_SUITE_PASSES_ARGS=-load-pass-plugin=/src/Daedalus/build/lib/libdaedalus.so" \
-    -DTEST_SUITE_COLLECT_COMPILE_TIME=OFF \
-    -DCMAKE_EXE_LINKER_FLAGS="-flto -fuse-ld=lld -Wl,--plugin-opt=-lto-embed-bitcode=post-merge-pre-opt" \
-    "-DTEST_SUITE_SUBDIRS=SingleSource;MultiSource" \
-    -C "cmake/caches/Os.cmake" \
-    -S . -B build
-RUN cmake --build build -- -k 0 -j 16 > /lit-results/failed.log || exit 0
-RUN llvm-lit --timeout 100 -j 16 -s -o /lit-results/daedalus_Os.json build || exit 0
+RUN cmake --fresh -G "Ninja" \
+	-DCMAKE_C_COMPILER=clang \
+	-DCMAKE_CXX_COMPILER=clang++ \
+	-DCMAKE_C_FLAGS="-flto" \
+	-DCMAKE_CXX_FLAGS="-flto" \
+	-DTEST_SUITE_COLLECT_INSTCOUNT=ON \
+	-DTEST_SUITE_SELECTED_PASSES= \
+	-DTEST_SUITE_PASSES_ARGS= \
+	-DTEST_SUITE_COLLECT_COMPILE_TIME=OFF \
+	-DCMAKE_EXE_LINKER_FLAGS="-flto -fuse-ld=lld -Wl,--plugin-opt=-lto-embed-bitcode=post-merge-pre-opt" \
+	"-DTEST_SUITE_SUBDIRS=SingleSource;MultiSource" \
+	-C "cmake/caches/Os.cmake" \
+	-S . -B build
+RUN cmake --build build -- -j 16 || exit
+RUN llvm-lit --timeout 100 -j 16 -s -o ~/lit-results/baseline_Os.json build || exit
 
-RUN rm -rf build/*
+RUN cmake --fresh -G "Ninja" \
+	-DCMAKE_C_COMPILER=clang \
+	-DCMAKE_CXX_COMPILER=clang++ \
+	-DCMAKE_C_FLAGS="-flto" \
+	-DCMAKE_CXX_FLAGS="-flto" \
+	-DTEST_SUITE_COLLECT_INSTCOUNT=ON \
+	-DTEST_SUITE_SELECTED_PASSES=daedalus \
+	"-DTEST_SUITE_PASSES_ARGS=-load-pass-plugin=/home/rafackstein/src/github/Daedalus/build/lib/libdaedalus.so" \
+	-DTEST_SUITE_COLLECT_COMPILE_TIME=OFF \
+	-DCMAKE_EXE_LINKER_FLAGS="-flto -fuse-ld=lld -Wl,--plugin-opt=-lto-embed-bitcode=post-merge-pre-opt" \
+	"-DTEST_SUITE_SUBDIRS=SingleSource;MultiSource" \
+	-C "cmake/caches/Os.cmake" \
+	-S . -B build
+RUN cmake --build build -- -k 0 -j 16 || exit
+RUN llvm-lit --timeout 100 -j 16 -s -o ~/lit-results/daedalus_Os.json build || exit
 
-RUN cmake -G Ninja \
-    -DCMAKE_C_COMPILER=clang \
-    -DCMAKE_CXX_COMPILER=clang++ \
-    -DCMAKE_C_FLAGS="-flto" \
-    -DCMAKE_CXX_FLAGS="-flto" \
-    -DTEST_SUITE_COLLECT_INSTCOUNT=ON \
-    -DTEST_SUITE_SELECTED_PASSES= \
-    -DTEST_SUITE_PASSES_ARGS= \
-    -DTEST_SUITE_COLLECT_COMPILE_TIME=OFF \
-    -DCMAKE_EXE_LINKER_FLAGS="-flto -fuse-ld=lld -Wl,--plugin-opt=-lto-embed-bitcode=post-merge-pre-opt" \
-    "-DTEST_SUITE_SUBDIRS=SingleSource;MultiSource" \
-    -C "cmake/caches/Os.cmake" \
-    -S . -B build
-RUN cmake --build build -- -j 16
-RUN llvm-lit --timeout 100 -j 16 -s -o /lit-results/baseline_Os.json build || exit 0
-
-RUN python3 utils/compare.py --full --diff -m instcount -m size..text /lit-results/baseline_Os.json /lit-results/daedalus_Os.json > /lit-results/results.txt
+RUN python3 utils/compare.py --full --diff -m instcount -m size..text ~/lit-results/baseline_Os.json ~/lit-results/daedalus_Os.json > ~/lit-results/results.txt
