@@ -31,6 +31,7 @@ using namespace llvm;
 
 #define DEBUG_TYPE "Daedalus"
 
+
 /**
  * @brief Determines if an instruction type can be sliced.
  *
@@ -66,9 +67,9 @@ bool canSliceInstrType(Instruction &I) {
  * @return True if the instruction was successfully removed, false otherwise.
  */
 bool canRemove(Instruction *I, Instruction *ini,
-               std::set<Instruction *> &constOriginalInst,
-               std::set<Instruction *> &vis,
-               std::set<Instruction *> &toRemove) {
+    std::set<Instruction *> &constOriginalInst,
+    std::set<Instruction *> &vis,
+    std::set<Instruction *> &toRemove) {
   if (ini == I) return true;
   if (toRemove.find(I) != toRemove.end()) return true;
 
@@ -93,6 +94,21 @@ bool canRemove(Instruction *I, Instruction *ini,
   return true;
 }
 
+bool isSelfContained(std::set<Instruction *> origInst, Instruction *I,
+    std::set<Instruction *> &tempToRemove) {
+  for (Instruction *J : origInst) {
+    if (J->getParent() == nullptr) continue;
+    std::set<Instruction *> vis;
+    if (I != J) {
+      if (canRemove(J, I, origInst, vis, tempToRemove))
+	tempToRemove.insert(J);
+      else
+	return false;
+    }
+  }
+  return true;
+}
+
 /**
  * @brief Checks if a program slice can be created for an instruction.
  *
@@ -114,17 +130,48 @@ bool canProgramSlice(Instruction *I) {
   if (PHINode *phi = dyn_cast<PHINode>(I)) {
     for (User *use : phi->users()) {
       if (Instruction *Iuse = dyn_cast<Instruction>(use))
-        if (isa<PHINode>(Iuse) && Iuse->getParent() == I->getParent()) {
-          LLVM_DEBUG(dbgs() << COLOR::RED
-                            << "Criterion is a phi-node which at least one of "
-                               "it's users are a Phi-Node and are in the same "
-                               "basic block!\n"
-                            << COLOR::CLEAN);
-          return false;
-        }
+	if (isa<PHINode>(Iuse) && Iuse->getParent() == I->getParent()) {
+	  LLVM_DEBUG(dbgs() << COLOR::RED
+	      << "Criterion is a phi-node which at least one of "
+	      "it's users are a Phi-Node and are in the same "
+	      "basic block!\n"
+	      << COLOR::CLEAN);
+	  return false;
+	}
     }
   }
   return true;
+}
+
+void removeInstructions(std::vector<iSlice> &allSlices, const std::set<Function *> &mergeTo, std::set<Function *> &toSimplify){
+  std::set<Instruction *> toRemove;
+  std::map<Instruction *, Function *> newCalls;
+
+  for (auto [I, callInst, F, args, origInst, wasRemoved] : allSlices) {
+    if (F == NULL) continue;
+    F = callInst->getCalledFunction();
+    if (mergeTo.count(F) == 0) {
+      killSlice(F, callInst, I);
+      continue;
+    }
+
+    if (I->getParent() == nullptr) continue;
+
+    std::set<Instruction *> tempToRemove;
+    if (!isSelfContained(origInst, I, tempToRemove)) {
+      LLVM_DEBUG(dbgs() << "Not self contained!\n");
+      killSlice(F, callInst, I);
+      continue;
+    } else {
+      for (auto *e : tempToRemove) toRemove.insert(e);
+    }
+    toSimplify.insert(F);
+    toRemove.insert(I);
+  }
+  for (auto &e : toRemove) {
+    e->replaceAllUsesWith(UndefValue::get(e->getType()));
+    e->eraseFromParent();
+  }
 }
 
 /**
@@ -155,8 +202,9 @@ std::set<Instruction *> instSetMeetCriterion(Function *F) {
     //     if (Instruction *Iit = dyn_cast<Instruction>(it)) S.insert(Iit);
 
     for (Instruction &I : BB) {
-      // if (I.getName() == "mul3" || I.getName() == "mul5") S.insert(&I);
-      if (isa<BinaryOperator>(I)) S.insert(&I);
+      if (I.getName() == "mul3" || I.getName() == "mul5") S.insert(&I);
+      // if (isa<PHINode>(I)) S.insert(&I);
+      // if (isa<BinaryOperator>(I)) S.insert(&I);
     }
 
     // for (Instruction &I : BB) {
@@ -169,8 +217,24 @@ std::set<Instruction *> instSetMeetCriterion(Function *F) {
 
   return S;
 }
+/// Replace all calls of callInst with original criterions instruction and
+/// remove new slice function
+void killSlice(Function *F, CallInst *callInst, Instruction *criterion) {
+  callInst->replaceAllUsesWith(criterion);
+  callInst->eraseFromParent();
+  for (User *U : F->users()) {
+    if (CallInst *X = dyn_cast<CallInst>(U)) {
+      X->replaceAllUsesWith(UndefValue::get(X->getType()));
+      X->eraseFromParent();
+    } else {
+      LLVM_DEBUG(dbgs() << "Warning: Use of function is not a CallInst!\n");
+    }
+  }
+  F->eraseFromParent();
+}
 
 namespace Daedalus {
+
 /**
  * @brief Runs the Daedalus LLVM pass on a given module.
  *
@@ -215,6 +279,20 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
 
       Function *G = ps.outline();
       if (G == NULL) continue;
+      // Get the original instruction, to check
+      // if it can be removed
+      std::map<Instruction *, Instruction *> constOriginalInst =
+          ps.getInstructionInSlice();
+
+      std::set<Instruction *> originInstructionSet;
+      for (auto &e : constOriginalInst) originInstructionSet.insert(e.first);
+
+      std::set<Instruction *> tempToRemove;
+      if (!isSelfContained(originInstructionSet, I, tempToRemove)) {
+        LLVM_DEBUG(dbgs() << "Not self contained!\n");
+        G->eraseFromParent();
+        continue;
+      }
 
       SmallVector<Value *> funcArgs = ps.getOrigFunctionArgs();
       CallInst *callInst =
@@ -223,14 +301,6 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
       if (I && isa<PHINode>(I)) moveTo = I->getParent()->getFirstNonPHI();
       callInst->moveBefore(moveTo);
       I->replaceAllUsesWith(callInst);
-
-      // Get the original instruction, to check
-      // if it can be removed
-      std::map<Instruction *, Instruction *> constOriginalInst =
-          ps.getInstructionInSlice();
-
-      std::set<Instruction *> originInstructionSet;
-      for (auto &e : constOriginalInst) originInstructionSet.insert(e.first);
 
       iSlice slice = {I, callInst, G, funcArgs, originInstructionSet, false};
       allSlices.push_back(slice);
@@ -248,14 +318,23 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
   }
 
   LLVM_DEBUG(dbgs() << "== MERGE SLICES FUNC PHASE ==\n");
+
   /// Say S and T are two slices that will merge, if we replace S by T, Then
   /// delToNewFunc is a map from S to T "deleted function to newFunction".
   auto [mergeFunc, delToNewFunc] =
       MergeFunctionsPass::runOnFunctions(outlinedFunctions);
+
   if (mergeFunc)
     LLVM_DEBUG(dbgs() << "MergeFunc returned true!\n");
   else
     LLVM_DEBUG(dbgs() << "MergeFunc returned false...\n");
+
+  std::set<Function *>
+    mergeTo; // Set of instruction such that some other slice merges to
+  for (auto [A, B] : delToNewFunc) {
+    if (B == nullptr) continue;
+    mergeTo.insert(B);
+  }
 
   // func-merging impl.
   // std::set<Function *> combinedFunctions;
@@ -281,66 +360,21 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
 
   LLVM_DEBUG(dbgs() << "== REMOVING INST PHASE ==\n");
 
-  std::set<Function *> mergeTo;
-  for (auto [A, B] : delToNewFunc) {
-    if (B == nullptr) continue;
-    mergeTo.insert(B);
-  }
-
-  std::set<Instruction *> toRemove;
-  std::map<Instruction *, Function *> newCalls;
   std::set<Function *> toSimplify;
+  removeInstructions(allSlices, mergeTo, toSimplify);
 
-  for (auto [I, callInst, F, args, origInst, wasRemoved] : allSlices) {
-    if (F == NULL) continue;
-    F = callInst->getCalledFunction();
-    if (mergeTo.count(F) == 0) {
-      callInst->replaceAllUsesWith(I);
-      callInst->eraseFromParent();
-      for (User *U : F->users()) {
-        if (CallInst *X = dyn_cast<CallInst>(U)) {
-          X->replaceAllUsesWith(UndefValue::get(X->getType()));
-          X->eraseFromParent();
-        } else {
-          LLVM_DEBUG(dbgs() << "Warning: Use of function is not a CallInst!\n");
-        }
-      }
-      F->eraseFromParent();
-      continue;
-    }
-    toSimplify.insert(F);
-
-    if (I->getParent() == nullptr) continue;
-
-    for (Instruction *J : origInst) {
-      if (J->getParent() == nullptr) continue;
-      std::set<Instruction *> vis;
-      if (I != J && canRemove(J, I, origInst, vis, toRemove)) {
-        toRemove.insert(J);
-      }
-    }
-    toRemove.insert(I);
-  }
-  for (auto &e : toRemove) {
-    e->replaceAllUsesWith(UndefValue::get(e->getType()));
-    e->eraseFromParent();
-  }
-  for (auto &[callInst, F] : newCalls) {
-    if (callInst->users().empty()) {
-      toSimplify.erase(F);
-      callInst->replaceAllUsesWith(UndefValue::get(callInst->getType()));
-      callInst->eraseFromParent();
-      if (F->users().empty()) F->eraseFromParent();
-    }
-  }
+  LLVM_DEBUG(dbgs() << "== SIMPLIFY PHASE ==\n");
 
   auto &FAM = MAM.getResult<FunctionAnalysisManagerModuleProxy>(M).getManager();
+
   for (auto F : toSimplify) {
     llvm::ProgramSlice::simplifyCfg(F, FAM);
   }
   for (auto originalF : originalFunctions) {
     llvm::ProgramSlice::simplifyCfg(originalF, FAM);
   }
+
+  LLVM_DEBUG(dbgs() << "== PRINT PHASE ==\n");
   for (Function &F : M.getFunctionList()) {
     LLVM_DEBUG(dbgs() << F << '\n');
   }

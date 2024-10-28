@@ -1,21 +1,22 @@
 #include <stdio.h>
 
-
-int main(int argc, char **argv){
-  unsigned int i =0;
-  while(++i < 1e9){
-    int a = 2;
-    int b = a+2;
-    int c = b+3;
-    int d = c+4;
-    int e = d+5;
-  }
+int f(int arg){
+    int a1 = arg*arg;
+    int a2 = a1*2;
+    int a3 = a2*2;
+    int a4 = a3*2;
+    int a5 = a4*2;
+    int a6 = a5*2;
+    int a7 = a6*2;
+    int a8 = a7*2;
+    int a9 = a3*5;
+    return a8;
 }
 
-void f(){
-    int a = 2;
-    int b = a+2;
-    int c = b+3;
-    int d = c+4;
-    int e = d+5;
+int main(int argc, char **argv){
+    int a1 = argc*argc;
+    int a2 = a1*2;
+    int a3 = a2*2;
+    int a4 = a3*2;
+    return a4;
 }

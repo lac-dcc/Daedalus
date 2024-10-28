@@ -3,7 +3,5 @@ compile_commands.json
 .cache/
 .obsidian-notes
 docs/
-sandbox.md
-tests/*.ll
 tests/*.bin
 tests/*.log
