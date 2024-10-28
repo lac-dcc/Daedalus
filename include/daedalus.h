@@ -45,6 +45,7 @@ std::set<llvm::Instruction *> instSetMeetCriterion(llvm::Function *F);
 
 struct iSlice {
     llvm::Instruction *I; // Criterion
+    llvm::CallInst *callInst; // CallInst to F
     llvm::Function *F;    // Slice
     llvm::SmallVector<llvm::Value *>
         args; // Arguments to pass on new function call

@@ -1008,7 +1008,7 @@ ReturnInst *ProgramSlice::addReturnValue(Function *F) {
  * @return The newly created delegate Function that encapsulates the slice.
  */
 Function *ProgramSlice::outline() {
-    if (_instsInSlice.size() <= 2) {
+    if (_instsInSlice.size() <= 3) {
         LLVM_DEBUG(
             dbgs() << "\033[31m"
                    << "Not outlined, Insufficient Numbers os instruction to "
