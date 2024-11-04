@@ -9,10 +9,8 @@ int f(int arg){
     int a6 = a5*2;
     int a7 = a6*2;
     int a8 = a7*2;
-    int a = a8 + 5;
-    int b = 2*a + 2;
-    printf("On f: %d\n", b);
-    return b;
+    int a9 = a3*5;
+    return a8;
 }
 
 int main(int argc, char **argv){
@@ -20,13 +18,5 @@ int main(int argc, char **argv){
     int a2 = a1*2;
     int a3 = a2*2;
     int a4 = a3*2;
-    int a5 = a4*2;
-    int a6 = a5*2;
-    int a7 = a6*2;
-    int a8 = a7*2;
-    int a = a8 + 5;
-    int b = 2*a + 2;
-    int c = f(2)-6;
-    printf("On main: %d\n", b);
-    return b;
+    return a4;
 }
