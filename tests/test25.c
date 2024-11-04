@@ -10,7 +10,6 @@ int f(int arg){
     int a7 = a6*2;
     int a8 = a7*2;
     int a = a8 + 5;
-    int c = a5 * 5;
     int b = 2*a + 2;
     printf("On f: %d\n", b);
     return b;

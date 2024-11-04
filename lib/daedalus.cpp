@@ -102,8 +102,8 @@ bool isSelfContained(std::set<Instruction *> origInst, Instruction *I,
     if (I != J) {
       if (canRemove(J, I, origInst, vis, tempToRemove))
 	tempToRemove.insert(J);
-      else
-	return false;
+ //      else
+	// return false;
     }
   }
   return true;
@@ -202,9 +202,9 @@ std::set<Instruction *> instSetMeetCriterion(Function *F) {
     //     if (Instruction *Iit = dyn_cast<Instruction>(it)) S.insert(Iit);
 
     for (Instruction &I : BB) {
-      if (I.getName() == "mul3" || I.getName() == "mul5") S.insert(&I);
+      // if (I.getName() == "mul3" || I.getName() == "mul5") S.insert(&I);
       // if (isa<PHINode>(I)) S.insert(&I);
-      // if (isa<BinaryOperator>(I)) S.insert(&I);
+      if (isa<BinaryOperator>(I)) S.insert(&I);
     }
 
     // for (Instruction &I : BB) {
@@ -222,7 +222,10 @@ std::set<Instruction *> instSetMeetCriterion(Function *F) {
 void killSlice(Function *F, CallInst *callInst, Instruction *criterion) {
   callInst->replaceAllUsesWith(criterion);
   callInst->eraseFromParent();
-  for (User *U : F->users()) {
+  if(!F->getParent()) return;
+  std::set<User *> fUses; 
+  for (User *U : F->users()) fUses.insert(U);
+  for (User *U : fUses) {
     if (CallInst *X = dyn_cast<CallInst>(U)) {
       X->replaceAllUsesWith(UndefValue::get(X->getType()));
       X->eraseFromParent();
@@ -273,7 +276,6 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
     for (Instruction *I : S) {
       if (!canSliceInstrType(*I)) continue;
       if (!canProgramSlice(I)) continue;
-      LLVM_DEBUG(dbgs() << "Instruction:\t" << *I << '\n');
 
       ProgramSlice ps = ProgramSlice(*I, *F, PDT);
 
