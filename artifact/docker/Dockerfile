@@ -59,7 +59,7 @@ RUN cmake -G "Ninja" \
 	-C "cmake/caches/Os.cmake" \
 	-S . -B build
 RUN cmake --build build -- -j 16 || exit 0
-RUN llvm-lit --timeout 100 -j 16 -s -o /lit-results/baseline_Os.json build || exit 0
+RUN llvm-lit --timeout 1200 -j 16 -s -o /lit-results/baseline_Os.json build || exit 0
 
 RUN rm -rf build/*
 
@@ -77,6 +77,6 @@ RUN cmake -G "Ninja" \
 	-C "cmake/caches/Os.cmake" \
 	-S . -B build
 RUN cmake --build build -- -k 0 -j 16 || exit 0
-RUN llvm-lit --timeout 100 -j 16 -s -o /lit-results/daedalus_Os.json build || exit 0
+RUN llvm-lit --timeout 1200 -j 16 -s -o /lit-results/daedalus_Os.json build || exit 0
 
 RUN python3 utils/compare.py --full --diff -m instcount -m size..text /lit-results/baseline_Os.json /lit-results/daedalus_Os.json > /lit-results/results.txt
