@@ -71,7 +71,9 @@ for i in "${TESTFILENAME[@]}"; do
     printf "\nTest IR file name: %s\n" "${LLFILENAME}"
     printf "Test IR file name (after Daedalus): %s\n" "${LLFILENAME}"
     
-    clang -S -Xclang -disable-O0-optnone -emit-llvm "${FULLFILENAME}" -o "${LLFILENAME}"
+    clang -Os -flto -fuse-ld=lld -Wl,--plugin-opt=-lto-embed-bitcode=post-merge-pre-opt "${FULLFILENAME}" -o "${LLFILENAME}.bin"
+    llvm-objcopy --dump-section .llvmbc="${LLFILENAME}" "${LLFILENAME}.bin"
+    opt -S "${LLFILENAME}" -o "${LLFILENAME}"
     if [ -e "${LLFILENAME}" ]; then
         opt -S -passes=mem2reg,lcssa "${LLFILENAME}" -o "${LLFILENAME}"
         
@@ -88,7 +90,7 @@ for i in "${TESTFILENAME[@]}"; do
         
         if [ -e "${DLLFILENAME}" ]; then
             remove_old_file "${FILENAMEWEXT}.d.bin"
-            clang "${DLLFILENAME}" -o "${FILENAMEWEXT}.d.bin"
+            clang -Os "${DLLFILENAME}" -o "${FILENAMEWEXT}.d.bin"
         fi
     fi
 done
