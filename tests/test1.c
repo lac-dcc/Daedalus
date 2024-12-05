@@ -3,8 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-__attribute__((pure))
-bool is_num(char *str, int N) {
+__attribute__((pure)) bool is_num(char *str, int N) {
   for (int i = 0; i < N; i++) {
     if (str[i] < '0' || str[i] > '9') {
       return false;
@@ -34,8 +33,8 @@ int main(int argc, char **argv) {
     fprintf(stderr, "Syntaxe: %s N\n", argv[0]);
   } else {
     const int N = atoi(argv[1]);
-    char *s0 = malloc(N);
-    char *s1 = malloc(N);
+    char *s0 = (char *)malloc(N);
+    char *s1 = (char *)malloc(N);
     memset(s0, 'a', N);
     memset(s1, '2', N);
     printf("%d\n", caller(s0, s1, N));
