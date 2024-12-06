@@ -24,7 +24,7 @@ namespace llvm {
     /**
      * @brief Constructs a ProgramSlice object.
      */
-    ProgramSlice(Instruction &I, Function &F, PostDominatorTree &PDT);
+    ProgramSlice(Instruction &I, Function &F, PostDominatorTree &PDT, FunctionAnalysisManager &FAM);
 
     /**
      * @brief Checks if outlining the slice is feasible.
