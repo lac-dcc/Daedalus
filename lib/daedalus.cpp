@@ -330,7 +330,7 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
       LLVM_DEBUG(dbgs() << COLOR::GREEN << "outlined!" << COLOR::CLEAN << '\n');
     }
   }
-  LLVM_DEBUG(dbgs() << "Number of slices founded: " << allSlices.size() << '\n');
+  LLVM_DEBUG(dbgs() << "Number of slices found: " << allSlices.size() << '\n');
 
   std::set<Function *> originalFunctions;
   std::set<Function *> outlinedFunctions;
