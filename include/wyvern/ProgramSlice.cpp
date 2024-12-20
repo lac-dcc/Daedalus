@@ -868,13 +868,15 @@ void ProgramSlice::reorderBlocks(Function *F) {
  * @param F The Function where references between arguments and instruction
  * operands are adjusted.
  */
-void ProgramSlice::replaceArgs(Function *F) {
+void ProgramSlice::replaceArgs(Function *F, DenseMap<Value *, uint> dt) {
+  
   for (Instruction &I : instructions(F)) {
     for (int j = 0; j < I.getNumOperands(); ++j) {
       for (int k = 0; k < F->arg_size(); ++k) {
-        StringRef ArgName = I.getOperand(j)->getName();
-        Value *valArg = F->getArg(k);
-        if (ArgName == valArg->getName()) I.setOperand(j, valArg);
+	auto operand = I.getOperand(j);
+	if(dt.count(operand)){
+	  I.setOperand(j, F->getArg(dt[operand]));
+	}
       }
     }
   };
@@ -1019,9 +1021,12 @@ Function *ProgramSlice::outline() {
   // Getting Arguments for the function
   SmallVector<Type *> v;
   SmallVector<StringRef> g;
+  DenseMap<Value *, uint> dt;
+  uint _i = 0;
   for (auto arg : _depArgs) {
     v.push_back(arg->getType());
     g.push_back(arg->getName());
+    dt[arg] = _i++;
   }
   FunctionType *delegateFunctionType = FunctionType::get(FreturnType, v, false);
 
@@ -1062,7 +1067,7 @@ Function *ProgramSlice::outline() {
   rerouteBranches(F);
   addReturnValue(F);
   reorderBlocks(F);
-  replaceArgs(F);
+  replaceArgs(F, dt);
   verifyFunction(*F);
   return F;
 }
