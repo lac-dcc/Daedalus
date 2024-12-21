@@ -24,6 +24,7 @@
 // #include "llvm/Transforms/IPO/FunctionMerging.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Transforms/Utils/ValueMapper.h"
+#include <csignal>
 #include <exception>
 #include <memory>
 
@@ -163,17 +164,20 @@ void killSlice(Function *F, CallInst *callInst, Instruction *criterion) {
   F->eraseFromParent();
 }
 
-void removeInstructions(std::vector<iSlice> &allSlices,
-                        const std::set<Function *> &mergeTo,
-                        std::set<Function *> &toSimplify) {
+std::pair<uint, uint> removeInstructions(std::vector<iSlice> &allSlices,
+                                         const std::set<Function *> &mergeTo,
+                                         std::set<Function *> &toSimplify) {
   std::set<Instruction *> toRemove;
   std::map<Instruction *, Function *> newCalls;
+
+  uint dontMerge = 0, notSelfContained = 0;
 
   for (auto [I, callInst, F, args, origInst, wasRemoved] : allSlices) {
     if (F == NULL) continue;
     F = callInst->getCalledFunction();
     if (mergeTo.count(F) == 0) {
       killSlice(F, callInst, I);
+      ++dontMerge;
       continue;
     }
 
@@ -191,6 +195,7 @@ void removeInstructions(std::vector<iSlice> &allSlices,
     if (!isSelfContained(origInst, I, tempToRemove)) {
       LLVM_DEBUG(dbgs() << "Not self contained!\n");
       killSlice(F, callInst, I);
+      ++notSelfContained;
       continue;
     } else {
       for (auto *inst : tempToRemove) {
@@ -210,6 +215,7 @@ void removeInstructions(std::vector<iSlice> &allSlices,
     e->replaceAllUsesWith(UndefValue::get(e->getType()));
     e->eraseFromParent();
   }
+  return {dontMerge, notSelfContained};
 }
 
 /**
@@ -245,8 +251,7 @@ std::set<Instruction *> instSetMeetCriterion(Function *F) {
       // if (instName.find("lcssa") == instName.npos) {
       //   S.insert(&I);
       // }
-      if (isa<BinaryOperator>(I))
-        S.insert(&I);
+      if (isa<BinaryOperator>(I)) S.insert(&I);
     }
   }
 
@@ -299,8 +304,7 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
       ProgramSlice ps = ProgramSlice(*I, *F, PDT, FAM);
       Function *G = ps.outline();
 
-      if (G == NULL)
-        continue;
+      if (G == NULL) continue;
       // Get the original instruction, to check
       // if it can be removed
       std::map<Instruction *, Instruction *> constOriginalInst =
@@ -330,7 +334,6 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
       LLVM_DEBUG(dbgs() << COLOR::GREEN << "outlined!" << COLOR::CLEAN << '\n');
     }
   }
-  LLVM_DEBUG(dbgs() << "Number of slices found: " << allSlices.size() << '\n');
 
   std::set<Function *> originalFunctions;
   std::set<Function *> outlinedFunctions;
@@ -384,7 +387,8 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
   LLVM_DEBUG(dbgs() << "== REMOVING INST PHASE ==\n");
 
   std::set<Function *> toSimplify;
-  removeInstructions(allSlices, mergeTo, toSimplify);
+  auto [dontMerge, notSelfContained] =
+      removeInstructions(allSlices, mergeTo, toSimplify);
 
   LLVM_DEBUG(dbgs() << "== SIMPLIFY PHASE ==\n");
 
@@ -395,9 +399,17 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
     llvm::ProgramSlice::simplifyCfg(originalF, FAM);
   }
 
-  LLVM_DEBUG(dbgs() << "== PRINT PHASE ==\n"); for (Function &F : M.getFunctionList()) 
-    LLVM_DEBUG(dbgs() << F << '\n');
-  
+  LLVM_DEBUG(dbgs() << "== PRINT PHASE ==\n");
+  for (Function &F : M.getFunctionList()) LLVM_DEBUG(dbgs() << F << '\n');
+
+  LLVM_DEBUG(dbgs() << "Summary: " << '\n');
+  LLVM_DEBUG(dbgs() << "Number of slices found: " << allSlices.size() << '\n');
+  LLVM_DEBUG(dbgs() << "Number of slices that dont merge: " << dontMerge
+                    << '\n');
+  LLVM_DEBUG(dbgs() << "Number of slices that arent self contained:"
+                    << notSelfContained << '\n');
+  LLVM_DEBUG(dbgs() << "Total Number of slices kill:"
+                    << dontMerge + notSelfContained << '\n');
 
   return PreservedAnalyses::none();
 }
