@@ -129,13 +129,15 @@ computeGates(Function &F) {
       for (const BasicBlock *pred : predecessors(&BB)) {
         // LLVM_DEBUG(dbgs() << " - " << pred->getName() << " -> ");
         if (DT.dominates(pred, &BB) && !PDT.dominates(&BB, pred)) {
-          // LLVM_DEBUG(dbgs() << " DOM " << getGate(pred)->getName() << " -> ");
+          // LLVM_DEBUG(dbgs() << " DOM " << getGate(pred)->getName() << " ->
+          // ");
           BB_gates.push_back(getGate(pred));
         } else {
           const BasicBlock *ctrl_BB = getController(pred, DT, PDT);
           if (ctrl_BB) {
-            // LLVM_DEBUG(dbgs() << " R-CTRL " << "CTRL_BB: " << ctrl_BB->getName()
-                              // << " " << getGate(ctrl_BB)->getName());
+            // LLVM_DEBUG(dbgs() << " R-CTRL " << "CTRL_BB: " <<
+            // ctrl_BB->getName()
+            // << " " << getGate(ctrl_BB)->getName());
             BB_gates.push_back(getGate(ctrl_BB));
           }
         }
@@ -869,14 +871,14 @@ void ProgramSlice::reorderBlocks(Function *F) {
  * operands are adjusted.
  */
 void ProgramSlice::replaceArgs(Function *F, DenseMap<Value *, uint> dt) {
-  
+
   for (Instruction &I : instructions(F)) {
     for (int j = 0; j < I.getNumOperands(); ++j) {
       for (int k = 0; k < F->arg_size(); ++k) {
-	auto operand = I.getOperand(j);
-	if(dt.count(operand)){
-	  I.setOperand(j, F->getArg(dt[operand]));
-	}
+        auto operand = I.getOperand(j);
+        if (dt.count(operand)) {
+          I.setOperand(j, F->getArg(dt[operand]));
+        }
       }
     }
   };
@@ -1003,14 +1005,17 @@ ReturnInst *ProgramSlice::addReturnValue(Function *F) {
 Function *ProgramSlice::outline() {
   const int size = 3;
   if (_instsInSlice.size() < size) {
-    LLVM_DEBUG(dbgs() << "Not outlined, Insufficient Numbers os instruction to "
-                         "outline! \n");
+    LLVM_DEBUG(
+        dbgs()
+        << "Insufficient number of instructions to outline a new slice...\n");
+    LLVM_DEBUG(dbgs() << "The slice must have at least " << size
+                      << " instructions to be outlined...\n");
     return NULL;
   }
   StructType *thunkStructType = getThunkStructType(false);
   PointerType *thunkStructPtrType = thunkStructType->getPointerTo();
 
-  // Getting return type of function, said if function is a add of integers,
+  // Get function's return type. If the function is an add of integers,
   // then the function must return an integer.
   Type *FreturnType;
   if (isa<ReturnInst>(_initial)) {
@@ -1018,7 +1023,7 @@ Function *ProgramSlice::outline() {
   } else
     FreturnType = _initial->getType();
 
-  // Getting Arguments for the function
+  // Get function's arguments
   SmallVector<Type *> v;
   SmallVector<StringRef> g;
   DenseMap<Value *, uint> dt;

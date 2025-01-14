@@ -13,7 +13,6 @@
 #include "llvm/IR/Attributes.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Function.h"
-#include "llvm/IR/InstIterator.h"
 #include "llvm/IR/InstrTypes.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/PassManager.h"
@@ -25,7 +24,6 @@
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Transforms/Utils/ValueMapper.h"
 #include <csignal>
-#include <exception>
 #include <memory>
 
 using namespace llvm;
@@ -120,11 +118,11 @@ bool isSelfContained(std::set<Instruction *> origInst, Instruction *I,
  * otherwise.
  */
 bool canProgramSlice(Instruction *I) {
-  /// PHINode MUST to be at top of basic blocks. If our criterion
-  /// is a phi-node it will be replace by an callsite, then all the phi-nodes
-  /// under it, MUST to be moved above our criterion. But if at least one
-  /// of these phi-nodes is an user of our criterion, then it will not
-  /// dominate all the uses. In this case, we cant replace it.
+  // PHINodes MUST be at the top of basic blocks. If our criterion
+  // is a PHINode, it will be replaced by a call site. Consequently, 
+  // all PHINodes below it MUST be moved above our criterion. However, 
+  // if at least one of these PHINodes is a user of our criterion, it 
+  // will not dominate all its uses. In this case, we cannot replace it.
   if (PHINode *phi = dyn_cast<PHINode>(I)) {
     for (User *use : phi->users()) {
       if (Instruction *Iuse = dyn_cast<Instruction>(use))
@@ -141,8 +139,8 @@ bool canProgramSlice(Instruction *I) {
   return true;
 }
 
-/// Replace all calls of callInst with original criterions instruction and
-/// remove new slice function
+/// Replace all calls of callInst with original instructions
+/// and remove new slice function
 void killSlice(Function *F, CallInst *callInst, Instruction *criterion) {
   callInst->replaceAllUsesWith(criterion);
   callInst->eraseFromParent();
@@ -281,6 +279,7 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
       errs() << "Error materializing module: " << EIB.message() << "\n";
     });
   }
+
   for (Function &F : M.getFunctionList())
     if (!F.empty()) FtoMap.insert(&F);
 
@@ -295,9 +294,9 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
     PDT.recalculate(*F);
 
     // Criterion Set
-    std::set<Instruction *> S = instSetMeetCriterion(F);
+    std::set<Instruction *> S = instSetMeetCriterion(F); // filter binary instructions for building a set of instructions that can be used as slicing criterion. this function enables us to change how we manage the slicing criterion. 
 
-    /// To replace all uses of I with the correpondent call
+    // Replace all uses of I with the correpondent call
     for (Instruction *I : S) {
       if (!canSliceInstrType(*I)) continue;
       if (!canProgramSlice(I)) continue;
@@ -305,8 +304,8 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
       Function *G = ps.outline();
 
       if (G == NULL) continue;
-      // Get the original instruction, to check
-      // if it can be removed
+
+      // Get the original instruction to check if it can be removed
       std::map<Instruction *, Instruction *> constOriginalInst =
           ps.getInstructionInSlice();
 
@@ -345,8 +344,8 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
 
   LLVM_DEBUG(dbgs() << "== MERGE SLICES FUNC PHASE ==\n");
 
-  /// Say S and T are two slices that will merge, if we replace S by T, Then
-  /// delToNewFunc is a map from S to T "deleted function to newFunction".
+  // Say S and T are two slices that will merge, if we replace S by T, Then
+  // delToNewFunc is a map from S to T "deleted function to newFunction".
   auto [mergeFunc, delToNewFunc] =
       MergeFunctionsPass::runOnFunctions(outlinedFunctions);
 
