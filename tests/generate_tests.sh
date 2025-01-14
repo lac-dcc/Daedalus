@@ -81,7 +81,7 @@ for i in "${TESTFILENAME[@]}"; do
         clang "${LLFILENAME}" -o "${FILENAMEWEXT}.bin"
         
         if [ $VERBOSE == 0 ]; then
-            TESTLOGNAME="${FILENAMEWEXT}_gen.log"
+            TESTLOGNAME="${FILENAMEWEXT}_transformation.log"
             remove_old_file "${TESTLOGNAME}"
             opt -debug-only=Daedalus -passes=daedalus -load-pass-plugin=../build/lib/libdaedalus.so -S "${LLFILENAME}" -o "${DLLFILENAME}" &>> "${TESTLOGNAME}"
         else

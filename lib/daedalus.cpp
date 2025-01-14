@@ -5,6 +5,7 @@
  *  @date   2024-07-08
  ***********************************************/
 #include "../include/daedalus.h"
+#include "../include/reports.h"
 #include "../include/debugCommon.h"
 #include "../include/wyvern/ProgramSlice.h"
 #include "llvm/Analysis/LoopInfo.h"
@@ -401,14 +402,27 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
   LLVM_DEBUG(dbgs() << "== PRINT PHASE ==\n");
   for (Function &F : M.getFunctionList()) LLVM_DEBUG(dbgs() << F << '\n');
 
-  LLVM_DEBUG(dbgs() << "Summary: " << '\n');
-  LLVM_DEBUG(dbgs() << "Number of slices found: " << allSlices.size() << '\n');
-  LLVM_DEBUG(dbgs() << "Number of slices that dont merge: " << dontMerge
-                    << '\n');
-  LLVM_DEBUG(dbgs() << "Number of slices that arent self contained:"
-                    << notSelfContained << '\n');
-  LLVM_DEBUG(dbgs() << "Total Number of slices kill:"
-                    << dontMerge + notSelfContained << '\n');
+  LLVM_DEBUG(dbgs() << "== REPORT GENERATION ==\n");
+  LLVM_DEBUG(dbgs() << "Exporting slices' data to disk...\n");
+  std::filesystem::path sourceFileName = M.getModuleIdentifier();
+  std::filesystem::path exportedFileName = sourceFileName.stem().string() + "_slices_report.log";
+  ReportWriter reportWriter(exportedFileName);
+  reportWriter.writeLine("totalSlicesFound = " + std::to_string(allSlices.size()));
+  reportWriter.writeLine("totalSlicesMerged = " + std::to_string(delToNewFunc.size())); // Note: all delToNewFunc keys are unique slices
+  reportWriter.writeLine("totalSlicesDiscarded = " + std::to_string(dontMerge + notSelfContained));
+  // TODO: reportWriter.writeLine("sizeOfLargestSliceBeforeMerging = " + std::to_string(largestSliceBeforeMerge));
+  // TODO: reportWriter.writeLine("sizeOfLargestSliceBeforeMerging = " + std::to_string(largestSliceAfterMerge));
+  reportWriter.writeLine("slicesMetadata:");
+  // for (size_t i = 0; i < allSlices.size(); i++) { // TODO: change vector and operations to it
+  //   reportWriter.writeLine("\t" + allSlices[i].getName() + ":");
+  //   reportWriter.writeLine("\t\tsize = " + std::to_string(slice.size()));
+  //     reportWriter.writeLine("\t\toriginalFunctions:");
+  //   for (size_t j = 0; j < allSlices[i].size(); j++) { // TODO: change vector and operations to it
+  //     reportWriter.writeLine("\t\t\t\t" + allSlices[i][j]->getParent()->getParent()->getName().str());
+  //   }
+  // }
+
+  LLVM_DEBUG(dbgs() << "Data written into '" << exportedFileName << "' file...\n");
 
   return PreservedAnalyses::none();
 }
