@@ -8,3 +8,4 @@ tests/*.ll
 tests/*.bin
 tests/*.log
 venv/
+.venv/

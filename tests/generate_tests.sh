@@ -82,7 +82,7 @@ for i in "${TESTFILENAME[@]}"; do
         
         if [ $VERBOSE == 0 ]; then
             TESTLOGNAME="${FILENAMEWEXT}_transformation.log"
-            rm "${FILENAMEWEXT}_slices_report.log" # delete old report file
+            remove_old_file "${FILENAMEWEXT}_slices_report.log" # delete old report file
             remove_old_file "${TESTLOGNAME}"
             opt -debug-only=Daedalus -passes=daedalus -load-pass-plugin=../build/lib/libdaedalus.so -S "${LLFILENAME}" -o "${DLLFILENAME}" &>> "${TESTLOGNAME}"
         else

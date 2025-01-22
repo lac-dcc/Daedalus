@@ -433,8 +433,10 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
   reportWriter.writeLine("sizeOfLargestSliceAfterMerging = " + std::to_string(sizeOfLargestSliceAfterMerging));
   reportWriter.writeLine("mergedSlicesMetadata:");
   for (auto [deletedFunc, newFunc] : delToNewFunc) {
-    reportWriter.writeLine("\t" + newFunc->getName().str() + ":");
-    reportWriter.writeLine("\t\tsize = " + std::to_string(numberOfInstructions(newFunc)));
+    if (newFunc->hasName()) {
+      reportWriter.writeLine("\t" + newFunc->getName().str() + ":");
+      reportWriter.writeLine("\t\tsize = " + std::to_string(numberOfInstructions(newFunc)));
+    }
   }
 
   LLVM_DEBUG(dbgs() << "Data written into '" << exportedFileName << "' file...\n");
