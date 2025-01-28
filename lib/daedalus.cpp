@@ -435,7 +435,7 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
   std::filesystem::path sourceFileName = M.getModuleIdentifier();
   std::filesystem::path exportedFileName = sourceFileName.stem().string() + "_slices_report.log";
   ReportWriter reportWriter(exportedFileName);
-  reportWriter.writeLine("totalSlicesFound = " + std::to_string(allSlices.size()));
+  reportWriter.writeLine("totalFunctionsOutlined = " + std::to_string(allSlices.size()));
   reportWriter.writeLine("totalSlicesMerged = " + std::to_string(delToNewFunc.size())); // Note: all delToNewFunc keys are unique slices
   reportWriter.writeLine("totalSlicesDiscarded = " + std::to_string(dontMerge + notSelfContained));
   reportWriter.writeLine("sizeOfLargestSliceBeforeMerging = " + std::to_string(sizeOfLargestSliceBeforeMerging));
