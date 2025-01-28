@@ -266,6 +266,14 @@ unsigned int numberOfInstructions(Function *F) {
   return instCount;
 }
 
+unsigned int numberOfMergedFunctions(Function *F, std::map<Function *, Function *> &delToNewFunc) {
+  unsigned int mergedFuncCount = 1;
+  for (auto &pair : delToNewFunc)
+    if (pair.second == F)
+      mergedFuncCount++;
+  return mergedFuncCount;
+}
+
 namespace Daedalus {
 
 /**
@@ -421,6 +429,7 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
   LLVM_DEBUG(dbgs() << "== PRINT PHASE ==\n");
   for (Function &F : M.getFunctionList()) LLVM_DEBUG(dbgs() << F << '\n');
 
+  // TODO: implement cli option to switch report generation on/off
   LLVM_DEBUG(dbgs() << "== REPORT GENERATION ==\n");
   LLVM_DEBUG(dbgs() << "Exporting slices' data to disk...\n");
   std::filesystem::path sourceFileName = M.getModuleIdentifier();
@@ -432,10 +441,13 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
   reportWriter.writeLine("sizeOfLargestSliceBeforeMerging = " + std::to_string(sizeOfLargestSliceBeforeMerging));
   reportWriter.writeLine("sizeOfLargestSliceAfterMerging = " + std::to_string(sizeOfLargestSliceAfterMerging));
   reportWriter.writeLine("mergedSlicesMetadata:");
+  std::set<Function *> checkedFunctions;
   for (auto [deletedFunc, newFunc] : delToNewFunc) {
-    if (newFunc->hasName()) {
+    if (newFunc->hasName() && checkedFunctions.count(newFunc) == 0) {
+      checkedFunctions.insert(newFunc);
       reportWriter.writeLine("\t" + newFunc->getName().str() + ":");
       reportWriter.writeLine("\t\tsize = " + std::to_string(numberOfInstructions(newFunc)));
+      reportWriter.writeLine("\t\tnumberOfMergedFunctions = " + std::to_string(numberOfMergedFunctions(newFunc, delToNewFunc)));
     }
   }
 
