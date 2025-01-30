@@ -31,34 +31,33 @@ bool canSliceInstrType(llvm::Instruction &I);
  * @brief Attempts to remove an instruction if it meets specific criteria.
  */
 bool canRemove(llvm::Instruction *I, llvm::Instruction *ini,
-    std::set<llvm::Instruction *> &constOriginalInst,
-    std::set<llvm::Instruction *> &vis);
-
+               std::set<llvm::Instruction *> &constOriginalInst,
+               std::set<llvm::Instruction *> &vis);
 
 void killSlice(llvm::Function *, llvm::CallInst *, llvm::Instruction *);
 
-bool isSelfContained(std::set<llvm::Instruction *> , llvm::Instruction *,
-    std::set<llvm::Instruction *> &);
-  /**
-   * @brief Checks if a program slice can be created for an instruction.
-   */
-  bool canProgramSlice(llvm::Instruction *I);
+bool isSelfContained(std::set<llvm::Instruction *>, llvm::Instruction *,
+                     std::set<llvm::Instruction *> &);
+/**
+ * @brief Checks if a program slice can be created for an instruction.
+ */
+bool canProgramSlice(llvm::Instruction *I);
 
-  /**
-   * @brief Checks if a given instruction meets the slicing criteria.
-   */
-  std::set<llvm::Instruction *> instSetMeetCriterion(llvm::Function *F);
+/**
+ * @brief Checks if a given instruction meets the slicing criteria.
+ */
+std::set<llvm::Instruction *> instSetMeetCriterion(llvm::Function *F);
 
-  struct iSlice {
-    llvm::Instruction *I;     // Criterion
-    llvm::CallInst *callInst; // CallInst to F
-    llvm::Function *F;        // Slice
-    llvm::SmallVector<llvm::Value *>
+struct iSlice {
+  llvm::Instruction *I;     // Criterion
+  llvm::CallInst *callInst; // CallInst to F
+  llvm::Function *F;        // Slice
+  llvm::SmallVector<llvm::Value *>
       args; // Arguments to pass on new function call
-    std::set<llvm::Instruction *>
+  std::set<llvm::Instruction *>
       constOriginalInst; // set of instruction in original function
-    bool wasRemoved;
-  };
+  bool wasRemoved;
+};
 
 namespace Daedalus {
 

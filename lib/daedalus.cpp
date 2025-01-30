@@ -5,8 +5,8 @@
  *  @date   2024-07-08
  ***********************************************/
 #include "../include/daedalus.h"
-#include "../include/reports.h"
 #include "../include/debugCommon.h"
+#include "../include/reports.h"
 #include "../include/wyvern/ProgramSlice.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Analysis/LoopInfo.h"
@@ -122,9 +122,9 @@ bool isSelfContained(std::set<Instruction *> origInst, Instruction *I,
  */
 bool canProgramSlice(Instruction *I) {
   // PHINodes MUST be at the top of basic blocks. If our criterion
-  // is a PHINode, it will be replaced by a call site. Consequently, 
-  // all PHINodes below it MUST be moved above our criterion. However, 
-  // if at least one of these PHINodes is a user of our criterion, it 
+  // is a PHINode, it will be replaced by a call site. Consequently,
+  // all PHINodes below it MUST be moved above our criterion. However,
+  // if at least one of these PHINodes is a user of our criterion, it
   // will not dominate all its uses. In this case, we cannot replace it.
   if (PHINode *phi = dyn_cast<PHINode>(I)) {
     for (User *use : phi->users()) {
@@ -261,16 +261,16 @@ std::set<Instruction *> instSetMeetCriterion(Function *F) {
 
 unsigned int numberOfInstructions(Function *F) {
   unsigned int instCount = 0;
-  for (BasicBlock &BB : *F)
-    instCount += BB.size();
+  for (BasicBlock &BB : *F) instCount += BB.size();
   return instCount;
 }
 
-unsigned int numberOfMergedFunctions(Function *F, std::map<Function *, Function *> &delToNewFunc) {
+unsigned int
+numberOfMergedFunctions(Function *F,
+                        std::map<Function *, Function *> &delToNewFunc) {
   unsigned int mergedFuncCount = 1;
   for (auto &pair : delToNewFunc)
-    if (pair.second == F)
-      mergedFuncCount++;
+    if (pair.second == F) mergedFuncCount++;
   return mergedFuncCount;
 }
 
@@ -312,7 +312,10 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
     PDT.recalculate(*F);
 
     // Criterion Set
-    std::set<Instruction *> S = instSetMeetCriterion(F); // filter binary instructions for building a set of instructions that can be used as slicing criterion. this function enables us to change how we manage the slicing criterion. 
+    std::set<Instruction *> S = instSetMeetCriterion(
+        F); // filter binary instructions for building a set of instructions
+            // that can be used as slicing criterion. this function enables us
+            // to change how we manage the slicing criterion.
 
     // Replace all uses of I with the correpondent call
     for (Instruction *I : S) {
@@ -354,16 +357,16 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
 
   std::set<Function *> originalFunctions;
   std::set<Function *> outlinedFunctions;
-  std::map<long unsigned int, StringRef> guidToName;
   int sizeOfLargestSliceBeforeMerging = 0;
   for (auto [I, call, F, args, origInst, wasRemoved] : allSlices) {
     Function *originalF = I->getParent()->getParent();
     originalFunctions.insert(originalF);
     outlinedFunctions.insert(F);
-    guidToName[F->getGUID()] = F->getName();
-    if (numberOfInstructions(F) > sizeOfLargestSliceBeforeMerging){
+    if (numberOfInstructions(F) > sizeOfLargestSliceBeforeMerging) {
       sizeOfLargestSliceBeforeMerging = numberOfInstructions(F);
-      LLVM_DEBUG(dbgs() << "name of the largest slice BEFORE merge: " << F->getName() << ", size = " << sizeOfLargestSliceBeforeMerging << '\n');
+      LLVM_DEBUG(
+          dbgs() << "name of the largest slice BEFORE merge: " << F->getName()
+                 << ", size = " << sizeOfLargestSliceBeforeMerging << '\n');
     }
   }
 
@@ -371,7 +374,8 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
 
   // Say S and T are two slices that will merge, if we replace S by T, Then
   // delToNewFunc is a map from S to T "deleted function to newFunction".
-  auto [mergeFunc, delToNewFunc] = MergeFunctionsPass::runOnFunctions(outlinedFunctions);
+  auto [mergeFunc, delToNewFunc] =
+      MergeFunctionsPass::runOnFunctions(outlinedFunctions);
   int sizeOfLargestSliceAfterMerging = 0;
 
   if (mergeFunc)
@@ -379,12 +383,15 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
   else
     LLVM_DEBUG(dbgs() << "MergeFunc returned false...\n");
 
-  std::set<Function *> mergeTo; // Set of instruction such that some other slice merges to
+  std::set<Function *>
+      mergeTo; // Set of instruction such that some other slice merges to
   for (auto [A, B] : delToNewFunc) {
     if (B == nullptr) continue;
     if (numberOfInstructions(B) > sizeOfLargestSliceAfterMerging) {
       sizeOfLargestSliceAfterMerging = numberOfInstructions(B);
-      LLVM_DEBUG(dbgs() << "name of the largest slice AFTER merge: " << B->getName() << ", size = " << sizeOfLargestSliceAfterMerging << '\n');
+      LLVM_DEBUG(
+          dbgs() << "name of the largest slice AFTER merge: " << B->getName()
+                 << ", size = " << sizeOfLargestSliceAfterMerging << '\n');
     }
     mergeTo.insert(B);
   }
@@ -433,25 +440,37 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
   LLVM_DEBUG(dbgs() << "== REPORT GENERATION ==\n");
   LLVM_DEBUG(dbgs() << "Exporting slices' data to disk...\n");
   std::filesystem::path sourceFileName = M.getModuleIdentifier();
-  std::filesystem::path exportedFileName = sourceFileName.stem().string() + "_slices_report.log";
+  std::filesystem::path exportedFileName =
+      sourceFileName.stem().string() + "_slices_report.log";
   ReportWriter reportWriter(exportedFileName);
-  reportWriter.writeLine("totalFunctionsOutlined = " + std::to_string(allSlices.size()));
-  reportWriter.writeLine("totalSlicesMerged = " + std::to_string(delToNewFunc.size())); // Note: all delToNewFunc keys are unique slices
-  reportWriter.writeLine("totalSlicesDiscarded = " + std::to_string(dontMerge + notSelfContained));
-  reportWriter.writeLine("sizeOfLargestSliceBeforeMerging = " + std::to_string(sizeOfLargestSliceBeforeMerging));
-  reportWriter.writeLine("sizeOfLargestSliceAfterMerging = " + std::to_string(sizeOfLargestSliceAfterMerging));
+  reportWriter.writeLine("totalFunctionsOutlined = " +
+                         std::to_string(allSlices.size()));
+  reportWriter.writeLine(
+      "totalSlicesMerged = " +
+      std::to_string(delToNewFunc.size())); // Note: all delToNewFunc keys are
+                                            // unique slices
+  reportWriter.writeLine("totalSlicesDiscarded = " +
+                         std::to_string(dontMerge + notSelfContained));
+  reportWriter.writeLine("sizeOfLargestSliceBeforeMerging = " +
+                         std::to_string(sizeOfLargestSliceBeforeMerging));
+  reportWriter.writeLine("sizeOfLargestSliceAfterMerging = " +
+                         std::to_string(sizeOfLargestSliceAfterMerging));
   reportWriter.writeLine("mergedSlicesMetadata:");
   std::set<Function *> checkedFunctions;
   for (auto [deletedFunc, newFunc] : delToNewFunc) {
     if (newFunc->hasName() && checkedFunctions.count(newFunc) == 0) {
       checkedFunctions.insert(newFunc);
       reportWriter.writeLine("\t" + newFunc->getName().str() + ":");
-      reportWriter.writeLine("\t\tsize = " + std::to_string(numberOfInstructions(newFunc)));
-      reportWriter.writeLine("\t\tnumberOfMergedFunctions = " + std::to_string(numberOfMergedFunctions(newFunc, delToNewFunc)));
+      reportWriter.writeLine("\t\tsize = " +
+                             std::to_string(numberOfInstructions(newFunc)));
+      reportWriter.writeLine(
+          "\t\tnumberOfMergedFunctions = " +
+          std::to_string(numberOfMergedFunctions(newFunc, delToNewFunc)));
     }
   }
 
-  LLVM_DEBUG(dbgs() << "Data written into '" << exportedFileName << "' file...\n");
+  LLVM_DEBUG(dbgs() << "Data written into '" << exportedFileName
+                    << "' file...\n");
 
   return PreservedAnalyses::none();
 }
