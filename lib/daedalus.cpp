@@ -7,7 +7,7 @@
 #include "../include/daedalus.h"
 #include "../include/debugCommon.h"
 #include "../include/reports.h"
-#include "../include/wyvern/ProgramSlice.h"
+#include "../include/ProgramSlice.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/PostDominators.h"
