@@ -227,7 +227,6 @@ get_data_dependences_for(
             if (u->getParent() == header) {
               phiOnArgs.insert(U);
               visited.insert(U);
-              // phiCrit = true;
               continue;
             }
             dbgs() << "On loop but not header\n";
