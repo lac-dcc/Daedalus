@@ -218,17 +218,19 @@ get_data_dependences_for(
         if (const PHINode *u = dyn_cast<PHINode>(U)) {
           LoopInfo &LI = FAM.getResult<LoopAnalysis>(F);
           Loop *L = LI.getLoopFor(I.getParent());
-          if (!L) continue;
+          if (L){
+            BasicBlock *header = L->getHeader();
+            if (!header)
+              LLVM_DEBUG(errs()
+                         << "Loop does not have a header on " << F.getName());
 
-          BasicBlock *header = L->getHeader();
-          if (!header)
-            LLVM_DEBUG(errs()
-                       << "Loop does not have a header on " << F.getName());
-
-          if (u->getParent() == header) {
-            phiOnArgs.insert(U);
-            visited.insert(U);
-            continue;
+            if (u->getParent() == header) {
+              phiOnArgs.insert(U);
+              visited.insert(U);
+              // phiCrit = true;
+              continue;
+            }
+            dbgs() << "On loop but not header\n";
           }
         }
         // Cannot have side effects.
@@ -279,8 +281,10 @@ ProgramSlice::ProgramSlice(Instruction &Initial, Function &F,
   auto [BBsInSlice, valuesInSlice, phiTypes, phiCrit, phiOnArgs] =
       get_data_dependences_for(Initial, gates, PDT, F, FAM);
   _phiCrit = phiCrit;
+
   std::set<const Instruction *> instsInSlice;
   SmallVector<Value *> depArgs;
+
   for (auto &val : valuesInSlice) {
     if (Argument *A = dyn_cast<Argument>(const_cast<Value *>(val))) {
       depArgs.push_back(A);
@@ -288,7 +292,9 @@ ProgramSlice::ProgramSlice(Instruction &Initial, Function &F,
       instsInSlice.insert(I);
     }
   }
+
   for (auto &val : phiOnArgs) depArgs.push_back(val);
+
   if (isa<ReturnInst>(_initial)) {
     Value *FreturnValue = dyn_cast<ReturnInst>(_initial)->getReturnValue();
     _instRetValue = dyn_cast<Instruction>(FreturnValue);
@@ -966,7 +972,6 @@ ReturnInst *ProgramSlice::addReturnValue(Function *F) {
       return ReturnInst::Create(F->getParent()->getContext(), retType, exit);
     }
   }
-  dbgs() << *_initial << '\n';
   if (auto *callInst = dyn_cast<CallInst>(_initial)) {
     Function *ftype = callInst->getCalledFunction();
     if (ftype) {
