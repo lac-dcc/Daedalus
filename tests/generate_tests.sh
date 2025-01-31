@@ -84,9 +84,9 @@ for i in "${TESTFILENAME[@]}"; do
             TESTLOGNAME="${FILENAMEWEXT}_transformation.log"
             remove_old_file "${FILENAMEWEXT}_slices_report.log" # delete old report file
             remove_old_file "${TESTLOGNAME}"
-            opt -debug-only=Daedalus -passes=daedalus -load-pass-plugin=../build/lib/libdaedalus.so -S "${LLFILENAME}" -o "${DLLFILENAME}" &>> "${TESTLOGNAME}"
+            opt -stats -debug-only=Daedalus -passes=daedalus -load-pass-plugin=../build/lib/libdaedalus.so -S "${LLFILENAME}" -o "${DLLFILENAME}" &>> "${TESTLOGNAME}"
         else
-            opt -debug-only=Daedalus -passes=daedalus -load-pass-plugin=../build/lib/libdaedalus.so -S "${LLFILENAME}" -o "${DLLFILENAME}" 2>&1
+            opt -stats -debug-only=Daedalus -passes=daedalus -load-pass-plugin=../build/lib/libdaedalus.so -S "${LLFILENAME}" -o "${DLLFILENAME}" 2>&1
         fi
         
         if [ -e "${DLLFILENAME}" ]; then

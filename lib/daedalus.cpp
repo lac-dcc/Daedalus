@@ -35,12 +35,11 @@ using namespace llvm;
 
 #define DEBUG_TYPE "Daedalus"
 
-
-STATISTIC(TotalFunctionsOutlined, "Total number of functions outlined.");
-STATISTIC(TotalSlicesMerged, "Total number of slices that got merged.");
-STATISTIC(TotalSlicesDiscarded, "Total number of slices that got discarded.");
-STATISTIC(SizeOfLargestSliceBeforeMerging, "Size of the largest slice function before merging step.");
-STATISTIC(SizeOfLargestSliceAfterMerging, "Size of the largest slice function after merging step.");
+STATISTIC(TotalFunctionsOutlined, "Total number of functions outlined");
+STATISTIC(TotalSlicesMerged, "Total number of slices that got merged");
+STATISTIC(TotalSlicesDiscarded, "Total number of slices that got discarded");
+STATISTIC(SizeOfLargestSliceBeforeMerging, "Size of the largest slice function before merging step");
+STATISTIC(SizeOfLargestSliceAfterMerging, "Size of the largest slice function after merging step");
 
 /**
  * @brief Determines if an instruction type can be sliced.
