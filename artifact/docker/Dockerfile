@@ -32,10 +32,10 @@ ENV PATH="/src/llvm-project/build/bin:$PATH"
 
 # Clone and Build Daedalus
 WORKDIR /src
-RUN git clone -b dev1 https://github.com/lac-dcc/Daedalus.git
+RUN git clone -b main https://github.com/lac-dcc/Daedalus.git
 WORKDIR Daedalus
 RUN mkdir -p build
-RUN cmake -G Ninja -DLLVM_DIR=/src/llvm-project/build/lib/cmake/llvm -S . -B build
+RUN cmake -G Ninja -DLLVM_DIR=/src/llvm-project -S . -B build
 RUN cmake --build build
 
 # Clone and Build LLVM 17 - Test Suite 
@@ -61,7 +61,7 @@ RUN cmake -G "Ninja" \
 RUN cmake --build build -- -j 16 || exit 0
 RUN llvm-lit --show-excluded \
 	--filter-out "GCC-C-execute.*" \
-	--timeout 1200 \
+	--timeout 120 \
 	-j 16 -s -o /lit-results/baseline.json build || exit 0
 
 RUN rm -rf build/*
@@ -82,7 +82,7 @@ RUN cmake -G "Ninja" \
 RUN cmake --build build -- -k 0 -j 16 || exit 0
 RUN llvm-lit --show-excluded \
 	--filter-out "GCC-C-execute.*" \
-	--timeout 1200 \
+	--timeout 120 \
 	-j 16 -s -o /lit-results/daedalus.json build || exit 0
 
 RUN python3 utils/compare.py --full --diff -m instcount -m size..text /lit-results/baseline.json /lit-results/daedalus.json > /lit-results/comparison_results.txt
