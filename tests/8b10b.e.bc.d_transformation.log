@@ -1,0 +1,234 @@
+== OUTLINING INST PHASE ==
+  %11 = shl nsw i64 %10, 3
+Not self contained!
+  %29 = lshr i32 %28, 8
+Not self contained!
+  %30 = lshr i32 %28, 3
+Not self contained!
+  %31 = and i32 %30, 31
+Not self contained!
+  %32 = shl nuw nsw i32 %29, 5
+Not self contained!
+  %33 = or i32 %31, %32
+Not self contained!
+  %34 = and i32 %28, 7
+Not self contained!
+  %35 = shl nuw nsw i32 %29, 3
+Not self contained!
+  %36 = or i32 %35, %34
+Not self contained!
+  %43 = lshr i64 -540007956238728929, %37
+Not self contained!
+  %44 = and i64 %43, 1
+Not self contained!
+  %47 = and i32 %39, 994
+Not self contained!
+  %49 = lshr i32 %39, 18
+Not self contained!
+  %50 = and i32 %49, 1
+Not self contained!
+  %52 = and i32 %39, 994
+Not self contained!
+  %53 = xor i32 %52, 994
+Not self contained!
+  %55 = lshr i64 1692929461114011360, %37
+Not self contained!
+  %56 = and i64 %55, 1
+Not self contained!
+  %59 = xor i32 %25, %58
+Not self contained!
+  %63 = add nsw i64 %40, -6
+Not self contained!
+  %66 = and i32 %42, 29
+Not self contained!
+  %68 = lshr i32 %42, 18
+Not self contained!
+  %69 = and i32 %68, 1
+Not self contained!
+  %71 = and i32 %42, 29
+Not self contained!
+  %72 = xor i32 %71, 29
+Not self contained!
+  %74 = lshr i32 %42, 19
+Not self contained!
+  %75 = and i32 %74, 1
+Not self contained!
+  %76 = xor i32 %61, %75
+Not self contained!
+  %80 = or i32 %79, %62
+Not self contained!
+== MERGE SLICES FUNC PHASE ==
+MergeFunc returned false...
+== REMOVING INST PHASE ==
+== SIMPLIFY PHASE ==
+== PRINT PHASE ==
+; Function Attrs: nounwind optsize uwtable
+define dso_local i32 @main(i32 noundef %0, ptr nocapture noundef readonly %1) #0 {
+  %3 = icmp eq i32 %0, 3
+  br i1 %3, label %4, label %98
+
+4:                                                ; preds = %2
+  %5 = getelementptr inbounds ptr, ptr %1, i64 2
+  %6 = load ptr, ptr %5, align 8, !tbaa !7
+  %7 = tail call i32 @atoi(ptr nocapture noundef %6) #6
+  %8 = getelementptr inbounds ptr, ptr %1, i64 1
+  %9 = load ptr, ptr %8, align 8, !tbaa !7
+  %10 = sext i32 %7 to i64
+  %11 = shl nsw i64 %10, 3
+  %12 = tail call noalias ptr @malloc(i64 noundef %11) #7
+  %13 = getelementptr inbounds i32, ptr %12, i64 %10
+  %14 = tail call noalias ptr @fopen(ptr noundef %9, ptr noundef nonnull @.str) #8
+  %15 = tail call i64 @fread(ptr noundef %12, i64 noundef %10, i64 noundef 4, ptr noundef %14) #8
+  %16 = tail call i32 @fclose(ptr noundef %14) #8
+  %17 = icmp sgt i32 %7, 0
+  br i1 %17, label %18, label %97
+
+18:                                               ; preds = %4
+  %19 = zext i32 %7 to i64
+  %20 = load i32, ptr @disparity0, align 4, !tbaa !11
+  br label %21
+
+21:                                               ; preds = %84, %18
+  %22 = phi i32 [ %20, %18 ], [ %.lcssa, %84 ]
+  %23 = phi i32 [ 0, %18 ], [ %85, %84 ]
+  br label %24
+
+24:                                               ; preds = %77, %21
+  %25 = phi i32 [ %22, %21 ], [ %78, %77 ]
+  %26 = phi i64 [ 0, %21 ], [ %82, %77 ]
+  %27 = getelementptr inbounds i32, ptr %12, i64 %26
+  %28 = load i32, ptr %27, align 4, !tbaa !11
+  %29 = lshr i32 %28, 8
+  %30 = lshr i32 %28, 3
+  %31 = and i32 %30, 31
+  %32 = shl nuw nsw i32 %29, 5
+  %33 = or i32 %31, %32
+  %34 = and i32 %28, 7
+  %35 = shl nuw nsw i32 %29, 3
+  %36 = or i32 %35, %34
+  %37 = zext i32 %33 to i64
+  %38 = getelementptr inbounds [64 x i32], ptr @lookupTable5B, i64 0, i64 %37
+  %39 = load i32, ptr %38, align 4, !tbaa !11
+  %40 = zext i32 %36 to i64
+  %41 = getelementptr inbounds [16 x i32], ptr @lookupTable3B, i64 0, i64 %40
+  %42 = load i32, ptr %41, align 4, !tbaa !11
+  %43 = lshr i64 -540007956238728929, %37
+  %44 = and i64 %43, 1
+  %45 = icmp eq i64 %44, 0
+  br i1 %45, label %46, label %48
+
+46:                                               ; preds = %24
+  %47 = and i32 %39, 994
+  br label %60
+
+48:                                               ; preds = %24
+  %49 = lshr i32 %39, 18
+  %50 = and i32 %49, 1
+  %51 = icmp eq i32 %25, %50
+  %52 = and i32 %39, 994
+  %53 = xor i32 %52, 994
+  %54 = select i1 %51, i32 %52, i32 %53
+  %55 = lshr i64 1692929461114011360, %37
+  %56 = and i64 %55, 1
+  %57 = icmp eq i64 %56, 0
+  %58 = zext i1 %57 to i32
+  %59 = xor i32 %25, %58
+  br label %60
+
+60:                                               ; preds = %48, %46
+  %61 = phi i32 [ %25, %46 ], [ %59, %48 ]
+  %62 = phi i32 [ %47, %46 ], [ %54, %48 ]
+  %63 = add nsw i64 %40, -6
+  %64 = icmp ult i64 %63, -4
+  br i1 %64, label %67, label %65
+
+65:                                               ; preds = %60
+  %66 = and i32 %42, 29
+  br label %77
+
+67:                                               ; preds = %60
+  %68 = lshr i32 %42, 18
+  %69 = and i32 %68, 1
+  %70 = icmp eq i32 %61, %69
+  %71 = and i32 %42, 29
+  %72 = xor i32 %71, 29
+  %73 = select i1 %70, i32 %71, i32 %72
+  %74 = lshr i32 %42, 19
+  %75 = and i32 %74, 1
+  %76 = xor i32 %61, %75
+  br label %77
+
+77:                                               ; preds = %67, %65
+  %78 = phi i32 [ %61, %65 ], [ %76, %67 ]
+  %79 = phi i32 [ %66, %65 ], [ %73, %67 ]
+  %80 = or i32 %79, %62
+  %81 = getelementptr inbounds i32, ptr %13, i64 %26
+  store i32 %80, ptr %81, align 4, !tbaa !11
+  %82 = add nuw nsw i64 %26, 1
+  %83 = icmp eq i64 %82, %19
+  br i1 %83, label %84, label %24, !llvm.loop !13
+
+84:                                               ; preds = %77
+  %.lcssa = phi i32 [ %78, %77 ]
+  %85 = add nuw nsw i32 %23, 1
+  %86 = icmp eq i32 %85, %7
+  br i1 %86, label %87, label %21, !llvm.loop !15
+
+87:                                               ; preds = %84
+  %.lcssa.lcssa = phi i32 [ %.lcssa, %84 ]
+  store i32 %.lcssa.lcssa, ptr @disparity0, align 4, !tbaa !11
+  %88 = load ptr, ptr @stdout, align 8, !tbaa !7
+  br label %89
+
+89:                                               ; preds = %89, %87
+  %90 = phi i64 [ %94, %89 ], [ 0, %87 ]
+  %91 = getelementptr inbounds i32, ptr %13, i64 %90
+  %92 = load i32, ptr %91, align 4, !tbaa !11
+  %93 = tail call i32 (ptr, ptr, ...) @fprintf(ptr noundef %88, ptr noundef nonnull @.str.1, i32 noundef %92) #8
+  %94 = add nuw i64 %90, 128
+  %95 = trunc i64 %94 to i32
+  %96 = icmp sgt i32 %7, %95
+  br i1 %96, label %89, label %97, !llvm.loop !16
+
+97:                                               ; preds = %89, %4
+  tail call void @free(ptr noundef %12) #9
+  br label %100
+
+98:                                               ; preds = %2
+  %99 = tail call i32 @puts(ptr nonnull dereferenceable(1) @str)
+  br label %100
+
+100:                                              ; preds = %98, %97
+  %101 = phi i32 [ 0, %97 ], [ -1, %98 ]
+  ret i32 %101
+}
+
+; Function Attrs: mustprogress nofree nounwind optsize willreturn memory(read)
+declare i32 @atoi(ptr nocapture noundef) local_unnamed_addr #1
+
+; Function Attrs: mustprogress nofree nounwind optsize willreturn allockind("alloc,uninitialized") allocsize(0) memory(inaccessiblemem: readwrite)
+declare noalias noundef ptr @malloc(i64 noundef) local_unnamed_addr #2
+
+; Function Attrs: nofree nounwind optsize
+declare noalias noundef ptr @fopen(ptr nocapture noundef readonly, ptr nocapture noundef readonly) local_unnamed_addr #3
+
+; Function Attrs: nofree nounwind optsize
+declare noundef i64 @fread(ptr nocapture noundef, i64 noundef, i64 noundef, ptr nocapture noundef) local_unnamed_addr #3
+
+; Function Attrs: nofree nounwind optsize
+declare noundef i32 @fclose(ptr nocapture noundef) local_unnamed_addr #3
+
+; Function Attrs: nofree nounwind optsize
+declare noundef i32 @fprintf(ptr nocapture noundef, ptr nocapture noundef readonly, ...) local_unnamed_addr #3
+
+; Function Attrs: mustprogress nounwind optsize willreturn allockind("free") memory(argmem: readwrite, inaccessiblemem: readwrite)
+declare void @free(ptr allocptr nocapture noundef) local_unnamed_addr #4
+
+; Function Attrs: nofree nounwind
+declare noundef i32 @puts(ptr nocapture noundef readonly) local_unnamed_addr #5
+
+Summary: 
+Number of slices found: 0
+Number of slices that dont merge: 0
+Number of slices that arent self contained:0
+Total Number of slices kill:0

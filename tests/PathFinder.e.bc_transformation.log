@@ -1,0 +1,208 @@
+== OUTLINING INST PHASE ==
+  %5 = ashr i32 %4, 3
+Not self contained!
+  %18 = or i8 %10, %17
+Not self contained!
+  %11 = and i32 %4, 7
+Not self contained!
+  %13 = shl nuw i32 16777216, %11
+Not self contained!
+  %14 = ashr exact i32 %13, 24
+Not self contained!
+  %15 = and i32 %14, %12
+Not self contained!
+  %4 = sdiv i32 %3, 8
+[32moutlined![0m
+  %5 = and i1 %3, %4
+[32moutlined![0m
+  %68 = add nsw i32 %58, 1
+Not self contained!
+  %28 = ashr exact i32 %25, 24
+Not self contained!
+  %9 = add nsw i32 %8, 1
+Not self contained!
+  %5 = and i1 %3, %4
+[32moutlined![0m
+  %47 = add nuw nsw i32 %39, %46
+[32moutlined![0m
+  %42 = add nsw i32 %41, 1
+Not self contained!
+  %6 = and i1 %5, %4
+Not self contained!
+  %10 = fsub double %9, %7
+[32moutlined![0m
+  %13 = sdiv i32 %12, 3600
+Not self contained!
+  %16 = sdiv i32 %15, 60
+Not self contained!
+  %35 = add nsw i32 %29, -1
+Not self contained!
+  %6 = and i1 %5, %4
+Not self contained!
+  %5 = and i1 %3, %4
+[32moutlined![0m
+  %5 = and i1 %3, %4
+[32moutlined![0m
+  %5 = and i1 %3, %4
+[32moutlined![0m
+  %29 = add nsw i32 %28, 1
+Not self contained!
+  %5 = and i1 %3, %4
+[32moutlined![0m
+  %41 = add nsw i32 %40, 1
+Not self contained!
+  %40 = add nsw i32 %26, %39
+Not self contained!
+  %61 = fsub double %60, %5
+[32moutlined![0m
+  %64 = sdiv i32 %63, 3600
+Not self contained!
+  %67 = sdiv i32 %66, 60
+Not self contained!
+  %18 = add i32 %17, -1
+Not self contained!
+  %66 = add nsw i32 %64, 1
+Not self contained!
+  %90 = and i16 %89, 2048
+Not self contained!
+  %124 = add nsw i32 %122, 1
+Not self contained!
+  %148 = and i16 %147, 2048
+Not self contained!
+  %162 = add i64 %.lcssa, 1
+Not self contained!
+  %165 = and i64 %162, 4294967295
+Not self contained!
+  %16 = shl nsw i64 %15, 3
+[32moutlined![0m
+  %39 = add i64 %.lcssa, 1
+Not self contained!
+  %64 = add nsw i32 %29, 1
+Not self contained!
+  %66 = shl nsw i64 %65, 3
+Not self contained!
+  %112 = add nsw i32 %44, 1
+Not self contained!
+  %114 = shl nsw i64 %113, 3
+Not self contained!
+  %42 = fsub double %41, %2
+[32moutlined![0m
+  %45 = sdiv i32 %44, 3600
+Not self contained!
+  %48 = sdiv i32 %47, 60
+Not self contained!
+  %10 = and i1 %8, %9
+[32moutlined![0m
+  %20 = and i1 %19, %18
+Not self contained!
+  %59 = and i8 %58, 1
+Not self contained!
+  %16 = and i1 %15, %13
+[32moutlined![0m
+  %109 = fsub double %108, %8
+[32moutlined![0m
+  %112 = sdiv i32 %111, 3600
+Not self contained!
+  %115 = sdiv i32 %114, 60
+Not self contained!
+  %6 = or i1 %4, %5
+[32moutlined![0m
+  %11 = shl nsw i64 %10, 4
+[32moutlined![0m
+  %28 = add nsw i32 %27, %25
+Not self contained!
+  %31 = add nuw nsw i32 %28, 1
+Not self contained!
+  %33 = shl nuw nsw i64 %32, 4
+Not self contained!
+  %57 = add nsw i32 %56, %52
+Not self contained!
+  %58 = add nsw i32 %57, 1
+Not self contained!
+  %60 = shl nsw i64 %59, 4
+Not self contained!
+  %14 = and i1 %13, %11
+[32moutlined![0m
+  %8 = and i1 %7, %6
+Not self contained!
+  %9 = add nsw i32 %8, 1
+[32moutlined![0m
+  %30 = fadd double %24, %29
+Not self contained!
+  %34 = add nsw i32 %33, 1
+Not self contained!
+  %47 = fdiv double %.lcssa2, %46
+Not self contained!
+  %65 = fsub double %63, %64
+Not self contained!
+  %6 = and i1 %4, %5
+[32moutlined![0m
+  %9 = and i1 %6, %8
+[32moutlined![0m
+  %46 = shl nsw i64 %45, 3
+Not self contained!
+  %51 = shl nsw i32 %50, 1
+Not self contained!
+  %5 = and i1 %3, %4
+[32moutlined![0m
+  %14 = shl nsw i64 %13, 2
+Not self contained!
+  %5 = and i1 %3, %4
+[32moutlined![0m
+  %14 = and i16 %13, 2048
+[32moutlined![0m
+  %8 = and i16 %7, 2048
+Not self contained!
+  %17 = and i16 %16, 2048
+Not self contained!
+  %20 = or i1 %19, %18
+Not self contained!
+  %28 = and i16 %27, 2048
+Not self contained!
+  %31 = or i1 %30, %29
+Not self contained!
+  %45 = and i16 %44, 2048
+Not self contained!
+  %5 = and i1 %3, %4
+[32moutlined![0m
+  %14 = or i1 %11, %13
+Not self contained!
+  %14 = shl nsw i64 %13, 3
+Not self contained!
+  %6 = and i1 %4, %5
+[32moutlined![0m
+  %6 = and i1 %4, %5
+[32moutlined![0m
+  %20 = shl nsw i64 %19, 3
+Not self contained!
+  %17 = add nsw i32 %16, 1900
+Not self contained!
+  %9 = or i1 %8, %7
+Not self contained!
+  %11 = or i1 %10, %9
+Not self contained!
+  %20 = add nsw i32 %19, 1
+Not self contained!
+  %30 = add nsw i32 %29, 1900
+Not self contained!
+  %32 = add nsw i32 %31, 1
+Not self contained!
+== MERGE SLICES FUNC PHASE ==
+MergeFunc returned true!
+== REMOVING INST PHASE ==
+PLEASE submit a bug report to https://github.com/llvm/llvm-project/issues/ and include the crash backtrace.
+Stack dump:
+0.	Program arguments: opt -stats -debug-only=Daedalus -passes=daedalus -load-pass-plugin=../build/lib/libdaedalus.so -S PathFinder.e.bc.ll -o PathFinder.e.bc.d.ll
+ #0 0x0000610a4385543c llvm::sys::PrintStackTrace(llvm::raw_ostream&, int) (/home/pc2/llvm-rafael/build/bin/opt+0x1ca143c)
+ #1 0x0000610a4385263b SignalHandler(int) Signals.cpp:0:0
+ #2 0x00007fa3fec1e1d0 (/usr/lib/libc.so.6+0x3d1d0)
+ #3 0x0000610a4304b740 llvm::AttributeList::hasFnAttr(llvm::Attribute::AttrKind) const (/home/pc2/llvm-rafael/build/bin/opt+0x1497740)
+ #4 0x00007fa3feb76311 removeInstructions(std::vector<iSlice, std::allocator<iSlice>>&, std::set<llvm::Function*, std::less<llvm::Function*>, std::allocator<llvm::Function*>> const&, std::set<llvm::Function*, std::less<llvm::Function*>, std::allocator<llvm::Function*>>&) /home/pc2/workspace/Daedalus/lib/daedalus.cpp:204:11
+ #5 0x00007fa3feb775d8 Daedalus::DaedalusPass::run(llvm::Module&, llvm::AnalysisManager<llvm::Module>&) /home/pc2/workspace/Daedalus/lib/daedalus.cpp:391:25
+ #6 0x00007fa3feb8bc61 llvm::detail::PassModel<llvm::Module, Daedalus::DaedalusPass, llvm::PreservedAnalyses, llvm::AnalysisManager<llvm::Module>>::run(llvm::Module&, llvm::AnalysisManager<llvm::Module>&) /home/pc2/llvm-rafael/llvm/include/llvm/IR/PassManagerInternal.h:90:3
+ #7 0x0000610a4323b0d1 llvm::PassManager<llvm::Module, llvm::AnalysisManager<llvm::Module>>::run(llvm::Module&, llvm::AnalysisManager<llvm::Module>&) (/home/pc2/llvm-rafael/build/bin/opt+0x16870d1)
+ #8 0x0000610a42145e5b llvm::runPassPipeline(llvm::StringRef, llvm::Module&, llvm::TargetMachine*, llvm::TargetLibraryInfoImpl*, llvm::ToolOutputFile*, llvm::ToolOutputFile*, llvm::ToolOutputFile*, llvm::StringRef, llvm::ArrayRef<llvm::PassPlugin>, llvm::opt_tool::OutputKind, llvm::opt_tool::VerifierKind, bool, bool, bool, bool, bool, bool, bool) (/home/pc2/llvm-rafael/build/bin/opt+0x591e5b)
+ #9 0x0000610a4208456f main (/home/pc2/llvm-rafael/build/bin/opt+0x4d056f)
+#10 0x00007fa3fec06e08 (/usr/lib/libc.so.6+0x25e08)
+#11 0x00007fa3fec06ecc __libc_start_main (/usr/lib/libc.so.6+0x25ecc)
+#12 0x0000610a42139755 _start (/home/pc2/llvm-rafael/build/bin/opt+0x585755)

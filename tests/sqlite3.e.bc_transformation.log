@@ -1,0 +1,275 @@
+== OUTLINING INST PHASE ==
+  %17 = or i1 %16, %15
+Not self contained!
+  %21 = add i32 %12, -1
+Not self contained!
+  %26 = add nsw i32 %25, 1
+Not self contained!
+  %31 = add nsw i32 %30, 1
+Not self contained!
+  %73 = add nsw i32 %72, 1
+Not self contained!
+  %38 = add nsw i32 %37, -1
+Not self contained!
+  %55 = add nsw i32 %54, -1
+Not self contained!
+  %39 = add nsw i32 %37, 1
+Not self contained!
+  %78 = add i32 %77, 16
+Not self contained!
+  %203 = add nsw i32 %202, 1
+Not self contained!
+  %232 = add i32 %231, 20
+Not self contained!
+  %7 = mul nsw i32 %6, 5
+Not self contained!
+  %13 = shl i64 %12, 32
+Not self contained!
+  %14 = ashr exact i64 %13, 32
+Not self contained!
+  %16 = sub nsw i64 %15, %14
+Not self contained!
+  %152 = and i32 %151, %150
+Not self contained!
+  %164 = and i32 %163, %162
+Not self contained!
+  %180 = and i32 %179, %178
+Not self contained!
+  %207 = and i32 %206, %204
+Not self contained!
+  %804 = shl i64 %803, 32
+Not self contained!
+  %805 = ashr exact i64 %804, 32
+Not self contained!
+  %807 = sub nsw i64 %806, %805
+Not self contained!
+  %813 = and i1 %812, %811
+Not self contained!
+  %163 = and i64 %156, 4294967295
+Not self contained!
+  %36 = and i16 %35, 8192
+Not self contained!
+  %41 = shl i64 %.lcssa9, 32
+Not self contained!
+  %42 = add i64 %41, 4294967296
+Not self contained!
+  %43 = ashr exact i64 %42, 32
+Not self contained!
+  %46 = shl i64 %.lcssa8, 32
+Not self contained!
+  %47 = ashr exact i64 %46, 32
+Not self contained!
+  %54 = or i1 %52, %53
+Not self contained!
+  %60 = add nsw i32 %57, 1
+Not self contained!
+  %67 = shl i64 %.lcssa9, 32
+Not self contained!
+  %68 = ashr exact i64 %67, 32
+Not self contained!
+  %78 = and i16 %77, 8192
+Not self contained!
+  %88 = add nsw i32 %86, 1
+Not self contained!
+  %108 = and i8 %104, -8
+Not self contained!
+  %111 = add nsw i8 %104, -48
+Not self contained!
+  %116 = and i8 %115, -8
+Not self contained!
+  %119 = shl nuw nsw i8 %111, 3
+Not self contained!
+  %120 = add nsw i8 %119, -48
+Not self contained!
+  %121 = add nsw i8 %120, %115
+Not self contained!
+  %126 = and i8 %125, -8
+Not self contained!
+  %129 = shl i8 %121, 3
+Not self contained!
+  %130 = add i8 %129, -48
+Not self contained!
+  %131 = add i8 %130, %125
+Not self contained!
+  %136 = add nsw i32 %133, 1
+Not self contained!
+  %139 = and i64 %.lcssa15, 4294967295
+Not self contained!
+  %705 = shl i64 %156, 32
+Not self contained!
+  %706 = ashr exact i64 %705, 32
+Not self contained!
+  %711 = and i1 %710, %708
+Not self contained!
+  %167 = and i1 %166, %165
+Not self contained!
+  %176 = and i64 %156, 4294967295
+Not self contained!
+  %198 = shl i64 %197, 32
+Not self contained!
+  %199 = ashr exact i64 %198, 32
+Not self contained!
+  %201 = sub nsw i64 %200, %199
+Not self contained!
+  %205 = shl i64 %156, 32
+Not self contained!
+  %206 = ashr exact i64 %205, 32
+Not self contained!
+  %241 = shl i64 %156, 32
+Not self contained!
+  %242 = ashr exact i64 %241, 32
+Not self contained!
+  %246 = and i1 %245, %244
+Not self contained!
+  %297 = shl i64 %156, 32
+Not self contained!
+  %298 = ashr exact i64 %297, 32
+Not self contained!
+  %305 = and i1 %304, %303
+Not self contained!
+  %320 = shl i64 %156, 32
+Not self contained!
+  %321 = ashr exact i64 %320, 32
+Not self contained!
+  %325 = and i1 %324, %323
+Not self contained!
+  %333 = and i64 %332, 4294967295
+Not self contained!
+  %348 = shl i64 %347, 32
+Not self contained!
+  %349 = ashr exact i64 %348, 32
+Not self contained!
+  %351 = sub nsw i64 %350, %349
+Not self contained!
+  %371 = add nsw i32 %343, 20
+Not self contained!
+  %372 = shl nsw i32 %367, 1
+Not self contained!
+  %373 = add nsw i32 %372, %371
+Not self contained!
+  %381 = shl i64 %378, 32
+Not self contained!
+  %382 = ashr exact i64 %381, 32
+Not self contained!
+  %398 = ashr exact i64 %397, 32
+Not self contained!
+  %423 = add nsw i32 %367, 1
+Not self contained!
+  %425 = shl nsw i64 %424, 3
+Not self contained!
+  %433 = shl i64 %332, 32
+Not self contained!
+  %434 = ashr exact i64 %433, 32
+Not self contained!
+  %435 = add i64 %433, -4294967296
+Not self contained!
+  %436 = ashr exact i64 %435, 32
+Not self contained!
+  %468 = add nsw i32 %.lcssa1, 1
+Not self contained!
+  %507 = and i1 %506, %503
+Not self contained!
+  %571 = and i1 %570, %569
+Not self contained!
+  %589 = shl i64 %588, 32
+Not self contained!
+  %590 = ashr exact i64 %589, 32
+Not self contained!
+  %592 = sub nsw i64 %591, %590
+Not self contained!
+  %595 = shl i64 %156, 32
+Not self contained!
+  %596 = ashr exact i64 %595, 32
+Not self contained!
+  %600 = and i1 %599, %598
+Not self contained!
+  %605 = shl i64 %604, 32
+Not self contained!
+  %606 = ashr exact i64 %605, 32
+Not self contained!
+  %663 = shl i64 %156, 32
+Not self contained!
+  %664 = ashr exact i64 %663, 32
+Not self contained!
+  %668 = and i1 %667, %666
+Not self contained!
+  %674 = shl i64 %156, 32
+Not self contained!
+  %675 = ashr exact i64 %674, 32
+Not self contained!
+  %679 = and i1 %678, %677
+Not self contained!
+  %722 = shl i64 %156, 32
+Not self contained!
+  %723 = ashr exact i64 %722, 32
+Not self contained!
+  %727 = shl i64 %156, 32
+Not self contained!
+  %728 = ashr exact i64 %727, 32
+Not self contained!
+  %732 = and i1 %731, %730
+Not self contained!
+  %745 = shl i64 %156, 32
+Not self contained!
+  %746 = ashr exact i64 %745, 32
+Not self contained!
+  %885 = and i64 %156, 4294967295
+Not self contained!
+  %910 = shl i64 %909, 32
+Not self contained!
+  %911 = ashr exact i64 %910, 32
+Not self contained!
+  %913 = sub nsw i64 %912, %911
+Not self contained!
+  %923 = add nuw i32 %919, 1
+Not self contained!
+  %944 = add i32 %919, -1
+Not self contained!
+  %945 = add i32 %944, %943
+Not self contained!
+  %946 = sdiv i32 %945, %943
+Not self contained!
+  %965 = add i64 %957, %949
+Not self contained!
+  %980 = and i64 %156, 4294967295
+Not self contained!
+  %984 = and i1 %983, %982
+Not self contained!
+  %1002 = and i1 %983, %1001
+Not self contained!
+  %1010 = shl i64 %156, 32
+Not self contained!
+  %1011 = ashr exact i64 %1010, 32
+Not self contained!
+  %15 = add i64 %14, 4294967296
+[32moutlined![0m
+  %167 = add nsw i32 %.lcssa7, 1
+Not self contained!
+  %265 = add nsw i32 %177, 1
+Not self contained!
+  %94 = and i16 %93, 8192
+Not self contained!
+opt: /home/pc2/llvm-rafael/llvm/include/llvm/IR/Instructions.h:2889: llvm::Value* llvm::PHINode::removeIncomingValue(const llvm::BasicBlock*, bool): Assertion `Idx >= 0 && "Invalid basic block argument to remove!"' failed.
+PLEASE submit a bug report to https://github.com/llvm/llvm-project/issues/ and include the crash backtrace.
+Stack dump:
+0.	Program arguments: opt -stats -debug-only=Daedalus -passes=daedalus -load-pass-plugin=../build/lib/libdaedalus.so -S sqlite3.e.bc.ll -o sqlite3.e.bc.d.ll
+ #0 0x000064c01b4c443c llvm::sys::PrintStackTrace(llvm::raw_ostream&, int) (/home/pc2/llvm-rafael/build/bin/opt+0x1ca143c)
+ #1 0x000064c01b4c163b SignalHandler(int) Signals.cpp:0:0
+ #2 0x000079090375d1d0 (/usr/lib/libc.so.6+0x3d1d0)
+ #3 0x00007909037b63f4 (/usr/lib/libc.so.6+0x963f4)
+ #4 0x000079090375d120 raise (/usr/lib/libc.so.6+0x3d120)
+ #5 0x00007909037444c3 abort (/usr/lib/libc.so.6+0x244c3)
+ #6 0x00007909037443df (/usr/lib/libc.so.6+0x243df)
+ #7 0x0000790903755177 (/usr/lib/libc.so.6+0x35177)
+ #8 0x00007909036d1ffb llvm::PHINode::removeIncomingValue(llvm::BasicBlock const*, bool) /home/pc2/llvm-rafael/llvm/include/llvm/IR/Instructions.h:2890:31
+ #9 0x00007909036cdece updatePHINodes(llvm::Function*) /home/pc2/workspace/Daedalus/include/wyvern/ProgramSlice.cpp:531:7
+#10 0x00007909036ceb2d llvm::ProgramSlice::rerouteBranches(llvm::Function*) /home/pc2/workspace/Daedalus/include/wyvern/ProgramSlice.cpp:690:1
+#11 0x00007909036d0602 llvm::ProgramSlice::outline() /home/pc2/workspace/Daedalus/include/wyvern/ProgramSlice.cpp:1073:17
+#12 0x00007909036b5cea Daedalus::DaedalusPass::run(llvm::Module&, llvm::AnalysisManager<llvm::Module>&) /home/pc2/workspace/Daedalus/lib/daedalus.cpp:305:31
+#13 0x00007909036cac61 llvm::detail::PassModel<llvm::Module, Daedalus::DaedalusPass, llvm::PreservedAnalyses, llvm::AnalysisManager<llvm::Module>>::run(llvm::Module&, llvm::AnalysisManager<llvm::Module>&) /home/pc2/llvm-rafael/llvm/include/llvm/IR/PassManagerInternal.h:90:3
+#14 0x000064c01aeaa0d1 llvm::PassManager<llvm::Module, llvm::AnalysisManager<llvm::Module>>::run(llvm::Module&, llvm::AnalysisManager<llvm::Module>&) (/home/pc2/llvm-rafael/build/bin/opt+0x16870d1)
+#15 0x000064c019db4e5b llvm::runPassPipeline(llvm::StringRef, llvm::Module&, llvm::TargetMachine*, llvm::TargetLibraryInfoImpl*, llvm::ToolOutputFile*, llvm::ToolOutputFile*, llvm::ToolOutputFile*, llvm::StringRef, llvm::ArrayRef<llvm::PassPlugin>, llvm::opt_tool::OutputKind, llvm::opt_tool::VerifierKind, bool, bool, bool, bool, bool, bool, bool) (/home/pc2/llvm-rafael/build/bin/opt+0x591e5b)
+#16 0x000064c019cf356f main (/home/pc2/llvm-rafael/build/bin/opt+0x4d056f)
+#17 0x0000790903745e08 (/usr/lib/libc.so.6+0x25e08)
+#18 0x0000790903745ecc __libc_start_main (/usr/lib/libc.so.6+0x25ecc)
+#19 0x000064c019da8755 _start (/home/pc2/llvm-rafael/build/bin/opt+0x585755)

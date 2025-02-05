@@ -1,0 +1,1233 @@
+== OUTLINING INST PHASE ==
+  %378 = xor i64 %377, %371
+Not self contained!
+  %379 = xor i64 %378, %277
+Not self contained!
+  %383 = xor i64 %379, %382
+Not self contained!
+  %387 = xor i64 %379, %386
+Not self contained!
+  %388 = lshr i64 %387, 4
+Not self contained!
+  %389 = shl i64 %387, 28
+Not self contained!
+  %390 = add i64 %388, %389
+Not self contained!
+  %391 = lshr i64 %383, 2
+Not self contained!
+  %392 = and i64 %391, 63
+Not self contained!
+  %395 = lshr i64 %383, 10
+Not self contained!
+  %17 = shl nuw nsw i64 %16, 16
+Not self contained!
+  %18 = or i64 %17, %12
+Not self contained!
+  %22 = shl nuw nsw i64 %21, 24
+Not self contained!
+  %23 = or i64 %18, %22
+Not self contained!
+  %30 = shl nuw nsw i64 %29, 16
+Not self contained!
+  %31 = or i64 %30, %25
+Not self contained!
+  %34 = shl nuw nsw i64 %33, 24
+Not self contained!
+  %35 = or i64 %31, %34
+Not self contained!
+  %36 = lshr i64 %35, 4
+Not self contained!
+  %37 = xor i64 %36, %23
+Not self contained!
+  %38 = and i64 %37, 252645135
+Not self contained!
+  %39 = xor i64 %38, %23
+Not self contained!
+  %40 = shl nuw nsw i64 %38, 4
+Not self contained!
+  %41 = xor i64 %40, %35
+Not self contained!
+  %42 = shl nuw nsw i64 %39, 18
+Not self contained!
+  %43 = xor i64 %42, %39
+Not self contained!
+  %44 = and i64 %43, 3435921408
+Not self contained!
+  %45 = lshr exact i64 %44, 18
+Not self contained!
+  %46 = or i64 %45, %44
+Not self contained!
+  %47 = xor i64 %46, %39
+Not self contained!
+  %48 = shl nuw nsw i64 %41, 18
+Not self contained!
+  %49 = xor i64 %48, %41
+Not self contained!
+  %50 = and i64 %49, 3435921408
+Not self contained!
+  %51 = lshr exact i64 %50, 18
+Not self contained!
+  %52 = or i64 %51, %50
+Not self contained!
+  %53 = xor i64 %52, %41
+Not self contained!
+  %54 = lshr i64 %53, 1
+Not self contained!
+  %55 = xor i64 %54, %47
+Not self contained!
+  %56 = and i64 %55, 1431655765
+Not self contained!
+  %57 = xor i64 %56, %47
+Not self contained!
+  %58 = shl nuw nsw i64 %56, 1
+Not self contained!
+  %59 = xor i64 %58, %53
+Not self contained!
+  %60 = lshr i64 %57, 8
+Not self contained!
+  %61 = xor i64 %60, %59
+Not self contained!
+  %62 = and i64 %61, 16711935
+Not self contained!
+  %63 = xor i64 %62, %59
+Not self contained!
+  %64 = shl nuw nsw i64 %62, 8
+Not self contained!
+  %65 = xor i64 %64, %57
+Not self contained!
+  %66 = lshr i64 %63, 1
+Not self contained!
+  %67 = xor i64 %66, %65
+Not self contained!
+  %68 = and i64 %67, 1431655765
+Not self contained!
+  %69 = xor i64 %68, %65
+Not self contained!
+  %70 = shl nuw nsw i64 %68, 1
+Not self contained!
+  %71 = xor i64 %70, %63
+Not self contained!
+  %72 = shl nuw nsw i64 %71, 16
+Not self contained!
+  %73 = and i64 %72, 16711680
+Not self contained!
+  %74 = and i64 %71, 65280
+Not self contained!
+  %75 = lshr i64 %71, 16
+Not self contained!
+  %76 = and i64 %75, 255
+Not self contained!
+  %77 = lshr i64 %69, 4
+Not self contained!
+  %78 = and i64 %77, 251658240
+Not self contained!
+  %79 = or i64 %78, %74
+Not self contained!
+  %80 = or i64 %79, %73
+Not self contained!
+  %81 = or i64 %80, %76
+Not self contained!
+  %92 = or i64 %89, 26
+Not self contained!
+  %93 = lshr i64 %87, %91
+Not self contained!
+  %94 = shl nuw nsw i64 %87, %92
+Not self contained!
+  %95 = or i64 %93, %94
+Not self contained!
+  %96 = lshr i64 %86, %91
+Not self contained!
+  %97 = shl nuw nsw i64 %86, %92
+Not self contained!
+  %98 = or i64 %96, %97
+Not self contained!
+  %99 = and i64 %98, 268435455
+Not self contained!
+  %100 = and i64 %93, 63
+Not self contained!
+  %103 = lshr i64 %93, 6
+Not self contained!
+  %104 = and i64 %103, 3
+Not self contained!
+  %105 = lshr i64 %93, 7
+Not self contained!
+  %106 = and i64 %105, 60
+Not self contained!
+  %107 = or i64 %104, %106
+Not self contained!
+  %368 = lshr i64 %339, 26
+Not self contained!
+  %369 = and i64 %368, 63
+Not self contained!
+  %372 = xor i64 %343, %347
+Not self contained!
+  %373 = xor i64 %372, %351
+Not self contained!
+  %374 = xor i64 %373, %355
+Not self contained!
+  %375 = xor i64 %374, %359
+Not self contained!
+  %376 = xor i64 %375, %363
+Not self contained!
+  %377 = xor i64 %376, %367
+Not self contained!
+  %110 = or i64 %109, %102
+Not self contained!
+  %111 = lshr i64 %93, 13
+Not self contained!
+  %112 = and i64 %111, 15
+Not self contained!
+  %113 = lshr i64 %93, 14
+Not self contained!
+  %114 = and i64 %113, 48
+Not self contained!
+  %115 = or i64 %112, %114
+Not self contained!
+  %118 = or i64 %110, %117
+Not self contained!
+  %119 = lshr i64 %93, 20
+Not self contained!
+  %120 = and i64 %119, 1
+Not self contained!
+  %121 = lshr i64 %93, 21
+Not self contained!
+  %122 = and i64 %121, 6
+Not self contained!
+  %123 = or i64 %120, %122
+Not self contained!
+  %124 = lshr i64 %95, 22
+Not self contained!
+  %125 = and i64 %124, 56
+Not self contained!
+  %126 = or i64 %123, %125
+Not self contained!
+  %258 = lshr i64 %234, 14
+Not self contained!
+  %259 = and i64 %258, 63
+Not self contained!
+  %262 = lshr i64 %234, 22
+Not self contained!
+  %263 = and i64 %262, 63
+Not self contained!
+  %266 = lshr i64 %237, 26
+Not self contained!
+  %267 = and i64 %266, 63
+Not self contained!
+  %129 = or i64 %118, %128
+Not self contained!
+  %130 = and i64 %96, 63
+Not self contained!
+  %133 = lshr i64 %96, 7
+Not self contained!
+  %134 = and i64 %133, 3
+Not self contained!
+  %135 = lshr i64 %96, 8
+Not self contained!
+  %136 = and i64 %135, 60
+Not self contained!
+  %137 = or i64 %134, %136
+Not self contained!
+  %140 = or i64 %139, %132
+Not self contained!
+  %141 = lshr i64 %96, 15
+Not self contained!
+  %142 = and i64 %141, 63
+Not self contained!
+  %145 = or i64 %140, %144
+Not self contained!
+  %146 = lshr i64 %96, 21
+Not self contained!
+  %147 = and i64 %146, 15
+Not self contained!
+  %148 = lshr i64 %98, 22
+Not self contained!
+  %149 = and i64 %148, 48
+Not self contained!
+  %150 = or i64 %149, %147
+Not self contained!
+  %153 = or i64 %145, %152
+Not self contained!
+  %154 = shl i64 %153, 16
+Not self contained!
+  %155 = and i64 %129, 65535
+Not self contained!
+  %156 = and i64 %154, 4294901760
+Not self contained!
+  %157 = or i64 %156, %155
+Not self contained!
+  %158 = shl nuw nsw i64 %157, 2
+Not self contained!
+  %159 = lshr i64 %156, 30
+Not self contained!
+  %160 = and i64 %158, 4294967292
+Not self contained!
+  %161 = or i64 %160, %159
+Not self contained!
+  %163 = lshr i64 %129, 16
+Not self contained!
+  %164 = and i64 %153, 4294901760
+Not self contained!
+  %165 = or i64 %164, %163
+Not self contained!
+  %166 = shl nuw nsw i64 %165, 6
+Not self contained!
+  %167 = lshr i64 %165, 26
+Not self contained!
+  %168 = and i64 %166, 4294967232
+Not self contained!
+  %169 = or i64 %168, %167
+Not self contained!
+  %186 = lshr i64 %185, 4
+Not self contained!
+  %187 = xor i64 %186, %184
+Not self contained!
+  %188 = and i64 %187, 252645135
+Not self contained!
+  %189 = xor i64 %188, %184
+Not self contained!
+  %190 = shl nuw nsw i64 %188, 4
+Not self contained!
+  %191 = xor i64 %190, %185
+Not self contained!
+  %192 = lshr i64 %189, 16
+Not self contained!
+  %193 = and i64 %191, 65535
+Not self contained!
+  %194 = xor i64 %193, %192
+Not self contained!
+  %195 = xor i64 %194, %191
+Not self contained!
+  %196 = shl nuw nsw i64 %194, 16
+Not self contained!
+  %197 = xor i64 %196, %189
+Not self contained!
+  %198 = lshr i64 %195, 2
+Not self contained!
+  %199 = xor i64 %198, %197
+Not self contained!
+  %200 = and i64 %199, 858993459
+Not self contained!
+  %201 = xor i64 %200, %197
+Not self contained!
+  %202 = shl nuw nsw i64 %200, 2
+Not self contained!
+  %203 = xor i64 %202, %195
+Not self contained!
+  %204 = lshr i64 %201, 8
+Not self contained!
+  %205 = xor i64 %204, %203
+Not self contained!
+  %206 = and i64 %205, 16711935
+Not self contained!
+  %207 = xor i64 %206, %203
+Not self contained!
+  %208 = shl nuw nsw i64 %206, 8
+Not self contained!
+  %209 = xor i64 %208, %201
+Not self contained!
+  %210 = lshr i64 %207, 1
+Not self contained!
+  %211 = xor i64 %210, %209
+Not self contained!
+  %212 = and i64 %211, 1431655765
+Not self contained!
+  %213 = xor i64 %212, %209
+Not self contained!
+  %214 = shl nuw nsw i64 %212, 1
+Not self contained!
+  %215 = xor i64 %214, %207
+Not self contained!
+  %216 = lshr i64 %213, 29
+Not self contained!
+  %217 = shl i64 %213, 3
+Not self contained!
+  %218 = add i64 %216, %217
+Not self contained!
+  %219 = and i64 %218, 4294967295
+Not self contained!
+  %220 = lshr i64 %215, 29
+Not self contained!
+  %221 = shl i64 %215, 3
+Not self contained!
+  %222 = add i64 %220, %221
+Not self contained!
+  %223 = and i64 %222, 4294967295
+Not self contained!
+  %230 = xor i64 %229, %227
+Not self contained!
+  %234 = xor i64 %233, %227
+Not self contained!
+  %235 = lshr i64 %234, 4
+Not self contained!
+  %236 = shl i64 %234, 28
+Not self contained!
+  %237 = add i64 %235, %236
+Not self contained!
+  %238 = lshr i64 %230, 2
+Not self contained!
+  %239 = and i64 %238, 63
+Not self contained!
+  %242 = lshr i64 %230, 10
+Not self contained!
+  %243 = and i64 %242, 63
+Not self contained!
+  %246 = lshr i64 %230, 18
+Not self contained!
+  %247 = and i64 %246, 63
+Not self contained!
+  %250 = lshr i64 %230, 26
+Not self contained!
+  %251 = and i64 %250, 63
+Not self contained!
+  %254 = lshr i64 %234, 6
+Not self contained!
+  %255 = and i64 %254, 63
+Not self contained!
+  %270 = xor i64 %241, %226
+Not self contained!
+  %271 = xor i64 %270, %245
+Not self contained!
+  %272 = xor i64 %271, %249
+Not self contained!
+  %273 = xor i64 %272, %253
+Not self contained!
+  %274 = xor i64 %273, %257
+Not self contained!
+  %275 = xor i64 %274, %261
+Not self contained!
+  %276 = xor i64 %275, %265
+Not self contained!
+  %277 = xor i64 %276, %269
+Not self contained!
+  %281 = xor i64 %277, %280
+Not self contained!
+  %285 = xor i64 %284, %277
+Not self contained!
+  %286 = lshr i64 %285, 4
+Not self contained!
+  %287 = shl i64 %285, 28
+Not self contained!
+  %288 = add i64 %286, %287
+Not self contained!
+  %289 = lshr i64 %281, 2
+Not self contained!
+  %290 = and i64 %289, 63
+Not self contained!
+  %293 = lshr i64 %281, 10
+Not self contained!
+  %294 = and i64 %293, 63
+Not self contained!
+  %297 = lshr i64 %281, 18
+Not self contained!
+  %298 = and i64 %297, 63
+Not self contained!
+  %301 = lshr i64 %281, 26
+Not self contained!
+  %302 = and i64 %301, 63
+Not self contained!
+  %305 = lshr i64 %285, 6
+Not self contained!
+  %306 = and i64 %305, 63
+Not self contained!
+  %309 = lshr i64 %285, 14
+Not self contained!
+  %310 = and i64 %309, 63
+Not self contained!
+  %313 = lshr i64 %285, 22
+Not self contained!
+  %314 = and i64 %313, 63
+Not self contained!
+  %317 = lshr i64 %288, 26
+Not self contained!
+  %318 = and i64 %317, 63
+Not self contained!
+  %321 = xor i64 %292, %296
+Not self contained!
+  %322 = xor i64 %321, %300
+Not self contained!
+  %323 = xor i64 %322, %304
+Not self contained!
+  %324 = xor i64 %323, %308
+Not self contained!
+  %325 = xor i64 %324, %312
+Not self contained!
+  %326 = xor i64 %325, %316
+Not self contained!
+  %327 = xor i64 %326, %320
+Not self contained!
+  %328 = xor i64 %327, %227
+Not self contained!
+  %332 = xor i64 %328, %331
+Not self contained!
+  %336 = xor i64 %328, %335
+Not self contained!
+  %337 = lshr i64 %336, 4
+Not self contained!
+  %338 = shl i64 %336, 28
+Not self contained!
+  %339 = add i64 %337, %338
+Not self contained!
+  %340 = lshr i64 %332, 2
+Not self contained!
+  %341 = and i64 %340, 63
+Not self contained!
+  %344 = lshr i64 %332, 10
+Not self contained!
+  %345 = and i64 %344, 63
+Not self contained!
+  %348 = lshr i64 %332, 18
+Not self contained!
+  %349 = and i64 %348, 63
+Not self contained!
+  %352 = lshr i64 %332, 26
+Not self contained!
+  %353 = and i64 %352, 63
+Not self contained!
+  %356 = lshr i64 %336, 6
+Not self contained!
+  %357 = and i64 %356, 63
+Not self contained!
+  %360 = lshr i64 %336, 14
+Not self contained!
+  %361 = and i64 %360, 63
+Not self contained!
+  %364 = lshr i64 %336, 22
+Not self contained!
+  %365 = and i64 %364, 63
+Not self contained!
+  %399 = lshr i64 %383, 18
+Not self contained!
+  %400 = and i64 %399, 63
+Not self contained!
+  %403 = lshr i64 %383, 26
+Not self contained!
+  %404 = and i64 %403, 63
+Not self contained!
+  %407 = lshr i64 %387, 6
+Not self contained!
+  %408 = and i64 %407, 63
+Not self contained!
+  %396 = and i64 %395, 63
+Not self contained!
+  %411 = lshr i64 %387, 14
+Not self contained!
+  %412 = and i64 %411, 63
+Not self contained!
+  %415 = lshr i64 %387, 22
+Not self contained!
+  %416 = and i64 %415, 63
+Not self contained!
+  %419 = lshr i64 %390, 26
+Not self contained!
+  %420 = and i64 %419, 63
+Not self contained!
+  %423 = xor i64 %394, %398
+Not self contained!
+  %424 = xor i64 %423, %402
+Not self contained!
+  %425 = xor i64 %424, %406
+Not self contained!
+  %426 = xor i64 %425, %410
+Not self contained!
+  %427 = xor i64 %426, %414
+Not self contained!
+  %428 = xor i64 %427, %418
+Not self contained!
+  %429 = xor i64 %428, %422
+Not self contained!
+  %430 = xor i64 %429, %328
+Not self contained!
+  %435 = lshr i64 %.lcssa1, 3
+Not self contained!
+  %436 = shl i64 %.lcssa1, 29
+Not self contained!
+  %437 = add i64 %435, %436
+Not self contained!
+  %438 = and i64 %437, 4294967295
+Not self contained!
+  %439 = lshr i64 %.lcssa, 3
+Not self contained!
+  %440 = shl i64 %.lcssa, 29
+Not self contained!
+  %441 = add i64 %439, %440
+Not self contained!
+  %442 = and i64 %441, 4294967295
+Not self contained!
+  %443 = lshr i64 %441, 1
+Not self contained!
+  %444 = xor i64 %443, %437
+Not self contained!
+  %445 = and i64 %444, 1431655765
+Not self contained!
+  %446 = xor i64 %445, %438
+Not self contained!
+  %447 = shl nuw nsw i64 %445, 1
+Not self contained!
+  %448 = xor i64 %447, %442
+Not self contained!
+  %449 = lshr i64 %446, 8
+Not self contained!
+  %450 = xor i64 %449, %448
+Not self contained!
+  %451 = and i64 %450, 16711935
+Not self contained!
+  %452 = xor i64 %451, %448
+Not self contained!
+  %453 = shl nuw nsw i64 %451, 8
+Not self contained!
+  %454 = xor i64 %453, %446
+Not self contained!
+  %455 = lshr i64 %452, 2
+Not self contained!
+  %456 = xor i64 %455, %454
+Not self contained!
+  %457 = and i64 %456, 858993459
+Not self contained!
+  %458 = xor i64 %457, %454
+Not self contained!
+  %459 = shl nuw nsw i64 %457, 2
+Not self contained!
+  %460 = xor i64 %459, %452
+Not self contained!
+  %461 = lshr i64 %458, 16
+Not self contained!
+  %462 = and i64 %460, 65535
+Not self contained!
+  %463 = xor i64 %462, %461
+Not self contained!
+  %464 = xor i64 %463, %460
+Not self contained!
+  %465 = shl nuw nsw i64 %463, 16
+Not self contained!
+  %466 = xor i64 %465, %458
+Not self contained!
+  %467 = lshr i64 %464, 4
+Not self contained!
+  %468 = xor i64 %467, %466
+Not self contained!
+  %469 = and i64 %468, 252645135
+Not self contained!
+  %470 = xor i64 %469, %466
+Not self contained!
+  %471 = shl nuw nsw i64 %469, 4
+Not self contained!
+  %472 = xor i64 %471, %464
+Not self contained!
+  %475 = lshr i64 %470, 8
+Not self contained!
+  %478 = lshr i64 %470, 16
+Not self contained!
+  %481 = lshr i64 %470, 24
+Not self contained!
+  %486 = lshr i64 %472, 8
+Not self contained!
+  %489 = lshr i64 %472, 16
+Not self contained!
+  %492 = lshr i64 %472, 24
+Not self contained!
+== MERGE SLICES FUNC PHASE ==
+MergeFunc returned false...
+== REMOVING INST PHASE ==
+== SIMPLIFY PHASE ==
+== PRINT PHASE ==
+; Function Attrs: noreturn nounwind optsize uwtable
+define dso_local i32 @main(i32 noundef %0, ptr nocapture noundef readonly %1) #0 {
+  %3 = icmp eq i32 %0, 2
+  br i1 %3, label %7, label %4
+
+4:                                                ; preds = %2
+  %5 = load ptr, ptr %1, align 8, !tbaa !7
+  %6 = tail call i32 (ptr, ...) @printf(ptr noundef nonnull dereferenceable(1) @.str.3, ptr noundef %5) #8
+  tail call void @exit(i32 noundef -1) #9
+  unreachable
+
+7:                                                ; preds = %2
+  %8 = getelementptr inbounds ptr, ptr %1, i64 1
+  %9 = load ptr, ptr %8, align 8, !tbaa !7
+  %10 = tail call i32 @atoi(ptr nocapture noundef %9) #10
+  %11 = icmp sgt i32 %10, 34
+  br i1 %11, label %12, label %15
+
+12:                                               ; preds = %7
+  %13 = load ptr, ptr %1, align 8, !tbaa !7
+  %14 = tail call i32 (ptr, ...) @printf(ptr noundef nonnull dereferenceable(1) @.str.3, ptr noundef %13) #8
+  tail call void @exit(i32 noundef -1) #9
+  unreachable
+
+15:                                               ; preds = %7
+  tail call fastcc void @driver(i32 noundef %10) #8
+  tail call void @exit(i32 noundef 0) #9
+  unreachable
+}
+
+; Function Attrs: nofree nounwind optsize
+declare noundef i32 @printf(ptr nocapture noundef readonly, ...) local_unnamed_addr #1
+
+; Function Attrs: noreturn nounwind optsize
+declare void @exit(i32 noundef) local_unnamed_addr #2
+
+; Function Attrs: mustprogress nofree nounwind optsize willreturn memory(read)
+declare i32 @atoi(ptr nocapture noundef) local_unnamed_addr #3
+
+; Function Attrs: nofree nounwind optsize uwtable
+define internal fastcc void @driver(i32 noundef %0) unnamed_addr #4 {
+  %2 = alloca [34 x [8 x i8]], align 16
+  %3 = alloca [34 x [16 x %struct.des_ks_struct]], align 16
+  call void @llvm.lifetime.start.p0(i64 272, ptr nonnull %2) #8
+  call void @llvm.lifetime.start.p0(i64 8704, ptr nonnull %3) #8
+  br label %7
+
+4:                                                ; preds = %173
+  %5 = icmp sgt i32 %0, 0
+  %6 = zext i32 %0 to i64
+  br label %176
+
+7:                                                ; preds = %173, %1
+  %8 = phi i64 [ 0, %1 ], [ %174, %173 ]
+  %9 = getelementptr inbounds [34 x [8 x i8]], ptr @key_data, i64 0, i64 %8
+  %10 = getelementptr inbounds [34 x [16 x %struct.des_ks_struct]], ptr %3, i64 0, i64 %8
+  %11 = load i16, ptr %9, align 8
+  %12 = zext i16 %11 to i64
+  %13 = getelementptr inbounds i8, ptr %9, i64 2
+  %14 = getelementptr inbounds i8, ptr %9, i64 3
+  %15 = load i8, ptr %13, align 2, !tbaa !11
+  %16 = zext i8 %15 to i64
+  %17 = shl nuw nsw i64 %16, 16
+  %18 = or i64 %17, %12
+  %19 = getelementptr inbounds i8, ptr %9, i64 4
+  %20 = load i8, ptr %14, align 1, !tbaa !11
+  %21 = zext i8 %20 to i64
+  %22 = shl nuw nsw i64 %21, 24
+  %23 = or i64 %18, %22
+  %24 = load i16, ptr %19, align 4
+  %25 = zext i16 %24 to i64
+  %26 = getelementptr inbounds i8, ptr %9, i64 6
+  %27 = getelementptr inbounds i8, ptr %9, i64 7
+  %28 = load i8, ptr %26, align 2, !tbaa !11
+  %29 = zext i8 %28 to i64
+  %30 = shl nuw nsw i64 %29, 16
+  %31 = or i64 %30, %25
+  %32 = load i8, ptr %27, align 1, !tbaa !11
+  %33 = zext i8 %32 to i64
+  %34 = shl nuw nsw i64 %33, 24
+  %35 = or i64 %31, %34
+  %36 = lshr i64 %35, 4
+  %37 = xor i64 %36, %23
+  %38 = and i64 %37, 252645135
+  %39 = xor i64 %38, %23
+  %40 = shl nuw nsw i64 %38, 4
+  %41 = xor i64 %40, %35
+  %42 = shl nuw nsw i64 %39, 18
+  %43 = xor i64 %42, %39
+  %44 = and i64 %43, 3435921408
+  %45 = lshr exact i64 %44, 18
+  %46 = or i64 %45, %44
+  %47 = xor i64 %46, %39
+  %48 = shl nuw nsw i64 %41, 18
+  %49 = xor i64 %48, %41
+  %50 = and i64 %49, 3435921408
+  %51 = lshr exact i64 %50, 18
+  %52 = or i64 %51, %50
+  %53 = xor i64 %52, %41
+  %54 = lshr i64 %53, 1
+  %55 = xor i64 %54, %47
+  %56 = and i64 %55, 1431655765
+  %57 = xor i64 %56, %47
+  %58 = shl nuw nsw i64 %56, 1
+  %59 = xor i64 %58, %53
+  %60 = lshr i64 %57, 8
+  %61 = xor i64 %60, %59
+  %62 = and i64 %61, 16711935
+  %63 = xor i64 %62, %59
+  %64 = shl nuw nsw i64 %62, 8
+  %65 = xor i64 %64, %57
+  %66 = lshr i64 %63, 1
+  %67 = xor i64 %66, %65
+  %68 = and i64 %67, 1431655765
+  %69 = xor i64 %68, %65
+  %70 = shl nuw nsw i64 %68, 1
+  %71 = xor i64 %70, %63
+  %72 = shl nuw nsw i64 %71, 16
+  %73 = and i64 %72, 16711680
+  %74 = and i64 %71, 65280
+  %75 = lshr i64 %71, 16
+  %76 = and i64 %75, 255
+  %77 = lshr i64 %69, 4
+  %78 = and i64 %77, 251658240
+  %79 = or i64 %78, %74
+  %80 = or i64 %79, %73
+  %81 = or i64 %80, %76
+  br label %82
+
+82:                                               ; preds = %82, %7
+  %83 = phi i64 [ 0, %7 ], [ %171, %82 ]
+  %84 = phi i64 [ %69, %7 ], [ %95, %82 ]
+  %85 = phi ptr [ %10, %7 ], [ %170, %82 ]
+  %86 = phi i64 [ %81, %7 ], [ %99, %82 ]
+  %87 = and i64 %84, 268435455
+  %88 = lshr i64 33027, %83
+  %89 = and i64 %88, 1
+  %90 = icmp eq i64 %89, 0
+  %91 = select i1 %90, i64 2, i64 1
+  %92 = or i64 %89, 26
+  %93 = lshr i64 %87, %91
+  %94 = shl nuw nsw i64 %87, %92
+  %95 = or i64 %93, %94
+  %96 = lshr i64 %86, %91
+  %97 = shl nuw nsw i64 %86, %92
+  %98 = or i64 %96, %97
+  %99 = and i64 %98, 268435455
+  %100 = and i64 %93, 63
+  %101 = getelementptr inbounds [64 x i64], ptr @des_skb, i64 0, i64 %100
+  %102 = load i64, ptr %101, align 8, !tbaa !12
+  %103 = lshr i64 %93, 6
+  %104 = and i64 %103, 3
+  %105 = lshr i64 %93, 7
+  %106 = and i64 %105, 60
+  %107 = or i64 %104, %106
+  %108 = getelementptr inbounds [8 x [64 x i64]], ptr @des_skb, i64 0, i64 1, i64 %107
+  %109 = load i64, ptr %108, align 8, !tbaa !12
+  %110 = or i64 %109, %102
+  %111 = lshr i64 %93, 13
+  %112 = and i64 %111, 15
+  %113 = lshr i64 %93, 14
+  %114 = and i64 %113, 48
+  %115 = or i64 %112, %114
+  %116 = getelementptr inbounds [8 x [64 x i64]], ptr @des_skb, i64 0, i64 2, i64 %115
+  %117 = load i64, ptr %116, align 8, !tbaa !12
+  %118 = or i64 %110, %117
+  %119 = lshr i64 %93, 20
+  %120 = and i64 %119, 1
+  %121 = lshr i64 %93, 21
+  %122 = and i64 %121, 6
+  %123 = or i64 %120, %122
+  %124 = lshr i64 %95, 22
+  %125 = and i64 %124, 56
+  %126 = or i64 %123, %125
+  %127 = getelementptr inbounds [8 x [64 x i64]], ptr @des_skb, i64 0, i64 3, i64 %126
+  %128 = load i64, ptr %127, align 8, !tbaa !12
+  %129 = or i64 %118, %128
+  %130 = and i64 %96, 63
+  %131 = getelementptr inbounds [8 x [64 x i64]], ptr @des_skb, i64 0, i64 4, i64 %130
+  %132 = load i64, ptr %131, align 8, !tbaa !12
+  %133 = lshr i64 %96, 7
+  %134 = and i64 %133, 3
+  %135 = lshr i64 %96, 8
+  %136 = and i64 %135, 60
+  %137 = or i64 %134, %136
+  %138 = getelementptr inbounds [8 x [64 x i64]], ptr @des_skb, i64 0, i64 5, i64 %137
+  %139 = load i64, ptr %138, align 8, !tbaa !12
+  %140 = or i64 %139, %132
+  %141 = lshr i64 %96, 15
+  %142 = and i64 %141, 63
+  %143 = getelementptr inbounds [8 x [64 x i64]], ptr @des_skb, i64 0, i64 6, i64 %142
+  %144 = load i64, ptr %143, align 8, !tbaa !12
+  %145 = or i64 %140, %144
+  %146 = lshr i64 %96, 21
+  %147 = and i64 %146, 15
+  %148 = lshr i64 %98, 22
+  %149 = and i64 %148, 48
+  %150 = or i64 %149, %147
+  %151 = getelementptr inbounds [8 x [64 x i64]], ptr @des_skb, i64 0, i64 7, i64 %150
+  %152 = load i64, ptr %151, align 8, !tbaa !12
+  %153 = or i64 %145, %152
+  %154 = shl i64 %153, 16
+  %155 = and i64 %129, 65535
+  %156 = and i64 %154, 4294901760
+  %157 = or i64 %156, %155
+  %158 = shl nuw nsw i64 %157, 2
+  %159 = lshr i64 %156, 30
+  %160 = and i64 %158, 4294967292
+  %161 = or i64 %160, %159
+  %162 = getelementptr inbounds i64, ptr %85, i64 1
+  store i64 %161, ptr %85, align 8, !tbaa !12
+  %163 = lshr i64 %129, 16
+  %164 = and i64 %153, 4294901760
+  %165 = or i64 %164, %163
+  %166 = shl nuw nsw i64 %165, 6
+  %167 = lshr i64 %165, 26
+  %168 = and i64 %166, 4294967232
+  %169 = or i64 %168, %167
+  %170 = getelementptr inbounds i64, ptr %85, i64 2
+  store i64 %169, ptr %162, align 8, !tbaa !12
+  %171 = add nuw nsw i64 %83, 1
+  %172 = icmp eq i64 %171, 16
+  br i1 %172, label %173, label %82, !llvm.loop !14
+
+173:                                              ; preds = %82
+  %174 = add nuw nsw i64 %8, 1
+  %175 = icmp eq i64 %174, 34
+  br i1 %175, label %4, label %7, !llvm.loop !16
+
+176:                                              ; preds = %496, %4
+  %177 = phi i32 [ 0, %4 ], [ %497, %496 ]
+  br i1 %5, label %178, label %496
+
+178:                                              ; preds = %433, %176
+  %179 = phi i64 [ %494, %433 ], [ 0, %176 ]
+  %180 = getelementptr inbounds [34 x [8 x i8]], ptr @plain_data, i64 0, i64 %179
+  %181 = getelementptr inbounds [34 x [16 x %struct.des_ks_struct]], ptr %3, i64 0, i64 %179
+  %182 = load <2 x i32>, ptr %180, align 8
+  %183 = zext <2 x i32> %182 to <2 x i64>
+  %184 = extractelement <2 x i64> %183, i64 0
+  %185 = extractelement <2 x i64> %183, i64 1
+  %186 = lshr i64 %185, 4
+  %187 = xor i64 %186, %184
+  %188 = and i64 %187, 252645135
+  %189 = xor i64 %188, %184
+  %190 = shl nuw nsw i64 %188, 4
+  %191 = xor i64 %190, %185
+  %192 = lshr i64 %189, 16
+  %193 = and i64 %191, 65535
+  %194 = xor i64 %193, %192
+  %195 = xor i64 %194, %191
+  %196 = shl nuw nsw i64 %194, 16
+  %197 = xor i64 %196, %189
+  %198 = lshr i64 %195, 2
+  %199 = xor i64 %198, %197
+  %200 = and i64 %199, 858993459
+  %201 = xor i64 %200, %197
+  %202 = shl nuw nsw i64 %200, 2
+  %203 = xor i64 %202, %195
+  %204 = lshr i64 %201, 8
+  %205 = xor i64 %204, %203
+  %206 = and i64 %205, 16711935
+  %207 = xor i64 %206, %203
+  %208 = shl nuw nsw i64 %206, 8
+  %209 = xor i64 %208, %201
+  %210 = lshr i64 %207, 1
+  %211 = xor i64 %210, %209
+  %212 = and i64 %211, 1431655765
+  %213 = xor i64 %212, %209
+  %214 = shl nuw nsw i64 %212, 1
+  %215 = xor i64 %214, %207
+  %216 = lshr i64 %213, 29
+  %217 = shl i64 %213, 3
+  %218 = add i64 %216, %217
+  %219 = and i64 %218, 4294967295
+  %220 = lshr i64 %215, 29
+  %221 = shl i64 %215, 3
+  %222 = add i64 %220, %221
+  %223 = and i64 %222, 4294967295
+  br label %224
+
+224:                                              ; preds = %224, %178
+  %225 = phi i64 [ %431, %224 ], [ 0, %178 ]
+  %226 = phi i64 [ %379, %224 ], [ %223, %178 ]
+  %227 = phi i64 [ %430, %224 ], [ %219, %178 ]
+  %228 = getelementptr inbounds i64, ptr %181, i64 %225
+  %229 = load i64, ptr %228, align 16, !tbaa !12
+  %230 = xor i64 %229, %227
+  %231 = or i64 %225, 1
+  %232 = getelementptr inbounds i64, ptr %181, i64 %231
+  %233 = load i64, ptr %232, align 8, !tbaa !12
+  %234 = xor i64 %233, %227
+  %235 = lshr i64 %234, 4
+  %236 = shl i64 %234, 28
+  %237 = add i64 %235, %236
+  %238 = lshr i64 %230, 2
+  %239 = and i64 %238, 63
+  %240 = getelementptr inbounds [64 x i64], ptr @des_SPtrans, i64 0, i64 %239
+  %241 = load i64, ptr %240, align 8, !tbaa !12
+  %242 = lshr i64 %230, 10
+  %243 = and i64 %242, 63
+  %244 = getelementptr inbounds [8 x [64 x i64]], ptr @des_SPtrans, i64 0, i64 2, i64 %243
+  %245 = load i64, ptr %244, align 8, !tbaa !12
+  %246 = lshr i64 %230, 18
+  %247 = and i64 %246, 63
+  %248 = getelementptr inbounds [8 x [64 x i64]], ptr @des_SPtrans, i64 0, i64 4, i64 %247
+  %249 = load i64, ptr %248, align 8, !tbaa !12
+  %250 = lshr i64 %230, 26
+  %251 = and i64 %250, 63
+  %252 = getelementptr inbounds [8 x [64 x i64]], ptr @des_SPtrans, i64 0, i64 6, i64 %251
+  %253 = load i64, ptr %252, align 8, !tbaa !12
+  %254 = lshr i64 %234, 6
+  %255 = and i64 %254, 63
+  %256 = getelementptr inbounds [8 x [64 x i64]], ptr @des_SPtrans, i64 0, i64 1, i64 %255
+  %257 = load i64, ptr %256, align 8, !tbaa !12
+  %258 = lshr i64 %234, 14
+  %259 = and i64 %258, 63
+  %260 = getelementptr inbounds [8 x [64 x i64]], ptr @des_SPtrans, i64 0, i64 3, i64 %259
+  %261 = load i64, ptr %260, align 8, !tbaa !12
+  %262 = lshr i64 %234, 22
+  %263 = and i64 %262, 63
+  %264 = getelementptr inbounds [8 x [64 x i64]], ptr @des_SPtrans, i64 0, i64 5, i64 %263
+  %265 = load i64, ptr %264, align 8, !tbaa !12
+  %266 = lshr i64 %237, 26
+  %267 = and i64 %266, 63
+  %268 = getelementptr inbounds [8 x [64 x i64]], ptr @des_SPtrans, i64 0, i64 7, i64 %267
+  %269 = load i64, ptr %268, align 8, !tbaa !12
+  %270 = xor i64 %241, %226
+  %271 = xor i64 %270, %245
+  %272 = xor i64 %271, %249
+  %273 = xor i64 %272, %253
+  %274 = xor i64 %273, %257
+  %275 = xor i64 %274, %261
+  %276 = xor i64 %275, %265
+  %277 = xor i64 %276, %269
+  %278 = or i64 %225, 2
+  %279 = getelementptr inbounds i64, ptr %181, i64 %278
+  %280 = load i64, ptr %279, align 16, !tbaa !12
+  %281 = xor i64 %277, %280
+  %282 = or i64 %225, 3
+  %283 = getelementptr inbounds i64, ptr %181, i64 %282
+  %284 = load i64, ptr %283, align 8, !tbaa !12
+  %285 = xor i64 %284, %277
+  %286 = lshr i64 %285, 4
+  %287 = shl i64 %285, 28
+  %288 = add i64 %286, %287
+  %289 = lshr i64 %281, 2
+  %290 = and i64 %289, 63
+  %291 = getelementptr inbounds [64 x i64], ptr @des_SPtrans, i64 0, i64 %290
+  %292 = load i64, ptr %291, align 8, !tbaa !12
+  %293 = lshr i64 %281, 10
+  %294 = and i64 %293, 63
+  %295 = getelementptr inbounds [8 x [64 x i64]], ptr @des_SPtrans, i64 0, i64 2, i64 %294
+  %296 = load i64, ptr %295, align 8, !tbaa !12
+  %297 = lshr i64 %281, 18
+  %298 = and i64 %297, 63
+  %299 = getelementptr inbounds [8 x [64 x i64]], ptr @des_SPtrans, i64 0, i64 4, i64 %298
+  %300 = load i64, ptr %299, align 8, !tbaa !12
+  %301 = lshr i64 %281, 26
+  %302 = and i64 %301, 63
+  %303 = getelementptr inbounds [8 x [64 x i64]], ptr @des_SPtrans, i64 0, i64 6, i64 %302
+  %304 = load i64, ptr %303, align 8, !tbaa !12
+  %305 = lshr i64 %285, 6
+  %306 = and i64 %305, 63
+  %307 = getelementptr inbounds [8 x [64 x i64]], ptr @des_SPtrans, i64 0, i64 1, i64 %306
+  %308 = load i64, ptr %307, align 8, !tbaa !12
+  %309 = lshr i64 %285, 14
+  %310 = and i64 %309, 63
+  %311 = getelementptr inbounds [8 x [64 x i64]], ptr @des_SPtrans, i64 0, i64 3, i64 %310
+  %312 = load i64, ptr %311, align 8, !tbaa !12
+  %313 = lshr i64 %285, 22
+  %314 = and i64 %313, 63
+  %315 = getelementptr inbounds [8 x [64 x i64]], ptr @des_SPtrans, i64 0, i64 5, i64 %314
+  %316 = load i64, ptr %315, align 8, !tbaa !12
+  %317 = lshr i64 %288, 26
+  %318 = and i64 %317, 63
+  %319 = getelementptr inbounds [8 x [64 x i64]], ptr @des_SPtrans, i64 0, i64 7, i64 %318
+  %320 = load i64, ptr %319, align 8, !tbaa !12
+  %321 = xor i64 %292, %296
+  %322 = xor i64 %321, %300
+  %323 = xor i64 %322, %304
+  %324 = xor i64 %323, %308
+  %325 = xor i64 %324, %312
+  %326 = xor i64 %325, %316
+  %327 = xor i64 %326, %320
+  %328 = xor i64 %327, %227
+  %329 = or i64 %225, 4
+  %330 = getelementptr inbounds i64, ptr %181, i64 %329
+  %331 = load i64, ptr %330, align 16, !tbaa !12
+  %332 = xor i64 %328, %331
+  %333 = or i64 %225, 5
+  %334 = getelementptr inbounds i64, ptr %181, i64 %333
+  %335 = load i64, ptr %334, align 8, !tbaa !12
+  %336 = xor i64 %328, %335
+  %337 = lshr i64 %336, 4
+  %338 = shl i64 %336, 28
+  %339 = add i64 %337, %338
+  %340 = lshr i64 %332, 2
+  %341 = and i64 %340, 63
+  %342 = getelementptr inbounds [64 x i64], ptr @des_SPtrans, i64 0, i64 %341
+  %343 = load i64, ptr %342, align 8, !tbaa !12
+  %344 = lshr i64 %332, 10
+  %345 = and i64 %344, 63
+  %346 = getelementptr inbounds [8 x [64 x i64]], ptr @des_SPtrans, i64 0, i64 2, i64 %345
+  %347 = load i64, ptr %346, align 8, !tbaa !12
+  %348 = lshr i64 %332, 18
+  %349 = and i64 %348, 63
+  %350 = getelementptr inbounds [8 x [64 x i64]], ptr @des_SPtrans, i64 0, i64 4, i64 %349
+  %351 = load i64, ptr %350, align 8, !tbaa !12
+  %352 = lshr i64 %332, 26
+  %353 = and i64 %352, 63
+  %354 = getelementptr inbounds [8 x [64 x i64]], ptr @des_SPtrans, i64 0, i64 6, i64 %353
+  %355 = load i64, ptr %354, align 8, !tbaa !12
+  %356 = lshr i64 %336, 6
+  %357 = and i64 %356, 63
+  %358 = getelementptr inbounds [8 x [64 x i64]], ptr @des_SPtrans, i64 0, i64 1, i64 %357
+  %359 = load i64, ptr %358, align 8, !tbaa !12
+  %360 = lshr i64 %336, 14
+  %361 = and i64 %360, 63
+  %362 = getelementptr inbounds [8 x [64 x i64]], ptr @des_SPtrans, i64 0, i64 3, i64 %361
+  %363 = load i64, ptr %362, align 8, !tbaa !12
+  %364 = lshr i64 %336, 22
+  %365 = and i64 %364, 63
+  %366 = getelementptr inbounds [8 x [64 x i64]], ptr @des_SPtrans, i64 0, i64 5, i64 %365
+  %367 = load i64, ptr %366, align 8, !tbaa !12
+  %368 = lshr i64 %339, 26
+  %369 = and i64 %368, 63
+  %370 = getelementptr inbounds [8 x [64 x i64]], ptr @des_SPtrans, i64 0, i64 7, i64 %369
+  %371 = load i64, ptr %370, align 8, !tbaa !12
+  %372 = xor i64 %343, %347
+  %373 = xor i64 %372, %351
+  %374 = xor i64 %373, %355
+  %375 = xor i64 %374, %359
+  %376 = xor i64 %375, %363
+  %377 = xor i64 %376, %367
+  %378 = xor i64 %377, %371
+  %379 = xor i64 %378, %277
+  %380 = or i64 %225, 6
+  %381 = getelementptr inbounds i64, ptr %181, i64 %380
+  %382 = load i64, ptr %381, align 16, !tbaa !12
+  %383 = xor i64 %379, %382
+  %384 = or i64 %225, 7
+  %385 = getelementptr inbounds i64, ptr %181, i64 %384
+  %386 = load i64, ptr %385, align 8, !tbaa !12
+  %387 = xor i64 %379, %386
+  %388 = lshr i64 %387, 4
+  %389 = shl i64 %387, 28
+  %390 = add i64 %388, %389
+  %391 = lshr i64 %383, 2
+  %392 = and i64 %391, 63
+  %393 = getelementptr inbounds [64 x i64], ptr @des_SPtrans, i64 0, i64 %392
+  %394 = load i64, ptr %393, align 8, !tbaa !12
+  %395 = lshr i64 %383, 10
+  %396 = and i64 %395, 63
+  %397 = getelementptr inbounds [8 x [64 x i64]], ptr @des_SPtrans, i64 0, i64 2, i64 %396
+  %398 = load i64, ptr %397, align 8, !tbaa !12
+  %399 = lshr i64 %383, 18
+  %400 = and i64 %399, 63
+  %401 = getelementptr inbounds [8 x [64 x i64]], ptr @des_SPtrans, i64 0, i64 4, i64 %400
+  %402 = load i64, ptr %401, align 8, !tbaa !12
+  %403 = lshr i64 %383, 26
+  %404 = and i64 %403, 63
+  %405 = getelementptr inbounds [8 x [64 x i64]], ptr @des_SPtrans, i64 0, i64 6, i64 %404
+  %406 = load i64, ptr %405, align 8, !tbaa !12
+  %407 = lshr i64 %387, 6
+  %408 = and i64 %407, 63
+  %409 = getelementptr inbounds [8 x [64 x i64]], ptr @des_SPtrans, i64 0, i64 1, i64 %408
+  %410 = load i64, ptr %409, align 8, !tbaa !12
+  %411 = lshr i64 %387, 14
+  %412 = and i64 %411, 63
+  %413 = getelementptr inbounds [8 x [64 x i64]], ptr @des_SPtrans, i64 0, i64 3, i64 %412
+  %414 = load i64, ptr %413, align 8, !tbaa !12
+  %415 = lshr i64 %387, 22
+  %416 = and i64 %415, 63
+  %417 = getelementptr inbounds [8 x [64 x i64]], ptr @des_SPtrans, i64 0, i64 5, i64 %416
+  %418 = load i64, ptr %417, align 8, !tbaa !12
+  %419 = lshr i64 %390, 26
+  %420 = and i64 %419, 63
+  %421 = getelementptr inbounds [8 x [64 x i64]], ptr @des_SPtrans, i64 0, i64 7, i64 %420
+  %422 = load i64, ptr %421, align 8, !tbaa !12
+  %423 = xor i64 %394, %398
+  %424 = xor i64 %423, %402
+  %425 = xor i64 %424, %406
+  %426 = xor i64 %425, %410
+  %427 = xor i64 %426, %414
+  %428 = xor i64 %427, %418
+  %429 = xor i64 %428, %422
+  %430 = xor i64 %429, %328
+  %431 = add nuw nsw i64 %225, 8
+  %432 = icmp ult i64 %225, 24
+  br i1 %432, label %224, label %433, !llvm.loop !17
+
+433:                                              ; preds = %224
+  %.lcssa1 = phi i64 [ %379, %224 ]
+  %.lcssa = phi i64 [ %430, %224 ]
+  %434 = getelementptr inbounds [34 x [8 x i8]], ptr %2, i64 0, i64 %179
+  %435 = lshr i64 %.lcssa1, 3
+  %436 = shl i64 %.lcssa1, 29
+  %437 = add i64 %435, %436
+  %438 = and i64 %437, 4294967295
+  %439 = lshr i64 %.lcssa, 3
+  %440 = shl i64 %.lcssa, 29
+  %441 = add i64 %439, %440
+  %442 = and i64 %441, 4294967295
+  %443 = lshr i64 %441, 1
+  %444 = xor i64 %443, %437
+  %445 = and i64 %444, 1431655765
+  %446 = xor i64 %445, %438
+  %447 = shl nuw nsw i64 %445, 1
+  %448 = xor i64 %447, %442
+  %449 = lshr i64 %446, 8
+  %450 = xor i64 %449, %448
+  %451 = and i64 %450, 16711935
+  %452 = xor i64 %451, %448
+  %453 = shl nuw nsw i64 %451, 8
+  %454 = xor i64 %453, %446
+  %455 = lshr i64 %452, 2
+  %456 = xor i64 %455, %454
+  %457 = and i64 %456, 858993459
+  %458 = xor i64 %457, %454
+  %459 = shl nuw nsw i64 %457, 2
+  %460 = xor i64 %459, %452
+  %461 = lshr i64 %458, 16
+  %462 = and i64 %460, 65535
+  %463 = xor i64 %462, %461
+  %464 = xor i64 %463, %460
+  %465 = shl nuw nsw i64 %463, 16
+  %466 = xor i64 %465, %458
+  %467 = lshr i64 %464, 4
+  %468 = xor i64 %467, %466
+  %469 = and i64 %468, 252645135
+  %470 = xor i64 %469, %466
+  %471 = shl nuw nsw i64 %469, 4
+  %472 = xor i64 %471, %464
+  %473 = trunc i64 %470 to i8
+  %474 = getelementptr inbounds i8, ptr %434, i64 1
+  store i8 %473, ptr %434, align 8, !tbaa !11
+  %475 = lshr i64 %470, 8
+  %476 = trunc i64 %475 to i8
+  %477 = getelementptr inbounds i8, ptr %434, i64 2
+  store i8 %476, ptr %474, align 1, !tbaa !11
+  %478 = lshr i64 %470, 16
+  %479 = trunc i64 %478 to i8
+  %480 = getelementptr inbounds i8, ptr %434, i64 3
+  store i8 %479, ptr %477, align 2, !tbaa !11
+  %481 = lshr i64 %470, 24
+  %482 = trunc i64 %481 to i8
+  %483 = getelementptr inbounds i8, ptr %434, i64 4
+  store i8 %482, ptr %480, align 1, !tbaa !11
+  %484 = trunc i64 %472 to i8
+  %485 = getelementptr inbounds i8, ptr %434, i64 5
+  store i8 %484, ptr %483, align 4, !tbaa !11
+  %486 = lshr i64 %472, 8
+  %487 = trunc i64 %486 to i8
+  %488 = getelementptr inbounds i8, ptr %434, i64 6
+  store i8 %487, ptr %485, align 1, !tbaa !11
+  %489 = lshr i64 %472, 16
+  %490 = trunc i64 %489 to i8
+  %491 = getelementptr inbounds i8, ptr %434, i64 7
+  store i8 %490, ptr %488, align 2, !tbaa !11
+  %492 = lshr i64 %472, 24
+  %493 = trunc i64 %492 to i8
+  store i8 %493, ptr %491, align 1, !tbaa !11
+  %494 = add nuw nsw i64 %179, 1
+  %495 = icmp eq i64 %494, %6
+  br i1 %495, label %496, label %178, !llvm.loop !18
+
+496:                                              ; preds = %433, %176
+  %497 = add nuw nsw i32 %177, 1
+  %498 = icmp eq i32 %497, 1000000
+  br i1 %498, label %499, label %176, !llvm.loop !19
+
+499:                                              ; preds = %496
+  %500 = shl nsw i32 %0, 3
+  %501 = sext i32 %500 to i64
+  %502 = call i32 @bcmp(ptr nonnull @cipher_data, ptr nonnull %2, i64 %501)
+  %503 = icmp eq i32 %502, 0
+  %504 = select i1 %503, ptr @str, ptr @str.4
+  %505 = tail call i32 @puts(ptr nonnull dereferenceable(1) %504)
+  call void @llvm.lifetime.end.p0(i64 8704, ptr nonnull %3) #8
+  call void @llvm.lifetime.end.p0(i64 272, ptr nonnull %2) #8
+  ret void
+}
+
+; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
+declare void @llvm.lifetime.start.p0(i64 immarg, ptr nocapture) #5
+
+; Function Attrs: mustprogress nofree nounwind willreturn memory(argmem: read)
+declare i32 @bcmp(ptr nocapture, ptr nocapture, i64) local_unnamed_addr #6
+
+; Function Attrs: nofree nounwind
+declare noundef i32 @puts(ptr nocapture noundef readonly) local_unnamed_addr #7
+
+; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
+declare void @llvm.lifetime.end.p0(i64 immarg, ptr nocapture) #5
+
+Summary: 
+Number of slices found: 0
+Number of slices that dont merge: 0
+Number of slices that arent self contained:0
+Total Number of slices kill:0

@@ -1,0 +1,359 @@
+== OUTLINING INST PHASE ==
+  %19 = sub i64 %12, %18
+Not self contained!
+  %13 = sub i64 %11, %12
+Not self contained!
+  %14 = ashr exact i64 %13, 2
+Not self contained!
+  %20 = ashr exact i64 %19, 2
+Not self contained!
+  %31 = sub i64 %30, %18
+Not self contained!
+  %32 = ashr exact i64 %31, 2
+Not self contained!
+  %33 = sub nsw i64 0, %32
+Not self contained!
+  %44 = sub i64 %2, %20
+Not self contained!
+  %67 = sub i64 %65, %66
+Not self contained!
+  %68 = ashr exact i64 %67, 2
+Not self contained!
+  %84 = sub i64 %65, %83
+Not self contained!
+  %88 = ashr exact i64 %84, 2
+Not self contained!
+  %93 = sub i64 %92, %65
+Not self contained!
+  %97 = ashr exact i64 %93, 2
+Not self contained!
+  %13 = fsub double %11, %12
+[32moutlined![0m
+  %13 = fadd double %11, %12
+[32moutlined![0m
+  %15 = sub i64 %4, %6
+Not self contained!
+  %8 = sub i64 %6, %7
+Not self contained!
+  %9 = ashr exact i64 %8, 5
+Not self contained!
+  %8 = sub i64 %6, %7
+Not self contained!
+  %9 = ashr exact i64 %8, 2
+Not self contained!
+  %22 = sub i64 %20, %21
+Not self contained!
+  %26 = ashr exact i64 %22, 2
+Not self contained!
+  %10 = add i64 %9, 1
+[32moutlined![0m
+  %29 = add i64 %28, 1
+[32moutlined![0m
+  %65 = add i64 %64, 1
+[32moutlined![0m
+  %22 = add i64 %21, 1
+Not self contained!
+  %11 = add i64 %10, 1
+[32moutlined![0m
+  %7 = sub i64 %5, %6
+[32moutlined![0m
+  %219 = add nsw i32 %.lcssa19, -2
+Not self contained!
+  %223 = sub nsw i32 %220, %222
+Not self contained!
+  %10 = shl nuw nsw i32 %7, 1
+Not self contained!
+  %13 = shl nuw nsw i64 %12, 5
+Not self contained!
+  %16 = shl nuw nsw i64 %12, 2
+Not self contained!
+  %19 = mul nsw i32 %7, 6
+Not self contained!
+  %21 = shl nsw i64 %20, 2
+Not self contained!
+  %24 = shl nuw nsw i64 %23, 2
+Not self contained!
+  %26 = add nuw nsw i64 %23, 3
+Not self contained!
+  %27 = and i64 %26, 8589934588
+Not self contained!
+  %28 = add nsw i64 %23, -1
+Not self contained!
+  %63 = add nsw i32 %7, -1
+Not self contained!
+  %97 = sub nsw i32 0, %91
+Not self contained!
+  %114 = sub nsw i32 %.lcssa6, %.lcssa4
+Not self contained!
+  %115 = add nsw i32 %.lcssa4, %.lcssa6
+Not self contained!
+  %116 = sdiv i32 %115, 2
+Not self contained!
+  %117 = sub nsw i32 %116, %.lcssa4
+Not self contained!
+  %268 = add nsw i32 %116, 1
+Not self contained!
+  %270 = shl i64 %.lcssa10, 32
+Not self contained!
+  %271 = ashr exact i64 %270, 32
+Not self contained!
+  %274 = shl i64 %.lcssa10, 32
+Not self contained!
+  %275 = add i64 %274, 4294967296
+Not self contained!
+  %276 = ashr exact i64 %275, 32
+Not self contained!
+  %278 = add nsw i32 %85, 3
+Not self contained!
+  %279 = shl i64 %.lcssa10, 32
+Not self contained!
+  %280 = add i64 %279, 8589934592
+Not self contained!
+  %281 = ashr exact i64 %280, 32
+Not self contained!
+  %285 = add i32 %.lcssa4, 1
+Not self contained!
+  %10 = sub i64 %8, %9
+Not self contained!
+  %11 = ashr exact i64 %10, 5
+Not self contained!
+  %9 = sub i64 %7, %8
+[32moutlined![0m
+  %12 = sub nsw i64 288230376151711743, %11
+Not self contained!
+  %17 = add i64 %16, %11
+Not self contained!
+  %20 = or i1 %18, %19
+Not self contained!
+  %16 = add i64 %15, 1
+Not self contained!
+  %7 = sub i64 %5, %6
+[32moutlined![0m
+  %9 = sub i64 %7, %8
+Not self contained!
+  %10 = ashr exact i64 %9, 3
+Not self contained!
+  %11 = sub nsw i64 0, %10
+Not self contained!
+  %10 = sub i64 %8, %9
+Not self contained!
+  %11 = ashr exact i64 %10, 2
+Not self contained!
+  %24 = sub i64 %23, %8
+Not self contained!
+  %32 = ashr exact i64 %24, 2
+Not self contained!
+  %9 = sub i64 %7, %8
+[32moutlined![0m
+  %12 = sub nsw i64 2305843009213693951, %11
+Not self contained!
+  %17 = add i64 %16, %11
+Not self contained!
+  %20 = or i1 %18, %19
+Not self contained!
+  %10 = sub i64 %8, %9
+Not self contained!
+  %11 = ashr exact i64 %10, 2
+Not self contained!
+  %24 = sub i64 %23, %8
+Not self contained!
+  %32 = ashr exact i64 %24, 2
+Not self contained!
+  %9 = sub i64 %7, %8
+[32moutlined![0m
+  %12 = sub nsw i64 1152921504606846975, %11
+Not self contained!
+  %17 = add i64 %16, %11
+Not self contained!
+  %20 = or i1 %18, %19
+Not self contained!
+  %19 = sub i64 %17, %18
+Not self contained!
+  %11 = sub i64 %7, %1
+Not self contained!
+  %6 = sub i64 4611686018427387903, %5
+[32moutlined![0m
+  %25 = add i32 %20, 1024
+Not self contained!
+  %29 = shl nsw i64 %28, 5
+Not self contained!
+  %38 = add nsw i32 %37, 1
+Not self contained!
+  %13 = add i64 %12, -1
+Not self contained!
+  %10 = sub i64 %8, %9
+Not self contained!
+  %11 = lshr exact i64 %10, 2
+Not self contained!
+  %15 = sub i64 %14, %8
+Not self contained!
+  %16 = ashr exact i64 %15, 2
+Not self contained!
+  %18 = xor i64 %11, 2305843009213693951
+Not self contained!
+  %48 = sub i64 %46, %47
+Not self contained!
+  %14 = shl nsw i64 %13, 2
+[32moutlined![0m
+  %35 = sub nsw i32 0, %32
+Not self contained!
+  %42 = add nuw nsw i32 %32, 1
+Not self contained!
+  %37 = fmul double %36, %36
+Not self contained!
+  %40 = fmul double %39, %39
+Not self contained!
+  %41 = fadd double %37, %40
+Not self contained!
+  %45 = fadd double %36, %44
+Not self contained!
+  %46 = fmul double %45, %45
+Not self contained!
+  %47 = fadd double %46, %40
+Not self contained!
+  %51 = fadd double %39, %50
+Not self contained!
+  %52 = fmul double %51, %51
+Not self contained!
+  %53 = fadd double %46, %52
+Not self contained!
+  %55 = fadd double %37, %52
+Not self contained!
+  %77 = and i1 %61, %74
+Not self contained!
+  %78 = and i1 %57, %71
+Not self contained!
+  %79 = or i1 %77, %78
+Not self contained!
+  %44 = fmul double %43, %43
+Not self contained!
+  %49 = fadd double %43, %48
+Not self contained!
+  %50 = fmul double %49, %49
+Not self contained!
+  %53 = fadd double %46, %52
+Not self contained!
+  %56 = fmul <2 x double> %55, %55
+Not self contained!
+  %59 = fadd <2 x double> %58, %56
+Not self contained!
+  %63 = fadd <2 x double> %62, %56
+Not self contained!
+  %93 = and i1 %89, %92
+Not self contained!
+  %94 = and i1 %66, %86
+Not self contained!
+  %95 = or i1 %93, %94
+Not self contained!
+  %96 = fmul double %48, 5.000000e-01
+Not self contained!
+  %97 = fadd double %43, %96
+Not self contained!
+  %99 = xor i1 %98, true
+Not self contained!
+  %100 = fmul double %52, 5.000000e-01
+Not self contained!
+  %101 = fadd double %46, %100
+Not self contained!
+  %103 = xor i1 %102, true
+Not self contained!
+  %104 = and i1 %98, %102
+Not self contained!
+  %106 = fsub double %4, %65
+Not self contained!
+  %107 = fsub double %78, %65
+Not self contained!
+  %108 = fdiv double %106, %107
+Not self contained!
+  %110 = and i1 %102, %99
+Not self contained!
+  %112 = fsub double %4, %67
+Not self contained!
+  %113 = fsub double %88, %67
+Not self contained!
+  %114 = fdiv double %112, %113
+Not self contained!
+  %116 = and i1 %99, %103
+Not self contained!
+  %118 = fsub double %4, %78
+Not self contained!
+  %119 = fsub double %65, %78
+Not self contained!
+  %120 = fdiv double %118, %119
+Not self contained!
+  %122 = and i1 %98, %103
+Not self contained!
+  %124 = fsub double %4, %88
+Not self contained!
+  %125 = fsub double %67, %88
+Not self contained!
+  %126 = fdiv double %124, %125
+Not self contained!
+  %135 = or i1 %91, %76
+Not self contained!
+  %136 = or i1 %95, %135
+Not self contained!
+  %137 = or i1 %84, %136
+Not self contained!
+  %43 = fadd double %38, %42
+Not self contained!
+  %46 = fadd double %40, %45
+Not self contained!
+  %49 = fmul <2 x double> %48, %48
+Not self contained!
+  %53 = fmul <2 x double> %52, %52
+Not self contained!
+  %55 = fadd <4 x double> %50, %54
+Not self contained!
+  %19 = add i64 %18, 1
+Not self contained!
+  %10 = add i64 %9, 1
+[32moutlined![0m
+  %22 = add i64 %21, 1
+Not self contained!
+  %34 = and i32 %33, 1
+Not self contained!
+  %45 = mul i64 %44, %42
+Not self contained!
+  %57 = mul i64 %56, %1
+Not self contained!
+  %8 = add i64 %7, -1
+Not self contained!
+  %37 = mul i64 %36, %34
+Not self contained!
+  %53 = and i32 %52, 256
+Not self contained!
+  %60 = sub i64 %58, %59
+Not self contained!
+  %61 = ashr exact i64 %60, 2
+Not self contained!
+  %74 = and i64 %69, 4294967295
+Not self contained!
+opt: /home/pc2/llvm-rafael/llvm/include/llvm/Support/Casting.h:109: static bool llvm::isa_impl_cl<To, const From*>::doit(const From*) [with To = llvm::Instruction; From = llvm::Value]: Assertion `Val && "isa<> used on a null pointer"' failed.
+PLEASE submit a bug report to https://github.com/llvm/llvm-project/issues/ and include the crash backtrace.
+Stack dump:
+0.	Program arguments: opt -stats -debug-only=Daedalus -passes=daedalus -load-pass-plugin=../build/lib/libdaedalus.so -S CLAMR.e.bc.ll -o CLAMR.e.bc.d.ll
+ #0 0x00005fae83e0843c llvm::sys::PrintStackTrace(llvm::raw_ostream&, int) (/home/pc2/llvm-rafael/build/bin/opt+0x1ca143c)
+ #1 0x00005fae83e0563b SignalHandler(int) Signals.cpp:0:0
+ #2 0x00007cb4dc44c1d0 (/usr/lib/libc.so.6+0x3d1d0)
+ #3 0x00007cb4dc4a53f4 (/usr/lib/libc.so.6+0x963f4)
+ #4 0x00007cb4dc44c120 raise (/usr/lib/libc.so.6+0x3d120)
+ #5 0x00007cb4dc4334c3 abort (/usr/lib/libc.so.6+0x244c3)
+ #6 0x00007cb4dc4333df (/usr/lib/libc.so.6+0x243df)
+ #7 0x00007cb4dc444177 (/usr/lib/libc.so.6+0x35177)
+ #8 0x00007cb4dc8bce9f llvm::isa_impl_cl<llvm::Instruction, llvm::Value const*>::doit(llvm::Value const*) /home/pc2/llvm-rafael/llvm/include/llvm/Support/Casting.h:110:36
+ #9 0x00007cb4dc8bb400 llvm::isa_impl_wrap<llvm::Instruction, llvm::Value const*, llvm::Value const*>::doit(llvm::Value const* const&) /home/pc2/llvm-rafael/llvm/include/llvm/Support/Casting.h:138:3
+#10 0x00007cb4dc8d4862 llvm::isa_impl_wrap<llvm::Instruction, llvm::Value* const, llvm::Value const*>::doit(llvm::Value* const&) /home/pc2/llvm-rafael/llvm/include/llvm/Support/Casting.h:130:3
+#11 0x00007cb4dc8cfe2e llvm::CastIsPossible<llvm::Instruction, llvm::Value*, void>::isPossible(llvm::Value* const&) /home/pc2/llvm-rafael/llvm/include/llvm/Support/Casting.h:258:3
+#12 0x00007cb4dc8d0c30 llvm::CastInfo<llvm::Instruction, llvm::Use const, void>::isPossible(llvm::Use const&) /home/pc2/llvm-rafael/llvm/include/llvm/Support/Casting.h:511:3
+#13 0x00007cb4dc8cc732 bool llvm::isa<llvm::Instruction, llvm::Use>(llvm::Use const&) /home/pc2/llvm-rafael/llvm/include/llvm/Support/Casting.h:550:1
+#14 0x00007cb4dc8c3198 get_data_dependences_for(llvm::Instruction&, std::unordered_map<llvm::BasicBlock const*, llvm::SmallVector<llvm::Value const*, 6u>, std::hash<llvm::BasicBlock const*>, std::equal_to<llvm::BasicBlock const*>, std::allocator<std::pair<llvm::BasicBlock const* const, llvm::SmallVector<llvm::Value const*, 6u>>>>&, llvm::PostDominatorTree&, llvm::Function&, llvm::AnalysisManager<llvm::Function>&) /home/pc2/workspace/Daedalus/include/wyvern/ProgramSlice.cpp:201:13
+#15 0x00007cb4dc8c3a6c llvm::ProgramSlice::ProgramSlice(llvm::Instruction&, llvm::Function&, llvm::PostDominatorTree&, llvm::AnalysisManager<llvm::Function>&) /home/pc2/workspace/Daedalus/include/wyvern/ProgramSlice.cpp:279:9
+#16 0x00007cb4dc8accdb Daedalus::DaedalusPass::run(llvm::Module&, llvm::AnalysisManager<llvm::Module>&) /home/pc2/workspace/Daedalus/lib/daedalus.cpp:305:31
+#17 0x00007cb4dc8c1c61 llvm::detail::PassModel<llvm::Module, Daedalus::DaedalusPass, llvm::PreservedAnalyses, llvm::AnalysisManager<llvm::Module>>::run(llvm::Module&, llvm::AnalysisManager<llvm::Module>&) /home/pc2/llvm-rafael/llvm/include/llvm/IR/PassManagerInternal.h:90:3
+#18 0x00005fae837ee0d1 llvm::PassManager<llvm::Module, llvm::AnalysisManager<llvm::Module>>::run(llvm::Module&, llvm::AnalysisManager<llvm::Module>&) (/home/pc2/llvm-rafael/build/bin/opt+0x16870d1)
+#19 0x00005fae826f8e5b llvm::runPassPipeline(llvm::StringRef, llvm::Module&, llvm::TargetMachine*, llvm::TargetLibraryInfoImpl*, llvm::ToolOutputFile*, llvm::ToolOutputFile*, llvm::ToolOutputFile*, llvm::StringRef, llvm::ArrayRef<llvm::PassPlugin>, llvm::opt_tool::OutputKind, llvm::opt_tool::VerifierKind, bool, bool, bool, bool, bool, bool, bool) (/home/pc2/llvm-rafael/build/bin/opt+0x591e5b)
+#20 0x00005fae8263756f main (/home/pc2/llvm-rafael/build/bin/opt+0x4d056f)
+#21 0x00007cb4dc434e08 (/usr/lib/libc.so.6+0x25e08)
+#22 0x00007cb4dc434ecc __libc_start_main (/usr/lib/libc.so.6+0x25ecc)
+#23 0x00005fae826ec755 _start (/home/pc2/llvm-rafael/build/bin/opt+0x585755)

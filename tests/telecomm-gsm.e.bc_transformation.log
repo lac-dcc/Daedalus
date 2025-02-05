@@ -1,0 +1,577 @@
+== OUTLINING INST PHASE ==
+  %51 = or i32 %50, %49
+[32moutlined![0m
+  %26 = mul nsw i64 %25, %24
+Not self contained!
+  %27 = add nsw i64 %26, 16384
+Not self contained!
+  %28 = lshr i64 %27, 15
+Not self contained!
+  %29 = and i64 %28, 65535
+Not self contained!
+  %39 = mul nsw i64 %38, %37
+Not self contained!
+  %40 = add nsw i64 %39, 16384
+Not self contained!
+  %41 = lshr i64 %40, 15
+Not self contained!
+  %42 = and i64 %41, 65535
+Not self contained!
+  %5 = or i1 %3, %4
+[32moutlined![0m
+  %318 = or i1 %316, %317
+Not self contained!
+  %324 = or i1 %322, %323
+Not self contained!
+  %9 = add i64 %7, %8
+[32moutlined![0m
+  %12 = add i64 %9, %11
+[32moutlined![0m
+  %9 = sub i64 %3, %4
+Not self contained!
+  %318 = shl <4 x i8> %310, <i8 1, i8 1, i8 1, i8 1>
+Not self contained!
+  %319 = and <4 x i8> %318, <i8 62, i8 62, i8 62, i8 62>
+Not self contained!
+  %324 = lshr <4 x i8> %323, <i8 7, i8 7, i8 7, i8 7>
+Not self contained!
+  %325 = or <4 x i8> %324, %319
+Not self contained!
+  %327 = lshr i8 %317, 4
+Not self contained!
+  %328 = lshr i8 %317, 1
+Not self contained!
+  %333 = and <4 x i8> %332, <i8 7, i8 7, i8 7, i8 7>
+Not self contained!
+  %335 = shl i8 %317, 2
+Not self contained!
+  %336 = and i8 %335, 4
+Not self contained!
+  %338 = lshr i8 %337, 6
+Not self contained!
+  %339 = or i8 %338, %336
+Not self contained!
+  %341 = lshr i8 %337, 3
+Not self contained!
+  %342 = and i8 %341, 7
+Not self contained!
+  %344 = and i8 %337, 7
+Not self contained!
+  %355 = lshr i8 %354, 7
+Not self contained!
+  %356 = or i8 %355, %353
+Not self contained!
+  %358 = lshr i8 %354, 4
+Not self contained!
+  %359 = and i8 %358, 7
+Not self contained!
+  %361 = lshr i8 %354, 1
+Not self contained!
+  %362 = and i8 %361, 7
+Not self contained!
+  %364 = shl i8 %354, 2
+Not self contained!
+  %365 = and i8 %364, 4
+Not self contained!
+  %107 = and i64 %103, 4294967295
+Not self contained!
+  %123 = and i8 %122, -16
+Not self contained!
+  %127 = shl nuw nsw i16 %126, 2
+Not self contained!
+  %128 = and i16 %127, 60
+Not self contained!
+  %261 = and <4 x i8> %260, <i8 7, i8 7, i8 7, i8 7>
+Not self contained!
+  %263 = shl i8 %254, 2
+Not self contained!
+  %264 = and i8 %263, 4
+Not self contained!
+  %266 = lshr i8 %265, 6
+Not self contained!
+  %267 = or i8 %266, %264
+Not self contained!
+  %130 = lshr i8 %129, 6
+Not self contained!
+  %132 = or i16 %128, %131
+Not self contained!
+  %133 = and i8 %129, 63
+Not self contained!
+  %347 = lshr i8 %346, 5
+Not self contained!
+  %349 = lshr i8 %346, 2
+Not self contained!
+  %350 = and i8 %349, 7
+Not self contained!
+  %352 = shl i8 %346, 1
+Not self contained!
+  %353 = and i8 %352, 6
+Not self contained!
+  %136 = lshr i8 %135, 3
+Not self contained!
+  %138 = shl i8 %135, 2
+Not self contained!
+  %139 = and i8 %138, 28
+Not self contained!
+  %141 = lshr i8 %140, 6
+Not self contained!
+  %142 = or i8 %141, %139
+Not self contained!
+  %144 = lshr i8 %140, 2
+Not self contained!
+  %145 = and i8 %144, 15
+Not self contained!
+  %147 = shl i8 %140, 2
+Not self contained!
+  %148 = and i8 %147, 12
+Not self contained!
+  %150 = lshr i8 %149, 6
+Not self contained!
+  %151 = or i8 %150, %148
+Not self contained!
+  %153 = lshr i8 %149, 3
+Not self contained!
+  %154 = and i8 %153, 7
+Not self contained!
+  %156 = and i8 %149, 7
+Not self contained!
+  %163 = lshr i8 %162, 4
+Not self contained!
+  %164 = and i8 %163, 7
+Not self contained!
+  %166 = lshr i8 %162, 1
+Not self contained!
+  %167 = and i8 %166, 7
+Not self contained!
+  %169 = shl i8 %162, 2
+Not self contained!
+  %170 = and i8 %169, 4
+Not self contained!
+  %172 = lshr i8 %171, 6
+Not self contained!
+  %173 = or i8 %172, %170
+Not self contained!
+  %175 = lshr i8 %171, 3
+Not self contained!
+  %176 = and i8 %175, 7
+Not self contained!
+  %178 = and i8 %171, 7
+Not self contained!
+  %181 = lshr i8 %180, 5
+Not self contained!
+  %183 = lshr i8 %180, 2
+Not self contained!
+  %184 = and i8 %183, 7
+Not self contained!
+  %186 = shl i8 %180, 1
+Not self contained!
+  %187 = and i8 %186, 6
+Not self contained!
+  %189 = lshr i8 %188, 7
+Not self contained!
+  %190 = or i8 %189, %187
+Not self contained!
+  %192 = lshr i8 %188, 4
+Not self contained!
+  %193 = and i8 %192, 7
+Not self contained!
+  %195 = lshr i8 %188, 1
+Not self contained!
+  %196 = and i8 %195, 7
+Not self contained!
+  %198 = shl i8 %188, 2
+Not self contained!
+  %199 = and i8 %198, 4
+Not self contained!
+  %201 = lshr i8 %200, 6
+Not self contained!
+  %202 = or i8 %201, %199
+Not self contained!
+  %204 = lshr i8 %200, 3
+Not self contained!
+  %208 = lshr i8 %207, 4
+Not self contained!
+  %209 = lshr i8 %207, 1
+Not self contained!
+  %214 = and <4 x i8> %213, <i8 7, i8 7, i8 7, i8 7>
+Not self contained!
+  %216 = shl i8 %207, 2
+Not self contained!
+  %217 = and i8 %216, 4
+Not self contained!
+  %219 = lshr i8 %218, 6
+Not self contained!
+  %220 = or i8 %219, %217
+Not self contained!
+  %222 = lshr i8 %218, 3
+Not self contained!
+  %223 = and i8 %222, 7
+Not self contained!
+  %225 = and i8 %218, 7
+Not self contained!
+  %228 = lshr i8 %227, 5
+Not self contained!
+  %230 = lshr i8 %227, 2
+Not self contained!
+  %231 = and i8 %230, 7
+Not self contained!
+  %233 = shl i8 %227, 1
+Not self contained!
+  %234 = and i8 %233, 6
+Not self contained!
+  %236 = lshr i8 %235, 7
+Not self contained!
+  %237 = or i8 %236, %234
+Not self contained!
+  %239 = lshr i8 %235, 4
+Not self contained!
+  %240 = and i8 %239, 7
+Not self contained!
+  %242 = lshr i8 %235, 1
+Not self contained!
+  %243 = and i8 %242, 7
+Not self contained!
+  %245 = shl i8 %235, 2
+Not self contained!
+  %246 = and i8 %245, 4
+Not self contained!
+  %248 = lshr i8 %247, 6
+Not self contained!
+  %249 = or i8 %248, %246
+Not self contained!
+  %251 = lshr i8 %247, 3
+Not self contained!
+  %255 = lshr i8 %254, 4
+Not self contained!
+  %256 = lshr i8 %254, 1
+Not self contained!
+  %269 = lshr i8 %265, 3
+Not self contained!
+  %270 = and i8 %269, 7
+Not self contained!
+  %272 = and i8 %265, 7
+Not self contained!
+  %275 = lshr i8 %274, 5
+Not self contained!
+  %277 = lshr i8 %274, 2
+Not self contained!
+  %278 = and i8 %277, 7
+Not self contained!
+  %280 = shl i8 %274, 1
+Not self contained!
+  %281 = and i8 %280, 6
+Not self contained!
+  %283 = lshr i8 %282, 7
+Not self contained!
+  %284 = or i8 %283, %281
+Not self contained!
+  %286 = lshr i8 %282, 4
+Not self contained!
+  %287 = and i8 %286, 7
+Not self contained!
+  %289 = lshr i8 %282, 1
+Not self contained!
+  %290 = and i8 %289, 7
+Not self contained!
+  %292 = shl i8 %282, 2
+Not self contained!
+  %293 = and i8 %292, 4
+Not self contained!
+  %295 = lshr i8 %294, 6
+Not self contained!
+  %296 = or i8 %295, %293
+Not self contained!
+  %298 = lshr i8 %294, 3
+Not self contained!
+  %303 = lshr <4 x i8> %302, <i8 1, i8 1, i8 1, i8 1>
+Not self contained!
+  %306 = shl <4 x i8> %302, <i8 1, i8 1, i8 1, i8 1>
+Not self contained!
+  %307 = and <4 x i8> %306, <i8 2, i8 2, i8 2, i8 2>
+Not self contained!
+  %311 = lshr <4 x i8> %310, <i8 7, i8 7, i8 7, i8 7>
+Not self contained!
+  %312 = or <4 x i8> %311, %307
+Not self contained!
+  %314 = lshr <4 x i8> %310, <i8 5, i8 5, i8 5, i8 5>
+Not self contained!
+  %315 = and <4 x i8> %314, <i8 3, i8 3, i8 3, i8 3>
+Not self contained!
+  %367 = lshr i8 %366, 6
+Not self contained!
+  %368 = or i8 %367, %365
+Not self contained!
+  %370 = lshr i8 %366, 3
+Not self contained!
+  %371 = and i8 %370, 7
+Not self contained!
+  %373 = and i8 %366, 7
+Not self contained!
+  %388 = add nsw i16 %387, -1
+Not self contained!
+  %390 = shl i16 %389, 3
+Not self contained!
+  %391 = sub i16 %384, %390
+Not self contained!
+  %405 = add nsw i16 %404, -8
+Not self contained!
+  %421 = shl nsw i64 %420, 33
+[32moutlined![0m
+  %426 = sub nsw i64 %425, %423
+Not self contained!
+  %432 = mul i64 %421, %429
+Not self contained!
+  %433 = add i64 %432, 140737488355328
+Not self contained!
+  %434 = lshr i64 %433, 48
+Not self contained!
+  %452 = xor i16 %449, 1
+Not self contained!
+  %456 = ashr <8 x i16> %455, <i16 2, i16 2, i16 2, i16 2, i16 2, i16 2, i16 2, i16 2>
+Not self contained!
+  %458 = ashr <8 x i16> %457, <i16 2, i16 2, i16 2, i16 2, i16 2, i16 2, i16 2, i16 2>
+Not self contained!
+  %459 = ashr <8 x i16> %455, <i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1>
+Not self contained!
+  %460 = add nsw <8 x i16> %459, %456
+Not self contained!
+  %461 = add nsw <8 x i16> %460, %458
+Not self contained!
+  %463 = ashr <8 x i16> %462, <i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1>
+Not self contained!
+  %465 = ashr <8 x i16> %464, <i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1>
+Not self contained!
+  %466 = add nsw <8 x i16> %465, %463
+Not self contained!
+  %468 = ashr <8 x i16> %467, <i16 2, i16 2, i16 2, i16 2, i16 2, i16 2, i16 2, i16 2>
+Not self contained!
+  %470 = ashr <8 x i16> %469, <i16 2, i16 2, i16 2, i16 2, i16 2, i16 2, i16 2, i16 2>
+Not self contained!
+  %471 = add nsw <8 x i16> %470, %468
+Not self contained!
+  %472 = ashr <8 x i16> %469, <i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1>
+Not self contained!
+  %473 = add nsw <8 x i16> %471, %472
+Not self contained!
+  %483 = add nsw i64 %482, 140737488355328
+[32moutlined![0m
+  %489 = shl nuw i64 %488, 48
+Not self contained!
+  %490 = ashr exact i64 %489, 47
+Not self contained!
+  %491 = add nsw i64 %490, -32768
+Not self contained!
+  %497 = and i16 %496, -8
+Not self contained!
+  %692 = lshr exact <8 x i64> %691, <i64 32, i64 32, i64 32, i64 32, i64 32, i64 32, i64 32, i64 32>
+Not self contained!
+  %694 = add <8 x i32> %693, <i32 16777216, i32 16777216, i32 16777216, i32 16777216, i32 16777216, i32 16777216, i32 16777216, i32 16777216>
+Not self contained!
+  %1661 = shl i16 %1656, 7
+Not self contained!
+  %1663 = shl i16 %1662, 4
+Not self contained!
+  %1664 = and i16 %1663, 112
+Not self contained!
+  %1665 = or i16 %1664, %1661
+Not self contained!
+  %1667 = shl i16 %1666, 1
+Not self contained!
+  %1668 = and i16 %1667, 14
+Not self contained!
+  %1669 = or i16 %1665, %1668
+Not self contained!
+  %1671 = lshr i16 %1670, 2
+Not self contained!
+  %425 = mul nsw i64 %424, %424
+Not self contained!
+  %426 = add nuw nsw i64 %414, %425
+Not self contained!
+  %427 = mul nsw i64 %424, %404
+Not self contained!
+  %428 = mul nsw i64 %424, %392
+Not self contained!
+  %429 = add nsw i64 %421, %428
+Not self contained!
+  %430 = mul nsw i64 %424, %388
+Not self contained!
+  %431 = add nsw i64 %430, %422
+Not self contained!
+  %432 = mul nsw i64 %424, %385
+Not self contained!
+  %435 = mul nsw i64 %434, %434
+Not self contained!
+  %436 = add nsw i64 %426, %435
+Not self contained!
+  %437 = add nsw i64 %434, %412
+Not self contained!
+  %438 = mul nsw i64 %437, %424
+Not self contained!
+  %439 = add nsw i64 %418, %438
+Not self contained!
+  %440 = add nsw i64 %434, %398
+Not self contained!
+  %441 = mul nsw i64 %440, %412
+Not self contained!
+  %442 = add nsw i64 %409, %427
+Not self contained!
+  %443 = add nsw i64 %442, %441
+Not self contained!
+  %444 = add nsw i64 %434, %388
+Not self contained!
+  %445 = mul nsw i64 %444, %404
+Not self contained!
+  %375 = shl nsw <8 x i32> %374, <i32 14, i32 14, i32 14, i32 14, i32 14, i32 14, i32 14, i32 14>
+Not self contained!
+  %376 = add nsw <8 x i32> %375, <i32 16384, i32 16384, i32 16384, i32 16384, i32 16384, i32 16384, i32 16384, i32 16384>
+Not self contained!
+  %377 = lshr <8 x i32> %376, <i32 15, i32 15, i32 15, i32 15, i32 15, i32 15, i32 15, i32 15>
+Not self contained!
+  %995 = add nsw i64 %989, %994
+Not self contained!
+  %1000 = mul nsw i64 %999, %825
+Not self contained!
+  %1001 = add nsw i64 %995, %1000
+Not self contained!
+  %1006 = mul nsw i64 %1005, %827
+Not self contained!
+  %1007 = add nsw i64 %1001, %1006
+Not self contained!
+  %1012 = mul nsw i64 %1011, %829
+Not self contained!
+  %1013 = add nsw i64 %1007, %1012
+Not self contained!
+  %1018 = mul nsw i64 %1017, %831
+Not self contained!
+  %1019 = add nsw i64 %1013, %1018
+Not self contained!
+  %1024 = mul nsw i64 %1023, %833
+Not self contained!
+  %1025 = add nsw i64 %1019, %1024
+Not self contained!
+  %1030 = mul nsw i64 %1029, %835
+Not self contained!
+  %1031 = add nsw i64 %1025, %1030
+Not self contained!
+  %1036 = mul nsw i64 %1035, %837
+Not self contained!
+  %1037 = add nsw i64 %1031, %1036
+Not self contained!
+  %892 = mul nsw i64 %891, %789
+Not self contained!
+  %893 = add nsw i64 %887, %892
+Not self contained!
+  %898 = mul nsw i64 %897, %791
+Not self contained!
+  %899 = add nsw i64 %893, %898
+Not self contained!
+  %904 = mul nsw i64 %903, %793
+Not self contained!
+  %905 = add nsw i64 %899, %904
+Not self contained!
+  %910 = mul nsw i64 %909, %795
+Not self contained!
+  %911 = add nsw i64 %905, %910
+Not self contained!
+  %916 = mul nsw i64 %915, %797
+Not self contained!
+  %917 = add nsw i64 %911, %916
+Not self contained!
+  %922 = mul nsw i64 %921, %799
+Not self contained!
+  %923 = add nsw i64 %917, %922
+Not self contained!
+  %928 = mul nsw i64 %927, %801
+Not self contained!
+  %929 = add nsw i64 %923, %928
+Not self contained!
+  %934 = mul nsw i64 %933, %803
+Not self contained!
+  %935 = add nsw i64 %929, %934
+Not self contained!
+  %940 = mul nsw i64 %939, %805
+Not self contained!
+  %941 = add nsw i64 %935, %940
+Not self contained!
+  %946 = mul nsw i64 %945, %807
+Not self contained!
+  %947 = add nsw i64 %941, %946
+Not self contained!
+  %952 = mul nsw i64 %951, %809
+Not self contained!
+  %953 = add nsw i64 %947, %952
+Not self contained!
+  %958 = mul nsw i64 %957, %811
+Not self contained!
+  %959 = add nsw i64 %953, %958
+Not self contained!
+  %964 = mul nsw i64 %963, %813
+Not self contained!
+  %965 = add nsw i64 %959, %964
+Not self contained!
+  %970 = mul nsw i64 %969, %815
+Not self contained!
+  %971 = add nsw i64 %965, %970
+Not self contained!
+  %976 = mul nsw i64 %975, %817
+Not self contained!
+  %977 = add nsw i64 %971, %976
+Not self contained!
+  %982 = mul nsw i64 %981, %819
+Not self contained!
+  %983 = add nsw i64 %977, %982
+Not self contained!
+  %988 = mul nsw i64 %987, %821
+Not self contained!
+  %989 = add nsw i64 %983, %988
+Not self contained!
+  %994 = mul nsw i64 %993, %823
+Not self contained!
+  %257 = and i16 %256, -4
+[32moutlined![0m
+  %262 = shl nsw i64 %261, 15
+Not self contained!
+  %265 = shl i64 %264, 63
+Not self contained!
+  %267 = sub i64 %266, %265
+Not self contained!
+  %268 = ashr exact i64 %267, 48
+Not self contained!
+  %269 = mul nsw i64 %268, 32735
+Not self contained!
+  %270 = add nsw i64 %269, 16384
+Not self contained!
+  %271 = ashr i64 %270, 15
+Not self contained!
+  %241 = shl nuw nsw i64 %239, 1
+Not self contained!
+  %242 = sub nuw nsw i64 320, %241
+Not self contained!
+  %514 = add nsw i64 %513, %471
+Not self contained!
+  %522 = shl i64 %521, 1
+Not self contained!
+opt: /home/pc2/llvm-rafael/llvm/include/llvm/IR/Instructions.h:2889: llvm::Value* llvm::PHINode::removeIncomingValue(const llvm::BasicBlock*, bool): Assertion `Idx >= 0 && "Invalid basic block argument to remove!"' failed.
+PLEASE submit a bug report to https://github.com/llvm/llvm-project/issues/ and include the crash backtrace.
+Stack dump:
+0.	Program arguments: opt -stats -debug-only=Daedalus -passes=daedalus -load-pass-plugin=../build/lib/libdaedalus.so -S telecomm-gsm.e.bc.ll -o telecomm-gsm.e.bc.d.ll
+ #0 0x00005d86980b043c llvm::sys::PrintStackTrace(llvm::raw_ostream&, int) (/home/pc2/llvm-rafael/build/bin/opt+0x1ca143c)
+ #1 0x00005d86980ad63b SignalHandler(int) Signals.cpp:0:0
+ #2 0x000071cddd12f1d0 (/usr/lib/libc.so.6+0x3d1d0)
+ #3 0x000071cddd1883f4 (/usr/lib/libc.so.6+0x963f4)
+ #4 0x000071cddd12f120 raise (/usr/lib/libc.so.6+0x3d120)
+ #5 0x000071cddd1164c3 abort (/usr/lib/libc.so.6+0x244c3)
+ #6 0x000071cddd1163df (/usr/lib/libc.so.6+0x243df)
+ #7 0x000071cddd127177 (/usr/lib/libc.so.6+0x35177)
+ #8 0x000071cddd0a3ffb llvm::PHINode::removeIncomingValue(llvm::BasicBlock const*, bool) /home/pc2/llvm-rafael/llvm/include/llvm/IR/Instructions.h:2890:31
+ #9 0x000071cddd09fece updatePHINodes(llvm::Function*) /home/pc2/workspace/Daedalus/include/wyvern/ProgramSlice.cpp:531:7
+#10 0x000071cddd0a0b2d llvm::ProgramSlice::rerouteBranches(llvm::Function*) /home/pc2/workspace/Daedalus/include/wyvern/ProgramSlice.cpp:690:1
+#11 0x000071cddd0a2602 llvm::ProgramSlice::outline() /home/pc2/workspace/Daedalus/include/wyvern/ProgramSlice.cpp:1073:17
+#12 0x000071cddd087cea Daedalus::DaedalusPass::run(llvm::Module&, llvm::AnalysisManager<llvm::Module>&) /home/pc2/workspace/Daedalus/lib/daedalus.cpp:305:31
+#13 0x000071cddd09cc61 llvm::detail::PassModel<llvm::Module, Daedalus::DaedalusPass, llvm::PreservedAnalyses, llvm::AnalysisManager<llvm::Module>>::run(llvm::Module&, llvm::AnalysisManager<llvm::Module>&) /home/pc2/llvm-rafael/llvm/include/llvm/IR/PassManagerInternal.h:90:3
+#14 0x00005d8697a960d1 llvm::PassManager<llvm::Module, llvm::AnalysisManager<llvm::Module>>::run(llvm::Module&, llvm::AnalysisManager<llvm::Module>&) (/home/pc2/llvm-rafael/build/bin/opt+0x16870d1)
+#15 0x00005d86969a0e5b llvm::runPassPipeline(llvm::StringRef, llvm::Module&, llvm::TargetMachine*, llvm::TargetLibraryInfoImpl*, llvm::ToolOutputFile*, llvm::ToolOutputFile*, llvm::ToolOutputFile*, llvm::StringRef, llvm::ArrayRef<llvm::PassPlugin>, llvm::opt_tool::OutputKind, llvm::opt_tool::VerifierKind, bool, bool, bool, bool, bool, bool, bool) (/home/pc2/llvm-rafael/build/bin/opt+0x591e5b)
+#16 0x00005d86968df56f main (/home/pc2/llvm-rafael/build/bin/opt+0x4d056f)
+#17 0x000071cddd117e08 (/usr/lib/libc.so.6+0x25e08)
+#18 0x000071cddd117ecc __libc_start_main (/usr/lib/libc.so.6+0x25ecc)
+#19 0x00005d8696994755 _start (/home/pc2/llvm-rafael/build/bin/opt+0x585755)

@@ -1,0 +1,793 @@
+; ModuleID = 'flops.e.bc.ll'
+source_filename = "ld-temp.o"
+target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128"
+target triple = "x86_64-unknown-linux-gnu"
+
+%struct.timeval = type { i64, i64 }
+
+@A3 = internal unnamed_addr global double 0x3F2A01A03FB1CA71, align 8
+@A5 = internal unnamed_addr global double 0x3E5AEB5A8CF8A426, align 8
+@T = internal unnamed_addr global [36 x double] zeroinitializer, align 16
+@scale = internal unnamed_addr global double 0.000000e+00, align 8
+@sa = internal unnamed_addr global double 0.000000e+00, align 8
+@nulltime = internal unnamed_addr global double 0.000000e+00, align 8
+@sc = internal unnamed_addr global double 0.000000e+00, align 8
+@.str.4 = private unnamed_addr constant [36 x i8] c"     1   %13.4lf  %10.4lf  %10.4lf\0A\00", align 1
+@.str.5 = private unnamed_addr constant [36 x i8] c"     2   %13.4lf  %10.4lf  %10.4lf\0A\00", align 1
+@.str.6 = private unnamed_addr constant [36 x i8] c"     3   %13.4lf  %10.4lf  %10.4lf\0A\00", align 1
+@.str.7 = private unnamed_addr constant [36 x i8] c"     4   %13.4lf  %10.4lf  %10.4lf\0A\00", align 1
+@.str.8 = private unnamed_addr constant [36 x i8] c"     5   %13.4lf  %10.4lf  %10.4lf\0A\00", align 1
+@.str.9 = private unnamed_addr constant [36 x i8] c"     6   %13.4lf  %10.4lf  %10.4lf\0A\00", align 1
+@.str.10 = private unnamed_addr constant [36 x i8] c"     7   %13.4lf  %10.4lf  %10.4lf\0A\00", align 1
+@.str.11 = private unnamed_addr constant [36 x i8] c"     8   %13.4lf  %10.4lf  %10.4lf\0A\00", align 1
+@.str.12 = private unnamed_addr constant [28 x i8] c"   Iterations      = %10ld\0A\00", align 1
+@.str.13 = private unnamed_addr constant [30 x i8] c"   NullTime (usec) = %10.4lf\0A\00", align 1
+@.str.14 = private unnamed_addr constant [30 x i8] c"   MFLOPS(1)       = %10.4lf\0A\00", align 1
+@.str.15 = private unnamed_addr constant [30 x i8] c"   MFLOPS(2)       = %10.4lf\0A\00", align 1
+@.str.16 = private unnamed_addr constant [30 x i8] c"   MFLOPS(3)       = %10.4lf\0A\00", align 1
+@.str.17 = private unnamed_addr constant [31 x i8] c"   MFLOPS(4)       = %10.4lf\0A\0A\00", align 1
+@tnow = internal global %struct.timeval zeroinitializer, align 8
+@str = private unnamed_addr constant [57 x i8] c"   FLOPS C Program (Double Precision), V2.0 18 Dec 1992\0A\00", align 1
+@str.18 = private unnamed_addr constant [47 x i8] c"   Module     Error        RunTime      MFLOPS\00", align 1
+@str.19 = private unnamed_addr constant [35 x i8] c"                            (usec)\00", align 1
+
+; Function Attrs: nofree nounwind optsize uwtable
+define dso_local i32 @main() #0 {
+  %1 = tail call i32 @putchar(i32 10)
+  %2 = tail call i32 @puts(ptr nonnull dereferenceable(1) @str)
+  store double 6.400000e+01, ptr getelementptr inbounds ([36 x double], ptr @T, i64 0, i64 1), align 8, !tbaa !7
+  store double 1.000000e+00, ptr @scale, align 8, !tbaa !7
+  %3 = tail call i32 @puts(ptr nonnull dereferenceable(1) @str.18)
+  %4 = tail call i32 @puts(ptr nonnull dereferenceable(1) @str.19)
+  %5 = tail call i32 @gettimeofday(ptr noundef nonnull @tnow, ptr noundef null) #6
+  %6 = tail call i32 @gettimeofday(ptr noundef nonnull @tnow, ptr noundef null) #6
+  store double 0.000000e+00, ptr @sa, align 8, !tbaa !7
+  br label %7
+
+7:                                                ; preds = %35, %0
+  %8 = phi i64 [ %9, %35 ], [ 15625, %0 ]
+  %9 = shl i64 %8, 1
+  %10 = sitofp i64 %9 to double
+  %11 = fdiv double 1.000000e+00, %10
+  %12 = tail call i32 @gettimeofday(ptr noundef nonnull @tnow, ptr noundef null) #6
+  %13 = load i64, ptr @tnow, align 8, !tbaa !11
+  %14 = load i64, ptr getelementptr inbounds (%struct.timeval, ptr @tnow, i64 0, i32 1), align 8, !tbaa !14
+  %15 = sitofp i64 %14 to double
+  %16 = tail call i64 @llvm.smax.i64(i64 %9, i64 2)
+  br label %17
+
+17:                                               ; preds = %17, %7
+  %18 = phi i64 [ 1, %7 ], [ %33, %17 ]
+  %19 = phi double [ 0.000000e+00, %7 ], [ %32, %17 ]
+  %20 = phi double [ 0.000000e+00, %7 ], [ %21, %17 ]
+  %21 = fadd double %20, 1.000000e+00
+  %22 = fmul double %11, %21
+  %23 = tail call double @llvm.fmuladd.f64(double %22, double 4.110510e-07, double 4.800000e-04)
+  %24 = insertelement <2 x double> poison, double %22, i64 0
+  %25 = shufflevector <2 x double> %24, <2 x double> poison, <2 x i32> zeroinitializer
+  %26 = insertelement <2 x double> <double 0x3EB4B05A0FF4A728, double poison>, double %23, i64 1
+  %27 = tail call <2 x double> @llvm.fmuladd.v2f64(<2 x double> %25, <2 x double> %26, <2 x double> <double 9.600000e-04, double 0x3FA47AE143138374>)
+  %28 = tail call <2 x double> @llvm.fmuladd.v2f64(<2 x double> %25, <2 x double> %27, <2 x double> <double 0x3FA47AE143138374, double 1.000000e+00>)
+  %29 = extractelement <2 x double> %28, i64 0
+  %30 = extractelement <2 x double> %28, i64 1
+  %31 = fdiv double %29, %30
+  %32 = fadd double %19, %31
+  %33 = add nuw nsw i64 %18, 1
+  %34 = icmp eq i64 %33, %16
+  br i1 %34, label %35, label %17, !llvm.loop !15
+
+35:                                               ; preds = %17
+  %.lcssa6 = phi double [ %32, %17 ]
+  %36 = sitofp i64 %13 to double
+  %37 = tail call double @llvm.fmuladd.f64(double %15, double 0x3EB0C6F7A0B5ED8D, double %36)
+  %38 = tail call i32 @gettimeofday(ptr noundef nonnull @tnow, ptr noundef null) #6
+  %39 = load i64, ptr @tnow, align 8, !tbaa !11
+  %40 = sitofp i64 %39 to double
+  %41 = load i64, ptr getelementptr inbounds (%struct.timeval, ptr @tnow, i64 0, i32 1), align 8, !tbaa !14
+  %42 = sitofp i64 %41 to double
+  %43 = tail call double @llvm.fmuladd.f64(double %42, double 0x3EB0C6F7A0B5ED8D, double %40)
+  %44 = fsub double %43, %37
+  store double %44, ptr @sa, align 8, !tbaa !7
+  %45 = icmp ne i64 %8, 256000000
+  %46 = fcmp olt double %44, 1.000000e+00
+  %47 = select i1 %45, i1 %46, i1 false
+  br i1 %47, label %7, label %48, !llvm.loop !17
+
+48:                                               ; preds = %35
+  %.lcssa7 = phi double [ %11, %35 ]
+  %.lcssa6.lcssa = phi double [ %.lcssa6, %35 ]
+  store double 1.589500e-02, ptr @scale, align 8, !tbaa !7
+  store double 1.589500e-02, ptr getelementptr inbounds ([36 x double], ptr @T, i64 0, i64 1), align 8, !tbaa !7
+  %49 = tail call i32 @gettimeofday(ptr noundef nonnull @tnow, ptr noundef null) #6
+  %50 = load i64, ptr @tnow, align 8, !tbaa !11
+  %51 = sitofp i64 %50 to double
+  %52 = load i64, ptr getelementptr inbounds (%struct.timeval, ptr @tnow, i64 0, i32 1), align 8, !tbaa !14
+  %53 = sitofp i64 %52 to double
+  %54 = tail call double @llvm.fmuladd.f64(double %53, double 0x3EB0C6F7A0B5ED8D, double %51)
+  %55 = tail call i32 @gettimeofday(ptr noundef nonnull @tnow, ptr noundef null) #6
+  %56 = load i64, ptr @tnow, align 8, !tbaa !11
+  %57 = sitofp i64 %56 to double
+  %58 = load i64, ptr getelementptr inbounds (%struct.timeval, ptr @tnow, i64 0, i32 1), align 8, !tbaa !14
+  %59 = sitofp i64 %58 to double
+  %60 = tail call double @llvm.fmuladd.f64(double %59, double 0x3EB0C6F7A0B5ED8D, double %57)
+  %61 = fsub double %60, %54
+  %62 = load double, ptr getelementptr inbounds ([36 x double], ptr @T, i64 0, i64 1), align 8, !tbaa !7
+  %63 = fmul double %62, %61
+  %64 = fcmp olt double %63, 0.000000e+00
+  %65 = select i1 %64, double 0.000000e+00, double %63
+  store double %65, ptr @nulltime, align 8, !tbaa !7
+  %66 = load double, ptr @sa, align 8, !tbaa !7
+  %67 = fneg double %65
+  %68 = tail call double @llvm.fmuladd.f64(double %62, double %66, double %67)
+  store double %68, ptr getelementptr inbounds ([36 x double], ptr @T, i64 0, i64 2), align 16, !tbaa !7
+  %69 = fdiv double %68, 1.400000e+01
+  store double %69, ptr getelementptr inbounds ([36 x double], ptr @T, i64 0, i64 3), align 8, !tbaa !7
+  %70 = tail call double @llvm.fmuladd.f64(double %.lcssa6.lcssa, double 2.000000e+00, double 0x3FB4516F9E23A8CA)
+  %71 = fmul double %.lcssa7, %70
+  %72 = fmul double %71, 5.000000e-01
+  store double %72, ptr @sa, align 8, !tbaa !7
+  %73 = fdiv double 1.000000e+00, %72
+  %74 = fptosi double %73 to i64
+  %75 = mul nsw i64 %74, 40000
+  %76 = sitofp i64 %75 to double
+  %77 = load double, ptr @scale, align 8, !tbaa !7
+  %78 = fdiv double %76, %77
+  %79 = fptosi double %78 to i64
+  %80 = fadd double %73, -2.520000e+01
+  store double %80, ptr @sc, align 8, !tbaa !7
+  %81 = fdiv double 1.000000e+00, %69
+  store double %81, ptr getelementptr inbounds ([36 x double], ptr @T, i64 0, i64 4), align 16, !tbaa !7
+  %82 = fmul double %80, 1.000000e-30
+  %83 = fmul double %68, 1.000000e-30
+  %84 = fmul double %81, 1.000000e-30
+  %85 = tail call i32 (ptr, ...) @printf(ptr noundef nonnull dereferenceable(1) @.str.4, double noundef %82, double noundef %83, double noundef %84) #7
+  store double -1.000000e+00, ptr @sa, align 8, !tbaa !7
+  %86 = tail call i32 @gettimeofday(ptr noundef nonnull @tnow, ptr noundef null) #6
+  %87 = icmp slt i64 %79, 1
+  br i1 %87, label %99, label %88
+
+88:                                               ; preds = %48
+  %89 = load double, ptr @sa, align 8, !tbaa !7
+  br label %90
+
+90:                                               ; preds = %90, %88
+  %91 = phi i64 [ %96, %90 ], [ 1, %88 ]
+  %92 = phi double [ %94, %90 ], [ -5.000000e+00, %88 ]
+  %93 = phi double [ %95, %90 ], [ %89, %88 ]
+  %94 = fneg double %92
+  %95 = fsub double %93, %92
+  %96 = add nuw i64 %91, 1
+  %97 = icmp eq i64 %91, %79
+  br i1 %97, label %98, label %90, !llvm.loop !18
+
+98:                                               ; preds = %90
+  %.lcssa5 = phi double [ %94, %90 ]
+  %.lcssa4 = phi double [ %95, %90 ]
+  store double %.lcssa4, ptr @sa, align 8, !tbaa !7
+  br label %99
+
+99:                                               ; preds = %98, %48
+  %100 = phi double [ %.lcssa5, %98 ], [ -5.000000e+00, %48 ]
+  %101 = tail call i32 @gettimeofday(ptr noundef nonnull @tnow, ptr noundef null) #6
+  %102 = call double @_wyvern_slice_main__403694321()
+  %103 = fcmp olt double %102, 0.000000e+00
+  %104 = select i1 %103, double 0.000000e+00, double %102
+  store double %104, ptr getelementptr inbounds ([36 x double], ptr @T, i64 0, i64 5), align 8, !tbaa !7
+  %105 = sitofp i64 %79 to double
+  store double %105, ptr @sc, align 8, !tbaa !7
+  %106 = load double, ptr @sa, align 8, !tbaa !7
+  %107 = tail call i32 @gettimeofday(ptr noundef nonnull @tnow, ptr noundef null) #6
+  br i1 %87, label %130, label %108
+
+108:                                              ; preds = %99
+  %109 = load double, ptr @sa, align 8, !tbaa !7
+  br label %110
+
+110:                                              ; preds = %110, %108
+  %111 = phi i64 [ 1, %108 ], [ %126, %110 ]
+  %112 = phi double [ %100, %108 ], [ %118, %110 ]
+  %113 = phi double [ %106, %108 ], [ %120, %110 ]
+  %114 = phi double [ 0.000000e+00, %108 ], [ %122, %110 ]
+  %115 = phi double [ 0.000000e+00, %108 ], [ %125, %110 ]
+  %116 = phi double [ 0.000000e+00, %108 ], [ %123, %110 ]
+  %117 = phi double [ %109, %108 ], [ %119, %110 ]
+  %118 = fneg double %112
+  %119 = fsub double %117, %112
+  %120 = fadd double %113, 2.000000e+00
+  %121 = fsub double %118, %120
+  %122 = fadd double %114, %121
+  %123 = tail call double @llvm.fmuladd.f64(double %112, double %120, double %116)
+  %124 = fdiv double %112, %120
+  %125 = fsub double %115, %124
+  %126 = add nuw i64 %111, 1
+  %127 = icmp eq i64 %111, %79
+  br i1 %127, label %128, label %110, !llvm.loop !19
+
+128:                                              ; preds = %110
+  %.lcssa3 = phi double [ %119, %110 ]
+  %.lcssa2 = phi double [ %122, %110 ]
+  %.lcssa1 = phi double [ %123, %110 ]
+  %.lcssa = phi double [ %125, %110 ]
+  store double %.lcssa3, ptr @sa, align 8, !tbaa !7
+  %129 = fmul double %.lcssa, 4.000000e+00
+  br label %130
+
+130:                                              ; preds = %128, %99
+  %131 = phi double [ %.lcssa1, %128 ], [ 0.000000e+00, %99 ]
+  %132 = phi double [ %129, %128 ], [ 0.000000e+00, %99 ]
+  %133 = phi double [ %.lcssa2, %128 ], [ 0.000000e+00, %99 ]
+  %134 = tail call i32 @gettimeofday(ptr noundef nonnull @tnow, ptr noundef null) #6
+  %135 = call double @_wyvern_slice_main__403694321()
+  store double %135, ptr getelementptr inbounds ([36 x double], ptr @T, i64 0, i64 6), align 16, !tbaa !7
+  %136 = load double, ptr getelementptr inbounds ([36 x double], ptr @T, i64 0, i64 5), align 8, !tbaa !7
+  %137 = fsub double %135, %136
+  %138 = fdiv double %137, 7.000000e+00
+  store double %138, ptr getelementptr inbounds ([36 x double], ptr @T, i64 0, i64 7), align 8, !tbaa !7
+  %139 = load double, ptr @sa, align 8, !tbaa !7
+  %140 = fmul double %133, %139
+  %141 = load double, ptr @sc, align 8, !tbaa !7
+  %142 = fdiv double %140, %141
+  %143 = fptosi double %142 to i64
+  %144 = insertelement <2 x double> <double poison, double 5.000000e+00>, double %132, i64 0
+  %145 = insertelement <2 x double> <double 5.000000e+00, double poison>, double %131, i64 1
+  %146 = fdiv <2 x double> %144, %145
+  %147 = extractelement <2 x double> %146, i64 0
+  store double %147, ptr @sa, align 8, !tbaa !7
+  %148 = shufflevector <2 x double> %146, <2 x double> poison, <2 x i32> <i32 1, i32 poison>
+  %149 = fadd <2 x double> %146, %148
+  %150 = extractelement <2 x double> %149, i64 0
+  store double 3.125000e+01, ptr @sc, align 8, !tbaa !7
+  %151 = fmul double %131, %131
+  %152 = fmul double %131, %151
+  %153 = fdiv double 3.125000e+01, %152
+  %154 = fsub double %150, %153
+  %155 = fadd double %154, 0xC00921FB54442D18
+  %156 = fdiv double 1.000000e+00, %138
+  store double %156, ptr getelementptr inbounds ([36 x double], ptr @T, i64 0, i64 8), align 16, !tbaa !7
+  %157 = fmul double %155, 1.000000e-30
+  %158 = fmul double %137, 1.000000e-30
+  %159 = fmul double %156, 1.000000e-30
+  %160 = tail call i32 (ptr, ...) @printf(ptr noundef nonnull dereferenceable(1) @.str.5, double noundef %157, double noundef %158, double noundef %159) #7
+  %161 = sitofp i64 %143 to double
+  %162 = fmul double %161, 3.000000e+00
+  %163 = fdiv double 0x400921FB54442D18, %162
+  %164 = tail call i32 @gettimeofday(ptr noundef nonnull @tnow, ptr noundef null) #6
+  %165 = icmp sgt i64 %143, 1
+  br i1 %165, label %166, label %187
+
+166:                                              ; preds = %130
+  %167 = load double, ptr @A5, align 8, !tbaa !7
+  %168 = fneg double %167
+  %169 = load double, ptr @A3, align 8, !tbaa !7
+  %170 = fneg double %169
+  br label %171
+
+171:                                              ; preds = %171, %166
+  %172 = phi i64 [ 1, %166 ], [ %185, %171 ]
+  %173 = phi double [ 0.000000e+00, %166 ], [ %184, %171 ]
+  %174 = phi double [ 0.000000e+00, %166 ], [ %175, %171 ]
+  %175 = fadd double %174, 1.000000e+00
+  %176 = fmul double %163, %175
+  %177 = fmul double %176, %176
+  %178 = tail call double @llvm.fmuladd.f64(double %177, double 0x3DE68DF75229C1A6, double %168)
+  %179 = tail call double @llvm.fmuladd.f64(double %178, double %177, double 0x3EC71DF284AA3566)
+  %180 = tail call double @llvm.fmuladd.f64(double %179, double %177, double %170)
+  %181 = tail call double @llvm.fmuladd.f64(double %180, double %177, double 0x3F811111113AE9A3)
+  %182 = tail call double @llvm.fmuladd.f64(double %181, double %177, double 0xBFC5555555559705)
+  %183 = tail call double @llvm.fmuladd.f64(double %182, double %177, double 1.000000e+00)
+  %184 = tail call double @llvm.fmuladd.f64(double %176, double %183, double %173)
+  %185 = add nuw nsw i64 %172, 1
+  %186 = icmp eq i64 %185, %143
+  br i1 %186, label %187, label %171, !llvm.loop !20
+
+187:                                              ; preds = %171, %130
+  %188 = phi double [ 0.000000e+00, %130 ], [ %184, %171 ]
+  %189 = tail call i32 @gettimeofday(ptr noundef nonnull @tnow, ptr noundef null) #6
+  %190 = call double @_wyvern_slice_main__228531947()
+  %191 = load double, ptr getelementptr inbounds ([36 x double], ptr @T, i64 0, i64 1), align 8, !tbaa !7
+  %192 = load double, ptr @nulltime, align 8, !tbaa !7
+  %193 = fneg double %192
+  %194 = tail call double @llvm.fmuladd.f64(double %191, double %190, double %193)
+  store double %194, ptr getelementptr inbounds ([36 x double], ptr @T, i64 0, i64 9), align 8, !tbaa !7
+  %195 = load double, ptr @A5, align 8, !tbaa !7
+  %196 = fsub double 0x3DE8BBDCC362E5E2, %195
+  %197 = tail call double @llvm.fmuladd.f64(double %196, double 0x3FF18BC4418CAFE1, double 0x3EC71DF284AA3566)
+  %198 = load double, ptr @A3, align 8, !tbaa !7
+  %199 = fneg double %198
+  %200 = tail call double @llvm.fmuladd.f64(double %197, double 0x3FF18BC4418CAFE1, double %199)
+  %201 = tail call double @llvm.fmuladd.f64(double %200, double 0x3FF18BC4418CAFE1, double 0x3F811111113AE9A3)
+  %202 = tail call double @llvm.fmuladd.f64(double %201, double 0x3FF18BC4418CAFE1, double 0xBFC5555555559705)
+  %203 = tail call double @llvm.fmuladd.f64(double %202, double 0x3FF18BC4418CAFE1, double 1.000000e+00)
+  %204 = fmul double %203, 0x3FF0C152382D7365
+  %205 = fdiv double %194, 1.700000e+01
+  store double %205, ptr getelementptr inbounds ([36 x double], ptr @T, i64 0, i64 10), align 16, !tbaa !7
+  %206 = tail call double @llvm.fmuladd.f64(double %188, double 2.000000e+00, double %204)
+  %207 = fmul double %163, %206
+  %208 = fmul double %207, 5.000000e-01
+  store double %208, ptr @sa, align 8, !tbaa !7
+  %209 = fadd double %208, -5.000000e-01
+  store double %209, ptr @sc, align 8, !tbaa !7
+  %210 = fdiv double 1.000000e+00, %205
+  store double %210, ptr getelementptr inbounds ([36 x double], ptr @T, i64 0, i64 11), align 8, !tbaa !7
+  %211 = fmul double %209, 1.000000e-30
+  %212 = fmul double %194, 1.000000e-30
+  %213 = fmul double %210, 1.000000e-30
+  %214 = tail call i32 (ptr, ...) @printf(ptr noundef nonnull dereferenceable(1) @.str.6, double noundef %211, double noundef %212, double noundef %213) #7
+  %215 = load double, ptr @A3, align 8, !tbaa !7
+  %216 = fneg double %215
+  store double %216, ptr @A3, align 8, !tbaa !7
+  %217 = load double, ptr @A5, align 8, !tbaa !7
+  %218 = fneg double %217
+  store double %218, ptr @A5, align 8, !tbaa !7
+  %219 = tail call i32 @gettimeofday(ptr noundef nonnull @tnow, ptr noundef null) #6
+  br i1 %165, label %220, label %235
+
+220:                                              ; preds = %220, %187
+  %221 = phi i64 [ %233, %220 ], [ 1, %187 ]
+  %222 = phi double [ %232, %220 ], [ 0.000000e+00, %187 ]
+  %223 = sitofp i64 %221 to double
+  %224 = fmul double %163, %223
+  %225 = fmul double %224, %224
+  %226 = tail call double @llvm.fmuladd.f64(double %225, double 0x3E2157B275DF182A, double 0xBE927BB3D47DDB8E)
+  %227 = tail call double @llvm.fmuladd.f64(double %225, double %226, double 0x3EFA019528242DB7)
+  %228 = tail call double @llvm.fmuladd.f64(double %225, double %227, double 0xBF56C16BFFE76516)
+  %229 = tail call double @llvm.fmuladd.f64(double %225, double %228, double 0x3FA5555555290224)
+  %230 = tail call double @llvm.fmuladd.f64(double %225, double %229, double 0xBFDFFFFFFFFF8156)
+  %231 = tail call double @llvm.fmuladd.f64(double %225, double %230, double %222)
+  %232 = fadd double %231, 1.000000e+00
+  %233 = add nuw nsw i64 %221, 1
+  %234 = icmp eq i64 %233, %143
+  br i1 %234, label %235, label %220, !llvm.loop !21
+
+235:                                              ; preds = %220, %187
+  %236 = phi double [ 0.000000e+00, %187 ], [ %232, %220 ]
+  %237 = tail call i32 @gettimeofday(ptr noundef nonnull @tnow, ptr noundef null) #6
+  %238 = call double @_wyvern_slice_main__228531947()
+  %239 = load double, ptr getelementptr inbounds ([36 x double], ptr @T, i64 0, i64 1), align 8, !tbaa !7
+  %240 = load double, ptr @nulltime, align 8, !tbaa !7
+  %241 = fneg double %240
+  %242 = tail call double @llvm.fmuladd.f64(double %239, double %238, double %241)
+  store double %242, ptr getelementptr inbounds ([36 x double], ptr @T, i64 0, i64 12), align 16, !tbaa !7
+  %243 = fdiv double %242, 1.500000e+01
+  store double %243, ptr getelementptr inbounds ([36 x double], ptr @T, i64 0, i64 13), align 8, !tbaa !7
+  %244 = tail call double @llvm.fmuladd.f64(double %236, double 2.000000e+00, double 0x3FF80000000001F6)
+  %245 = fmul double %163, %244
+  %246 = fmul double %245, 5.000000e-01
+  store double %246, ptr @sa, align 8, !tbaa !7
+  %247 = call double @_wyvern_slice_main__400777188()
+  %248 = fsub double %246, %247
+  store double %248, ptr @sc, align 8, !tbaa !7
+  %249 = fdiv double 1.000000e+00, %243
+  store double %249, ptr getelementptr inbounds ([36 x double], ptr @T, i64 0, i64 14), align 16, !tbaa !7
+  %250 = fmul double %248, 1.000000e-30
+  %251 = fmul double %242, 1.000000e-30
+  %252 = fmul double %249, 1.000000e-30
+  %253 = tail call i32 (ptr, ...) @printf(ptr noundef nonnull dereferenceable(1) @.str.7, double noundef %250, double noundef %251, double noundef %252) #7
+  %254 = tail call i32 @gettimeofday(ptr noundef nonnull @tnow, ptr noundef null) #6
+  br i1 %165, label %255, label %281
+
+255:                                              ; preds = %235
+  %256 = load double, ptr @A5, align 8, !tbaa !7
+  %257 = load double, ptr @A3, align 8, !tbaa !7
+  br label %258
+
+258:                                              ; preds = %258, %255
+  %259 = phi i64 [ 1, %255 ], [ %279, %258 ]
+  %260 = phi double [ 0.000000e+00, %255 ], [ %278, %258 ]
+  %261 = sitofp i64 %259 to double
+  %262 = fmul double %163, %261
+  %263 = fmul double %262, %262
+  %264 = tail call double @llvm.fmuladd.f64(double %263, double 0x3DE68DF75229C1A6, double %256)
+  %265 = tail call double @llvm.fmuladd.f64(double %264, double %263, double 0x3EC71DF284AA3566)
+  %266 = tail call double @llvm.fmuladd.f64(double %265, double %263, double %257)
+  %267 = tail call double @llvm.fmuladd.f64(double %266, double %263, double 0x3F811111113AE9A3)
+  %268 = tail call double @llvm.fmuladd.f64(double %267, double %263, double 0xBFC5555555559705)
+  %269 = tail call double @llvm.fmuladd.f64(double %268, double %263, double 1.000000e+00)
+  %270 = fmul double %262, %269
+  %271 = tail call double @llvm.fmuladd.f64(double %263, double 0x3E2157B275DF182A, double 0xBE927BB3D47DDB8E)
+  %272 = tail call double @llvm.fmuladd.f64(double %263, double %271, double 0x3EFA019528242DB7)
+  %273 = tail call double @llvm.fmuladd.f64(double %263, double %272, double 0xBF56C16BFFE76516)
+  %274 = tail call double @llvm.fmuladd.f64(double %263, double %273, double 0x3FA5555555290224)
+  %275 = tail call double @llvm.fmuladd.f64(double %263, double %274, double 0xBFDFFFFFFFFF8156)
+  %276 = tail call double @llvm.fmuladd.f64(double %263, double %275, double 1.000000e+00)
+  %277 = fdiv double %270, %276
+  %278 = fadd double %260, %277
+  %279 = add nuw nsw i64 %259, 1
+  %280 = icmp eq i64 %279, %143
+  br i1 %280, label %281, label %258, !llvm.loop !22
+
+281:                                              ; preds = %258, %235
+  %282 = phi double [ 0.000000e+00, %235 ], [ %278, %258 ]
+  %283 = tail call i32 @gettimeofday(ptr noundef nonnull @tnow, ptr noundef null) #6
+  %284 = call double @_wyvern_slice_main__228531947()
+  %285 = load double, ptr getelementptr inbounds ([36 x double], ptr @T, i64 0, i64 1), align 8, !tbaa !7
+  %286 = load double, ptr @nulltime, align 8, !tbaa !7
+  %287 = fneg double %286
+  %288 = tail call double @llvm.fmuladd.f64(double %285, double %284, double %287)
+  store double %288, ptr getelementptr inbounds ([36 x double], ptr @T, i64 0, i64 15), align 8, !tbaa !7
+  %289 = call double @_wyvern_slice_main__400777188()
+  %290 = fdiv double %289, 0x3FE00000000003EB
+  %291 = fdiv double %288, 2.900000e+01
+  store double %291, ptr getelementptr inbounds ([36 x double], ptr @T, i64 0, i64 16), align 16, !tbaa !7
+  %292 = tail call double @llvm.fmuladd.f64(double %282, double 2.000000e+00, double %290)
+  %293 = fmul double %163, %292
+  %294 = fmul double %293, 5.000000e-01
+  store double %294, ptr @sa, align 8, !tbaa !7
+  %295 = fadd double %294, 0xBFE62E42FEFA39EF
+  store double %295, ptr @sc, align 8, !tbaa !7
+  %296 = fdiv double 1.000000e+00, %291
+  store double %296, ptr getelementptr inbounds ([36 x double], ptr @T, i64 0, i64 17), align 8, !tbaa !7
+  %297 = fmul double %295, 1.000000e-30
+  %298 = fmul double %288, 1.000000e-30
+  %299 = fmul double %296, 1.000000e-30
+  %300 = tail call i32 (ptr, ...) @printf(ptr noundef nonnull dereferenceable(1) @.str.8, double noundef %297, double noundef %298, double noundef %299) #7
+  %301 = fmul double %161, 4.000000e+00
+  %302 = fdiv double 0x400921FB54442D18, %301
+  %303 = tail call i32 @gettimeofday(ptr noundef nonnull @tnow, ptr noundef null) #6
+  br i1 %165, label %304, label %329
+
+304:                                              ; preds = %281
+  %305 = load double, ptr @A5, align 8, !tbaa !7
+  %306 = load double, ptr @A3, align 8, !tbaa !7
+  br label %307
+
+307:                                              ; preds = %307, %304
+  %308 = phi i64 [ 1, %304 ], [ %327, %307 ]
+  %309 = phi double [ 0.000000e+00, %304 ], [ %326, %307 ]
+  %310 = sitofp i64 %308 to double
+  %311 = fmul double %302, %310
+  %312 = fmul double %311, %311
+  %313 = tail call double @llvm.fmuladd.f64(double %312, double 0x3DE68DF75229C1A6, double %305)
+  %314 = tail call double @llvm.fmuladd.f64(double %313, double %312, double 0x3EC71DF284AA3566)
+  %315 = tail call double @llvm.fmuladd.f64(double %314, double %312, double %306)
+  %316 = tail call double @llvm.fmuladd.f64(double %315, double %312, double 0x3F811111113AE9A3)
+  %317 = tail call double @llvm.fmuladd.f64(double %316, double %312, double 0xBFC5555555559705)
+  %318 = tail call double @llvm.fmuladd.f64(double %317, double %312, double 1.000000e+00)
+  %319 = fmul double %311, %318
+  %320 = tail call double @llvm.fmuladd.f64(double %312, double 0x3E2157B275DF182A, double 0xBE927BB3D47DDB8E)
+  %321 = tail call double @llvm.fmuladd.f64(double %312, double %320, double 0x3EFA019528242DB7)
+  %322 = tail call double @llvm.fmuladd.f64(double %312, double %321, double 0xBF56C16BFFE76516)
+  %323 = tail call double @llvm.fmuladd.f64(double %312, double %322, double 0x3FA5555555290224)
+  %324 = tail call double @llvm.fmuladd.f64(double %312, double %323, double 0xBFDFFFFFFFFF8156)
+  %325 = tail call double @llvm.fmuladd.f64(double %312, double %324, double 1.000000e+00)
+  %326 = tail call double @llvm.fmuladd.f64(double %319, double %325, double %309)
+  %327 = add nuw nsw i64 %308, 1
+  %328 = icmp eq i64 %327, %143
+  br i1 %328, label %329, label %307, !llvm.loop !23
+
+329:                                              ; preds = %307, %281
+  %330 = phi double [ 0.000000e+00, %281 ], [ %326, %307 ]
+  %331 = tail call i32 @gettimeofday(ptr noundef nonnull @tnow, ptr noundef null) #6
+  %332 = call double @_wyvern_slice_main__228531947()
+  %333 = load double, ptr getelementptr inbounds ([36 x double], ptr @T, i64 0, i64 1), align 8, !tbaa !7
+  %334 = load double, ptr @nulltime, align 8, !tbaa !7
+  %335 = fneg double %334
+  %336 = tail call double @llvm.fmuladd.f64(double %333, double %332, double %335)
+  store double %336, ptr getelementptr inbounds ([36 x double], ptr @T, i64 0, i64 18), align 16, !tbaa !7
+  %337 = load double, ptr @A5, align 8, !tbaa !7
+  %338 = fadd double %337, 0x3DDBD3585BCF429F
+  %339 = tail call double @llvm.fmuladd.f64(double %338, double 0x3FE3BD3CC9BE45DE, double 0x3EC71DF284AA3566)
+  %340 = load double, ptr @A3, align 8, !tbaa !7
+  %341 = tail call double @llvm.fmuladd.f64(double %339, double 0x3FE3BD3CC9BE45DE, double %340)
+  %342 = tail call double @llvm.fmuladd.f64(double %341, double 0x3FE3BD3CC9BE45DE, double 0x3F811111113AE9A3)
+  %343 = tail call double @llvm.fmuladd.f64(double %342, double 0x3FE3BD3CC9BE45DE, double 0xBFC5555555559705)
+  %344 = tail call double @llvm.fmuladd.f64(double %343, double 0x3FE3BD3CC9BE45DE, double 1.000000e+00)
+  %345 = fmul double %344, 0x3FE921FB54442D18
+  %346 = fmul double %345, 0x3FE6A09E667F3DDE
+  %347 = fdiv double %336, 2.900000e+01
+  store double %347, ptr getelementptr inbounds ([36 x double], ptr @T, i64 0, i64 19), align 8, !tbaa !7
+  %348 = tail call double @llvm.fmuladd.f64(double %330, double 2.000000e+00, double %346)
+  %349 = fmul double %302, %348
+  %350 = fmul double %349, 5.000000e-01
+  store double %350, ptr @sa, align 8, !tbaa !7
+  %351 = fadd double %350, -2.500000e-01
+  store double %351, ptr @sc, align 8, !tbaa !7
+  %352 = fdiv double 1.000000e+00, %347
+  store double %352, ptr getelementptr inbounds ([36 x double], ptr @T, i64 0, i64 20), align 16, !tbaa !7
+  %353 = fmul double %351, 1.000000e-30
+  %354 = fmul double %336, 1.000000e-30
+  %355 = fmul double %352, 1.000000e-30
+  %356 = tail call i32 (ptr, ...) @printf(ptr noundef nonnull dereferenceable(1) @.str.9, double noundef %353, double noundef %354, double noundef %355) #7
+  store double 0x40599541F7F192A4, ptr @sa, align 8, !tbaa !7
+  %357 = fdiv double 0x40599541F7F192A4, %161
+  %358 = tail call i32 @gettimeofday(ptr noundef nonnull @tnow, ptr noundef null) #6
+  br i1 %165, label %359, label %381
+
+359:                                              ; preds = %359, %329
+  %360 = phi i64 [ %379, %359 ], [ 1, %329 ]
+  %361 = phi double [ %378, %359 ], [ 0.000000e+00, %329 ]
+  %362 = sitofp i64 %360 to double
+  %363 = fmul double %357, %362
+  %364 = fmul double %363, %363
+  %365 = fadd double %363, 1.000000e+00
+  %366 = fdiv double 1.000000e+00, %365
+  %367 = fsub double %361, %366
+  %368 = fadd double %364, 1.000000e+00
+  %369 = tail call double @llvm.fmuladd.f64(double %363, double %364, double 1.000000e+00)
+  %370 = insertelement <2 x double> poison, double %363, i64 0
+  %371 = insertelement <2 x double> %370, double %364, i64 1
+  %372 = insertelement <2 x double> poison, double %368, i64 0
+  %373 = insertelement <2 x double> %372, double %369, i64 1
+  %374 = fdiv <2 x double> %371, %373
+  %375 = extractelement <2 x double> %374, i64 0
+  %376 = fsub double %367, %375
+  %377 = extractelement <2 x double> %374, i64 1
+  %378 = fsub double %376, %377
+  %379 = add nuw nsw i64 %360, 1
+  %380 = icmp eq i64 %379, %143
+  br i1 %380, label %381, label %359, !llvm.loop !24
+
+381:                                              ; preds = %359, %329
+  %382 = phi double [ 0.000000e+00, %329 ], [ %378, %359 ]
+  %383 = tail call i32 @gettimeofday(ptr noundef nonnull @tnow, ptr noundef null) #6
+  %384 = call double @_wyvern_slice_main__228531947()
+  %385 = load double, ptr getelementptr inbounds ([36 x double], ptr @T, i64 0, i64 1), align 8, !tbaa !7
+  %386 = load double, ptr @nulltime, align 8, !tbaa !7
+  %387 = fneg double %386
+  %388 = tail call double @llvm.fmuladd.f64(double %385, double %384, double %387)
+  store double %388, ptr getelementptr inbounds ([36 x double], ptr @T, i64 0, i64 21), align 8, !tbaa !7
+  %389 = fdiv double %388, 1.200000e+01
+  store double %389, ptr getelementptr inbounds ([36 x double], ptr @T, i64 0, i64 22), align 16, !tbaa !7
+  %390 = load double, ptr @sa, align 8, !tbaa !7
+  %391 = fmul double %390, %390
+  %392 = insertelement <2 x double> poison, double %390, i64 0
+  %393 = insertelement <2 x double> %392, double %391, i64 1
+  %394 = fadd <2 x double> %393, <double 1.000000e+00, double 1.000000e+00>
+  %395 = insertelement <2 x double> <double 1.000000e+00, double poison>, double %390, i64 1
+  %396 = fdiv <2 x double> %395, %394
+  %397 = extractelement <2 x double> %396, i64 0
+  %398 = fsub double -1.000000e+00, %397
+  %399 = extractelement <2 x double> %396, i64 1
+  %400 = fsub double %398, %399
+  %401 = tail call double @llvm.fmuladd.f64(double %390, double %391, double 1.000000e+00)
+  %402 = fdiv double %391, %401
+  %403 = fsub double %400, %402
+  %404 = fmul double %357, 1.800000e+01
+  %405 = tail call double @llvm.fmuladd.f64(double %382, double 2.000000e+00, double %403)
+  %406 = fmul double %404, %405
+  store double %406, ptr @sa, align 8, !tbaa !7
+  %407 = fptosi double %406 to i64
+  %408 = mul nsw i64 %407, -2000
+  %409 = sitofp i64 %408 to double
+  %410 = load double, ptr @scale, align 8, !tbaa !7
+  %411 = fdiv double %409, %410
+  %412 = fptosi double %411 to i64
+  %413 = fadd double %406, 5.002000e+02
+  store double %413, ptr @sc, align 8, !tbaa !7
+  %414 = fdiv double 1.000000e+00, %389
+  store double %414, ptr getelementptr inbounds ([36 x double], ptr @T, i64 0, i64 23), align 8, !tbaa !7
+  %415 = fmul double %413, 1.000000e-30
+  %416 = fmul double %388, 1.000000e-30
+  %417 = fmul double %414, 1.000000e-30
+  %418 = tail call i32 (ptr, ...) @printf(ptr noundef nonnull dereferenceable(1) @.str.10, double noundef %415, double noundef %416, double noundef %417) #7
+  %419 = sitofp i64 %412 to double
+  %420 = fmul double %419, 3.000000e+00
+  %421 = fdiv double 0x400921FB54442D18, %420
+  %422 = tail call i32 @gettimeofday(ptr noundef nonnull @tnow, ptr noundef null) #6
+  %423 = load i64, ptr @tnow, align 8, !tbaa !11
+  %424 = load i64, ptr getelementptr inbounds (%struct.timeval, ptr @tnow, i64 0, i32 1), align 8, !tbaa !14
+  %425 = icmp sgt i64 %412, 1
+  br i1 %425, label %426, label %452
+
+426:                                              ; preds = %381
+  %427 = load double, ptr @A5, align 8, !tbaa !7
+  %428 = load double, ptr @A3, align 8, !tbaa !7
+  br label %429
+
+429:                                              ; preds = %429, %426
+  %430 = phi i64 [ 1, %426 ], [ %450, %429 ]
+  %431 = phi double [ 0.000000e+00, %426 ], [ %449, %429 ]
+  %432 = sitofp i64 %430 to double
+  %433 = fmul double %421, %432
+  %434 = fmul double %433, %433
+  %435 = tail call double @llvm.fmuladd.f64(double %434, double 0x3E2157B275DF182A, double 0xBE927BB3D47DDB8E)
+  %436 = tail call double @llvm.fmuladd.f64(double %434, double %435, double 0x3EFA019528242DB7)
+  %437 = tail call double @llvm.fmuladd.f64(double %434, double %436, double 0xBF56C16BFFE76516)
+  %438 = tail call double @llvm.fmuladd.f64(double %434, double %437, double 0x3FA5555555290224)
+  %439 = tail call double @llvm.fmuladd.f64(double %434, double %438, double 0xBFDFFFFFFFFF8156)
+  %440 = tail call double @llvm.fmuladd.f64(double %434, double %439, double 1.000000e+00)
+  %441 = fmul double %440, %440
+  %442 = fmul double %433, %441
+  %443 = tail call double @llvm.fmuladd.f64(double %434, double 0x3DE68DF75229C1A6, double %427)
+  %444 = tail call double @llvm.fmuladd.f64(double %443, double %434, double 0x3EC71DF284AA3566)
+  %445 = tail call double @llvm.fmuladd.f64(double %444, double %434, double %428)
+  %446 = tail call double @llvm.fmuladd.f64(double %445, double %434, double 0x3F811111113AE9A3)
+  %447 = tail call double @llvm.fmuladd.f64(double %446, double %434, double 0xBFC5555555559705)
+  %448 = tail call double @llvm.fmuladd.f64(double %447, double %434, double 1.000000e+00)
+  %449 = tail call double @llvm.fmuladd.f64(double %442, double %448, double %431)
+  %450 = add nuw nsw i64 %430, 1
+  %451 = icmp eq i64 %450, %412
+  br i1 %451, label %452, label %429, !llvm.loop !25
+
+452:                                              ; preds = %429, %381
+  %453 = phi double [ 0.000000e+00, %381 ], [ %449, %429 ]
+  %454 = sitofp i64 %424 to double
+  %455 = sitofp i64 %423 to double
+  %456 = tail call double @llvm.fmuladd.f64(double %454, double 0x3EB0C6F7A0B5ED8D, double %455)
+  %457 = tail call i32 @gettimeofday(ptr noundef nonnull @tnow, ptr noundef null) #6
+  %458 = load i64, ptr @tnow, align 8, !tbaa !11
+  %459 = sitofp i64 %458 to double
+  %460 = load i64, ptr getelementptr inbounds (%struct.timeval, ptr @tnow, i64 0, i32 1), align 8, !tbaa !14
+  %461 = sitofp i64 %460 to double
+  %462 = tail call double @llvm.fmuladd.f64(double %461, double 0x3EB0C6F7A0B5ED8D, double %459)
+  %463 = fsub double %462, %456
+  %464 = load double, ptr getelementptr inbounds ([36 x double], ptr @T, i64 0, i64 1), align 8, !tbaa !7
+  %465 = load double, ptr @nulltime, align 8, !tbaa !7
+  %466 = fneg double %465
+  %467 = tail call double @llvm.fmuladd.f64(double %464, double %463, double %466)
+  store double %467, ptr getelementptr inbounds ([36 x double], ptr @T, i64 0, i64 24), align 16, !tbaa !7
+  %468 = call double @_wyvern_slice_main__400777188()
+  %469 = fmul double %468, 0x3FE00000000003EB
+  %470 = fmul double %469, 0x3FE00000000003EB
+  %471 = fdiv double %467, 3.000000e+01
+  store double %471, ptr getelementptr inbounds ([36 x double], ptr @T, i64 0, i64 25), align 8, !tbaa !7
+  %472 = tail call double @llvm.fmuladd.f64(double %453, double 2.000000e+00, double %470)
+  %473 = fmul double %421, %472
+  %474 = fmul double %473, 5.000000e-01
+  store double %474, ptr @sa, align 8, !tbaa !7
+  %475 = fadd double %474, 0xBFD2AAAAAAAAAAAB
+  store double %475, ptr @sc, align 8, !tbaa !7
+  %476 = fdiv double 1.000000e+00, %471
+  store double %476, ptr getelementptr inbounds ([36 x double], ptr @T, i64 0, i64 26), align 16, !tbaa !7
+  %477 = fmul double %475, 1.000000e-30
+  %478 = fmul double %467, 1.000000e-30
+  %479 = fmul double %476, 1.000000e-30
+  %480 = tail call i32 (ptr, ...) @printf(ptr noundef nonnull dereferenceable(1) @.str.11, double noundef %477, double noundef %478, double noundef %479) #7
+  %481 = load double, ptr getelementptr inbounds ([36 x double], ptr @T, i64 0, i64 6), align 16, !tbaa !7
+  %482 = load double, ptr getelementptr inbounds ([36 x double], ptr @T, i64 0, i64 5), align 8, !tbaa !7
+  %483 = fsub double %481, %482
+  %484 = load double, ptr getelementptr inbounds ([36 x double], ptr @T, i64 0, i64 9), align 8, !tbaa !7
+  %485 = tail call double @llvm.fmuladd.f64(double %483, double 5.000000e+00, double %484)
+  %486 = fdiv double %485, 5.200000e+01
+  store double %486, ptr getelementptr inbounds ([36 x double], ptr @T, i64 0, i64 27), align 8, !tbaa !7
+  %487 = load double, ptr getelementptr inbounds ([36 x double], ptr @T, i64 0, i64 2), align 16, !tbaa !7
+  %488 = fadd double %484, %487
+  %489 = load double, ptr getelementptr inbounds ([36 x double], ptr @T, i64 0, i64 12), align 16, !tbaa !7
+  %490 = fadd double %488, %489
+  %491 = load double, ptr getelementptr inbounds ([36 x double], ptr @T, i64 0, i64 15), align 8, !tbaa !7
+  %492 = fadd double %490, %491
+  %493 = load double, ptr getelementptr inbounds ([36 x double], ptr @T, i64 0, i64 18), align 16, !tbaa !7
+  %494 = fadd double %492, %493
+  %495 = load double, ptr getelementptr inbounds ([36 x double], ptr @T, i64 0, i64 21), align 8, !tbaa !7
+  %496 = tail call double @llvm.fmuladd.f64(double %495, double 4.000000e+00, double %494)
+  %497 = insertelement <2 x double> <double 1.000000e+00, double poison>, double %496, i64 1
+  %498 = insertelement <2 x double> <double poison, double 1.520000e+02>, double %486, i64 0
+  %499 = fdiv <2 x double> %497, %498
+  store <2 x double> %499, ptr getelementptr inbounds ([36 x double], ptr @T, i64 0, i64 28), align 16, !tbaa !7
+  %500 = fadd double %494, %495
+  %501 = load double, ptr getelementptr inbounds ([36 x double], ptr @T, i64 0, i64 24), align 16, !tbaa !7
+  %502 = fadd double %500, %501
+  %503 = insertelement <2 x double> <double 1.000000e+00, double poison>, double %502, i64 1
+  %504 = shufflevector <2 x double> %499, <2 x double> <double poison, double 1.460000e+02>, <2 x i32> <i32 1, i32 3>
+  %505 = fdiv <2 x double> %503, %504
+  store <2 x double> %505, ptr getelementptr inbounds ([36 x double], ptr @T, i64 0, i64 30), align 16, !tbaa !7
+  %506 = fadd double %484, %489
+  %507 = fadd double %506, %493
+  %508 = fadd double %507, %501
+  %509 = insertelement <2 x double> <double 1.000000e+00, double poison>, double %508, i64 1
+  %510 = shufflevector <2 x double> %505, <2 x double> <double poison, double 9.100000e+01>, <2 x i32> <i32 1, i32 3>
+  %511 = fdiv <2 x double> %509, %510
+  store <2 x double> %511, ptr getelementptr inbounds ([36 x double], ptr @T, i64 0, i64 32), align 16, !tbaa !7
+  %512 = extractelement <2 x double> %511, i64 1
+  %513 = fdiv double 1.000000e+00, %512
+  store double %513, ptr getelementptr inbounds ([36 x double], ptr @T, i64 0, i64 34), align 16, !tbaa !7
+  %514 = tail call i32 @putchar(i32 10)
+  %515 = tail call i32 (ptr, ...) @printf(ptr noundef nonnull dereferenceable(1) @.str.12, i64 noundef %412) #7
+  %516 = load double, ptr @nulltime, align 8, !tbaa !7
+  %517 = fmul double %516, 1.000000e-30
+  %518 = tail call i32 (ptr, ...) @printf(ptr noundef nonnull dereferenceable(1) @.str.13, double noundef %517) #7
+  %519 = load double, ptr getelementptr inbounds ([36 x double], ptr @T, i64 0, i64 28), align 16, !tbaa !7
+  %520 = fmul double %519, 1.000000e-30
+  %521 = tail call i32 (ptr, ...) @printf(ptr noundef nonnull dereferenceable(1) @.str.14, double noundef %520) #7
+  %522 = load double, ptr getelementptr inbounds ([36 x double], ptr @T, i64 0, i64 30), align 16, !tbaa !7
+  %523 = fmul double %522, 1.000000e-30
+  %524 = tail call i32 (ptr, ...) @printf(ptr noundef nonnull dereferenceable(1) @.str.15, double noundef %523) #7
+  %525 = load double, ptr getelementptr inbounds ([36 x double], ptr @T, i64 0, i64 32), align 16, !tbaa !7
+  %526 = fmul double %525, 1.000000e-30
+  %527 = tail call i32 (ptr, ...) @printf(ptr noundef nonnull dereferenceable(1) @.str.16, double noundef %526) #7
+  %528 = load double, ptr getelementptr inbounds ([36 x double], ptr @T, i64 0, i64 34), align 16, !tbaa !7
+  %529 = fmul double %528, 1.000000e-30
+  %530 = tail call i32 (ptr, ...) @printf(ptr noundef nonnull dereferenceable(1) @.str.17, double noundef %529) #7
+  ret i32 0
+}
+
+; Function Attrs: nofree nounwind
+declare noundef i32 @putchar(i32 noundef) local_unnamed_addr #1
+
+; Function Attrs: nofree nounwind
+declare noundef i32 @puts(ptr nocapture noundef readonly) local_unnamed_addr #1
+
+; Function Attrs: nofree nounwind optsize
+declare noundef i32 @gettimeofday(ptr nocapture noundef, ptr nocapture noundef) local_unnamed_addr #2
+
+; Function Attrs: nocallback nofree nosync nounwind speculatable willreturn memory(none)
+declare i64 @llvm.smax.i64(i64, i64) #3
+
+; Function Attrs: nocallback nofree nosync nounwind speculatable willreturn memory(none)
+declare double @llvm.fmuladd.f64(double, double, double) #3
+
+; Function Attrs: nocallback nofree nosync nounwind speculatable willreturn memory(none)
+declare <2 x double> @llvm.fmuladd.v2f64(<2 x double>, <2 x double>, <2 x double>) #3
+
+; Function Attrs: nofree nounwind optsize
+declare noundef i32 @printf(ptr nocapture noundef readonly, ...) local_unnamed_addr #2
+
+; Function Attrs: noinline nounwind optsize willreturn
+define internal double @_wyvern_slice_main__403694321() #4 {
+sliceclone_:
+  %0 = call double @_wyvern_slice_main__228531947()
+  %1 = load double, ptr getelementptr inbounds ([36 x double], ptr @T, i64 0, i64 1), align 8, !tbaa !7
+  %2 = fmul double %1, %0
+  ret double %2
+}
+
+; Function Attrs: noinline nounwind optsize willreturn
+define internal double @_wyvern_slice_main__400777188() #4 {
+sliceclone_:
+  %0 = load double, ptr @A5, align 8, !tbaa !7
+  %1 = fadd double %0, 0x3DE8BBDCC362E5E2
+  %2 = tail call double @llvm.fmuladd.f64(double %1, double 0x3FF18BC4418CAFE1, double 0x3EC71DF284AA3566)
+  %3 = load double, ptr @A3, align 8, !tbaa !7
+  %4 = tail call double @llvm.fmuladd.f64(double %2, double 0x3FF18BC4418CAFE1, double %3)
+  %5 = tail call double @llvm.fmuladd.f64(double %4, double 0x3FF18BC4418CAFE1, double 0x3F811111113AE9A3)
+  %6 = tail call double @llvm.fmuladd.f64(double %5, double 0x3FF18BC4418CAFE1, double 0xBFC5555555559705)
+  %7 = tail call double @llvm.fmuladd.f64(double %6, double 0x3FF18BC4418CAFE1, double 1.000000e+00)
+  %8 = fmul double %7, 0x3FF0C152382D7365
+  ret double %8
+}
+
+; Function Attrs: nounwind optsize willreturn
+define internal double @_wyvern_slice_main__228531947() #5 {
+sliceclone_:
+  %0 = load i64, ptr @tnow, align 8, !tbaa !11
+  %1 = sitofp i64 %0 to double
+  %2 = load i64, ptr getelementptr inbounds (%struct.timeval, ptr @tnow, i64 0, i32 1), align 8, !tbaa !14
+  %3 = sitofp i64 %2 to double
+  %4 = tail call double @llvm.fmuladd.f64(double %3, double 0x3EB0C6F7A0B5ED8D, double %1)
+  %5 = load i64, ptr @tnow, align 8, !tbaa !11
+  %6 = sitofp i64 %5 to double
+  %7 = load i64, ptr getelementptr inbounds (%struct.timeval, ptr @tnow, i64 0, i32 1), align 8, !tbaa !14
+  %8 = sitofp i64 %7 to double
+  %9 = tail call double @llvm.fmuladd.f64(double %8, double 0x3EB0C6F7A0B5ED8D, double %6)
+  %10 = fsub double %9, %4
+  ret double %10
+}
+
+attributes #0 = { nofree nounwind optsize uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+attributes #1 = { nofree nounwind }
+attributes #2 = { nofree nounwind optsize "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+attributes #3 = { nocallback nofree nosync nounwind speculatable willreturn memory(none) }
+attributes #4 = { noinline nounwind optsize willreturn "Daedalus"="1" }
+attributes #5 = { nounwind optsize willreturn "Daedalus"="1" }
+attributes #6 = { nounwind optsize }
+attributes #7 = { optsize }
+
+!llvm.ident = !{!0}
+!llvm.module.flags = !{!1, !2, !3, !4, !5, !6}
+
+!0 = !{!"clang version 17.0.6 (https://github.com/Casperento/llvm-project.git 9b0073551ece0d22bf3378af2b03e456a26031b6)"}
+!1 = !{i32 1, !"wchar_size", i32 4}
+!2 = !{i32 8, !"PIC Level", i32 2}
+!3 = !{i32 7, !"PIE Level", i32 2}
+!4 = !{i32 7, !"uwtable", i32 2}
+!5 = !{i32 1, !"ThinLTO", i32 0}
+!6 = !{i32 1, !"EnableSplitLTOUnit", i32 1}
+!7 = !{!8, !8, i64 0}
+!8 = !{!"double", !9, i64 0}
+!9 = !{!"omnipotent char", !10, i64 0}
+!10 = !{!"Simple C/C++ TBAA"}
+!11 = !{!12, !13, i64 0}
+!12 = !{!"timeval", !13, i64 0, !13, i64 8}
+!13 = !{!"long", !9, i64 0}
+!14 = !{!12, !13, i64 8}
+!15 = distinct !{!15, !16}
+!16 = !{!"llvm.loop.mustprogress"}
+!17 = distinct !{!17, !16}
+!18 = distinct !{!18, !16}
+!19 = distinct !{!19, !16}
+!20 = distinct !{!20, !16}
+!21 = distinct !{!21, !16}
+!22 = distinct !{!22, !16}
+!23 = distinct !{!23, !16}
+!24 = distinct !{!24, !16}
+!25 = distinct !{!25, !16}

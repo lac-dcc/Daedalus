@@ -1,0 +1,147 @@
+== OUTLINING INST PHASE ==
+  %156 = shl i64 %155, 32
+Not self contained!
+  %157 = add i64 %156, 4294967296
+Not self contained!
+  %158 = ashr exact i64 %157, 32
+Not self contained!
+  %160 = ashr exact i64 %156, 32
+Not self contained!
+  %76 = sub i64 %74, %75
+Not self contained!
+  %85 = shl i64 %84, 32
+Not self contained!
+  %86 = ashr exact i64 %85, 32
+Not self contained!
+  %262 = and i8 %261, -29
+Not self contained!
+  %263 = or i8 %262, 4
+Not self contained!
+  %133 = shl nsw i64 %132, 3
+[32moutlined![0m
+  %198 = shl i64 %197, 32
+Not self contained!
+  %199 = add i64 %198, 8589934592
+Not self contained!
+  %200 = ashr exact i64 %199, 32
+Not self contained!
+  %202 = ashr exact i64 %198, 32
+Not self contained!
+  %204 = add i64 %198, 4294967296
+Not self contained!
+  %205 = ashr exact i64 %204, 32
+Not self contained!
+  %209 = and i64 %197, 2147483648
+Not self contained!
+  %216 = and i8 %215, -29
+Not self contained!
+  %217 = or i8 %216, 4
+Not self contained!
+  %238 = add i32 %237, 1
+Not self contained!
+  %247 = add nuw nsw i32 %243, 1
+Not self contained!
+  %251 = and i32 %243, 7
+Not self contained!
+  %254 = add i32 %243, 1
+Not self contained!
+  %278 = shl i64 %271, 32
+Not self contained!
+  %279 = ashr exact i64 %278, 32
+Not self contained!
+  %372 = add i32 %371, 1
+Not self contained!
+  %377 = add i32 %376, -1
+Not self contained!
+  %409 = add i32 %408, 1
+Not self contained!
+  %418 = add nuw nsw i32 %414, 1
+Not self contained!
+  %422 = and i32 %414, 7
+Not self contained!
+  %425 = add i32 %414, 1
+Not self contained!
+  %439 = sdiv i32 256, %438
+Not self contained!
+  %13 = or i1 %11, %12
+Not self contained!
+  %14 = add i32 %13, 1
+Not self contained!
+  %23 = add nuw nsw i32 %19, 1
+Not self contained!
+  %27 = and i32 %19, 7
+Not self contained!
+  %30 = add i32 %19, 1
+Not self contained!
+  %67 = shl i32 %66, 8
+Not self contained!
+  %74 = add i32 %73, %67
+Not self contained!
+  %76 = add i64 %61, %75
+Not self contained!
+  %141 = add i32 %83, 1
+Not self contained!
+  %149 = add nuw nsw i32 %83, 1
+Not self contained!
+  %153 = and i32 %83, 7
+Not self contained!
+  %156 = add i32 %83, 1
+Not self contained!
+  %12 = add nsw i32 %11, 1
+Not self contained!
+  %37 = sub i64 %36, ptrtoint (ptr @.str.24.250 to i64)
+Not self contained!
+  %16 = shl nuw nsw i64 %15, 3
+Not self contained!
+  %38 = shl nsw i64 %37, 3
+[32moutlined![0m
+  %104 = add i32 %103, 1
+Not self contained!
+  %26 = add nsw i32 %25, 1
+Not self contained!
+  %16 = add i32 %15, 1
+Not self contained!
+  %25 = add nuw nsw i32 %21, 1
+Not self contained!
+  %29 = and i32 %21, 7
+Not self contained!
+  %32 = add i32 %21, 1
+Not self contained!
+  %15 = mul nuw nsw i64 %14, 40
+[32moutlined![0m
+  %47 = add i32 %46, 1
+Not self contained!
+  %927 = lshr i32 %926, 6
+Not self contained!
+  %931 = and i32 %926, 63
+Not self contained!
+  %203 = and i64 %202, 4294967295
+Not self contained!
+  %207 = shl i64 %202, 32
+Not self contained!
+  %208 = ashr exact i64 %207, 32
+Not self contained!
+opt: /home/pc2/llvm-rafael/llvm/include/llvm/IR/Instructions.h:2889: llvm::Value* llvm::PHINode::removeIncomingValue(const llvm::BasicBlock*, bool): Assertion `Idx >= 0 && "Invalid basic block argument to remove!"' failed.
+PLEASE submit a bug report to https://github.com/llvm/llvm-project/issues/ and include the crash backtrace.
+Stack dump:
+0.	Program arguments: opt -stats -debug-only=Daedalus -passes=daedalus -load-pass-plugin=../build/lib/libdaedalus.so -S make_dparser.e.bc.ll -o make_dparser.e.bc.d.ll
+ #0 0x0000564715a9243c llvm::sys::PrintStackTrace(llvm::raw_ostream&, int) (/home/pc2/llvm-rafael/build/bin/opt+0x1ca143c)
+ #1 0x0000564715a8f63b SignalHandler(int) Signals.cpp:0:0
+ #2 0x00007c6828e4c1d0 (/usr/lib/libc.so.6+0x3d1d0)
+ #3 0x00007c6828ea53f4 (/usr/lib/libc.so.6+0x963f4)
+ #4 0x00007c6828e4c120 raise (/usr/lib/libc.so.6+0x3d120)
+ #5 0x00007c6828e334c3 abort (/usr/lib/libc.so.6+0x244c3)
+ #6 0x00007c6828e333df (/usr/lib/libc.so.6+0x243df)
+ #7 0x00007c6828e44177 (/usr/lib/libc.so.6+0x35177)
+ #8 0x00007c6828dc0ffb llvm::PHINode::removeIncomingValue(llvm::BasicBlock const*, bool) /home/pc2/llvm-rafael/llvm/include/llvm/IR/Instructions.h:2890:31
+ #9 0x00007c6828dbcece updatePHINodes(llvm::Function*) /home/pc2/workspace/Daedalus/include/wyvern/ProgramSlice.cpp:531:7
+#10 0x00007c6828dbdb2d llvm::ProgramSlice::rerouteBranches(llvm::Function*) /home/pc2/workspace/Daedalus/include/wyvern/ProgramSlice.cpp:690:1
+#11 0x00007c6828dbf602 llvm::ProgramSlice::outline() /home/pc2/workspace/Daedalus/include/wyvern/ProgramSlice.cpp:1073:17
+#12 0x00007c6828da4cea Daedalus::DaedalusPass::run(llvm::Module&, llvm::AnalysisManager<llvm::Module>&) /home/pc2/workspace/Daedalus/lib/daedalus.cpp:305:31
+#13 0x00007c6828db9c61 llvm::detail::PassModel<llvm::Module, Daedalus::DaedalusPass, llvm::PreservedAnalyses, llvm::AnalysisManager<llvm::Module>>::run(llvm::Module&, llvm::AnalysisManager<llvm::Module>&) /home/pc2/llvm-rafael/llvm/include/llvm/IR/PassManagerInternal.h:90:3
+#14 0x00005647154780d1 llvm::PassManager<llvm::Module, llvm::AnalysisManager<llvm::Module>>::run(llvm::Module&, llvm::AnalysisManager<llvm::Module>&) (/home/pc2/llvm-rafael/build/bin/opt+0x16870d1)
+#15 0x0000564714382e5b llvm::runPassPipeline(llvm::StringRef, llvm::Module&, llvm::TargetMachine*, llvm::TargetLibraryInfoImpl*, llvm::ToolOutputFile*, llvm::ToolOutputFile*, llvm::ToolOutputFile*, llvm::StringRef, llvm::ArrayRef<llvm::PassPlugin>, llvm::opt_tool::OutputKind, llvm::opt_tool::VerifierKind, bool, bool, bool, bool, bool, bool, bool) (/home/pc2/llvm-rafael/build/bin/opt+0x591e5b)
+#16 0x00005647142c156f main (/home/pc2/llvm-rafael/build/bin/opt+0x4d056f)
+#17 0x00007c6828e34e08 (/usr/lib/libc.so.6+0x25e08)
+#18 0x00007c6828e34ecc __libc_start_main (/usr/lib/libc.so.6+0x25ecc)
+#19 0x0000564714376755 _start (/home/pc2/llvm-rafael/build/bin/opt+0x585755)

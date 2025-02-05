@@ -1,0 +1,49 @@
+== OUTLINING INST PHASE ==
+  %38 = fmul float %37, 1.000000e+02
+[32moutlined![0m
+  %41 = fdiv float %38, %40
+Not self contained!
+  %61 = sub i64 %60, %58
+Not self contained!
+  %62 = mul i64 %61, 100
+Not self contained!
+  %65 = fdiv double %63, %64
+Not self contained!
+  %5 = ashr exact i64 %4, 32
+[32moutlined![0m
+  %83 = fdiv double 1.000000e+00, %70
+Not self contained!
+  %142 = and i16 %141, -769
+Not self contained!
+  %143 = or i16 %142, 512
+Not self contained!
+  %228 = add nsw i32 %216, 1
+Not self contained!
+opt: /home/pc2/llvm-rafael/llvm/include/llvm/Support/Casting.h:109: static bool llvm::isa_impl_cl<To, const From*>::doit(const From*) [with To = llvm::Instruction; From = llvm::Value]: Assertion `Val && "isa<> used on a null pointer"' failed.
+PLEASE submit a bug report to https://github.com/llvm/llvm-project/issues/ and include the crash backtrace.
+Stack dump:
+0.	Program arguments: opt -stats -debug-only=Daedalus -passes=daedalus -load-pass-plugin=../build/lib/libdaedalus.so -S minisat.e.bc.ll -o minisat.e.bc.d.ll
+ #0 0x00005661b560b43c llvm::sys::PrintStackTrace(llvm::raw_ostream&, int) (/home/pc2/llvm-rafael/build/bin/opt+0x1ca143c)
+ #1 0x00005661b560863b SignalHandler(int) Signals.cpp:0:0
+ #2 0x0000772ab804c1d0 (/usr/lib/libc.so.6+0x3d1d0)
+ #3 0x0000772ab80a53f4 (/usr/lib/libc.so.6+0x963f4)
+ #4 0x0000772ab804c120 raise (/usr/lib/libc.so.6+0x3d120)
+ #5 0x0000772ab80334c3 abort (/usr/lib/libc.so.6+0x244c3)
+ #6 0x0000772ab80333df (/usr/lib/libc.so.6+0x243df)
+ #7 0x0000772ab8044177 (/usr/lib/libc.so.6+0x35177)
+ #8 0x0000772ab7fb4e9f llvm::isa_impl_cl<llvm::Instruction, llvm::Value const*>::doit(llvm::Value const*) /home/pc2/llvm-rafael/llvm/include/llvm/Support/Casting.h:110:36
+ #9 0x0000772ab7fb3400 llvm::isa_impl_wrap<llvm::Instruction, llvm::Value const*, llvm::Value const*>::doit(llvm::Value const* const&) /home/pc2/llvm-rafael/llvm/include/llvm/Support/Casting.h:138:3
+#10 0x0000772ab7fcc862 llvm::isa_impl_wrap<llvm::Instruction, llvm::Value* const, llvm::Value const*>::doit(llvm::Value* const&) /home/pc2/llvm-rafael/llvm/include/llvm/Support/Casting.h:130:3
+#11 0x0000772ab7fc7e2e llvm::CastIsPossible<llvm::Instruction, llvm::Value*, void>::isPossible(llvm::Value* const&) /home/pc2/llvm-rafael/llvm/include/llvm/Support/Casting.h:258:3
+#12 0x0000772ab7fc8c30 llvm::CastInfo<llvm::Instruction, llvm::Use const, void>::isPossible(llvm::Use const&) /home/pc2/llvm-rafael/llvm/include/llvm/Support/Casting.h:511:3
+#13 0x0000772ab7fc4732 bool llvm::isa<llvm::Instruction, llvm::Use>(llvm::Use const&) /home/pc2/llvm-rafael/llvm/include/llvm/Support/Casting.h:550:1
+#14 0x0000772ab7fbb198 get_data_dependences_for(llvm::Instruction&, std::unordered_map<llvm::BasicBlock const*, llvm::SmallVector<llvm::Value const*, 6u>, std::hash<llvm::BasicBlock const*>, std::equal_to<llvm::BasicBlock const*>, std::allocator<std::pair<llvm::BasicBlock const* const, llvm::SmallVector<llvm::Value const*, 6u>>>>&, llvm::PostDominatorTree&, llvm::Function&, llvm::AnalysisManager<llvm::Function>&) /home/pc2/workspace/Daedalus/include/wyvern/ProgramSlice.cpp:201:13
+#15 0x0000772ab7fbba6c llvm::ProgramSlice::ProgramSlice(llvm::Instruction&, llvm::Function&, llvm::PostDominatorTree&, llvm::AnalysisManager<llvm::Function>&) /home/pc2/workspace/Daedalus/include/wyvern/ProgramSlice.cpp:279:9
+#16 0x0000772ab7fa4cdb Daedalus::DaedalusPass::run(llvm::Module&, llvm::AnalysisManager<llvm::Module>&) /home/pc2/workspace/Daedalus/lib/daedalus.cpp:305:31
+#17 0x0000772ab7fb9c61 llvm::detail::PassModel<llvm::Module, Daedalus::DaedalusPass, llvm::PreservedAnalyses, llvm::AnalysisManager<llvm::Module>>::run(llvm::Module&, llvm::AnalysisManager<llvm::Module>&) /home/pc2/llvm-rafael/llvm/include/llvm/IR/PassManagerInternal.h:90:3
+#18 0x00005661b4ff10d1 llvm::PassManager<llvm::Module, llvm::AnalysisManager<llvm::Module>>::run(llvm::Module&, llvm::AnalysisManager<llvm::Module>&) (/home/pc2/llvm-rafael/build/bin/opt+0x16870d1)
+#19 0x00005661b3efbe5b llvm::runPassPipeline(llvm::StringRef, llvm::Module&, llvm::TargetMachine*, llvm::TargetLibraryInfoImpl*, llvm::ToolOutputFile*, llvm::ToolOutputFile*, llvm::ToolOutputFile*, llvm::StringRef, llvm::ArrayRef<llvm::PassPlugin>, llvm::opt_tool::OutputKind, llvm::opt_tool::VerifierKind, bool, bool, bool, bool, bool, bool, bool) (/home/pc2/llvm-rafael/build/bin/opt+0x591e5b)
+#20 0x00005661b3e3a56f main (/home/pc2/llvm-rafael/build/bin/opt+0x4d056f)
+#21 0x0000772ab8034e08 (/usr/lib/libc.so.6+0x25e08)
+#22 0x0000772ab8034ecc __libc_start_main (/usr/lib/libc.so.6+0x25ecc)
+#23 0x00005661b3eef755 _start (/home/pc2/llvm-rafael/build/bin/opt+0x585755)

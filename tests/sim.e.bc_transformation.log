@@ -1,0 +1,31 @@
+== OUTLINING INST PHASE ==
+  %94 = and i1 %93, %92
+Not self contained!
+  %29 = add nsw i32 %11, %21
+Not self contained!
+  %32 = shl nsw i64 %20, 3
+Not self contained!
+opt: /home/pc2/llvm-rafael/llvm/include/llvm/IR/Instructions.h:2889: llvm::Value* llvm::PHINode::removeIncomingValue(const llvm::BasicBlock*, bool): Assertion `Idx >= 0 && "Invalid basic block argument to remove!"' failed.
+PLEASE submit a bug report to https://github.com/llvm/llvm-project/issues/ and include the crash backtrace.
+Stack dump:
+0.	Program arguments: opt -stats -debug-only=Daedalus -passes=daedalus -load-pass-plugin=../build/lib/libdaedalus.so -S sim.e.bc.ll -o sim.e.bc.d.ll
+ #0 0x00005b57f058443c llvm::sys::PrintStackTrace(llvm::raw_ostream&, int) (/home/pc2/llvm-rafael/build/bin/opt+0x1ca143c)
+ #1 0x00005b57f058163b SignalHandler(int) Signals.cpp:0:0
+ #2 0x00007ff69164c1d0 (/usr/lib/libc.so.6+0x3d1d0)
+ #3 0x00007ff6916a53f4 (/usr/lib/libc.so.6+0x963f4)
+ #4 0x00007ff69164c120 raise (/usr/lib/libc.so.6+0x3d120)
+ #5 0x00007ff6916334c3 abort (/usr/lib/libc.so.6+0x244c3)
+ #6 0x00007ff6916333df (/usr/lib/libc.so.6+0x243df)
+ #7 0x00007ff691644177 (/usr/lib/libc.so.6+0x35177)
+ #8 0x00007ff6915c0ffb llvm::PHINode::removeIncomingValue(llvm::BasicBlock const*, bool) /home/pc2/llvm-rafael/llvm/include/llvm/IR/Instructions.h:2890:31
+ #9 0x00007ff6915bcece updatePHINodes(llvm::Function*) /home/pc2/workspace/Daedalus/include/wyvern/ProgramSlice.cpp:531:7
+#10 0x00007ff6915bdb2d llvm::ProgramSlice::rerouteBranches(llvm::Function*) /home/pc2/workspace/Daedalus/include/wyvern/ProgramSlice.cpp:690:1
+#11 0x00007ff6915bf602 llvm::ProgramSlice::outline() /home/pc2/workspace/Daedalus/include/wyvern/ProgramSlice.cpp:1073:17
+#12 0x00007ff6915a4cea Daedalus::DaedalusPass::run(llvm::Module&, llvm::AnalysisManager<llvm::Module>&) /home/pc2/workspace/Daedalus/lib/daedalus.cpp:305:31
+#13 0x00007ff6915b9c61 llvm::detail::PassModel<llvm::Module, Daedalus::DaedalusPass, llvm::PreservedAnalyses, llvm::AnalysisManager<llvm::Module>>::run(llvm::Module&, llvm::AnalysisManager<llvm::Module>&) /home/pc2/llvm-rafael/llvm/include/llvm/IR/PassManagerInternal.h:90:3
+#14 0x00005b57eff6a0d1 llvm::PassManager<llvm::Module, llvm::AnalysisManager<llvm::Module>>::run(llvm::Module&, llvm::AnalysisManager<llvm::Module>&) (/home/pc2/llvm-rafael/build/bin/opt+0x16870d1)
+#15 0x00005b57eee74e5b llvm::runPassPipeline(llvm::StringRef, llvm::Module&, llvm::TargetMachine*, llvm::TargetLibraryInfoImpl*, llvm::ToolOutputFile*, llvm::ToolOutputFile*, llvm::ToolOutputFile*, llvm::StringRef, llvm::ArrayRef<llvm::PassPlugin>, llvm::opt_tool::OutputKind, llvm::opt_tool::VerifierKind, bool, bool, bool, bool, bool, bool, bool) (/home/pc2/llvm-rafael/build/bin/opt+0x591e5b)
+#16 0x00005b57eedb356f main (/home/pc2/llvm-rafael/build/bin/opt+0x4d056f)
+#17 0x00007ff691634e08 (/usr/lib/libc.so.6+0x25e08)
+#18 0x00007ff691634ecc __libc_start_main (/usr/lib/libc.so.6+0x25ecc)
+#19 0x00005b57eee68755 _start (/home/pc2/llvm-rafael/build/bin/opt+0x585755)

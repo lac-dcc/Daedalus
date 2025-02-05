@@ -1,0 +1,315 @@
+== OUTLINING INST PHASE ==
+  %35 = fadd float %34, %33
+Not self contained!
+  %38 = fadd <2 x float> %19, %37
+Not self contained!
+  %39 = fmul <2 x float> %38, <float 2.000000e+00, float 2.000000e+00>
+Not self contained!
+  %40 = fmul float %35, 2.000000e+00
+Not self contained!
+  %63 = fadd float %62, %61
+Not self contained!
+  %66 = fadd <2 x float> %47, %65
+Not self contained!
+  %67 = fmul <2 x float> %66, <float 2.000000e+00, float 2.000000e+00>
+Not self contained!
+  %68 = fmul float %63, 2.000000e+00
+Not self contained!
+  %20 = mul nsw i32 %19, %2
+Not self contained!
+  %53 = mul nsw i32 %30, %52
+Not self contained!
+  %59 = fmul <2 x float> %57, %58
+Not self contained!
+  %66 = fmul <2 x float> %65, %64
+Not self contained!
+  %75 = fmul float %74, %71
+Not self contained!
+  %20 = mul nsw i32 %19, %2
+Not self contained!
+  %53 = mul nsw i32 %30, %52
+Not self contained!
+  %59 = fmul <2 x float> %57, %58
+Not self contained!
+  %66 = fmul <2 x float> %65, %64
+Not self contained!
+  %75 = fmul float %74, %71
+Not self contained!
+  %19 = mul nsw i32 %18, %2
+Not self contained!
+  %53 = mul nsw i32 %29, %52
+Not self contained!
+  %59 = fmul <2 x float> %57, %58
+Not self contained!
+  %66 = fmul <2 x float> %65, %64
+Not self contained!
+  %75 = fmul float %74, %71
+Not self contained!
+  %18 = fsub float %16, %17
+Not self contained!
+  %23 = fsub float %20, %22
+Not self contained!
+  %28 = fsub float %25, %27
+Not self contained!
+  %29 = fmul float %23, %23
+Not self contained!
+  %34 = fmul float %33, %33
+Not self contained!
+  %52 = fmul <2 x float> %51, %49
+Not self contained!
+  %64 = fmul float %44, %63
+Not self contained!
+  %77 = fmul <2 x float> %49, %76
+Not self contained!
+  %84 = fmul float %63, %72
+Not self contained!
+  %95 = fmul <2 x float> %49, %94
+Not self contained!
+  %102 = fmul float %63, %90
+Not self contained!
+  %109 = fmul float %90, %106
+Not self contained!
+  %114 = fadd float %111, %113
+Not self contained!
+  %120 = fmul <2 x float> %51, %119
+Not self contained!
+  %128 = fmul float %44, %127
+Not self contained!
+  %133 = fmul <2 x float> %76, %119
+Not self contained!
+  %136 = fmul float %72, %127
+Not self contained!
+  %139 = fmul <2 x float> %94, %119
+Not self contained!
+  %142 = fmul float %90, %127
+Not self contained!
+  %151 = fmul <2 x float> %148, %150
+Not self contained!
+  %161 = fadd <2 x float> %160, %159
+Not self contained!
+  %164 = fmul <2 x float> %148, %163
+Not self contained!
+  %171 = fadd <2 x float> %160, %170
+Not self contained!
+  %172 = fmul float %90, %146
+Not self contained!
+  %175 = fadd float %113, %174
+Not self contained!
+  %181 = add i32 %180, -21
+Not self contained!
+  %210 = fsub <2 x float> %207, %209
+Not self contained!
+  %211 = fsub float %199, %205
+Not self contained!
+  %213 = fadd <2 x float> %209, %212
+Not self contained!
+  %214 = fadd float %205, %203
+Not self contained!
+  %19 = shl nsw i32 %13, 1
+Not self contained!
+  %26 = shl nsw i64 %25, 6
+Not self contained!
+  %77 = add nsw i32 %76, 1
+Not self contained!
+  %20 = sub nsw i64 %18, %19
+Not self contained!
+  %21 = mul nsw i64 %20, 1000
+Not self contained!
+  %26 = sub nsw i64 %23, %25
+Not self contained!
+  %27 = sdiv i64 %26, 1000
+Not self contained!
+  %28 = add nsw i64 %27, %21
+Not self contained!
+  %32 = add i32 %30, %31
+Not self contained!
+  %35 = add nsw i32 %34, 1
+Not self contained!
+  %49 = fmul <2 x float> %48, %48
+Not self contained!
+  %55 = fdiv float 1.000000e+00, %54
+Not self contained!
+  %58 = fmul <2 x float> %48, %57
+Not self contained!
+  %59 = fmul float %47, %55
+Not self contained!
+  %74 = add nsw <2 x i32> %72, %73
+Not self contained!
+  %7 = and i16 %6, %4
+[32moutlined![0m
+  %15 = and i16 %14, %12
+[32moutlined![0m
+  %35 = fmul <2 x float> %32, %34
+Not self contained!
+  %50 = fmul float %20, %49
+Not self contained!
+  %63 = fsub float 1.000000e+00, %62
+Not self contained!
+  %68 = fmul <2 x float> %67, %65
+Not self contained!
+  %76 = fmul float %62, %75
+Not self contained!
+  %49 = shl nsw i32 %43, 1
+Not self contained!
+  %56 = shl nsw i64 %55, 3
+Not self contained!
+  %18 = fadd <2 x float> %17, <float 7.000000e+00, float -2.000000e+00>
+Not self contained!
+  %14 = fmul float %13, 6.000000e+00
+[32moutlined![0m
+  %34 = shl nsw i32 %29, 1
+Not self contained!
+  %41 = shl nsw i64 %40, 3
+Not self contained!
+  %73 = add nsw i32 %69, 1
+Not self contained!
+  %77 = fmul <2 x float> %76, zeroinitializer
+Not self contained!
+  %79 = fadd <2 x float> %77, %77
+Not self contained!
+  %84 = fadd <2 x float> %83, %65
+Not self contained!
+  %86 = fadd float %78, %85
+Not self contained!
+  %87 = fadd float %86, %64
+Not self contained!
+  %91 = fadd float %78, %90
+Not self contained!
+  %96 = fadd <2 x float> %95, %65
+Not self contained!
+  %98 = fadd float %78, %97
+Not self contained!
+  %99 = fadd float %98, %64
+Not self contained!
+  %112 = fadd float %78, %111
+Not self contained!
+  %117 = fadd <2 x float> %116, %65
+Not self contained!
+  %119 = fadd float %78, %118
+Not self contained!
+  %120 = fadd float %119, %64
+Not self contained!
+  %258 = fadd <2 x float> %257, %65
+Not self contained!
+  %260 = fadd float %78, %259
+Not self contained!
+  %261 = fadd float %260, %64
+Not self contained!
+  %134 = fadd float %131, %133
+Not self contained!
+  %139 = fadd <2 x float> %138, %65
+Not self contained!
+  %141 = fadd float %78, %140
+Not self contained!
+  %142 = fadd float %141, %64
+Not self contained!
+  %154 = fadd float %131, %153
+Not self contained!
+  %159 = fadd <2 x float> %158, %65
+Not self contained!
+  %161 = fadd float %78, %160
+Not self contained!
+  %162 = fadd float %161, %64
+Not self contained!
+  %174 = fadd float %173, %133
+Not self contained!
+  %179 = fadd <2 x float> %178, %65
+Not self contained!
+  %181 = fadd float %78, %180
+Not self contained!
+  %182 = fadd float %181, %64
+Not self contained!
+  %193 = fadd float %173, %153
+Not self contained!
+  %198 = fadd <2 x float> %197, %65
+Not self contained!
+  %200 = fadd float %78, %199
+Not self contained!
+  %201 = fadd float %200, %64
+Not self contained!
+  %215 = fadd float %212, %214
+Not self contained!
+  %220 = fadd <2 x float> %219, %65
+Not self contained!
+  %222 = fadd float %78, %221
+Not self contained!
+  %223 = fadd float %222, %64
+Not self contained!
+  %234 = fadd float %233, %214
+Not self contained!
+  %239 = fadd <2 x float> %238, %65
+Not self contained!
+  %241 = fadd float %78, %240
+Not self contained!
+  %242 = fadd float %241, %64
+Not self contained!
+  %253 = fadd float %252, %214
+Not self contained!
+  %271 = fadd float %270, %214
+Not self contained!
+  %276 = fadd <2 x float> %275, %65
+Not self contained!
+  %278 = fadd float %78, %277
+Not self contained!
+  %279 = fadd float %278, %64
+Not self contained!
+  %51 = fadd float %43, %50
+Not self contained!
+  %25 = fadd float %16, %24
+Not self contained!
+  %32 = fmul float %31, 5.000000e+00
+Not self contained!
+  %33 = fadd float %32, 0.000000e+00
+Not self contained!
+  %42 = fmul float %41, 5.000000e+00
+Not self contained!
+  %43 = fadd float %42, 0.000000e+00
+Not self contained!
+  %49 = add nuw nsw i32 %47, 1
+Not self contained!
+  %51 = fmul float %50, 5.000000e-01
+Not self contained!
+  %53 = fmul float %51, 1.500000e+00
+Not self contained!
+  %64 = add nsw i32 %47, -2
+Not self contained!
+  %66 = fmul float %65, 5.000000e-01
+Not self contained!
+  %67 = fmul float %66, 1.500000e+00
+Not self contained!
+  %75 = add nsw i32 %47, -5
+Not self contained!
+  %77 = fmul float %76, 5.000000e-01
+Not self contained!
+  %79 = fmul float %77, 2.000000e+00
+Not self contained!
+  %46 = fadd float %37, %45
+Not self contained!
+opt: /home/pc2/llvm-rafael/llvm/include/llvm/Support/Casting.h:109: static bool llvm::isa_impl_cl<To, const From*>::doit(const From*) [with To = llvm::Instruction; From = llvm::Value]: Assertion `Val && "isa<> used on a null pointer"' failed.
+PLEASE submit a bug report to https://github.com/llvm/llvm-project/issues/ and include the crash backtrace.
+Stack dump:
+0.	Program arguments: opt -stats -debug-only=Daedalus -passes=daedalus -load-pass-plugin=../build/lib/libdaedalus.so -S bullet.e.bc.ll -o bullet.e.bc.d.ll
+ #0 0x00005ed901f0d43c llvm::sys::PrintStackTrace(llvm::raw_ostream&, int) (/home/pc2/llvm-rafael/build/bin/opt+0x1ca143c)
+ #1 0x00005ed901f0a63b SignalHandler(int) Signals.cpp:0:0
+ #2 0x00007e09de64c1d0 (/usr/lib/libc.so.6+0x3d1d0)
+ #3 0x00007e09de6a53f4 (/usr/lib/libc.so.6+0x963f4)
+ #4 0x00007e09de64c120 raise (/usr/lib/libc.so.6+0x3d120)
+ #5 0x00007e09de6334c3 abort (/usr/lib/libc.so.6+0x244c3)
+ #6 0x00007e09de6333df (/usr/lib/libc.so.6+0x243df)
+ #7 0x00007e09de644177 (/usr/lib/libc.so.6+0x35177)
+ #8 0x00007e09deaf9e9f llvm::isa_impl_cl<llvm::Instruction, llvm::Value const*>::doit(llvm::Value const*) /home/pc2/llvm-rafael/llvm/include/llvm/Support/Casting.h:110:36
+ #9 0x00007e09deaf8400 llvm::isa_impl_wrap<llvm::Instruction, llvm::Value const*, llvm::Value const*>::doit(llvm::Value const* const&) /home/pc2/llvm-rafael/llvm/include/llvm/Support/Casting.h:138:3
+#10 0x00007e09deb11862 llvm::isa_impl_wrap<llvm::Instruction, llvm::Value* const, llvm::Value const*>::doit(llvm::Value* const&) /home/pc2/llvm-rafael/llvm/include/llvm/Support/Casting.h:130:3
+#11 0x00007e09deb0ce2e llvm::CastIsPossible<llvm::Instruction, llvm::Value*, void>::isPossible(llvm::Value* const&) /home/pc2/llvm-rafael/llvm/include/llvm/Support/Casting.h:258:3
+#12 0x00007e09deb0dc30 llvm::CastInfo<llvm::Instruction, llvm::Use const, void>::isPossible(llvm::Use const&) /home/pc2/llvm-rafael/llvm/include/llvm/Support/Casting.h:511:3
+#13 0x00007e09deb09732 bool llvm::isa<llvm::Instruction, llvm::Use>(llvm::Use const&) /home/pc2/llvm-rafael/llvm/include/llvm/Support/Casting.h:550:1
+#14 0x00007e09deb00198 get_data_dependences_for(llvm::Instruction&, std::unordered_map<llvm::BasicBlock const*, llvm::SmallVector<llvm::Value const*, 6u>, std::hash<llvm::BasicBlock const*>, std::equal_to<llvm::BasicBlock const*>, std::allocator<std::pair<llvm::BasicBlock const* const, llvm::SmallVector<llvm::Value const*, 6u>>>>&, llvm::PostDominatorTree&, llvm::Function&, llvm::AnalysisManager<llvm::Function>&) /home/pc2/workspace/Daedalus/include/wyvern/ProgramSlice.cpp:201:13
+#15 0x00007e09deb00a6c llvm::ProgramSlice::ProgramSlice(llvm::Instruction&, llvm::Function&, llvm::PostDominatorTree&, llvm::AnalysisManager<llvm::Function>&) /home/pc2/workspace/Daedalus/include/wyvern/ProgramSlice.cpp:279:9
+#16 0x00007e09deae9cdb Daedalus::DaedalusPass::run(llvm::Module&, llvm::AnalysisManager<llvm::Module>&) /home/pc2/workspace/Daedalus/lib/daedalus.cpp:305:31
+#17 0x00007e09deafec61 llvm::detail::PassModel<llvm::Module, Daedalus::DaedalusPass, llvm::PreservedAnalyses, llvm::AnalysisManager<llvm::Module>>::run(llvm::Module&, llvm::AnalysisManager<llvm::Module>&) /home/pc2/llvm-rafael/llvm/include/llvm/IR/PassManagerInternal.h:90:3
+#18 0x00005ed9018f30d1 llvm::PassManager<llvm::Module, llvm::AnalysisManager<llvm::Module>>::run(llvm::Module&, llvm::AnalysisManager<llvm::Module>&) (/home/pc2/llvm-rafael/build/bin/opt+0x16870d1)
+#19 0x00005ed9007fde5b llvm::runPassPipeline(llvm::StringRef, llvm::Module&, llvm::TargetMachine*, llvm::TargetLibraryInfoImpl*, llvm::ToolOutputFile*, llvm::ToolOutputFile*, llvm::ToolOutputFile*, llvm::StringRef, llvm::ArrayRef<llvm::PassPlugin>, llvm::opt_tool::OutputKind, llvm::opt_tool::VerifierKind, bool, bool, bool, bool, bool, bool, bool) (/home/pc2/llvm-rafael/build/bin/opt+0x591e5b)
+#20 0x00005ed90073c56f main (/home/pc2/llvm-rafael/build/bin/opt+0x4d056f)
+#21 0x00007e09de634e08 (/usr/lib/libc.so.6+0x25e08)
+#22 0x00007e09de634ecc __libc_start_main (/usr/lib/libc.so.6+0x25ecc)
+#23 0x00005ed9007f1755 _start (/home/pc2/llvm-rafael/build/bin/opt+0x585755)

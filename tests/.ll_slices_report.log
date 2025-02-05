@@ -1,0 +1,789 @@
+totalFunctionsOutlined = 76
+totalSlicesMerged = 22
+totalSlicesDiscarded = 37
+sizeOfLargestSliceBeforeMerging = 59
+sizeOfLargestSliceAfterMerging = 23
+mergedSlicesMetadata:
+	_wyvern_slice_main__289999240:
+		size = 11
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__220884516:
+		size = 4
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__321433591:
+		size = 8
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__6113004:
+		size = 14
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__467786258:
+		size = 7
+		numberOfMergedFunctions = 2
+	_wyvern_slice_GenerateSeqLaplacian__717034827:
+		size = 13
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__111661111:
+		size = 5
+		numberOfMergedFunctions = 3
+	_wyvern_slice_main__338121612:
+		size = 4
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__132492299:
+		size = 7
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__320486880:
+		size = 4
+		numberOfMergedFunctions = 3
+	_wyvern_slice_main__146492709:
+		size = 4
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__719927815:
+		size = 4
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__650373594:
+		size = 6
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__172064029:
+		size = 6
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__446250768:
+		size = 8
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__504999513:
+		size = 4
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__192704398:
+		size = 4
+		numberOfMergedFunctions = 2
+totalFunctionsOutlined = 76
+totalSlicesMerged = 21
+totalSlicesDiscarded = 38
+sizeOfLargestSliceBeforeMerging = 59
+sizeOfLargestSliceAfterMerging = 20
+mergedSlicesMetadata:
+	_wyvern_slice_main__289298939:
+		size = 4
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__122762127:
+		size = 6
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__332816540:
+		size = 14
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__178429974:
+		size = 11
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__577656213:
+		size = 7
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__405829048:
+		size = 4
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__627498922:
+		size = 6
+		numberOfMergedFunctions = 3
+	_wyvern_slice_main__194926889:
+		size = 5
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__317712974:
+		size = 7
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__595721895:
+		size = 8
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__128601844:
+		size = 4
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__142805600:
+		size = 8
+		numberOfMergedFunctions = 3
+	_wyvern_slice_GenerateSeqLaplacian__196927986:
+		size = 2
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__673729289:
+		size = 4
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__240791501:
+		size = 4
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__143099986:
+		size = 4
+		numberOfMergedFunctions = 3
+	_wyvern_slice_main__62813670:
+		size = 4
+		numberOfMergedFunctions = 2
+totalFunctionsOutlined = 76
+totalSlicesMerged = 21
+totalSlicesDiscarded = 39
+sizeOfLargestSliceBeforeMerging = 59
+sizeOfLargestSliceAfterMerging = 20
+mergedSlicesMetadata:
+	_wyvern_slice_main__683111154:
+		size = 4
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__67465848:
+		size = 4
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__573309379:
+		size = 6
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__468475602:
+		size = 7
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__490729:
+		size = 11
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__144245358:
+		size = 4
+		numberOfMergedFunctions = 3
+	_wyvern_slice_main__870909251:
+		size = 7
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__141141421:
+		size = 8
+		numberOfMergedFunctions = 3
+	_wyvern_slice_main__409781588:
+		size = 8
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__444242680:
+		size = 4
+		numberOfMergedFunctions = 2
+	_wyvern_slice_GenerateSeqLaplacian__572087276:
+		size = 2
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__628098203:
+		size = 14
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__425500064:
+		size = 4
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__480896666:
+		size = 5
+		numberOfMergedFunctions = 3
+	_wyvern_slice_main__245178675:
+		size = 6
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__124676404:
+		size = 4
+		numberOfMergedFunctions = 2
+totalFunctionsOutlined = 76
+totalSlicesMerged = 21
+totalSlicesDiscarded = 39
+sizeOfLargestSliceBeforeMerging = 59
+sizeOfLargestSliceAfterMerging = 20
+mergedSlicesMetadata:
+	_wyvern_slice_main__1815585:
+		size = 7
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__840615358:
+		size = 4
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__425626029:
+		size = 7
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__213022697:
+		size = 4
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__529459792:
+		size = 11
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__201868208:
+		size = 8
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__332378766:
+		size = 4
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__279905173:
+		size = 6
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__162229461:
+		size = 4
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__120434843:
+		size = 8
+		numberOfMergedFunctions = 3
+	_wyvern_slice_main__8372026:
+		size = 14
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__543149927:
+		size = 4
+		numberOfMergedFunctions = 2
+	_wyvern_slice_GenerateSeqLaplacian__398654961:
+		size = 2
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__410936813:
+		size = 4
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__621029855:
+		size = 5
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__335461321:
+		size = 6
+		numberOfMergedFunctions = 2
+totalFunctionsOutlined = 76
+totalSlicesMerged = 22
+totalSlicesDiscarded = 37
+sizeOfLargestSliceBeforeMerging = 59
+sizeOfLargestSliceAfterMerging = 23
+mergedSlicesMetadata:
+	_wyvern_slice_main__425477411:
+		size = 4
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__424304469:
+		size = 7
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__172375284:
+		size = 4
+		numberOfMergedFunctions = 2
+	_wyvern_slice_GenerateSeqLaplacian__430296073:
+		size = 13
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__520425111:
+		size = 11
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__345482563:
+		size = 7
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__456702535:
+		size = 8
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__173789457:
+		size = 6
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__35456200:
+		size = 4
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__255967306:
+		size = 14
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__411498636:
+		size = 5
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__308163933:
+		size = 4
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__514855426:
+		size = 4
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__433668745:
+		size = 8
+		numberOfMergedFunctions = 3
+	_wyvern_slice_main__546458549:
+		size = 6
+		numberOfMergedFunctions = 3
+	_wyvern_slice_main__274953451:
+		size = 4
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__262706642:
+		size = 4
+		numberOfMergedFunctions = 2
+totalFunctionsOutlined = 76
+totalSlicesMerged = 22
+totalSlicesDiscarded = 37
+sizeOfLargestSliceBeforeMerging = 59
+sizeOfLargestSliceAfterMerging = 20
+mergedSlicesMetadata:
+	_wyvern_slice_main__685367604:
+		size = 6
+		numberOfMergedFunctions = 2
+	_wyvern_slice_GenerateSeqLaplacian__409766300:
+		size = 2
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__35195071:
+		size = 4
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__352280237:
+		size = 6
+		numberOfMergedFunctions = 3
+	_wyvern_slice_main__137399930:
+		size = 7
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__809254952:
+		size = 11
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__688419629:
+		size = 4
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__240929228:
+		size = 4
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__153134998:
+		size = 7
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__425035665:
+		size = 14
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__56893446:
+		size = 8
+		numberOfMergedFunctions = 3
+	_wyvern_slice_main__257696532:
+		size = 8
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__2918788:
+		size = 4
+		numberOfMergedFunctions = 3
+	_wyvern_slice_main__534562381:
+		size = 4
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__169300891:
+		size = 4
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__358859052:
+		size = 4
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__130348142:
+		size = 5
+		numberOfMergedFunctions = 2
+totalFunctionsOutlined = 76
+totalSlicesMerged = 21
+totalSlicesDiscarded = 38
+sizeOfLargestSliceBeforeMerging = 59
+sizeOfLargestSliceAfterMerging = 23
+mergedSlicesMetadata:
+	_wyvern_slice_main__932900307:
+		size = 7
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__310728516:
+		size = 14
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__241100650:
+		size = 7
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__364420887:
+		size = 6
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__222244057:
+		size = 11
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__577879594:
+		size = 4
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__181467341:
+		size = 8
+		numberOfMergedFunctions = 3
+	_wyvern_slice_main__440101350:
+		size = 8
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__446382839:
+		size = 4
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__157985849:
+		size = 5
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__382581107:
+		size = 4
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__677017222:
+		size = 4
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__146734155:
+		size = 4
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__338067402:
+		size = 4
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__301578373:
+		size = 4
+		numberOfMergedFunctions = 3
+	_wyvern_slice_main__433423353:
+		size = 6
+		numberOfMergedFunctions = 3
+	_wyvern_slice_GenerateSeqLaplacian__74746833:
+		size = 13
+		numberOfMergedFunctions = 2
+totalFunctionsOutlined = 76
+totalSlicesMerged = 22
+totalSlicesDiscarded = 37
+sizeOfLargestSliceBeforeMerging = 59
+sizeOfLargestSliceAfterMerging = 23
+mergedSlicesMetadata:
+	_wyvern_slice_main__553924918:
+		size = 8
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__408357301:
+		size = 4
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__359611485:
+		size = 7
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__510703563:
+		size = 11
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__482165375:
+		size = 5
+		numberOfMergedFunctions = 3
+	_wyvern_slice_main__690657179:
+		size = 4
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__235076326:
+		size = 7
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__583578627:
+		size = 4
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__576616529:
+		size = 6
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__137639650:
+		size = 4
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__411611674:
+		size = 8
+		numberOfMergedFunctions = 3
+	_wyvern_slice_GenerateSeqLaplacian__402024941:
+		size = 13
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__139610784:
+		size = 14
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__133107938:
+		size = 4
+		numberOfMergedFunctions = 3
+	_wyvern_slice_main__313022242:
+		size = 6
+		numberOfMergedFunctions = 3
+	_wyvern_slice_main__176724671:
+		size = 4
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__600013302:
+		size = 4
+		numberOfMergedFunctions = 2
+totalFunctionsOutlined = 76
+totalSlicesMerged = 22
+totalSlicesDiscarded = 37
+sizeOfLargestSliceBeforeMerging = 59
+sizeOfLargestSliceAfterMerging = 20
+mergedSlicesMetadata:
+	_wyvern_slice_main__703837220:
+		size = 7
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__413438336:
+		size = 4
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__617173099:
+		size = 11
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__176730053:
+		size = 5
+		numberOfMergedFunctions = 3
+	_wyvern_slice_main__277281143:
+		size = 4
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__262493729:
+		size = 4
+		numberOfMergedFunctions = 3
+	_wyvern_slice_main__130471963:
+		size = 4
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__416994258:
+		size = 6
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__172017791:
+		size = 7
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__598017882:
+		size = 14
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__452857675:
+		size = 8
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__32197445:
+		size = 6
+		numberOfMergedFunctions = 2
+	_wyvern_slice_GenerateSeqLaplacian__331991657:
+		size = 2
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__287168230:
+		size = 8
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__221322171:
+		size = 4
+		numberOfMergedFunctions = 3
+	_wyvern_slice_main__291135601:
+		size = 4
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__136104099:
+		size = 4
+		numberOfMergedFunctions = 2
+totalFunctionsOutlined = 76
+totalSlicesMerged = 21
+totalSlicesDiscarded = 38
+sizeOfLargestSliceBeforeMerging = 59
+sizeOfLargestSliceAfterMerging = 20
+mergedSlicesMetadata:
+	_wyvern_slice_main__972436381:
+		size = 8
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__16592417:
+		size = 6
+		numberOfMergedFunctions = 3
+	_wyvern_slice_main__16607096:
+		size = 4
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__324241780:
+		size = 7
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__413509175:
+		size = 11
+		numberOfMergedFunctions = 2
+	_wyvern_slice_GenerateSeqLaplacian__231036079:
+		size = 2
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__166358263:
+		size = 14
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__151440274:
+		size = 4
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__304195009:
+		size = 6
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__239152046:
+		size = 7
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__198832270:
+		size = 4
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__747252052:
+		size = 4
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__918039226:
+		size = 4
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__105017597:
+		size = 4
+		numberOfMergedFunctions = 3
+	_wyvern_slice_main__653670164:
+		size = 8
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__401512355:
+		size = 4
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__189387304:
+		size = 5
+		numberOfMergedFunctions = 2
+totalFunctionsOutlined = 76
+totalSlicesMerged = 22
+totalSlicesDiscarded = 37
+sizeOfLargestSliceBeforeMerging = 59
+sizeOfLargestSliceAfterMerging = 20
+mergedSlicesMetadata:
+	_wyvern_slice_main__290091345:
+		size = 4
+		numberOfMergedFunctions = 3
+	_wyvern_slice_main__171165837:
+		size = 7
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__726987427:
+		size = 8
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__808489459:
+		size = 11
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__121552579:
+		size = 6
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__266620428:
+		size = 14
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__590289030:
+		size = 4
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__805084888:
+		size = 4
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__361843454:
+		size = 7
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__55171225:
+		size = 4
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__412789753:
+		size = 8
+		numberOfMergedFunctions = 3
+	_wyvern_slice_main__13006024:
+		size = 6
+		numberOfMergedFunctions = 3
+	_wyvern_slice_GenerateSeqLaplacian__418833869:
+		size = 2
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__371668422:
+		size = 4
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__101434449:
+		size = 5
+		numberOfMergedFunctions = 3
+	_wyvern_slice_main__766995954:
+		size = 4
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__292539810:
+		size = 4
+		numberOfMergedFunctions = 2
+totalFunctionsOutlined = 76
+totalSlicesMerged = 22
+totalSlicesDiscarded = 37
+sizeOfLargestSliceBeforeMerging = 59
+sizeOfLargestSliceAfterMerging = 23
+mergedSlicesMetadata:
+	_wyvern_slice_main__174560392:
+		size = 4
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__740017764:
+		size = 5
+		numberOfMergedFunctions = 3
+	_wyvern_slice_main__39041266:
+		size = 8
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__576463592:
+		size = 14
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__459604872:
+		size = 11
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__330088433:
+		size = 7
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__169406015:
+		size = 4
+		numberOfMergedFunctions = 3
+	_wyvern_slice_main__402287661:
+		size = 7
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__213474009:
+		size = 6
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__500550121:
+		size = 4
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__157520271:
+		size = 4
+		numberOfMergedFunctions = 2
+	_wyvern_slice_GenerateSeqLaplacian__193738148:
+		size = 13
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__358463076:
+		size = 6
+		numberOfMergedFunctions = 3
+	_wyvern_slice_main__257604258:
+		size = 8
+		numberOfMergedFunctions = 3
+	_wyvern_slice_main__478163660:
+		size = 4
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__216158948:
+		size = 4
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__677643779:
+		size = 4
+		numberOfMergedFunctions = 2
+totalFunctionsOutlined = 76
+totalSlicesMerged = 21
+totalSlicesDiscarded = 39
+sizeOfLargestSliceBeforeMerging = 59
+sizeOfLargestSliceAfterMerging = 23
+mergedSlicesMetadata:
+	_wyvern_slice_main__654920745:
+		size = 14
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__405341622:
+		size = 4
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__313399518:
+		size = 8
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__408925523:
+		size = 4
+		numberOfMergedFunctions = 3
+	_wyvern_slice_main__145912717:
+		size = 7
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__147499624:
+		size = 7
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__287318506:
+		size = 11
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__203855833:
+		size = 4
+		numberOfMergedFunctions = 3
+	_wyvern_slice_main__186483188:
+		size = 6
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__260812265:
+		size = 4
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__156699825:
+		size = 5
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__918880245:
+		size = 4
+		numberOfMergedFunctions = 2
+	_wyvern_slice_GenerateSeqLaplacian__21125687:
+		size = 13
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__601722951:
+		size = 8
+		numberOfMergedFunctions = 3
+	_wyvern_slice_main__139207960:
+		size = 4
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__173966704:
+		size = 6
+		numberOfMergedFunctions = 3
+totalFunctionsOutlined = 76
+totalSlicesMerged = 22
+totalSlicesDiscarded = 37
+sizeOfLargestSliceBeforeMerging = 61
+sizeOfLargestSliceAfterMerging = 20
+mergedSlicesMetadata:
+	_wyvern_slice_main__314786660:
+		size = 4
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__143179212:
+		size = 4
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__39450420:
+		size = 11
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__308759122:
+		size = 5
+		numberOfMergedFunctions = 3
+	_wyvern_slice_main__141891647:
+		size = 14
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__627197917:
+		size = 7
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__446417308:
+		size = 8
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__311606291:
+		size = 7
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__226615665:
+		size = 6
+		numberOfMergedFunctions = 3
+	_wyvern_slice_main__105305604:
+		size = 4
+		numberOfMergedFunctions = 3
+	_wyvern_slice_main__677256594:
+		size = 6
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__325898180:
+		size = 4
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__294465324:
+		size = 4
+		numberOfMergedFunctions = 2
+	_wyvern_slice_GenerateSeqLaplacian__396824219:
+		size = 2
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__364667573:
+		size = 4
+		numberOfMergedFunctions = 2
+	_wyvern_slice_main__620577587:
+		size = 8
+		numberOfMergedFunctions = 3
+	_wyvern_slice_main__538701607:
+		size = 4
+		numberOfMergedFunctions = 2

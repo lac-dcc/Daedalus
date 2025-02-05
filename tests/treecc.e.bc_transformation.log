@@ -1,0 +1,183 @@
+== OUTLINING INST PHASE ==
+  %520 = add nsw i32 %505, -1
+Not self contained!
+  %259 = and i64 %257, 4294967295
+Not self contained!
+  %220 = add nsw i32 %217, -1
+Not self contained!
+  %275 = add nuw nsw i32 %272, 1
+Not self contained!
+  %297 = or i16 %296, 2562
+[32moutlined![0m
+  %459 = and i32 %458, 1
+[32moutlined![0m
+  %327 = or i8 %326, 8
+Not self contained!
+  %332 = or i8 %331, 8
+Not self contained!
+  %376 = and i32 %375, 1
+Not self contained!
+  %391 = and i32 %390, 5
+Not self contained!
+  %415 = and i32 %414, 8
+Not self contained!
+  %422 = add i64 %418, 4294967295
+Not self contained!
+  %423 = and i64 %422, 4294967295
+Not self contained!
+  %428 = add i64 %418, 4294967294
+Not self contained!
+  %429 = and i64 %428, 4294967295
+Not self contained!
+  %479 = and i32 %478, -65281
+Not self contained!
+  %488 = shl nsw i64 %487, 3
+Not self contained!
+  %538 = and i32 %537, -65281
+Not self contained!
+  %570 = and i32 %569, 256
+Not self contained!
+  %1028 = and i32 %1027, 1
+[32moutlined![0m
+  %582 = or i32 %569, 256
+Not self contained!
+  %595 = and i32 %594, 1
+[32moutlined![0m
+  %645 = and i32 %644, 1
+[32moutlined![0m
+  %656 = mul nsw i32 %654, %642
+Not self contained!
+  %663 = and i32 %662, 1
+[32moutlined![0m
+  %667 = or i1 %666, %665
+Not self contained!
+  %674 = or i1 %672, %673
+Not self contained!
+  %754 = and i8 %753, 4
+Not self contained!
+  %762 = and i8 %761, 8
+Not self contained!
+  %765 = and i8 %761, -17
+Not self contained!
+  %774 = and i16 %773, 4096
+Not self contained!
+  %800 = and i32 %799, 1
+[32moutlined![0m
+  %847 = and i16 %846, 128
+Not self contained!
+  %860 = and i16 %859, 2
+Not self contained!
+  %874 = and i16 %873, 8
+Not self contained!
+  %882 = and i16 %881, 8
+Not self contained!
+  %893 = and i16 %892, 8
+Not self contained!
+  %901 = and i16 %900, 8
+Not self contained!
+  %908 = and i16 %907, 8
+Not self contained!
+  %916 = and i16 %915, 8
+Not self contained!
+  %924 = and i16 %923, 8
+Not self contained!
+  %932 = and i16 %931, 8
+Not self contained!
+  %940 = and i16 %939, 2048
+Not self contained!
+  %968 = and i8 %967, 24
+Not self contained!
+  %972 = and i8 %967, 4
+Not self contained!
+  %990 = and i8 %989, 4
+Not self contained!
+  %1002 = and i8 %1001, 8
+Not self contained!
+  %1005 = and i8 %1001, -17
+Not self contained!
+  %1094 = and i8 %1093, 24
+Not self contained!
+  %1104 = and i8 %1103, 4
+Not self contained!
+  %1123 = and i32 %1122, 1
+[32moutlined![0m
+  %1152 = and i8 %1151, 4
+Not self contained!
+  %1164 = and i8 %1163, 8
+Not self contained!
+  %1167 = and i8 %1163, -17
+Not self contained!
+  %1176 = and i16 %1175, 72
+Not self contained!
+  %1181 = and i16 %1180, 8
+Not self contained!
+  %1188 = and i16 %1187, 8
+Not self contained!
+  %1195 = and i16 %1194, 8
+Not self contained!
+  %1211 = and i8 %1210, 24
+Not self contained!
+  %1215 = and i8 %1210, 4
+Not self contained!
+  %1232 = and i8 %1231, 4
+Not self contained!
+  %1244 = and i8 %1243, 8
+Not self contained!
+  %1247 = and i8 %1243, -17
+Not self contained!
+  %1268 = and i8 %1267, 24
+Not self contained!
+  %1272 = and i8 %1267, 4
+Not self contained!
+  %1292 = and i8 %1291, 4
+Not self contained!
+  %1304 = and i8 %1303, 8
+Not self contained!
+  %1307 = and i8 %1303, -17
+Not self contained!
+  %1328 = and i8 %1327, 24
+Not self contained!
+  %1332 = and i8 %1327, 4
+Not self contained!
+  %1350 = and i8 %1349, 4
+Not self contained!
+  %1358 = and i8 %1357, 8
+Not self contained!
+  %1361 = and i8 %1357, -17
+Not self contained!
+  %1380 = and i8 %1379, 24
+Not self contained!
+  %1384 = and i8 %1379, 4
+Not self contained!
+  %1400 = and i8 %1399, 8
+Not self contained!
+  %1407 = and i8 %1399, 3
+Not self contained!
+  %1433 = shl i64 %1421, 32
+Not self contained!
+  %1434 = ashr exact i64 %1433, 32
+Not self contained!
+opt: /home/pc2/llvm-rafael/llvm/include/llvm/IR/Instructions.h:2889: llvm::Value* llvm::PHINode::removeIncomingValue(const llvm::BasicBlock*, bool): Assertion `Idx >= 0 && "Invalid basic block argument to remove!"' failed.
+PLEASE submit a bug report to https://github.com/llvm/llvm-project/issues/ and include the crash backtrace.
+Stack dump:
+0.	Program arguments: opt -stats -debug-only=Daedalus -passes=daedalus -load-pass-plugin=../build/lib/libdaedalus.so -S treecc.e.bc.ll -o treecc.e.bc.d.ll
+ #0 0x000061fff8ad243c llvm::sys::PrintStackTrace(llvm::raw_ostream&, int) (/home/pc2/llvm-rafael/build/bin/opt+0x1ca143c)
+ #1 0x000061fff8acf63b SignalHandler(int) Signals.cpp:0:0
+ #2 0x00007d132da4c1d0 (/usr/lib/libc.so.6+0x3d1d0)
+ #3 0x00007d132daa53f4 (/usr/lib/libc.so.6+0x963f4)
+ #4 0x00007d132da4c120 raise (/usr/lib/libc.so.6+0x3d120)
+ #5 0x00007d132da334c3 abort (/usr/lib/libc.so.6+0x244c3)
+ #6 0x00007d132da333df (/usr/lib/libc.so.6+0x243df)
+ #7 0x00007d132da44177 (/usr/lib/libc.so.6+0x35177)
+ #8 0x00007d132d9c0ffb llvm::PHINode::removeIncomingValue(llvm::BasicBlock const*, bool) /home/pc2/llvm-rafael/llvm/include/llvm/IR/Instructions.h:2890:31
+ #9 0x00007d132d9bcece updatePHINodes(llvm::Function*) /home/pc2/workspace/Daedalus/include/wyvern/ProgramSlice.cpp:531:7
+#10 0x00007d132d9bdb2d llvm::ProgramSlice::rerouteBranches(llvm::Function*) /home/pc2/workspace/Daedalus/include/wyvern/ProgramSlice.cpp:690:1
+#11 0x00007d132d9bf602 llvm::ProgramSlice::outline() /home/pc2/workspace/Daedalus/include/wyvern/ProgramSlice.cpp:1073:17
+#12 0x00007d132d9a4cea Daedalus::DaedalusPass::run(llvm::Module&, llvm::AnalysisManager<llvm::Module>&) /home/pc2/workspace/Daedalus/lib/daedalus.cpp:305:31
+#13 0x00007d132d9b9c61 llvm::detail::PassModel<llvm::Module, Daedalus::DaedalusPass, llvm::PreservedAnalyses, llvm::AnalysisManager<llvm::Module>>::run(llvm::Module&, llvm::AnalysisManager<llvm::Module>&) /home/pc2/llvm-rafael/llvm/include/llvm/IR/PassManagerInternal.h:90:3
+#14 0x000061fff84b80d1 llvm::PassManager<llvm::Module, llvm::AnalysisManager<llvm::Module>>::run(llvm::Module&, llvm::AnalysisManager<llvm::Module>&) (/home/pc2/llvm-rafael/build/bin/opt+0x16870d1)
+#15 0x000061fff73c2e5b llvm::runPassPipeline(llvm::StringRef, llvm::Module&, llvm::TargetMachine*, llvm::TargetLibraryInfoImpl*, llvm::ToolOutputFile*, llvm::ToolOutputFile*, llvm::ToolOutputFile*, llvm::StringRef, llvm::ArrayRef<llvm::PassPlugin>, llvm::opt_tool::OutputKind, llvm::opt_tool::VerifierKind, bool, bool, bool, bool, bool, bool, bool) (/home/pc2/llvm-rafael/build/bin/opt+0x591e5b)
+#16 0x000061fff730156f main (/home/pc2/llvm-rafael/build/bin/opt+0x4d056f)
+#17 0x00007d132da34e08 (/usr/lib/libc.so.6+0x25e08)
+#18 0x00007d132da34ecc __libc_start_main (/usr/lib/libc.so.6+0x25ecc)
+#19 0x000061fff73b6755 _start (/home/pc2/llvm-rafael/build/bin/opt+0x585755)

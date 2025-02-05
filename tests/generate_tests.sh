@@ -2,7 +2,7 @@
 #
 #   Script to generate .ll and .bin files for each test file
 #
-TESTFILENAME=(./*.{c,h,cpp})
+TESTFILENAME=(./*.{c,h,cpp,ll})
 VERBOSE=0
 
 remove_old_file() {
@@ -52,6 +52,9 @@ while getopts "t:hv" opt; do
     esac
 done
 
+#echo testfilename
+printf '%s\n' "${TESTFILENAME[@]}"
+
 for i in "${TESTFILENAME[@]}"; do
     FULLFILENAME=$(basename "$i")
     FILENAME="${FULLFILENAME%.*}"
@@ -63,13 +66,14 @@ for i in "${TESTFILENAME[@]}"; do
         c) FILENAMEWEXT="${FULLFILENAME%.c}" ;;
         cpp) FILENAMEWEXT="${FULLFILENAME%.cpp}" ;;
         h) FILENAMEWEXT="${FULLFILENAME%.h}" ;;
+        ll) FILENAMEWEXT="${FULLFILENAME%.ll}" ;;
     esac
     LLFILENAME="${FILENAMEWEXT}.ll"
     DLLFILENAME="${FILENAMEWEXT}.d.ll"
     
     printf "\nTest source file name: %s" "${FULLFILENAME}"
     printf "\nTest IR file name: %s\n" "${LLFILENAME}"
-    printf "Test IR file name (after Daedalus): %s\n" "${LLFILENAME}"
+    printf "Test IR file name (after Daedalus): %s\n" "${DLLFILENAME}"
     
     clang -Os -flto -fuse-ld=lld -Wl,--plugin-opt=-lto-embed-bitcode=post-merge-pre-opt "${FULLFILENAME}" -o "${LLFILENAME}.bin"
     llvm-objcopy --dump-section .llvmbc="${LLFILENAME}" "${LLFILENAME}.bin"

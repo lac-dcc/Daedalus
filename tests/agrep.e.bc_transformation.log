@@ -1,0 +1,699 @@
+== OUTLINING INST PHASE ==
+  %76 = add nsw i32 %71, 1
+Not self contained!
+  %152 = and i16 %151, 2048
+Not self contained!
+  %168 = add nsw i32 %167, -1
+Not self contained!
+  %569 = and <16 x i8> %568, <i8 15, i8 15, i8 15, i8 15, i8 15, i8 15, i8 15, i8 15, i8 15, i8 15, i8 15, i8 15, i8 15, i8 15, i8 15, i8 15>
+[32moutlined![0m
+  %234 = add i64 %233, 1
+[32moutlined![0m
+  %522 = and <8 x i16> %521, <i16 8, i16 8, i16 8, i16 8, i16 8, i16 8, i16 8, i16 8>
+[32moutlined![0m
+  %267 = and i64 %256, 4294967295
+Not self contained!
+  %290 = and i1 %286, %285
+[32moutlined![0m
+  %303 = and i1 %302, %301
+Not self contained!
+  %306 = and i1 %302, %305
+Not self contained!
+  %316 = and i64 %256, 4294967295
+Not self contained!
+  %345 = add nsw i32 %338, %342
+Not self contained!
+  %414 = or <16 x i64> %413, <i64 0, i64 1, i64 2, i64 3, i64 4, i64 5, i64 6, i64 7, i64 8, i64 9, i64 10, i64 11, i64 12, i64 13, i64 14, i64 15>
+[32moutlined![0m
+  %602 = and i1 %600, %601
+[32moutlined![0m
+  %646 = and i8 %645, 15
+Not self contained!
+  %647 = or i8 %646, %642
+Not self contained!
+  %650 = shl nuw nsw i32 %648, 4
+Not self contained!
+  %654 = and i8 %653, 15
+Not self contained!
+  %656 = or i32 %650, %655
+Not self contained!
+  %662 = sub nsw i64 %629, %641
+Not self contained!
+  %680 = and i32 %623, %679
+Not self contained!
+  %681 = add i32 %680, %673
+Not self contained!
+  %685 = and i32 %.lcssa1, 8191
+Not self contained!
+  %787 = sub nsw i32 %785, %786
+[32moutlined![0m
+  %833 = sub nsw i32 %832, %818
+Not self contained!
+  %882 = and i64 %878, 4294967295
+Not self contained!
+  %950 = and i1 %949, %948
+Not self contained!
+  %35 = or <16 x i64> %34, <i64 0, i64 1, i64 2, i64 3, i64 4, i64 5, i64 6, i64 7, i64 8, i64 9, i64 10, i64 11, i64 12, i64 13, i64 14, i64 15>
+[32moutlined![0m
+  %262 = add nuw nsw i64 %231, %246
+Not self contained!
+  %145 = and <8 x i16> %144, <i16 8, i16 8, i16 8, i16 8, i16 8, i16 8, i16 8, i16 8>
+[32moutlined![0m
+  %217 = add i32 %216, -1
+Not self contained!
+  %229 = shl nuw nsw i32 %228, 3
+[32moutlined![0m
+  %232 = or i64 %231, 1
+Not self contained!
+  %233 = or i64 %231, 2
+Not self contained!
+  %234 = or i64 %231, 3
+Not self contained!
+  %235 = or i64 %231, 4
+Not self contained!
+  %236 = or i64 %231, 5
+Not self contained!
+  %237 = or i64 %231, 6
+Not self contained!
+  %238 = or i64 %231, 7
+Not self contained!
+  %239 = add nuw nsw i64 %231, 8
+Not self contained!
+  %240 = add nuw nsw i64 %231, 9
+Not self contained!
+  %241 = add nuw nsw i64 %231, 10
+Not self contained!
+  %242 = add nuw nsw i64 %231, 11
+Not self contained!
+  %243 = add nuw nsw i64 %231, 12
+Not self contained!
+  %244 = add nuw nsw i64 %231, 13
+Not self contained!
+  %245 = add nuw nsw i64 %231, 14
+Not self contained!
+  %246 = add nuw nsw i64 %231, 15
+Not self contained!
+  %249 = add nuw nsw i64 %248, %231
+Not self contained!
+  %259 = add nuw nsw i64 %232, %248
+Not self contained!
+  %521 = shl nuw nsw i64 %520, 8
+[32moutlined![0m
+  %528 = or i64 %521, %527
+Not self contained!
+  %269 = add nuw nsw i64 %234, %248
+Not self contained!
+  %274 = add nuw nsw i64 %235, %248
+Not self contained!
+  %279 = add nuw nsw i64 %236, %248
+Not self contained!
+  %284 = add nuw nsw i64 %237, %248
+Not self contained!
+  %289 = add nuw nsw i64 %238, %248
+Not self contained!
+  %294 = add nuw nsw i64 %239, %248
+Not self contained!
+  %299 = add nuw nsw i64 %240, %248
+Not self contained!
+  %304 = add nuw nsw i64 %241, %248
+Not self contained!
+  %309 = add nuw nsw i64 %242, %248
+Not self contained!
+  %314 = add nuw nsw i64 %243, %248
+Not self contained!
+  %319 = add nuw nsw i64 %244, %248
+Not self contained!
+  %324 = add nuw nsw i64 %245, %248
+Not self contained!
+  %329 = add nuw nsw i64 %246, %248
+Not self contained!
+  %340 = add nuw nsw i32 %229, %339
+Not self contained!
+  %348 = sub i32 %217, %347
+Not self contained!
+  %353 = add nsw i32 %216, -2
+Not self contained!
+  %363 = sub nsw i32 %217, %.lcssa15
+Not self contained!
+  %394 = sub i32 %376, %393
+Not self contained!
+  %479 = sub nsw i64 %474, %476
+Not self contained!
+  %486 = add i32 %478, %485
+Not self contained!
+  %505 = and i64 %504, 4294967295
+Not self contained!
+  %545 = sub i32 %536, %544
+Not self contained!
+  %546 = urem i32 %545, %533
+Not self contained!
+  %569 = mul i32 %566, %533
+Not self contained!
+  %576 = add i32 %569, %575
+Not self contained!
+  %577 = sub i32 %536, %576
+Not self contained!
+  %588 = mul i32 %533, %587
+Not self contained!
+  %589 = sub i32 %536, %588
+Not self contained!
+  %625 = mul i32 %623, %533
+Not self contained!
+  %631 = add i32 %625, %630
+Not self contained!
+  %632 = sub i32 %536, %631
+Not self contained!
+  %637 = add i32 %629, %636
+Not self contained!
+  %676 = xor i32 %675, -1
+[32moutlined![0m
+  %678 = and i32 %673, %676
+Not self contained!
+  %713 = shl nuw nsw i64 %712, 2
+Not self contained!
+  %730 = add nuw nsw i32 %727, 2047
+Not self contained!
+  %738 = and i1 %737, %736
+Not self contained!
+  %742 = sub nsw i32 %730, %.lcssa1
+Not self contained!
+  %743 = add nsw i32 %742, 1
+Not self contained!
+  %757 = shl nuw nsw i64 %756, 3
+[32moutlined![0m
+  %762 = add nuw nsw i64 %757, %761
+[32moutlined![0m
+  %776 = shl nuw nsw i64 %775, 3
+Not self contained!
+  %780 = add nuw nsw i64 %776, %779
+Not self contained!
+  %786 = sub nsw i64 %723, %785
+Not self contained!
+  %889 = add i32 %203, %888
+Not self contained!
+  %987 = shl nuw nsw i32 %986, 3
+[32moutlined![0m
+  %995 = add nuw nsw i32 %987, %994
+[32moutlined![0m
+  %997 = and i32 %995, %970
+Not self contained!
+  %1012 = add i32 %1005, %1011
+[32moutlined![0m
+  %1014 = and i32 %1012, %970
+Not self contained!
+  %1099 = or i32 %1096, %1098
+[32moutlined![0m
+  %1101 = and i32 %1099, %1077
+[32moutlined![0m
+  %1167 = sdiv i32 %203, %701
+Not self contained!
+  %1169 = add nsw i32 %1167, -1
+Not self contained!
+  %1220 = add nsw i32 %1215, %1219
+Not self contained!
+  %1231 = sub i64 %1230, %1171
+Not self contained!
+  %1233 = sub i32 %1232, %704
+Not self contained!
+  %1234 = add nsw i32 %1233, -10
+Not self contained!
+  %1240 = add nsw i32 %1233, -2
+Not self contained!
+  %1244 = add i32 %704, %1232
+Not self contained!
+  %1247 = add i32 %704, %1232
+Not self contained!
+  %1256 = sub i64 %1255, %1171
+Not self contained!
+  %1262 = sub i64 %1261, %1260
+Not self contained!
+  %1268 = add nuw i32 %1265, 1
+Not self contained!
+  %1298 = or i1 %708, %1297
+Not self contained!
+  %1305 = lshr i32 %1304, 1
+Not self contained!
+  %1306 = or i32 %1305, %1303
+Not self contained!
+  %1313 = lshr i32 %1312, 1
+Not self contained!
+  %1314 = or i32 %1313, %1303
+Not self contained!
+  %1317 = and i32 %1316, %1314
+Not self contained!
+  %1318 = and i32 %1317, %1309
+Not self contained!
+  %1324 = and i32 %1323, %1267
+Not self contained!
+  %1348 = or i1 %708, %1347
+Not self contained!
+  %1354 = add nsw i32 %1352, 1
+Not self contained!
+  %1359 = lshr i32 %1358, 1
+Not self contained!
+  %1360 = or i32 %1359, %1357
+Not self contained!
+  %1367 = lshr i32 %1366, 1
+Not self contained!
+  %1368 = or i32 %1367, %1357
+Not self contained!
+  %1371 = and i32 %1370, %1368
+Not self contained!
+  %1372 = and i32 %1371, %1363
+Not self contained!
+  %1378 = and i32 %1377, %1267
+Not self contained!
+  %1408 = sub nsw i32 2047, %742
+Not self contained!
+  %1414 = add nuw nsw i32 %1409, 1
+Not self contained!
+  %19 = add nsw i32 %18, 1
+Not self contained!
+  %24 = add i64 %23, %6
+Not self contained!
+  %31 = shl i64 %27, 32
+Not self contained!
+  %32 = ashr exact i64 %31, 32
+Not self contained!
+  %34 = add i64 %31, 4294967296
+Not self contained!
+  %35 = ashr exact i64 %34, 32
+Not self contained!
+  %37 = add i64 %31, 8589934592
+Not self contained!
+  %38 = ashr exact i64 %37, 32
+Not self contained!
+  %40 = add i64 %31, 12884901888
+Not self contained!
+  %41 = ashr exact i64 %40, 32
+Not self contained!
+  %49 = shl i64 %27, 32
+Not self contained!
+  %50 = ashr exact i64 %49, 32
+Not self contained!
+  %52 = add i64 %49, 4294967296
+Not self contained!
+  %53 = ashr exact i64 %52, 32
+Not self contained!
+  %55 = add i64 %49, 8589934592
+Not self contained!
+  %56 = ashr exact i64 %55, 32
+Not self contained!
+  %58 = add i64 %49, 12884901888
+Not self contained!
+  %59 = ashr exact i64 %58, 32
+Not self contained!
+  %73 = ashr exact i64 %72, 32
+Not self contained!
+  %77 = ashr exact i64 %76, 32
+Not self contained!
+  %83 = add nsw i32 %28, -2
+Not self contained!
+  %124 = add nsw i32 %122, 1
+Not self contained!
+  %268 = add nsw i32 %264, 1
+Not self contained!
+  %304 = and i1 %303, %302
+[32moutlined![0m
+  %321 = add i64 %320, 5
+Not self contained!
+  %322 = and i64 %321, 4294967295
+Not self contained!
+  %357 = shl nuw nsw i64 %356, 3
+Not self contained!
+  %165 = or i32 %164, %55
+Not self contained!
+  %318 = add nsw i64 %300, %290
+Not self contained!
+  %321 = or i32 %320, %317
+Not self contained!
+  %328 = add nsw i64 %300, %290
+Not self contained!
+  %331 = xor i32 %330, %327
+Not self contained!
+  %346 = and i16 %345, 256
+[32moutlined![0m
+  %284 = sub nsw i32 %252, %283
+Not self contained!
+  %285 = shl nsw i32 -1, %284
+Not self contained!
+  %286 = and i32 %285, %280
+Not self contained!
+  %287 = xor i32 %286, %280
+Not self contained!
+  %266 = add nuw i32 %265, 1
+Not self contained!
+  %273 = or i32 %272, %270
+[32moutlined![0m
+  %279 = or i32 %278, %255
+Not self contained!
+  %280 = shl i32 %255, 1
+Not self contained!
+  %281 = or i32 %280, 1
+Not self contained!
+  %282 = or i32 %281, %254
+Not self contained!
+  %283 = or i32 %282, %279
+Not self contained!
+  %30 = and i16 %29, 1280
+Not self contained!
+  %71 = or i32 %70, %56
+[32moutlined![0m
+  %87 = or i32 %86, %53
+[32moutlined![0m
+  %261 = or i32 %259, %260
+[32moutlined![0m
+  %264 = ashr i32 %261, %263
+[32moutlined![0m
+  %134 = add nsw i32 %132, %113
+Not self contained!
+  %177 = and i1 %46, %172
+Not self contained!
+  %185 = or i32 %184, %55
+Not self contained!
+  %190 = or i32 %189, %53
+Not self contained!
+  %198 = or i32 %197, %53
+Not self contained!
+  %205 = or i32 %204, %53
+Not self contained!
+  %214 = or i32 %213, %53
+Not self contained!
+  %242 = add nsw i32 %237, 1
+Not self contained!
+  %32 = add nuw i32 %10, 1023
+Not self contained!
+  %40 = and i1 %39, %38
+Not self contained!
+  %45 = sub nsw i32 %32, %44
+Not self contained!
+  %46 = add nsw i32 %45, 1
+Not self contained!
+  %62 = sub nsw i32 1023, %45
+Not self contained!
+  %18 = and i64 %9, 4294967295
+Not self contained!
+  %550 = or i32 %549, %547
+[32moutlined![0m
+  %569 = or i32 %568, %562
+Not self contained!
+  %403 = and i32 %394, %88
+Not self contained!
+  %407 = and i32 %406, %400
+Not self contained!
+  %408 = or i32 %407, %403
+Not self contained!
+  %410 = and i32 %409, %88
+Not self contained!
+  %414 = and i32 %413, %400
+Not self contained!
+  %415 = or i32 %407, %394
+Not self contained!
+  %419 = or i32 %418, %394
+Not self contained!
+  %420 = and i32 %419, %49
+Not self contained!
+  %421 = or i32 %420, %414
+Not self contained!
+  %422 = or i32 %421, %410
+Not self contained!
+  %425 = and i32 %424, %88
+Not self contained!
+  %429 = and i32 %428, %400
+Not self contained!
+  %430 = or i32 %421, %409
+Not self contained!
+  %434 = or i32 %433, %409
+Not self contained!
+  %435 = and i32 %434, %49
+Not self contained!
+  %436 = or i32 %435, %429
+Not self contained!
+  %437 = or i32 %436, %425
+Not self contained!
+  %440 = and i32 %439, %88
+Not self contained!
+  %444 = and i32 %443, %400
+Not self contained!
+  %445 = or i32 %436, %424
+Not self contained!
+  %449 = or i32 %448, %424
+Not self contained!
+  %450 = and i32 %449, %49
+Not self contained!
+  %451 = or i32 %450, %444
+Not self contained!
+  %452 = or i32 %451, %440
+Not self contained!
+  %455 = and i32 %454, %88
+Not self contained!
+  %459 = and i32 %458, %400
+Not self contained!
+  %460 = or i32 %451, %439
+Not self contained!
+  %464 = or i32 %463, %439
+Not self contained!
+  %465 = and i32 %464, %49
+Not self contained!
+  %466 = or i32 %459, %455
+Not self contained!
+  %467 = or i32 %466, %465
+Not self contained!
+  %469 = add nsw i32 %395, 1
+Not self contained!
+  %471 = and i32 %470, %88
+Not self contained!
+  %475 = and i32 %474, %400
+Not self contained!
+  %476 = or i32 %475, %471
+Not self contained!
+  %482 = or i32 %481, %476
+Not self contained!
+  %486 = and i32 %484, 1
+Not self contained!
+  %488 = xor i1 %485, %487
+Not self contained!
+  %495 = and i32 %494, %88
+Not self contained!
+  %499 = and i32 %498, %400
+Not self contained!
+  %500 = or i32 %499, %495
+Not self contained!
+  %507 = and i32 %506, %88
+Not self contained!
+  %512 = or i32 %511, %503
+[32moutlined![0m
+  %1029 = and i32 %1028, %1027
+Not self contained!
+  %1030 = lshr i32 %1028, %544
+Not self contained!
+  %1034 = and i32 %1028, %.lcssa7
+Not self contained!
+  %1038 = or i32 %1037, %1033
+Not self contained!
+  %1039 = and i32 %1038, %836
+Not self contained!
+  %1040 = or i32 %1039, %1029
+Not self contained!
+  %1043 = lshr i32 %1040, %544
+Not self contained!
+  %1047 = and i32 %1040, %.lcssa7
+Not self contained!
+  %1051 = or i32 %1046, %1050
+Not self contained!
+  %1052 = or i32 %1051, %1040
+Not self contained!
+  %1056 = and i32 %1054, 1
+Not self contained!
+  %1058 = xor i1 %1055, %1057
+Not self contained!
+  %365 = and i32 %364, %88
+Not self contained!
+  %369 = and i32 %368, %269
+Not self contained!
+  %370 = or i32 %369, %365
+Not self contained!
+  %377 = and i32 %376, %88
+Not self contained!
+  %382 = or i32 %381, %373
+[32moutlined![0m
+  %384 = and i32 %382, %49
+Not self contained!
+  %388 = and i32 %387, %269
+Not self contained!
+  %389 = or i32 %388, %377
+Not self contained!
+  %390 = or i32 %389, %384
+Not self contained!
+  %285 = or i32 %284, %272
+Not self contained!
+  %286 = and i32 %285, %49
+Not self contained!
+  %290 = and i32 %289, %269
+Not self contained!
+  %291 = or i32 %290, %286
+Not self contained!
+  %292 = or i32 %291, %280
+Not self contained!
+  %295 = and i32 %294, %88
+Not self contained!
+  %296 = or i32 %291, %279
+Not self contained!
+  %300 = or i32 %299, %279
+Not self contained!
+  %301 = and i32 %300, %49
+Not self contained!
+  %305 = and i32 %304, %269
+Not self contained!
+  %306 = or i32 %305, %301
+Not self contained!
+  %307 = or i32 %306, %295
+Not self contained!
+  %310 = and i32 %309, %88
+Not self contained!
+  %311 = or i32 %306, %294
+Not self contained!
+  %315 = or i32 %314, %294
+Not self contained!
+  %316 = and i32 %315, %49
+Not self contained!
+  %320 = and i32 %319, %269
+Not self contained!
+  %321 = or i32 %320, %316
+Not self contained!
+  %322 = or i32 %321, %310
+Not self contained!
+  %325 = and i32 %324, %88
+Not self contained!
+  %326 = or i32 %321, %309
+Not self contained!
+  %330 = or i32 %329, %309
+Not self contained!
+  %331 = and i32 %330, %49
+Not self contained!
+  %335 = and i32 %334, %269
+Not self contained!
+  %336 = or i32 %331, %325
+Not self contained!
+  %337 = or i32 %336, %335
+Not self contained!
+  %341 = and i32 %340, %88
+Not self contained!
+  %345 = and i32 %344, %269
+Not self contained!
+  %346 = or i32 %345, %341
+Not self contained!
+  %352 = or i32 %351, %346
+Not self contained!
+  %356 = and i32 %354, 1
+Not self contained!
+  %358 = xor i1 %355, %357
+Not self contained!
+  %2386 = sub i32 %2294, %2177
+Not self contained!
+  %2418 = and i32 %2417, %2416
+Not self contained!
+  %2419 = lshr i32 %2416, 1
+Not self contained!
+  %2420 = and i32 %2419, %2309
+Not self contained!
+  %2421 = or i32 %2420, %2418
+Not self contained!
+  %59 = or i32 %58, %52
+Not self contained!
+  %73 = or i32 %72, %68
+[32moutlined![0m
+  %105 = shl nuw nsw i64 %81, 2
+Not self contained!
+  %120 = add nuw nsw i32 %117, 1024
+Not self contained!
+  %124 = and i64 %123, 4294967295
+Not self contained!
+  %148 = and i32 %140, %89
+Not self contained!
+  %152 = and i32 %151, %146
+Not self contained!
+  %153 = or i32 %152, %148
+Not self contained!
+  %161 = or i32 %160, %153
+Not self contained!
+  %165 = and i32 %163, 1
+Not self contained!
+  %167 = xor i1 %164, %166
+Not self contained!
+  %177 = and i32 %176, %146
+Not self contained!
+  %178 = or i32 %177, %61
+Not self contained!
+  %191 = and i32 %180, %89
+Not self contained!
+  %195 = add nsw i32 %181, 1
+Not self contained!
+  %196 = and i32 %180, %89
+Not self contained!
+  %200 = and i32 %199, %188
+Not self contained!
+  %201 = or i32 %200, %196
+Not self contained!
+  %207 = or i32 %206, %201
+Not self contained!
+  %211 = and i32 %209, 1
+Not self contained!
+  %213 = xor i1 %210, %212
+Not self contained!
+  %226 = and i32 %225, %188
+Not self contained!
+  %227 = or i32 %226, %222
+Not self contained!
+  %230 = sub nsw i32 %120, %.lcssa1
+Not self contained!
+  %233 = sub nsw i64 0, %232
+Not self contained!
+  %238 = sub nsw i32 1024, %231
+Not self contained!
+  %246 = add nuw nsw i32 %243, 1024
+Not self contained!
+  %250 = and i64 %249, 4294967295
+Not self contained!
+  %516 = and i32 %514, %49
+Not self contained!
+  %520 = and i32 %519, %402
+Not self contained!
+  %521 = or i32 %520, %509
+Not self contained!
+  %522 = or i32 %521, %516
+Not self contained!
+  %274 = and i32 %273, %89
+Not self contained!
+  %278 = and i32 %277, %270
+Not self contained!
+  %279 = or i32 %278, %274
+Not self contained!
+  %281 = and i32 %280, %89
+Not self contained!
+  %282 = or i32 %278, %273
+Not self contained!
+opt: /home/pc2/llvm-rafael/llvm/include/llvm/IR/Instructions.h:2889: llvm::Value* llvm::PHINode::removeIncomingValue(const llvm::BasicBlock*, bool): Assertion `Idx >= 0 && "Invalid basic block argument to remove!"' failed.
+PLEASE submit a bug report to https://github.com/llvm/llvm-project/issues/ and include the crash backtrace.
+Stack dump:
+0.	Program arguments: opt -stats -debug-only=Daedalus -passes=daedalus -load-pass-plugin=../build/lib/libdaedalus.so -S agrep.e.bc.ll -o agrep.e.bc.d.ll
+ #0 0x0000637a833cd43c llvm::sys::PrintStackTrace(llvm::raw_ostream&, int) (/home/pc2/llvm-rafael/build/bin/opt+0x1ca143c)
+ #1 0x0000637a833ca63b SignalHandler(int) Signals.cpp:0:0
+ #2 0x00007a2f4f35d1d0 (/usr/lib/libc.so.6+0x3d1d0)
+ #3 0x00007a2f4f3b63f4 (/usr/lib/libc.so.6+0x963f4)
+ #4 0x00007a2f4f35d120 raise (/usr/lib/libc.so.6+0x3d120)
+ #5 0x00007a2f4f3444c3 abort (/usr/lib/libc.so.6+0x244c3)
+ #6 0x00007a2f4f3443df (/usr/lib/libc.so.6+0x243df)
+ #7 0x00007a2f4f355177 (/usr/lib/libc.so.6+0x35177)
+ #8 0x00007a2f4f2d1ffb llvm::PHINode::removeIncomingValue(llvm::BasicBlock const*, bool) /home/pc2/llvm-rafael/llvm/include/llvm/IR/Instructions.h:2890:31
+ #9 0x00007a2f4f2cdece updatePHINodes(llvm::Function*) /home/pc2/workspace/Daedalus/include/wyvern/ProgramSlice.cpp:531:7
+#10 0x00007a2f4f2ceb2d llvm::ProgramSlice::rerouteBranches(llvm::Function*) /home/pc2/workspace/Daedalus/include/wyvern/ProgramSlice.cpp:690:1
+#11 0x00007a2f4f2d0602 llvm::ProgramSlice::outline() /home/pc2/workspace/Daedalus/include/wyvern/ProgramSlice.cpp:1073:17
+#12 0x00007a2f4f2b5cea Daedalus::DaedalusPass::run(llvm::Module&, llvm::AnalysisManager<llvm::Module>&) /home/pc2/workspace/Daedalus/lib/daedalus.cpp:305:31
+#13 0x00007a2f4f2cac61 llvm::detail::PassModel<llvm::Module, Daedalus::DaedalusPass, llvm::PreservedAnalyses, llvm::AnalysisManager<llvm::Module>>::run(llvm::Module&, llvm::AnalysisManager<llvm::Module>&) /home/pc2/llvm-rafael/llvm/include/llvm/IR/PassManagerInternal.h:90:3
+#14 0x0000637a82db30d1 llvm::PassManager<llvm::Module, llvm::AnalysisManager<llvm::Module>>::run(llvm::Module&, llvm::AnalysisManager<llvm::Module>&) (/home/pc2/llvm-rafael/build/bin/opt+0x16870d1)
+#15 0x0000637a81cbde5b llvm::runPassPipeline(llvm::StringRef, llvm::Module&, llvm::TargetMachine*, llvm::TargetLibraryInfoImpl*, llvm::ToolOutputFile*, llvm::ToolOutputFile*, llvm::ToolOutputFile*, llvm::StringRef, llvm::ArrayRef<llvm::PassPlugin>, llvm::opt_tool::OutputKind, llvm::opt_tool::VerifierKind, bool, bool, bool, bool, bool, bool, bool) (/home/pc2/llvm-rafael/build/bin/opt+0x591e5b)
+#16 0x0000637a81bfc56f main (/home/pc2/llvm-rafael/build/bin/opt+0x4d056f)
+#17 0x00007a2f4f345e08 (/usr/lib/libc.so.6+0x25e08)
+#18 0x00007a2f4f345ecc __libc_start_main (/usr/lib/libc.so.6+0x25ecc)
+#19 0x0000637a81cb1755 _start (/home/pc2/llvm-rafael/build/bin/opt+0x585755)

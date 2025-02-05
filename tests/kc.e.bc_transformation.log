@@ -1,0 +1,59 @@
+== OUTLINING INST PHASE ==
+  %172 = add nsw i32 %169, -1
+Not self contained!
+  %177 = add nsw i32 %174, -1
+Not self contained!
+  %214 = mul nsw i32 %213, %212
+Not self contained!
+  %237 = and i32 %236, 1
+Not self contained!
+  %242 = and i32 %241, 1
+Not self contained!
+  %31 = add nsw i32 %30, 1
+Not self contained!
+  %37 = add nsw i32 %30, 2
+Not self contained!
+  %54 = add nsw i32 %53, 1
+Not self contained!
+  %75 = add nsw i32 %74, 1
+Not self contained!
+  %82 = add nsw i32 %81, 1
+Not self contained!
+  %87 = and i1 %86, %85
+Not self contained!
+  %100 = and i32 %99, 1
+Not self contained!
+  %116 = and i32 %115, 1
+Not self contained!
+  %153 = add nsw i32 %152, 1
+Not self contained!
+  %159 = add nsw i32 %158, -1
+Not self contained!
+  %163 = add nsw i32 %162, -1
+Not self contained!
+  %167 = add nsw i32 %166, 1
+Not self contained!
+opt: /home/pc2/llvm-rafael/llvm/include/llvm/IR/Instructions.h:2889: llvm::Value* llvm::PHINode::removeIncomingValue(const llvm::BasicBlock*, bool): Assertion `Idx >= 0 && "Invalid basic block argument to remove!"' failed.
+PLEASE submit a bug report to https://github.com/llvm/llvm-project/issues/ and include the crash backtrace.
+Stack dump:
+0.	Program arguments: opt -stats -debug-only=Daedalus -passes=daedalus -load-pass-plugin=../build/lib/libdaedalus.so -S kc.e.bc.ll -o kc.e.bc.d.ll
+ #0 0x00005579ccb9f43c llvm::sys::PrintStackTrace(llvm::raw_ostream&, int) (/home/pc2/llvm-rafael/build/bin/opt+0x1ca143c)
+ #1 0x00005579ccb9c63b SignalHandler(int) Signals.cpp:0:0
+ #2 0x00007838f552f1d0 (/usr/lib/libc.so.6+0x3d1d0)
+ #3 0x00007838f55883f4 (/usr/lib/libc.so.6+0x963f4)
+ #4 0x00007838f552f120 raise (/usr/lib/libc.so.6+0x3d120)
+ #5 0x00007838f55164c3 abort (/usr/lib/libc.so.6+0x244c3)
+ #6 0x00007838f55163df (/usr/lib/libc.so.6+0x243df)
+ #7 0x00007838f5527177 (/usr/lib/libc.so.6+0x35177)
+ #8 0x00007838f54a3ffb llvm::PHINode::removeIncomingValue(llvm::BasicBlock const*, bool) /home/pc2/llvm-rafael/llvm/include/llvm/IR/Instructions.h:2890:31
+ #9 0x00007838f549fece updatePHINodes(llvm::Function*) /home/pc2/workspace/Daedalus/include/wyvern/ProgramSlice.cpp:531:7
+#10 0x00007838f54a0b2d llvm::ProgramSlice::rerouteBranches(llvm::Function*) /home/pc2/workspace/Daedalus/include/wyvern/ProgramSlice.cpp:690:1
+#11 0x00007838f54a2602 llvm::ProgramSlice::outline() /home/pc2/workspace/Daedalus/include/wyvern/ProgramSlice.cpp:1073:17
+#12 0x00007838f5487cea Daedalus::DaedalusPass::run(llvm::Module&, llvm::AnalysisManager<llvm::Module>&) /home/pc2/workspace/Daedalus/lib/daedalus.cpp:305:31
+#13 0x00007838f549cc61 llvm::detail::PassModel<llvm::Module, Daedalus::DaedalusPass, llvm::PreservedAnalyses, llvm::AnalysisManager<llvm::Module>>::run(llvm::Module&, llvm::AnalysisManager<llvm::Module>&) /home/pc2/llvm-rafael/llvm/include/llvm/IR/PassManagerInternal.h:90:3
+#14 0x00005579cc5850d1 llvm::PassManager<llvm::Module, llvm::AnalysisManager<llvm::Module>>::run(llvm::Module&, llvm::AnalysisManager<llvm::Module>&) (/home/pc2/llvm-rafael/build/bin/opt+0x16870d1)
+#15 0x00005579cb48fe5b llvm::runPassPipeline(llvm::StringRef, llvm::Module&, llvm::TargetMachine*, llvm::TargetLibraryInfoImpl*, llvm::ToolOutputFile*, llvm::ToolOutputFile*, llvm::ToolOutputFile*, llvm::StringRef, llvm::ArrayRef<llvm::PassPlugin>, llvm::opt_tool::OutputKind, llvm::opt_tool::VerifierKind, bool, bool, bool, bool, bool, bool, bool) (/home/pc2/llvm-rafael/build/bin/opt+0x591e5b)
+#16 0x00005579cb3ce56f main (/home/pc2/llvm-rafael/build/bin/opt+0x4d056f)
+#17 0x00007838f5517e08 (/usr/lib/libc.so.6+0x25e08)
+#18 0x00007838f5517ecc __libc_start_main (/usr/lib/libc.so.6+0x25ecc)
+#19 0x00005579cb483755 _start (/home/pc2/llvm-rafael/build/bin/opt+0x585755)

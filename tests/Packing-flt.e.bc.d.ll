@@ -1,0 +1,5640 @@
+; ModuleID = 'Packing-flt.e.bc.ll'
+source_filename = "ld-temp.o"
+target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128"
+target triple = "x86_64-unknown-linux-gnu"
+
+%struct.GlobalData = type { [32000 x float], [3 x i32], [4 x i8], [32000 x float], [5 x i32], [12 x i8], [32000 x float], [7 x i32], [4 x i8], [32000 x float], [11 x i32], [4 x i8], [32000 x float], [13 x i32], [12 x i8], [256 x [256 x float]], [17 x i32], [12 x i8], [256 x [256 x float]], [19 x i32], [4 x i8], [256 x [256 x float]], [23 x i32], [4 x i8], [256 x [256 x float]] }
+
+@global_data = internal unnamed_addr global %struct.GlobalData zeroinitializer, align 16
+@array = internal unnamed_addr global [65536 x float] zeroinitializer, align 16
+@.str = private unnamed_addr constant [7 x i8] c"%.*G \0A\00", align 1
+@digits = internal unnamed_addr global i32 6, align 4
+@.str.1 = private unnamed_addr constant [6 x i8] c"s000 \00", align 1
+@.str.2 = private unnamed_addr constant [6 x i8] c"s111 \00", align 1
+@.str.3 = private unnamed_addr constant [6 x i8] c"s112 \00", align 1
+@.str.4 = private unnamed_addr constant [6 x i8] c"s113 \00", align 1
+@.str.5 = private unnamed_addr constant [6 x i8] c"s114 \00", align 1
+@.str.6 = private unnamed_addr constant [6 x i8] c"s115 \00", align 1
+@.str.7 = private unnamed_addr constant [6 x i8] c"s116 \00", align 1
+@.str.8 = private unnamed_addr constant [6 x i8] c"s118 \00", align 1
+@.str.9 = private unnamed_addr constant [6 x i8] c"s119 \00", align 1
+@.str.10 = private unnamed_addr constant [6 x i8] c"s121 \00", align 1
+@.str.11 = private unnamed_addr constant [6 x i8] c"s122 \00", align 1
+@.str.12 = private unnamed_addr constant [6 x i8] c"s123 \00", align 1
+@.str.13 = private unnamed_addr constant [6 x i8] c"s124 \00", align 1
+@.str.14 = private unnamed_addr constant [6 x i8] c"s125 \00", align 1
+@.str.15 = private unnamed_addr constant [6 x i8] c"s126 \00", align 1
+@.str.16 = private unnamed_addr constant [6 x i8] c"s127 \00", align 1
+@.str.17 = private unnamed_addr constant [6 x i8] c"s128 \00", align 1
+@.str.18 = private unnamed_addr constant [6 x i8] c"s131 \00", align 1
+@.str.19 = private unnamed_addr constant [6 x i8] c"s132 \00", align 1
+@.str.20 = private unnamed_addr constant [6 x i8] c"s141 \00", align 1
+@.str.21 = private unnamed_addr constant [6 x i8] c"s151 \00", align 1
+@.str.22 = private unnamed_addr constant [6 x i8] c"s152 \00", align 1
+@.str.23 = private unnamed_addr constant [6 x i8] c"s161 \00", align 1
+@.str.24 = private unnamed_addr constant [6 x i8] c"s162 \00", align 1
+@.str.25 = private unnamed_addr constant [6 x i8] c"s171 \00", align 1
+@.str.26 = private unnamed_addr constant [6 x i8] c"s172 \00", align 1
+@.str.27 = private unnamed_addr constant [6 x i8] c"s173 \00", align 1
+@.str.28 = private unnamed_addr constant [6 x i8] c"s174 \00", align 1
+@.str.29 = private unnamed_addr constant [6 x i8] c"s175 \00", align 1
+@.str.30 = private unnamed_addr constant [6 x i8] c"s176 \00", align 1
+@.str.31 = private unnamed_addr constant [6 x i8] c"s211 \00", align 1
+@.str.32 = private unnamed_addr constant [6 x i8] c"s212 \00", align 1
+@.str.33 = private unnamed_addr constant [6 x i8] c"s221 \00", align 1
+@.str.34 = private unnamed_addr constant [6 x i8] c"s222 \00", align 1
+@.str.35 = private unnamed_addr constant [6 x i8] c"s231 \00", align 1
+@.str.36 = private unnamed_addr constant [6 x i8] c"s232 \00", align 1
+@.str.37 = private unnamed_addr constant [6 x i8] c"s233 \00", align 1
+@.str.38 = private unnamed_addr constant [6 x i8] c"s234 \00", align 1
+@.str.39 = private unnamed_addr constant [6 x i8] c"s235 \00", align 1
+@.str.40 = private unnamed_addr constant [6 x i8] c"s241 \00", align 1
+@.str.41 = private unnamed_addr constant [6 x i8] c"s242 \00", align 1
+@.str.42 = private unnamed_addr constant [6 x i8] c"s243 \00", align 1
+@.str.43 = private unnamed_addr constant [6 x i8] c"s244 \00", align 1
+@.str.44 = private unnamed_addr constant [6 x i8] c"s251 \00", align 1
+@.str.45 = private unnamed_addr constant [6 x i8] c"s252 \00", align 1
+@.str.46 = private unnamed_addr constant [6 x i8] c"s253 \00", align 1
+@.str.47 = private unnamed_addr constant [6 x i8] c"s254 \00", align 1
+@.str.48 = private unnamed_addr constant [6 x i8] c"s255 \00", align 1
+@.str.49 = private unnamed_addr constant [6 x i8] c"s256 \00", align 1
+@.str.50 = private unnamed_addr constant [6 x i8] c"s257 \00", align 1
+@.str.51 = private unnamed_addr constant [6 x i8] c"s258 \00", align 1
+@.str.52 = private unnamed_addr constant [6 x i8] c"s261 \00", align 1
+@.str.53 = private unnamed_addr constant [6 x i8] c"s271 \00", align 1
+@.str.54 = private unnamed_addr constant [6 x i8] c"s272 \00", align 1
+@.str.55 = private unnamed_addr constant [6 x i8] c"s273 \00", align 1
+@.str.56 = private unnamed_addr constant [6 x i8] c"s274 \00", align 1
+@.str.57 = private unnamed_addr constant [6 x i8] c"s275 \00", align 1
+@.str.58 = private unnamed_addr constant [6 x i8] c"s276 \00", align 1
+@.str.59 = private unnamed_addr constant [6 x i8] c"s277 \00", align 1
+@.str.60 = private unnamed_addr constant [6 x i8] c"s278 \00", align 1
+@.str.61 = private unnamed_addr constant [6 x i8] c"s279 \00", align 1
+@.str.62 = private unnamed_addr constant [6 x i8] c"s2710\00", align 1
+@.str.63 = private unnamed_addr constant [6 x i8] c"s2711\00", align 1
+@.str.64 = private unnamed_addr constant [6 x i8] c"s2712\00", align 1
+@.str.65 = private unnamed_addr constant [6 x i8] c"s281 \00", align 1
+@.str.66 = private unnamed_addr constant [6 x i8] c"s291 \00", align 1
+@.str.67 = private unnamed_addr constant [6 x i8] c"s292 \00", align 1
+@.str.68 = private unnamed_addr constant [6 x i8] c"s293 \00", align 1
+@.str.69 = private unnamed_addr constant [6 x i8] c"s2101\00", align 1
+@.str.70 = private unnamed_addr constant [6 x i8] c"s2102\00", align 1
+@.str.71 = private unnamed_addr constant [6 x i8] c"s2111\00", align 1
+@.str.72 = private unnamed_addr constant [6 x i8] c"s311 \00", align 1
+@.str.73 = private unnamed_addr constant [6 x i8] c"s312 \00", align 1
+@.str.74 = private unnamed_addr constant [6 x i8] c"s313 \00", align 1
+@.str.75 = private unnamed_addr constant [6 x i8] c"s314 \00", align 1
+@.str.76 = private unnamed_addr constant [6 x i8] c"s315 \00", align 1
+@.str.77 = private unnamed_addr constant [6 x i8] c"s316 \00", align 1
+@.str.78 = private unnamed_addr constant [6 x i8] c"s317 \00", align 1
+@.str.79 = private unnamed_addr constant [6 x i8] c"s318 \00", align 1
+@.str.80 = private unnamed_addr constant [6 x i8] c"s319 \00", align 1
+@.str.81 = private unnamed_addr constant [6 x i8] c"s3110\00", align 1
+@.str.82 = private unnamed_addr constant [6 x i8] c"s3111\00", align 1
+@.str.83 = private unnamed_addr constant [6 x i8] c"s3112\00", align 1
+@.str.84 = private unnamed_addr constant [6 x i8] c"s3113\00", align 1
+@.str.85 = private unnamed_addr constant [6 x i8] c"s321 \00", align 1
+@.str.86 = private unnamed_addr constant [6 x i8] c"s322 \00", align 1
+@.str.87 = private unnamed_addr constant [6 x i8] c"s323 \00", align 1
+@.str.88 = private unnamed_addr constant [6 x i8] c"s331 \00", align 1
+@.str.89 = private unnamed_addr constant [6 x i8] c"s332 \00", align 1
+@.str.90 = private unnamed_addr constant [6 x i8] c"s341 \00", align 1
+@.str.91 = private unnamed_addr constant [6 x i8] c"s342 \00", align 1
+@.str.92 = private unnamed_addr constant [6 x i8] c"s343 \00", align 1
+@.str.93 = private unnamed_addr constant [6 x i8] c"s351 \00", align 1
+@.str.94 = private unnamed_addr constant [6 x i8] c"s352 \00", align 1
+@.str.95 = private unnamed_addr constant [6 x i8] c"s353 \00", align 1
+@.str.96 = private unnamed_addr constant [6 x i8] c"s411 \00", align 1
+@.str.97 = private unnamed_addr constant [6 x i8] c"s412 \00", align 1
+@.str.98 = private unnamed_addr constant [6 x i8] c"s413 \00", align 1
+@.str.99 = private unnamed_addr constant [6 x i8] c"s414 \00", align 1
+@.str.100 = private unnamed_addr constant [6 x i8] c"s415 \00", align 1
+@.str.101 = private unnamed_addr constant [6 x i8] c"s421 \00", align 1
+@.str.102 = private unnamed_addr constant [6 x i8] c"s422 \00", align 1
+@.str.103 = private unnamed_addr constant [6 x i8] c"s423 \00", align 1
+@.str.104 = private unnamed_addr constant [6 x i8] c"s424 \00", align 1
+@.str.105 = private unnamed_addr constant [6 x i8] c"s431 \00", align 1
+@.str.106 = private unnamed_addr constant [6 x i8] c"s432 \00", align 1
+@.str.107 = private unnamed_addr constant [6 x i8] c"s441 \00", align 1
+@.str.108 = private unnamed_addr constant [6 x i8] c"s442 \00", align 1
+@.str.109 = private unnamed_addr constant [6 x i8] c"s443 \00", align 1
+@.str.110 = private unnamed_addr constant [6 x i8] c"s451 \00", align 1
+@.str.111 = private unnamed_addr constant [6 x i8] c"s452 \00", align 1
+@.str.112 = private unnamed_addr constant [6 x i8] c"s453 \00", align 1
+@.str.113 = private unnamed_addr constant [6 x i8] c"s471 \00", align 1
+@.str.114 = private unnamed_addr constant [6 x i8] c"s481 \00", align 1
+@.str.115 = private unnamed_addr constant [6 x i8] c"s482 \00", align 1
+@.str.116 = private unnamed_addr constant [6 x i8] c"s491 \00", align 1
+@.str.117 = private unnamed_addr constant [6 x i8] c"s4112\00", align 1
+@.str.118 = private unnamed_addr constant [6 x i8] c"s4113\00", align 1
+@.str.119 = private unnamed_addr constant [6 x i8] c"s4114\00", align 1
+@.str.120 = private unnamed_addr constant [6 x i8] c"s4115\00", align 1
+@.str.121 = private unnamed_addr constant [6 x i8] c"s4116\00", align 1
+@.str.122 = private unnamed_addr constant [6 x i8] c"s4117\00", align 1
+@.str.123 = private unnamed_addr constant [6 x i8] c"s4121\00", align 1
+@.str.124 = private unnamed_addr constant [4 x i8] c"va\09\00", align 1
+@.str.125 = private unnamed_addr constant [6 x i8] c"vag  \00", align 1
+@.str.126 = private unnamed_addr constant [6 x i8] c"vas  \00", align 1
+@.str.127 = private unnamed_addr constant [6 x i8] c"vif  \00", align 1
+@.str.128 = private unnamed_addr constant [6 x i8] c"vpv  \00", align 1
+@.str.129 = private unnamed_addr constant [6 x i8] c"vtv  \00", align 1
+@.str.130 = private unnamed_addr constant [6 x i8] c"vpvtv\00", align 1
+@.str.131 = private unnamed_addr constant [6 x i8] c"vpvts\00", align 1
+@.str.132 = private unnamed_addr constant [6 x i8] c"vpvpv\00", align 1
+@.str.133 = private unnamed_addr constant [6 x i8] c"vtvtv\00", align 1
+@.str.134 = private unnamed_addr constant [6 x i8] c"vsumr\00", align 1
+@.str.135 = private unnamed_addr constant [6 x i8] c"vdotr\00", align 1
+@.str.136 = private unnamed_addr constant [6 x i8] c"vbor \00", align 1
+@ntimes = internal unnamed_addr global i32 200000, align 4
+@.str.137 = private unnamed_addr constant [14 x i8] c"S341\09 %.2f \09\09\00", align 1
+@.str.138 = private unnamed_addr constant [14 x i8] c"S342\09 %.2f \09\09\00", align 1
+@.str.139 = private unnamed_addr constant [14 x i8] c"S343\09 %.2f \09\09\00", align 1
+@xx = internal global ptr null, align 8
+@.str.141 = private unnamed_addr constant [31 x i8] c"Running each loop %d times...\0A\00", align 1
+@str = private unnamed_addr constant [29 x i8] c"Loop \09 Time(Sec) \09 Checksum \00", align 1
+
+; Function Attrs: nofree nounwind optsize uwtable
+define dso_local i32 @main(i32 noundef %0, ptr nocapture noundef readonly %1) #0 {
+  %3 = alloca ptr, align 8
+  call void @llvm.lifetime.start.p0(i64 8, ptr nonnull %3) #9
+  %4 = call i32 @posix_memalign(ptr noundef nonnull %3, i64 noundef 16, i64 noundef 128000) #10
+  %5 = icmp sgt i32 %0, 1
+  br i1 %5, label %9, label %6
+
+6:                                                ; preds = %2
+  %7 = load i32, ptr @ntimes, align 4, !tbaa !7
+  %8 = call i32 (ptr, ...) @printf(ptr noundef nonnull dereferenceable(1) @.str.141, i32 noundef %7) #11
+  br label %19
+
+9:                                                ; preds = %2
+  %10 = getelementptr inbounds ptr, ptr %1, i64 1
+  %11 = load ptr, ptr %10, align 8, !tbaa !11
+  %12 = call i32 @atoi(ptr nocapture noundef %11) #12
+  store i32 %12, ptr @ntimes, align 4, !tbaa !7
+  %13 = call i32 (ptr, ...) @printf(ptr noundef nonnull dereferenceable(1) @.str.141, i32 noundef %12) #11
+  %14 = icmp eq i32 %0, 2
+  br i1 %14, label %19, label %15
+
+15:                                               ; preds = %9
+  %16 = getelementptr inbounds ptr, ptr %1, i64 2
+  %17 = load ptr, ptr %16, align 8, !tbaa !11
+  %18 = call i32 @atoi(ptr nocapture noundef %17) #12
+  store i32 %18, ptr @digits, align 4, !tbaa !7
+  br label %19
+
+19:                                               ; preds = %15, %9, %6
+  %20 = load ptr, ptr %3, align 8, !tbaa !11
+  %21 = call i32 @posix_memalign(ptr noundef nonnull @xx, i64 noundef 16, i64 noundef 128000) #10
+  %22 = call i32 @putchar(i32 10)
+  br label %88
+
+23:                                               ; preds = %106, %23
+  %24 = phi i64 [ %26, %23 ], [ 0, %106 ]
+  %25 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 3, i64 %24
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %25, align 16, !tbaa !13
+  %26 = add nuw nsw i64 %24, 4
+  %27 = icmp eq i64 %26, 32000
+  br i1 %27, label %28, label %23, !llvm.loop !15
+
+28:                                               ; preds = %28, %23
+  %29 = phi i64 [ %31, %28 ], [ 0, %23 ]
+  %30 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 6, i64 %29
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %30, align 16, !tbaa !13
+  %31 = add nuw nsw i64 %29, 4
+  %32 = icmp eq i64 %31, 32000
+  br i1 %32, label %33, label %28, !llvm.loop !18
+
+33:                                               ; preds = %33, %28
+  %34 = phi i64 [ %36, %33 ], [ 0, %28 ]
+  %35 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 9, i64 %34
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %35, align 16, !tbaa !13
+  %36 = add nuw nsw i64 %34, 4
+  %37 = icmp eq i64 %36, 32000
+  br i1 %37, label %38, label %33, !llvm.loop !19
+
+38:                                               ; preds = %38, %33
+  %39 = phi i64 [ %41, %38 ], [ 0, %33 ]
+  %40 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 12, i64 %39
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %40, align 16, !tbaa !13
+  %41 = add nuw nsw i64 %39, 4
+  %42 = icmp eq i64 %41, 32000
+  br i1 %42, label %43, label %38, !llvm.loop !20
+
+43:                                               ; preds = %56, %38
+  %44 = phi i64 [ %45, %56 ], [ 0, %38 ]
+  %45 = add nuw nsw i64 %44, 1
+  %46 = trunc i64 %45 to i32
+  %47 = sitofp i32 %46 to float
+  %48 = fdiv float 1.000000e+00, %47
+  %49 = insertelement <4 x float> poison, float %48, i64 0
+  %50 = shufflevector <4 x float> %49, <4 x float> poison, <4 x i32> zeroinitializer
+  br label %51
+
+51:                                               ; preds = %51, %43
+  %52 = phi i64 [ 0, %43 ], [ %54, %51 ]
+  %53 = getelementptr inbounds [256 x float], ptr getelementptr inbounds (%struct.GlobalData, ptr @global_data, i64 0, i32 15, i64 0, i64 0), i64 %44, i64 %52
+  store <4 x float> %50, ptr %53, align 16, !tbaa !13
+  %54 = add nuw nsw i64 %52, 4
+  %55 = icmp eq i64 %54, 256
+  br i1 %55, label %56, label %51, !llvm.loop !21
+
+56:                                               ; preds = %51
+  %57 = icmp eq i64 %45, 256
+  br i1 %57, label %58, label %43
+
+58:                                               ; preds = %71, %56
+  %59 = phi i64 [ %60, %71 ], [ 0, %56 ]
+  %60 = add nuw nsw i64 %59, 1
+  %61 = trunc i64 %60 to i32
+  %62 = sitofp i32 %61 to float
+  %63 = fdiv float 1.000000e+00, %62
+  %64 = insertelement <4 x float> poison, float %63, i64 0
+  %65 = shufflevector <4 x float> %64, <4 x float> poison, <4 x i32> zeroinitializer
+  br label %66
+
+66:                                               ; preds = %66, %58
+  %67 = phi i64 [ 0, %58 ], [ %69, %66 ]
+  %68 = getelementptr inbounds [256 x float], ptr getelementptr inbounds (%struct.GlobalData, ptr @global_data, i64 0, i32 18, i64 0, i64 0), i64 %59, i64 %67
+  store <4 x float> %65, ptr %68, align 16, !tbaa !13
+  %69 = add nuw nsw i64 %67, 4
+  %70 = icmp eq i64 %69, 256
+  br i1 %70, label %71, label %66, !llvm.loop !22
+
+71:                                               ; preds = %66
+  %72 = icmp eq i64 %60, 256
+  br i1 %72, label %73, label %58
+
+73:                                               ; preds = %86, %71
+  %74 = phi i64 [ %75, %86 ], [ 0, %71 ]
+  %75 = add nuw nsw i64 %74, 1
+  %76 = trunc i64 %75 to i32
+  %77 = sitofp i32 %76 to float
+  %78 = fdiv float 1.000000e+00, %77
+  %79 = insertelement <4 x float> poison, float %78, i64 0
+  %80 = shufflevector <4 x float> %79, <4 x float> poison, <4 x i32> zeroinitializer
+  br label %81
+
+81:                                               ; preds = %81, %73
+  %82 = phi i64 [ 0, %73 ], [ %84, %81 ]
+  %83 = getelementptr inbounds [256 x float], ptr getelementptr inbounds (%struct.GlobalData, ptr @global_data, i64 0, i32 21, i64 0, i64 0), i64 %74, i64 %82
+  store <4 x float> %80, ptr %83, align 16, !tbaa !13
+  %84 = add nuw nsw i64 %82, 4
+  %85 = icmp eq i64 %84, 256
+  br i1 %85, label %86, label %81, !llvm.loop !23
+
+86:                                               ; preds = %81
+  %87 = icmp eq i64 %75, 256
+  br i1 %87, label %111, label %73
+
+88:                                               ; preds = %88, %19
+  %89 = phi i64 [ 0, %19 ], [ %104, %88 ]
+  %90 = add nuw nsw i64 %89, 4
+  %91 = getelementptr inbounds i32, ptr %20, i64 %89
+  %92 = trunc i64 %90 to i32
+  store i32 %92, ptr %91, align 4, !tbaa !7
+  %93 = add nuw nsw i64 %89, 2
+  %94 = add nuw nsw i64 %89, 1
+  %95 = getelementptr inbounds i32, ptr %20, i64 %94
+  %96 = trunc i64 %93 to i32
+  store i32 %96, ptr %95, align 4, !tbaa !7
+  %97 = getelementptr inbounds i32, ptr %20, i64 %93
+  %98 = trunc i64 %89 to i32
+  store i32 %98, ptr %97, align 4, !tbaa !7
+  %99 = add nuw nsw i64 %89, 3
+  %100 = getelementptr inbounds i32, ptr %20, i64 %99
+  %101 = trunc i64 %99 to i32
+  store i32 %101, ptr %100, align 4, !tbaa !7
+  %102 = getelementptr inbounds i32, ptr %20, i64 %90
+  %103 = trunc i64 %94 to i32
+  store i32 %103, ptr %102, align 4, !tbaa !7
+  %104 = add nuw nsw i64 %89, 5
+  %105 = icmp ult i64 %89, 31995
+  br i1 %105, label %88, label %106
+
+106:                                              ; preds = %106, %88
+  %107 = phi i64 [ %109, %106 ], [ 0, %88 ]
+  %108 = getelementptr inbounds float, ptr @global_data, i64 %107
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %108, align 16, !tbaa !13
+  %109 = add nuw nsw i64 %107, 4
+  %110 = icmp eq i64 %109, 32000
+  br i1 %110, label %23, label %106, !llvm.loop !24
+
+111:                                              ; preds = %86
+  %112 = call i32 @puts(ptr nonnull dereferenceable(1) @str)
+  call fastcc void @init(ptr noundef nonnull @.str.90) #11
+  %113 = load i32, ptr @ntimes, align 4, !tbaa !7
+  %114 = icmp sgt i32 %113, 0
+  br i1 %114, label %115, label %134
+
+115:                                              ; preds = %117, %111
+  %116 = phi i32 [ %118, %117 ], [ 0, %111 ]
+  br label %120
+
+117:                                              ; preds = %130
+  %118 = add nuw nsw i32 %116, 1
+  %119 = icmp eq i32 %118, %113
+  br i1 %119, label %134, label %115
+
+120:                                              ; preds = %130, %115
+  %121 = phi i64 [ 0, %115 ], [ %132, %130 ]
+  %122 = phi i32 [ -1, %115 ], [ %131, %130 ]
+  %123 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 3, i64 %121
+  %124 = load float, ptr %123, align 4, !tbaa !13
+  %125 = fcmp ogt float %124, 0.000000e+00
+  br i1 %125, label %126, label %130
+
+126:                                              ; preds = %120
+  %127 = add nsw i32 %122, 1
+  %128 = sext i32 %127 to i64
+  %129 = getelementptr inbounds float, ptr @global_data, i64 %128
+  store float %124, ptr %129, align 4, !tbaa !13
+  br label %130
+
+130:                                              ; preds = %126, %120
+  %131 = phi i32 [ %127, %126 ], [ %122, %120 ]
+  %132 = add nuw nsw i64 %121, 1
+  %133 = icmp eq i64 %132, 32000
+  br i1 %133, label %117, label %120
+
+134:                                              ; preds = %117, %111
+  %135 = call i32 (ptr, ...) @printf(ptr noundef nonnull dereferenceable(1) @.str.137, double noundef 0.000000e+00) #11
+  call fastcc void @check(i32 noundef 1) #11
+  call fastcc void @init(ptr noundef nonnull @.str.91) #11
+  %136 = load i32, ptr @ntimes, align 4, !tbaa !7
+  %137 = icmp sgt i32 %136, 0
+  br i1 %137, label %138, label %158
+
+138:                                              ; preds = %140, %134
+  %139 = phi i32 [ %141, %140 ], [ 0, %134 ]
+  br label %143
+
+140:                                              ; preds = %154
+  %141 = add nuw nsw i32 %139, 1
+  %142 = icmp eq i32 %141, %136
+  br i1 %142, label %158, label %138
+
+143:                                              ; preds = %154, %138
+  %144 = phi i64 [ 0, %138 ], [ %156, %154 ]
+  %145 = phi i32 [ -1, %138 ], [ %155, %154 ]
+  %146 = getelementptr inbounds float, ptr @global_data, i64 %144
+  %147 = load float, ptr %146, align 4, !tbaa !13
+  %148 = fcmp ogt float %147, 0.000000e+00
+  br i1 %148, label %149, label %154
+
+149:                                              ; preds = %143
+  %150 = add nsw i32 %145, 1
+  %151 = sext i32 %150 to i64
+  %152 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 3, i64 %151
+  %153 = load float, ptr %152, align 4, !tbaa !13
+  store float %153, ptr %146, align 4, !tbaa !13
+  br label %154
+
+154:                                              ; preds = %149, %143
+  %155 = phi i32 [ %150, %149 ], [ %145, %143 ]
+  %156 = add nuw nsw i64 %144, 1
+  %157 = icmp eq i64 %156, 32000
+  br i1 %157, label %140, label %143
+
+158:                                              ; preds = %140, %134
+  %159 = call i32 (ptr, ...) @printf(ptr noundef nonnull dereferenceable(1) @.str.138, double noundef 0.000000e+00) #11
+  call fastcc void @check(i32 noundef 1) #11
+  call fastcc void @init(ptr noundef nonnull @.str.92) #11
+  %160 = load i32, ptr @ntimes, align 4, !tbaa !7
+  %161 = icmp sgt i32 %160, 255
+  br i1 %161, label %162, label %192
+
+162:                                              ; preds = %158
+  %163 = lshr i32 %160, 8
+  %164 = mul nuw nsw i32 %163, 10
+  br label %165
+
+165:                                              ; preds = %170, %162
+  %166 = phi i32 [ %171, %170 ], [ 0, %162 ]
+  br label %167
+
+167:                                              ; preds = %173, %165
+  %168 = phi i64 [ 0, %165 ], [ %174, %173 ]
+  %169 = phi i32 [ -1, %165 ], [ %.lcssa, %173 ]
+  br label %176
+
+170:                                              ; preds = %173
+  %171 = add nuw nsw i32 %166, 1
+  %172 = icmp eq i32 %171, %164
+  br i1 %172, label %192, label %165
+
+173:                                              ; preds = %188
+  %.lcssa = phi i32 [ %189, %188 ]
+  %174 = add nuw nsw i64 %168, 1
+  %175 = icmp eq i64 %174, 256
+  br i1 %175, label %170, label %167
+
+176:                                              ; preds = %188, %167
+  %177 = phi i64 [ 0, %167 ], [ %190, %188 ]
+  %178 = phi i32 [ %169, %167 ], [ %189, %188 ]
+  %179 = getelementptr inbounds [256 x float], ptr getelementptr inbounds (%struct.GlobalData, ptr @global_data, i64 0, i32 18, i64 0, i64 0), i64 %177, i64 %168
+  %180 = load float, ptr %179, align 4, !tbaa !13
+  %181 = fcmp ogt float %180, 0.000000e+00
+  br i1 %181, label %182, label %188
+
+182:                                              ; preds = %176
+  %183 = add nsw i32 %178, 1
+  %184 = getelementptr inbounds [256 x float], ptr getelementptr inbounds (%struct.GlobalData, ptr @global_data, i64 0, i32 15, i64 0, i64 0), i64 %177, i64 %168
+  %185 = load float, ptr %184, align 4, !tbaa !13
+  %186 = sext i32 %183 to i64
+  %187 = getelementptr inbounds [65536 x float], ptr @array, i64 0, i64 %186
+  store float %185, ptr %187, align 4, !tbaa !13
+  br label %188
+
+188:                                              ; preds = %182, %176
+  %189 = phi i32 [ %183, %182 ], [ %178, %176 ]
+  %190 = add nuw nsw i64 %177, 1
+  %191 = icmp eq i64 %190, 256
+  br i1 %191, label %173, label %176
+
+192:                                              ; preds = %170, %158
+  %193 = call i32 (ptr, ...) @printf(ptr noundef nonnull dereferenceable(1) @.str.139, double noundef 0.000000e+00) #11
+  call fastcc void @check(i32 noundef 0) #11
+  call void @llvm.lifetime.end.p0(i64 8, ptr nonnull %3) #9
+  ret i32 0
+}
+
+; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
+declare void @llvm.lifetime.start.p0(i64 immarg, ptr nocapture) #1
+
+; Function Attrs: nofree nounwind optsize
+declare i32 @posix_memalign(ptr noundef, i64 noundef, i64 noundef) local_unnamed_addr #2
+
+; Function Attrs: nofree nounwind optsize
+declare noundef i32 @printf(ptr nocapture noundef readonly, ...) local_unnamed_addr #2
+
+; Function Attrs: mustprogress nofree nounwind optsize willreturn memory(read)
+declare i32 @atoi(ptr nocapture noundef) local_unnamed_addr #3
+
+; Function Attrs: nofree nounwind
+declare noundef i32 @putchar(i32 noundef) local_unnamed_addr #4
+
+; Function Attrs: nofree nounwind
+declare noundef i32 @puts(ptr nocapture noundef readonly) local_unnamed_addr #4
+
+; Function Attrs: nofree nounwind optsize memory(write, argmem: read, inaccessiblemem: none) uwtable
+define internal fastcc void @init(ptr noundef readonly %0) unnamed_addr #5 {
+  %2 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.1) #12
+  %3 = icmp eq i32 %2, 0
+  br i1 %3, label %3043, label %4
+
+4:                                                ; preds = %1
+  %5 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.2) #12
+  %6 = icmp eq i32 %5, 0
+  br i1 %6, label %7, label %44
+
+7:                                                ; preds = %7, %4
+  %8 = phi i64 [ %10, %7 ], [ 0, %4 ]
+  %9 = getelementptr inbounds float, ptr @global_data, i64 %8
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %9, align 16, !tbaa !13
+  %10 = add nuw nsw i64 %8, 4
+  %11 = icmp eq i64 %10, 32000
+  br i1 %11, label %12, label %7, !llvm.loop !25
+
+12:                                               ; preds = %12, %7
+  %13 = phi i64 [ %17, %12 ], [ 0, %7 ]
+  %14 = phi <4 x i32> [ %18, %12 ], [ <i32 0, i32 1, i32 2, i32 3>, %7 ]
+  %15 = call <4 x float> @_wyvern_slice_init__102007472(<4 x i32> %14)
+  %16 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 3, i64 %13
+  store <4 x float> %15, ptr %16, align 16, !tbaa !13
+  %17 = add nuw nsw i64 %13, 4
+  %18 = add <4 x i32> %14, <i32 4, i32 4, i32 4, i32 4>
+  %19 = icmp eq i64 %17, 32000
+  br i1 %19, label %20, label %12, !llvm.loop !26
+
+20:                                               ; preds = %20, %12
+  %21 = phi i64 [ %25, %20 ], [ 0, %12 ]
+  %22 = phi <4 x i32> [ %26, %20 ], [ <i32 0, i32 1, i32 2, i32 3>, %12 ]
+  %23 = call <4 x float> @_wyvern_slice_init__102007472(<4 x i32> %22)
+  %24 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 6, i64 %21
+  store <4 x float> %23, ptr %24, align 16, !tbaa !13
+  %25 = add nuw nsw i64 %21, 4
+  %26 = add <4 x i32> %22, <i32 4, i32 4, i32 4, i32 4>
+  %27 = icmp eq i64 %25, 32000
+  br i1 %27, label %28, label %20, !llvm.loop !27
+
+28:                                               ; preds = %28, %20
+  %29 = phi i64 [ %33, %28 ], [ 0, %20 ]
+  %30 = phi <4 x i32> [ %34, %28 ], [ <i32 0, i32 1, i32 2, i32 3>, %20 ]
+  %31 = call <4 x float> @_wyvern_slice_init__102007472(<4 x i32> %30)
+  %32 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 9, i64 %29
+  store <4 x float> %31, ptr %32, align 16, !tbaa !13
+  %33 = add nuw nsw i64 %29, 4
+  %34 = add <4 x i32> %30, <i32 4, i32 4, i32 4, i32 4>
+  %35 = icmp eq i64 %33, 32000
+  br i1 %35, label %36, label %28, !llvm.loop !28
+
+36:                                               ; preds = %36, %28
+  %37 = phi i64 [ %41, %36 ], [ 0, %28 ]
+  %38 = phi <4 x i32> [ %42, %36 ], [ <i32 0, i32 1, i32 2, i32 3>, %28 ]
+  %39 = call <4 x float> @_wyvern_slice_init__102007472(<4 x i32> %38)
+  %40 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 12, i64 %37
+  store <4 x float> %39, ptr %40, align 16, !tbaa !13
+  %41 = add nuw nsw i64 %37, 4
+  %42 = add <4 x i32> %38, <i32 4, i32 4, i32 4, i32 4>
+  %43 = icmp eq i64 %41, 32000
+  br i1 %43, label %3043, label %36, !llvm.loop !29
+
+44:                                               ; preds = %4
+  %45 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.3) #12
+  %46 = icmp eq i32 %45, 0
+  br i1 %46, label %47, label %60
+
+47:                                               ; preds = %47, %44
+  %48 = phi i64 [ %50, %47 ], [ 0, %44 ]
+  %49 = getelementptr inbounds float, ptr @global_data, i64 %48
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %49, align 16, !tbaa !13
+  %50 = add nuw nsw i64 %48, 4
+  %51 = icmp eq i64 %50, 32000
+  br i1 %51, label %52, label %47, !llvm.loop !30
+
+52:                                               ; preds = %52, %47
+  %53 = phi i64 [ %57, %52 ], [ 0, %47 ]
+  %54 = phi <4 x i32> [ %58, %52 ], [ <i32 0, i32 1, i32 2, i32 3>, %47 ]
+  %55 = call <4 x float> @_wyvern_slice_init__102007472(<4 x i32> %54)
+  %56 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 3, i64 %53
+  store <4 x float> %55, ptr %56, align 16, !tbaa !13
+  %57 = add nuw nsw i64 %53, 4
+  %58 = add <4 x i32> %54, <i32 4, i32 4, i32 4, i32 4>
+  %59 = icmp eq i64 %57, 32000
+  br i1 %59, label %3043, label %52, !llvm.loop !31
+
+60:                                               ; preds = %44
+  %61 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.4) #12
+  %62 = icmp eq i32 %61, 0
+  br i1 %62, label %63, label %76
+
+63:                                               ; preds = %63, %60
+  %64 = phi i64 [ %66, %63 ], [ 0, %60 ]
+  %65 = getelementptr inbounds float, ptr @global_data, i64 %64
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %65, align 16, !tbaa !13
+  %66 = add nuw nsw i64 %64, 4
+  %67 = icmp eq i64 %66, 32000
+  br i1 %67, label %68, label %63, !llvm.loop !32
+
+68:                                               ; preds = %68, %63
+  %69 = phi i64 [ %73, %68 ], [ 0, %63 ]
+  %70 = phi <4 x i32> [ %74, %68 ], [ <i32 0, i32 1, i32 2, i32 3>, %63 ]
+  %71 = call <4 x float> @_wyvern_slice_init__102007472(<4 x i32> %70)
+  %72 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 3, i64 %69
+  store <4 x float> %71, ptr %72, align 16, !tbaa !13
+  %73 = add nuw nsw i64 %69, 4
+  %74 = add <4 x i32> %70, <i32 4, i32 4, i32 4, i32 4>
+  %75 = icmp eq i64 %73, 32000
+  br i1 %75, label %3043, label %68, !llvm.loop !33
+
+76:                                               ; preds = %60
+  %77 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.5) #12
+  %78 = icmp eq i32 %77, 0
+  br i1 %78, label %79, label %110
+
+79:                                               ; preds = %92, %76
+  %80 = phi i64 [ %81, %92 ], [ 0, %76 ]
+  %81 = add nuw nsw i64 %80, 1
+  %82 = trunc i64 %81 to i32
+  %83 = sitofp i32 %82 to float
+  %84 = fdiv float 1.000000e+00, %83
+  %85 = insertelement <4 x float> poison, float %84, i64 0
+  %86 = shufflevector <4 x float> %85, <4 x float> poison, <4 x i32> zeroinitializer
+  br label %87
+
+87:                                               ; preds = %87, %79
+  %88 = phi i64 [ 0, %79 ], [ %90, %87 ]
+  %89 = getelementptr inbounds [256 x float], ptr getelementptr inbounds (%struct.GlobalData, ptr @global_data, i64 0, i32 15, i64 0, i64 0), i64 %80, i64 %88
+  store <4 x float> %86, ptr %89, align 16, !tbaa !13
+  %90 = add nuw nsw i64 %88, 4
+  %91 = icmp eq i64 %90, 256
+  br i1 %91, label %92, label %87, !llvm.loop !34
+
+92:                                               ; preds = %87
+  %93 = icmp eq i64 %81, 256
+  br i1 %93, label %94, label %79
+
+94:                                               ; preds = %108, %92
+  %95 = phi i64 [ %96, %108 ], [ 0, %92 ]
+  %96 = add nuw nsw i64 %95, 1
+  %97 = trunc i64 %96 to i32
+  %98 = mul nsw i32 %97, %97
+  %99 = sitofp i32 %98 to float
+  %100 = fdiv float 1.000000e+00, %99
+  %101 = insertelement <4 x float> poison, float %100, i64 0
+  %102 = shufflevector <4 x float> %101, <4 x float> poison, <4 x i32> zeroinitializer
+  br label %103
+
+103:                                              ; preds = %103, %94
+  %104 = phi i64 [ 0, %94 ], [ %106, %103 ]
+  %105 = getelementptr inbounds [256 x float], ptr getelementptr inbounds (%struct.GlobalData, ptr @global_data, i64 0, i32 18, i64 0, i64 0), i64 %95, i64 %104
+  store <4 x float> %102, ptr %105, align 16, !tbaa !13
+  %106 = add nuw nsw i64 %104, 4
+  %107 = icmp eq i64 %106, 256
+  br i1 %107, label %108, label %103, !llvm.loop !35
+
+108:                                              ; preds = %103
+  %109 = icmp eq i64 %96, 256
+  br i1 %109, label %3043, label %94
+
+110:                                              ; preds = %76
+  %111 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.6) #12
+  %112 = icmp eq i32 %111, 0
+  br i1 %112, label %113, label %148
+
+113:                                              ; preds = %113, %110
+  %114 = phi i64 [ %116, %113 ], [ 0, %110 ]
+  %115 = getelementptr inbounds float, ptr @global_data, i64 %114
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %115, align 16, !tbaa !13
+  %116 = add nuw nsw i64 %114, 4
+  %117 = icmp eq i64 %116, 32000
+  br i1 %117, label %118, label %113, !llvm.loop !36
+
+118:                                              ; preds = %125, %113
+  %119 = phi i64 [ %126, %125 ], [ 0, %113 ]
+  br label %120
+
+120:                                              ; preds = %120, %118
+  %121 = phi i64 [ 0, %118 ], [ %123, %120 ]
+  %122 = getelementptr inbounds [256 x float], ptr getelementptr inbounds (%struct.GlobalData, ptr @global_data, i64 0, i32 15, i64 0, i64 0), i64 %119, i64 %121
+  store <4 x float> <float 0x3EB0C6F7A0000000, float 0x3EB0C6F7A0000000, float 0x3EB0C6F7A0000000, float 0x3EB0C6F7A0000000>, ptr %122, align 16, !tbaa !13
+  %123 = add nuw nsw i64 %121, 4
+  %124 = icmp eq i64 %123, 256
+  br i1 %124, label %125, label %120, !llvm.loop !37
+
+125:                                              ; preds = %120
+  %126 = add nuw nsw i64 %119, 1
+  %127 = icmp eq i64 %126, 256
+  br i1 %127, label %128, label %118
+
+128:                                              ; preds = %135, %125
+  %129 = phi i64 [ %136, %135 ], [ 0, %125 ]
+  br label %130
+
+130:                                              ; preds = %130, %128
+  %131 = phi i64 [ 0, %128 ], [ %133, %130 ]
+  %132 = getelementptr inbounds [256 x float], ptr getelementptr inbounds (%struct.GlobalData, ptr @global_data, i64 0, i32 18, i64 0, i64 0), i64 %129, i64 %131
+  store <4 x float> <float 0x3EB0C6F7A0000000, float 0x3EB0C6F7A0000000, float 0x3EB0C6F7A0000000, float 0x3EB0C6F7A0000000>, ptr %132, align 16, !tbaa !13
+  %133 = add nuw nsw i64 %131, 4
+  %134 = icmp eq i64 %133, 256
+  br i1 %134, label %135, label %130, !llvm.loop !38
+
+135:                                              ; preds = %130
+  %136 = add nuw nsw i64 %129, 1
+  %137 = icmp eq i64 %136, 256
+  br i1 %137, label %138, label %128
+
+138:                                              ; preds = %145, %135
+  %139 = phi i64 [ %146, %145 ], [ 0, %135 ]
+  br label %140
+
+140:                                              ; preds = %140, %138
+  %141 = phi i64 [ 0, %138 ], [ %143, %140 ]
+  %142 = getelementptr inbounds [256 x float], ptr getelementptr inbounds (%struct.GlobalData, ptr @global_data, i64 0, i32 21, i64 0, i64 0), i64 %139, i64 %141
+  store <4 x float> <float 0x3EB0C6F7A0000000, float 0x3EB0C6F7A0000000, float 0x3EB0C6F7A0000000, float 0x3EB0C6F7A0000000>, ptr %142, align 16, !tbaa !13
+  %143 = add nuw nsw i64 %141, 4
+  %144 = icmp eq i64 %143, 256
+  br i1 %144, label %145, label %140, !llvm.loop !39
+
+145:                                              ; preds = %140
+  %146 = add nuw nsw i64 %139, 1
+  %147 = icmp eq i64 %146, 256
+  br i1 %147, label %3043, label %138
+
+148:                                              ; preds = %110
+  %149 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.7) #12
+  %150 = icmp eq i32 %149, 0
+  br i1 %150, label %151, label %156
+
+151:                                              ; preds = %151, %148
+  %152 = phi i64 [ %154, %151 ], [ 0, %148 ]
+  %153 = getelementptr inbounds float, ptr @global_data, i64 %152
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %153, align 16, !tbaa !13
+  %154 = add nuw nsw i64 %152, 4
+  %155 = icmp eq i64 %154, 32000
+  br i1 %155, label %3043, label %151, !llvm.loop !40
+
+156:                                              ; preds = %148
+  %157 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.8) #12
+  %158 = icmp eq i32 %157, 0
+  br i1 %158, label %159, label %174
+
+159:                                              ; preds = %159, %156
+  %160 = phi i64 [ %162, %159 ], [ 0, %156 ]
+  %161 = getelementptr inbounds float, ptr @global_data, i64 %160
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %161, align 16, !tbaa !13
+  %162 = add nuw nsw i64 %160, 4
+  %163 = icmp eq i64 %162, 32000
+  br i1 %163, label %164, label %159, !llvm.loop !41
+
+164:                                              ; preds = %171, %159
+  %165 = phi i64 [ %172, %171 ], [ 0, %159 ]
+  br label %166
+
+166:                                              ; preds = %166, %164
+  %167 = phi i64 [ 0, %164 ], [ %169, %166 ]
+  %168 = getelementptr inbounds [256 x float], ptr getelementptr inbounds (%struct.GlobalData, ptr @global_data, i64 0, i32 18, i64 0, i64 0), i64 %165, i64 %167
+  store <4 x float> <float 0x3EB0C6F7A0000000, float 0x3EB0C6F7A0000000, float 0x3EB0C6F7A0000000, float 0x3EB0C6F7A0000000>, ptr %168, align 16, !tbaa !13
+  %169 = add nuw nsw i64 %167, 4
+  %170 = icmp eq i64 %169, 256
+  br i1 %170, label %171, label %166, !llvm.loop !42
+
+171:                                              ; preds = %166
+  %172 = add nuw nsw i64 %165, 1
+  %173 = icmp eq i64 %172, 256
+  br i1 %173, label %3043, label %164
+
+174:                                              ; preds = %156
+  %175 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.9) #12
+  %176 = icmp eq i32 %175, 0
+  br i1 %176, label %177, label %203
+
+177:                                              ; preds = %184, %174
+  %178 = phi i64 [ %185, %184 ], [ 0, %174 ]
+  br label %179
+
+179:                                              ; preds = %179, %177
+  %180 = phi i64 [ 0, %177 ], [ %182, %179 ]
+  %181 = getelementptr inbounds [256 x float], ptr getelementptr inbounds (%struct.GlobalData, ptr @global_data, i64 0, i32 15, i64 0, i64 0), i64 %178, i64 %180
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %181, align 16, !tbaa !13
+  %182 = add nuw nsw i64 %180, 4
+  %183 = icmp eq i64 %182, 256
+  br i1 %183, label %184, label %179, !llvm.loop !43
+
+184:                                              ; preds = %179
+  %185 = add nuw nsw i64 %178, 1
+  %186 = icmp eq i64 %185, 256
+  br i1 %186, label %187, label %177
+
+187:                                              ; preds = %201, %184
+  %188 = phi i64 [ %189, %201 ], [ 0, %184 ]
+  %189 = add nuw nsw i64 %188, 1
+  %190 = trunc i64 %189 to i32
+  %191 = mul nsw i32 %190, %190
+  %192 = sitofp i32 %191 to float
+  %193 = fdiv float 1.000000e+00, %192
+  %194 = insertelement <4 x float> poison, float %193, i64 0
+  %195 = shufflevector <4 x float> %194, <4 x float> poison, <4 x i32> zeroinitializer
+  br label %196
+
+196:                                              ; preds = %196, %187
+  %197 = phi i64 [ 0, %187 ], [ %199, %196 ]
+  %198 = getelementptr inbounds [256 x float], ptr getelementptr inbounds (%struct.GlobalData, ptr @global_data, i64 0, i32 18, i64 0, i64 0), i64 %188, i64 %197
+  store <4 x float> %195, ptr %198, align 16, !tbaa !13
+  %199 = add nuw nsw i64 %197, 4
+  %200 = icmp eq i64 %199, 256
+  br i1 %200, label %201, label %196, !llvm.loop !44
+
+201:                                              ; preds = %196
+  %202 = icmp eq i64 %189, 256
+  br i1 %202, label %3043, label %187
+
+203:                                              ; preds = %174
+  %204 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.10) #12
+  %205 = icmp eq i32 %204, 0
+  br i1 %205, label %206, label %219
+
+206:                                              ; preds = %206, %203
+  %207 = phi i64 [ %209, %206 ], [ 0, %203 ]
+  %208 = getelementptr inbounds float, ptr @global_data, i64 %207
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %208, align 16, !tbaa !13
+  %209 = add nuw nsw i64 %207, 4
+  %210 = icmp eq i64 %209, 32000
+  br i1 %210, label %211, label %206, !llvm.loop !45
+
+211:                                              ; preds = %211, %206
+  %212 = phi i64 [ %216, %211 ], [ 0, %206 ]
+  %213 = phi <4 x i32> [ %217, %211 ], [ <i32 0, i32 1, i32 2, i32 3>, %206 ]
+  %214 = call <4 x float> @_wyvern_slice_init__102007472(<4 x i32> %213)
+  %215 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 3, i64 %212
+  store <4 x float> %214, ptr %215, align 16, !tbaa !13
+  %216 = add nuw nsw i64 %212, 4
+  %217 = add <4 x i32> %213, <i32 4, i32 4, i32 4, i32 4>
+  %218 = icmp eq i64 %216, 32000
+  br i1 %218, label %3043, label %211, !llvm.loop !46
+
+219:                                              ; preds = %203
+  %220 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.11) #12
+  %221 = icmp eq i32 %220, 0
+  br i1 %221, label %222, label %235
+
+222:                                              ; preds = %222, %219
+  %223 = phi i64 [ %225, %222 ], [ 0, %219 ]
+  %224 = getelementptr inbounds float, ptr @global_data, i64 %223
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %224, align 16, !tbaa !13
+  %225 = add nuw nsw i64 %223, 4
+  %226 = icmp eq i64 %225, 32000
+  br i1 %226, label %227, label %222, !llvm.loop !47
+
+227:                                              ; preds = %227, %222
+  %228 = phi i64 [ %232, %227 ], [ 0, %222 ]
+  %229 = phi <4 x i32> [ %233, %227 ], [ <i32 0, i32 1, i32 2, i32 3>, %222 ]
+  %230 = call <4 x float> @_wyvern_slice_init__102007472(<4 x i32> %229)
+  %231 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 3, i64 %228
+  store <4 x float> %230, ptr %231, align 16, !tbaa !13
+  %232 = add nuw nsw i64 %228, 4
+  %233 = add <4 x i32> %229, <i32 4, i32 4, i32 4, i32 4>
+  %234 = icmp eq i64 %232, 32000
+  br i1 %234, label %3043, label %227, !llvm.loop !48
+
+235:                                              ; preds = %219
+  %236 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.12) #12
+  %237 = icmp eq i32 %236, 0
+  br i1 %237, label %238, label %265
+
+238:                                              ; preds = %235
+  tail call void @llvm.memset.p0.i64(ptr noundef nonnull align 16 dereferenceable(128000) @global_data, i8 0, i64 128000, i1 false), !tbaa !13
+  br label %239
+
+239:                                              ; preds = %239, %238
+  %240 = phi i64 [ 0, %238 ], [ %242, %239 ]
+  %241 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 3, i64 %240
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %241, align 16, !tbaa !13
+  %242 = add nuw nsw i64 %240, 4
+  %243 = icmp eq i64 %242, 32000
+  br i1 %243, label %244, label %239, !llvm.loop !49
+
+244:                                              ; preds = %244, %239
+  %245 = phi i64 [ %247, %244 ], [ 0, %239 ]
+  %246 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 6, i64 %245
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %246, align 16, !tbaa !13
+  %247 = add nuw nsw i64 %245, 4
+  %248 = icmp eq i64 %247, 32000
+  br i1 %248, label %249, label %244, !llvm.loop !50
+
+249:                                              ; preds = %249, %244
+  %250 = phi i64 [ %254, %249 ], [ 0, %244 ]
+  %251 = phi <4 x i32> [ %255, %249 ], [ <i32 0, i32 1, i32 2, i32 3>, %244 ]
+  %252 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %251)
+  %253 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 9, i64 %250
+  store <4 x float> %252, ptr %253, align 16, !tbaa !13
+  %254 = add nuw nsw i64 %250, 4
+  %255 = add <4 x i32> %251, <i32 4, i32 4, i32 4, i32 4>
+  %256 = icmp eq i64 %254, 32000
+  br i1 %256, label %257, label %249, !llvm.loop !51
+
+257:                                              ; preds = %257, %249
+  %258 = phi i64 [ %262, %257 ], [ 0, %249 ]
+  %259 = phi <4 x i32> [ %263, %257 ], [ <i32 0, i32 1, i32 2, i32 3>, %249 ]
+  %260 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %259)
+  %261 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 12, i64 %258
+  store <4 x float> %260, ptr %261, align 16, !tbaa !13
+  %262 = add nuw nsw i64 %258, 4
+  %263 = add <4 x i32> %259, <i32 4, i32 4, i32 4, i32 4>
+  %264 = icmp eq i64 %262, 32000
+  br i1 %264, label %3043, label %257, !llvm.loop !52
+
+265:                                              ; preds = %235
+  %266 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.13) #12
+  %267 = icmp eq i32 %266, 0
+  br i1 %267, label %268, label %295
+
+268:                                              ; preds = %265
+  tail call void @llvm.memset.p0.i64(ptr noundef nonnull align 16 dereferenceable(128000) @global_data, i8 0, i64 128000, i1 false), !tbaa !13
+  br label %269
+
+269:                                              ; preds = %269, %268
+  %270 = phi i64 [ 0, %268 ], [ %272, %269 ]
+  %271 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 3, i64 %270
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %271, align 16, !tbaa !13
+  %272 = add nuw nsw i64 %270, 4
+  %273 = icmp eq i64 %272, 32000
+  br i1 %273, label %274, label %269, !llvm.loop !53
+
+274:                                              ; preds = %274, %269
+  %275 = phi i64 [ %277, %274 ], [ 0, %269 ]
+  %276 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 6, i64 %275
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %276, align 16, !tbaa !13
+  %277 = add nuw nsw i64 %275, 4
+  %278 = icmp eq i64 %277, 32000
+  br i1 %278, label %279, label %274, !llvm.loop !54
+
+279:                                              ; preds = %279, %274
+  %280 = phi i64 [ %284, %279 ], [ 0, %274 ]
+  %281 = phi <4 x i32> [ %285, %279 ], [ <i32 0, i32 1, i32 2, i32 3>, %274 ]
+  %282 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %281)
+  %283 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 9, i64 %280
+  store <4 x float> %282, ptr %283, align 16, !tbaa !13
+  %284 = add nuw nsw i64 %280, 4
+  %285 = add <4 x i32> %281, <i32 4, i32 4, i32 4, i32 4>
+  %286 = icmp eq i64 %284, 32000
+  br i1 %286, label %287, label %279, !llvm.loop !55
+
+287:                                              ; preds = %287, %279
+  %288 = phi i64 [ %292, %287 ], [ 0, %279 ]
+  %289 = phi <4 x i32> [ %293, %287 ], [ <i32 0, i32 1, i32 2, i32 3>, %279 ]
+  %290 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %289)
+  %291 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 12, i64 %288
+  store <4 x float> %290, ptr %291, align 16, !tbaa !13
+  %292 = add nuw nsw i64 %288, 4
+  %293 = add <4 x i32> %289, <i32 4, i32 4, i32 4, i32 4>
+  %294 = icmp eq i64 %292, 32000
+  br i1 %294, label %3043, label %287, !llvm.loop !56
+
+295:                                              ; preds = %265
+  %296 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.14) #12
+  %297 = icmp eq i32 %296, 0
+  br i1 %297, label %298, label %329
+
+298:                                              ; preds = %295
+  tail call void @llvm.memset.p0.i64(ptr noundef nonnull align 16 dereferenceable(128000) @array, i8 0, i64 128000, i1 false), !tbaa !13
+  br label %299
+
+299:                                              ; preds = %306, %298
+  %300 = phi i64 [ %307, %306 ], [ 0, %298 ]
+  br label %301
+
+301:                                              ; preds = %301, %299
+  %302 = phi i64 [ 0, %299 ], [ %304, %301 ]
+  %303 = getelementptr inbounds [256 x float], ptr getelementptr inbounds (%struct.GlobalData, ptr @global_data, i64 0, i32 15, i64 0, i64 0), i64 %300, i64 %302
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %303, align 16, !tbaa !13
+  %304 = add nuw nsw i64 %302, 4
+  %305 = icmp eq i64 %304, 256
+  br i1 %305, label %306, label %301, !llvm.loop !57
+
+306:                                              ; preds = %301
+  %307 = add nuw nsw i64 %300, 1
+  %308 = icmp eq i64 %307, 256
+  br i1 %308, label %309, label %299
+
+309:                                              ; preds = %316, %306
+  %310 = phi i64 [ %317, %316 ], [ 0, %306 ]
+  br label %311
+
+311:                                              ; preds = %311, %309
+  %312 = phi i64 [ 0, %309 ], [ %314, %311 ]
+  %313 = getelementptr inbounds [256 x float], ptr getelementptr inbounds (%struct.GlobalData, ptr @global_data, i64 0, i32 18, i64 0, i64 0), i64 %310, i64 %312
+  store <4 x float> <float 5.000000e-01, float 5.000000e-01, float 5.000000e-01, float 5.000000e-01>, ptr %313, align 16, !tbaa !13
+  %314 = add nuw nsw i64 %312, 4
+  %315 = icmp eq i64 %314, 256
+  br i1 %315, label %316, label %311, !llvm.loop !58
+
+316:                                              ; preds = %311
+  %317 = add nuw nsw i64 %310, 1
+  %318 = icmp eq i64 %317, 256
+  br i1 %318, label %319, label %309
+
+319:                                              ; preds = %326, %316
+  %320 = phi i64 [ %327, %326 ], [ 0, %316 ]
+  br label %321
+
+321:                                              ; preds = %321, %319
+  %322 = phi i64 [ 0, %319 ], [ %324, %321 ]
+  %323 = getelementptr inbounds [256 x float], ptr getelementptr inbounds (%struct.GlobalData, ptr @global_data, i64 0, i32 21, i64 0, i64 0), i64 %320, i64 %322
+  store <4 x float> <float 2.000000e+00, float 2.000000e+00, float 2.000000e+00, float 2.000000e+00>, ptr %323, align 16, !tbaa !13
+  %324 = add nuw nsw i64 %322, 4
+  %325 = icmp eq i64 %324, 256
+  br i1 %325, label %326, label %321, !llvm.loop !59
+
+326:                                              ; preds = %321
+  %327 = add nuw nsw i64 %320, 1
+  %328 = icmp eq i64 %327, 256
+  br i1 %328, label %3043, label %319
+
+329:                                              ; preds = %295
+  %330 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.15) #12
+  %331 = icmp eq i32 %330, 0
+  br i1 %331, label %332, label %365
+
+332:                                              ; preds = %339, %329
+  %333 = phi i64 [ %340, %339 ], [ 0, %329 ]
+  br label %334
+
+334:                                              ; preds = %334, %332
+  %335 = phi i64 [ 0, %332 ], [ %337, %334 ]
+  %336 = getelementptr inbounds [256 x float], ptr getelementptr inbounds (%struct.GlobalData, ptr @global_data, i64 0, i32 18, i64 0, i64 0), i64 %333, i64 %335
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %336, align 16, !tbaa !13
+  %337 = add nuw nsw i64 %335, 4
+  %338 = icmp eq i64 %337, 256
+  br i1 %338, label %339, label %334, !llvm.loop !60
+
+339:                                              ; preds = %334
+  %340 = add nuw nsw i64 %333, 1
+  %341 = icmp eq i64 %340, 256
+  br i1 %341, label %342, label %332
+
+342:                                              ; preds = %342, %339
+  %343 = phi i64 [ %347, %342 ], [ 0, %339 ]
+  %344 = phi <4 x i32> [ %348, %342 ], [ <i32 0, i32 1, i32 2, i32 3>, %339 ]
+  %345 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %344)
+  %346 = getelementptr inbounds float, ptr @array, i64 %343
+  store <4 x float> %345, ptr %346, align 16, !tbaa !13
+  %347 = add nuw nsw i64 %343, 4
+  %348 = add <4 x i32> %344, <i32 4, i32 4, i32 4, i32 4>
+  %349 = icmp eq i64 %347, 32000
+  br i1 %349, label %350, label %342, !llvm.loop !61
+
+350:                                              ; preds = %363, %342
+  %351 = phi i64 [ %352, %363 ], [ 0, %342 ]
+  %352 = add nuw nsw i64 %351, 1
+  %353 = trunc i64 %352 to i32
+  %354 = sitofp i32 %353 to float
+  %355 = fdiv float 1.000000e+00, %354
+  %356 = insertelement <4 x float> poison, float %355, i64 0
+  %357 = shufflevector <4 x float> %356, <4 x float> poison, <4 x i32> zeroinitializer
+  br label %358
+
+358:                                              ; preds = %358, %350
+  %359 = phi i64 [ 0, %350 ], [ %361, %358 ]
+  %360 = getelementptr inbounds [256 x float], ptr getelementptr inbounds (%struct.GlobalData, ptr @global_data, i64 0, i32 21, i64 0, i64 0), i64 %351, i64 %359
+  store <4 x float> %357, ptr %360, align 16, !tbaa !13
+  %361 = add nuw nsw i64 %359, 4
+  %362 = icmp eq i64 %361, 256
+  br i1 %362, label %363, label %358, !llvm.loop !62
+
+363:                                              ; preds = %358
+  %364 = icmp eq i64 %352, 256
+  br i1 %364, label %3043, label %350
+
+365:                                              ; preds = %329
+  %366 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.16) #12
+  %367 = icmp eq i32 %366, 0
+  br i1 %367, label %368, label %398
+
+368:                                              ; preds = %365
+  tail call void @llvm.memset.p0.i64(ptr noundef nonnull align 16 dereferenceable(128000) @global_data, i8 0, i64 128000, i1 false), !tbaa !13
+  br label %369
+
+369:                                              ; preds = %369, %368
+  %370 = phi i64 [ 0, %368 ], [ %372, %369 ]
+  %371 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 3, i64 %370
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %371, align 16, !tbaa !13
+  %372 = add nuw nsw i64 %370, 4
+  %373 = icmp eq i64 %372, 32000
+  br i1 %373, label %374, label %369, !llvm.loop !63
+
+374:                                              ; preds = %374, %369
+  %375 = phi i64 [ %379, %374 ], [ 0, %369 ]
+  %376 = phi <4 x i32> [ %380, %374 ], [ <i32 0, i32 1, i32 2, i32 3>, %369 ]
+  %377 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %376)
+  %378 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 6, i64 %375
+  store <4 x float> %377, ptr %378, align 16, !tbaa !13
+  %379 = add nuw nsw i64 %375, 4
+  %380 = add <4 x i32> %376, <i32 4, i32 4, i32 4, i32 4>
+  %381 = icmp eq i64 %379, 32000
+  br i1 %381, label %382, label %374, !llvm.loop !64
+
+382:                                              ; preds = %382, %374
+  %383 = phi i64 [ %387, %382 ], [ 0, %374 ]
+  %384 = phi <4 x i32> [ %388, %382 ], [ <i32 0, i32 1, i32 2, i32 3>, %374 ]
+  %385 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %384)
+  %386 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 9, i64 %383
+  store <4 x float> %385, ptr %386, align 16, !tbaa !13
+  %387 = add nuw nsw i64 %383, 4
+  %388 = add <4 x i32> %384, <i32 4, i32 4, i32 4, i32 4>
+  %389 = icmp eq i64 %387, 32000
+  br i1 %389, label %390, label %382, !llvm.loop !65
+
+390:                                              ; preds = %390, %382
+  %391 = phi i64 [ %395, %390 ], [ 0, %382 ]
+  %392 = phi <4 x i32> [ %396, %390 ], [ <i32 0, i32 1, i32 2, i32 3>, %382 ]
+  %393 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %392)
+  %394 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 12, i64 %391
+  store <4 x float> %393, ptr %394, align 16, !tbaa !13
+  %395 = add nuw nsw i64 %391, 4
+  %396 = add <4 x i32> %392, <i32 4, i32 4, i32 4, i32 4>
+  %397 = icmp eq i64 %395, 32000
+  br i1 %397, label %3043, label %390, !llvm.loop !66
+
+398:                                              ; preds = %365
+  %399 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.17) #12
+  %400 = icmp eq i32 %399, 0
+  br i1 %400, label %401, label %417
+
+401:                                              ; preds = %398
+  tail call void @llvm.memset.p0.i64(ptr noundef nonnull align 16 dereferenceable(128000) @global_data, i8 0, i64 128000, i1 false), !tbaa !13
+  br label %402
+
+402:                                              ; preds = %402, %401
+  %403 = phi i64 [ 0, %401 ], [ %405, %402 ]
+  %404 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 3, i64 %403
+  store <4 x float> <float 2.000000e+00, float 2.000000e+00, float 2.000000e+00, float 2.000000e+00>, ptr %404, align 16, !tbaa !13
+  %405 = add nuw nsw i64 %403, 4
+  %406 = icmp eq i64 %405, 32000
+  br i1 %406, label %407, label %402, !llvm.loop !67
+
+407:                                              ; preds = %407, %402
+  %408 = phi i64 [ %410, %407 ], [ 0, %402 ]
+  %409 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 6, i64 %408
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %409, align 16, !tbaa !13
+  %410 = add nuw nsw i64 %408, 4
+  %411 = icmp eq i64 %410, 32000
+  br i1 %411, label %412, label %407, !llvm.loop !68
+
+412:                                              ; preds = %412, %407
+  %413 = phi i64 [ %415, %412 ], [ 0, %407 ]
+  %414 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 9, i64 %413
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %414, align 16, !tbaa !13
+  %415 = add nuw nsw i64 %413, 4
+  %416 = icmp eq i64 %415, 32000
+  br i1 %416, label %3043, label %412, !llvm.loop !69
+
+417:                                              ; preds = %398
+  %418 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.18) #12
+  %419 = icmp eq i32 %418, 0
+  br i1 %419, label %420, label %433
+
+420:                                              ; preds = %420, %417
+  %421 = phi i64 [ %423, %420 ], [ 0, %417 ]
+  %422 = getelementptr inbounds float, ptr @global_data, i64 %421
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %422, align 16, !tbaa !13
+  %423 = add nuw nsw i64 %421, 4
+  %424 = icmp eq i64 %423, 32000
+  br i1 %424, label %425, label %420, !llvm.loop !70
+
+425:                                              ; preds = %425, %420
+  %426 = phi i64 [ %430, %425 ], [ 0, %420 ]
+  %427 = phi <4 x i32> [ %431, %425 ], [ <i32 0, i32 1, i32 2, i32 3>, %420 ]
+  %428 = call <4 x float> @_wyvern_slice_init__102007472(<4 x i32> %427)
+  %429 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 3, i64 %426
+  store <4 x float> %428, ptr %429, align 16, !tbaa !13
+  %430 = add nuw nsw i64 %426, 4
+  %431 = add <4 x i32> %427, <i32 4, i32 4, i32 4, i32 4>
+  %432 = icmp eq i64 %430, 32000
+  br i1 %432, label %3043, label %425, !llvm.loop !71
+
+433:                                              ; preds = %417
+  %434 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.19) #12
+  %435 = icmp eq i32 %434, 0
+  br i1 %435, label %436, label %462
+
+436:                                              ; preds = %443, %433
+  %437 = phi i64 [ %444, %443 ], [ 0, %433 ]
+  br label %438
+
+438:                                              ; preds = %438, %436
+  %439 = phi i64 [ 0, %436 ], [ %441, %438 ]
+  %440 = getelementptr inbounds [256 x float], ptr getelementptr inbounds (%struct.GlobalData, ptr @global_data, i64 0, i32 15, i64 0, i64 0), i64 %437, i64 %439
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %440, align 16, !tbaa !13
+  %441 = add nuw nsw i64 %439, 4
+  %442 = icmp eq i64 %441, 256
+  br i1 %442, label %443, label %438, !llvm.loop !72
+
+443:                                              ; preds = %438
+  %444 = add nuw nsw i64 %437, 1
+  %445 = icmp eq i64 %444, 256
+  br i1 %445, label %446, label %436
+
+446:                                              ; preds = %446, %443
+  %447 = phi i64 [ %451, %446 ], [ 0, %443 ]
+  %448 = phi <4 x i32> [ %452, %446 ], [ <i32 0, i32 1, i32 2, i32 3>, %443 ]
+  %449 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %448)
+  %450 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 3, i64 %447
+  store <4 x float> %449, ptr %450, align 16, !tbaa !13
+  %451 = add nuw nsw i64 %447, 4
+  %452 = add <4 x i32> %448, <i32 4, i32 4, i32 4, i32 4>
+  %453 = icmp eq i64 %451, 32000
+  br i1 %453, label %454, label %446, !llvm.loop !73
+
+454:                                              ; preds = %454, %446
+  %455 = phi i64 [ %459, %454 ], [ 0, %446 ]
+  %456 = phi <4 x i32> [ %460, %454 ], [ <i32 0, i32 1, i32 2, i32 3>, %446 ]
+  %457 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %456)
+  %458 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 6, i64 %455
+  store <4 x float> %457, ptr %458, align 16, !tbaa !13
+  %459 = add nuw nsw i64 %455, 4
+  %460 = add <4 x i32> %456, <i32 4, i32 4, i32 4, i32 4>
+  %461 = icmp eq i64 %459, 32000
+  br i1 %461, label %3043, label %454, !llvm.loop !74
+
+462:                                              ; preds = %433
+  %463 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.20) #12
+  %464 = icmp eq i32 %463, 0
+  br i1 %464, label %465, label %486
+
+465:                                              ; preds = %465, %462
+  %466 = phi i64 [ %468, %465 ], [ 0, %462 ]
+  %467 = getelementptr inbounds float, ptr @array, i64 %466
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %467, align 16, !tbaa !13
+  %468 = add nuw nsw i64 %466, 4
+  %469 = icmp eq i64 %468, 32000
+  br i1 %469, label %470, label %465, !llvm.loop !75
+
+470:                                              ; preds = %484, %465
+  %471 = phi i64 [ %472, %484 ], [ 0, %465 ]
+  %472 = add nuw nsw i64 %471, 1
+  %473 = trunc i64 %472 to i32
+  %474 = mul nsw i32 %473, %473
+  %475 = sitofp i32 %474 to float
+  %476 = fdiv float 1.000000e+00, %475
+  %477 = insertelement <4 x float> poison, float %476, i64 0
+  %478 = shufflevector <4 x float> %477, <4 x float> poison, <4 x i32> zeroinitializer
+  br label %479
+
+479:                                              ; preds = %479, %470
+  %480 = phi i64 [ 0, %470 ], [ %482, %479 ]
+  %481 = getelementptr inbounds [256 x float], ptr getelementptr inbounds (%struct.GlobalData, ptr @global_data, i64 0, i32 18, i64 0, i64 0), i64 %471, i64 %480
+  store <4 x float> %478, ptr %481, align 16, !tbaa !13
+  %482 = add nuw nsw i64 %480, 4
+  %483 = icmp eq i64 %482, 256
+  br i1 %483, label %484, label %479, !llvm.loop !76
+
+484:                                              ; preds = %479
+  %485 = icmp eq i64 %472, 256
+  br i1 %485, label %3043, label %470
+
+486:                                              ; preds = %462
+  %487 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.21) #12
+  %488 = icmp eq i32 %487, 0
+  br i1 %488, label %489, label %502
+
+489:                                              ; preds = %489, %486
+  %490 = phi i64 [ %492, %489 ], [ 0, %486 ]
+  %491 = getelementptr inbounds float, ptr @global_data, i64 %490
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %491, align 16, !tbaa !13
+  %492 = add nuw nsw i64 %490, 4
+  %493 = icmp eq i64 %492, 32000
+  br i1 %493, label %494, label %489, !llvm.loop !77
+
+494:                                              ; preds = %494, %489
+  %495 = phi i64 [ %499, %494 ], [ 0, %489 ]
+  %496 = phi <4 x i32> [ %500, %494 ], [ <i32 0, i32 1, i32 2, i32 3>, %489 ]
+  %497 = call <4 x float> @_wyvern_slice_init__102007472(<4 x i32> %496)
+  %498 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 3, i64 %495
+  store <4 x float> %497, ptr %498, align 16, !tbaa !13
+  %499 = add nuw nsw i64 %495, 4
+  %500 = add <4 x i32> %496, <i32 4, i32 4, i32 4, i32 4>
+  %501 = icmp eq i64 %499, 32000
+  br i1 %501, label %3043, label %494, !llvm.loop !78
+
+502:                                              ; preds = %486
+  %503 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.22) #12
+  %504 = icmp eq i32 %503, 0
+  br i1 %504, label %505, label %535
+
+505:                                              ; preds = %505, %502
+  %506 = phi i64 [ %508, %505 ], [ 0, %502 ]
+  %507 = getelementptr inbounds float, ptr @global_data, i64 %506
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %507, align 16, !tbaa !13
+  %508 = add nuw nsw i64 %506, 4
+  %509 = icmp eq i64 %508, 32000
+  br i1 %509, label %510, label %505, !llvm.loop !79
+
+510:                                              ; preds = %505
+  tail call void @llvm.memset.p0.i64(ptr noundef nonnull align 16 dereferenceable(128000) getelementptr inbounds (%struct.GlobalData, ptr @global_data, i64 0, i32 3, i64 0), i8 0, i64 128000, i1 false), !tbaa !13
+  br label %511
+
+511:                                              ; preds = %511, %510
+  %512 = phi i64 [ 0, %510 ], [ %516, %511 ]
+  %513 = phi <4 x i32> [ <i32 0, i32 1, i32 2, i32 3>, %510 ], [ %517, %511 ]
+  %514 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %513)
+  %515 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 6, i64 %512
+  store <4 x float> %514, ptr %515, align 16, !tbaa !13
+  %516 = add nuw nsw i64 %512, 4
+  %517 = add <4 x i32> %513, <i32 4, i32 4, i32 4, i32 4>
+  %518 = icmp eq i64 %516, 32000
+  br i1 %518, label %519, label %511, !llvm.loop !80
+
+519:                                              ; preds = %519, %511
+  %520 = phi i64 [ %524, %519 ], [ 0, %511 ]
+  %521 = phi <4 x i32> [ %525, %519 ], [ <i32 0, i32 1, i32 2, i32 3>, %511 ]
+  %522 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %521)
+  %523 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 9, i64 %520
+  store <4 x float> %522, ptr %523, align 16, !tbaa !13
+  %524 = add nuw nsw i64 %520, 4
+  %525 = add <4 x i32> %521, <i32 4, i32 4, i32 4, i32 4>
+  %526 = icmp eq i64 %524, 32000
+  br i1 %526, label %527, label %519, !llvm.loop !81
+
+527:                                              ; preds = %527, %519
+  %528 = phi i64 [ %532, %527 ], [ 0, %519 ]
+  %529 = phi <4 x i32> [ %533, %527 ], [ <i32 0, i32 1, i32 2, i32 3>, %519 ]
+  %530 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %529)
+  %531 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 12, i64 %528
+  store <4 x float> %530, ptr %531, align 16, !tbaa !13
+  %532 = add nuw nsw i64 %528, 4
+  %533 = add <4 x i32> %529, <i32 4, i32 4, i32 4, i32 4>
+  %534 = icmp eq i64 %532, 32000
+  br i1 %534, label %3043, label %527, !llvm.loop !82
+
+535:                                              ; preds = %502
+  %536 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.23) #12
+  %537 = icmp eq i32 %536, 0
+  br i1 %537, label %538, label %574
+
+538:                                              ; preds = %538, %535
+  %539 = phi i64 [ %541, %538 ], [ 0, %535 ]
+  %540 = getelementptr inbounds float, ptr @global_data, i64 %539
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %540, align 16, !tbaa !13
+  %541 = add nuw nsw i64 %539, 4
+  %542 = icmp eq i64 %541, 32000
+  br i1 %542, label %543, label %538, !llvm.loop !83
+
+543:                                              ; preds = %543, %538
+  %544 = phi i64 [ %546, %543 ], [ 0, %538 ]
+  %545 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 3, i64 %544
+  store float 1.000000e+00, ptr %545, align 8, !tbaa !13
+  %546 = add nuw nsw i64 %544, 2
+  %547 = icmp ult i64 %544, 31998
+  br i1 %547, label %543, label %548
+
+548:                                              ; preds = %548, %543
+  %549 = phi i64 [ %551, %548 ], [ 0, %543 ]
+  %550 = getelementptr inbounds float, ptr getelementptr inbounds (%struct.GlobalData, ptr @global_data, i64 0, i32 3, i64 1), i64 %549
+  store float -1.000000e+00, ptr %550, align 4, !tbaa !13
+  %551 = add nuw nsw i64 %549, 2
+  %552 = icmp ult i64 %549, 31998
+  br i1 %552, label %548, label %553
+
+553:                                              ; preds = %553, %548
+  %554 = phi i64 [ %556, %553 ], [ 0, %548 ]
+  %555 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 6, i64 %554
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %555, align 16, !tbaa !13
+  %556 = add nuw nsw i64 %554, 4
+  %557 = icmp eq i64 %556, 32000
+  br i1 %557, label %558, label %553, !llvm.loop !84
+
+558:                                              ; preds = %558, %553
+  %559 = phi i64 [ %563, %558 ], [ 0, %553 ]
+  %560 = phi <4 x i32> [ %564, %558 ], [ <i32 0, i32 1, i32 2, i32 3>, %553 ]
+  %561 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %560)
+  %562 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 9, i64 %559
+  store <4 x float> %561, ptr %562, align 16, !tbaa !13
+  %563 = add nuw nsw i64 %559, 4
+  %564 = add <4 x i32> %560, <i32 4, i32 4, i32 4, i32 4>
+  %565 = icmp eq i64 %563, 32000
+  br i1 %565, label %566, label %558, !llvm.loop !85
+
+566:                                              ; preds = %566, %558
+  %567 = phi i64 [ %571, %566 ], [ 0, %558 ]
+  %568 = phi <4 x i32> [ %572, %566 ], [ <i32 0, i32 1, i32 2, i32 3>, %558 ]
+  %569 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %568)
+  %570 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 12, i64 %567
+  store <4 x float> %569, ptr %570, align 16, !tbaa !13
+  %571 = add nuw nsw i64 %567, 4
+  %572 = add <4 x i32> %568, <i32 4, i32 4, i32 4, i32 4>
+  %573 = icmp eq i64 %571, 32000
+  br i1 %573, label %3043, label %566, !llvm.loop !86
+
+574:                                              ; preds = %535
+  %575 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.24) #12
+  %576 = icmp eq i32 %575, 0
+  br i1 %576, label %577, label %598
+
+577:                                              ; preds = %577, %574
+  %578 = phi i64 [ %580, %577 ], [ 0, %574 ]
+  %579 = getelementptr inbounds float, ptr @global_data, i64 %578
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %579, align 16, !tbaa !13
+  %580 = add nuw nsw i64 %578, 4
+  %581 = icmp eq i64 %580, 32000
+  br i1 %581, label %582, label %577, !llvm.loop !87
+
+582:                                              ; preds = %582, %577
+  %583 = phi i64 [ %587, %582 ], [ 0, %577 ]
+  %584 = phi <4 x i32> [ %588, %582 ], [ <i32 0, i32 1, i32 2, i32 3>, %577 ]
+  %585 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %584)
+  %586 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 3, i64 %583
+  store <4 x float> %585, ptr %586, align 16, !tbaa !13
+  %587 = add nuw nsw i64 %583, 4
+  %588 = add <4 x i32> %584, <i32 4, i32 4, i32 4, i32 4>
+  %589 = icmp eq i64 %587, 32000
+  br i1 %589, label %590, label %582, !llvm.loop !88
+
+590:                                              ; preds = %590, %582
+  %591 = phi i64 [ %595, %590 ], [ 0, %582 ]
+  %592 = phi <4 x i32> [ %596, %590 ], [ <i32 0, i32 1, i32 2, i32 3>, %582 ]
+  %593 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %592)
+  %594 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 6, i64 %591
+  store <4 x float> %593, ptr %594, align 16, !tbaa !13
+  %595 = add nuw nsw i64 %591, 4
+  %596 = add <4 x i32> %592, <i32 4, i32 4, i32 4, i32 4>
+  %597 = icmp eq i64 %595, 32000
+  br i1 %597, label %3043, label %590, !llvm.loop !89
+
+598:                                              ; preds = %574
+  %599 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.25) #12
+  %600 = icmp eq i32 %599, 0
+  br i1 %600, label %601, label %614
+
+601:                                              ; preds = %601, %598
+  %602 = phi i64 [ %604, %601 ], [ 0, %598 ]
+  %603 = getelementptr inbounds float, ptr @global_data, i64 %602
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %603, align 16, !tbaa !13
+  %604 = add nuw nsw i64 %602, 4
+  %605 = icmp eq i64 %604, 32000
+  br i1 %605, label %606, label %601, !llvm.loop !90
+
+606:                                              ; preds = %606, %601
+  %607 = phi i64 [ %611, %606 ], [ 0, %601 ]
+  %608 = phi <4 x i32> [ %612, %606 ], [ <i32 0, i32 1, i32 2, i32 3>, %601 ]
+  %609 = call <4 x float> @_wyvern_slice_init__102007472(<4 x i32> %608)
+  %610 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 3, i64 %607
+  store <4 x float> %609, ptr %610, align 16, !tbaa !13
+  %611 = add nuw nsw i64 %607, 4
+  %612 = add <4 x i32> %608, <i32 4, i32 4, i32 4, i32 4>
+  %613 = icmp eq i64 %611, 32000
+  br i1 %613, label %3043, label %606, !llvm.loop !91
+
+614:                                              ; preds = %598
+  %615 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.26) #12
+  %616 = icmp eq i32 %615, 0
+  br i1 %616, label %617, label %630
+
+617:                                              ; preds = %617, %614
+  %618 = phi i64 [ %620, %617 ], [ 0, %614 ]
+  %619 = getelementptr inbounds float, ptr @global_data, i64 %618
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %619, align 16, !tbaa !13
+  %620 = add nuw nsw i64 %618, 4
+  %621 = icmp eq i64 %620, 32000
+  br i1 %621, label %622, label %617, !llvm.loop !92
+
+622:                                              ; preds = %622, %617
+  %623 = phi i64 [ %627, %622 ], [ 0, %617 ]
+  %624 = phi <4 x i32> [ %628, %622 ], [ <i32 0, i32 1, i32 2, i32 3>, %617 ]
+  %625 = call <4 x float> @_wyvern_slice_init__102007472(<4 x i32> %624)
+  %626 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 3, i64 %623
+  store <4 x float> %625, ptr %626, align 16, !tbaa !13
+  %627 = add nuw nsw i64 %623, 4
+  %628 = add <4 x i32> %624, <i32 4, i32 4, i32 4, i32 4>
+  %629 = icmp eq i64 %627, 32000
+  br i1 %629, label %3043, label %622, !llvm.loop !93
+
+630:                                              ; preds = %614
+  %631 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.27) #12
+  %632 = icmp eq i32 %631, 0
+  br i1 %632, label %633, label %646
+
+633:                                              ; preds = %633, %630
+  %634 = phi i64 [ %636, %633 ], [ 0, %630 ]
+  %635 = getelementptr inbounds float, ptr @global_data, i64 %634
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %635, align 16, !tbaa !13
+  %636 = add nuw nsw i64 %634, 4
+  %637 = icmp eq i64 %636, 32000
+  br i1 %637, label %638, label %633, !llvm.loop !94
+
+638:                                              ; preds = %638, %633
+  %639 = phi i64 [ %643, %638 ], [ 0, %633 ]
+  %640 = phi <4 x i32> [ %644, %638 ], [ <i32 0, i32 1, i32 2, i32 3>, %633 ]
+  %641 = call <4 x float> @_wyvern_slice_init__102007472(<4 x i32> %640)
+  %642 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 3, i64 %639
+  store <4 x float> %641, ptr %642, align 16, !tbaa !13
+  %643 = add nuw nsw i64 %639, 4
+  %644 = add <4 x i32> %640, <i32 4, i32 4, i32 4, i32 4>
+  %645 = icmp eq i64 %643, 32000
+  br i1 %645, label %3043, label %638, !llvm.loop !95
+
+646:                                              ; preds = %630
+  %647 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.28) #12
+  %648 = icmp eq i32 %647, 0
+  br i1 %648, label %649, label %662
+
+649:                                              ; preds = %649, %646
+  %650 = phi i64 [ %652, %649 ], [ 0, %646 ]
+  %651 = getelementptr inbounds float, ptr @global_data, i64 %650
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %651, align 16, !tbaa !13
+  %652 = add nuw nsw i64 %650, 4
+  %653 = icmp eq i64 %652, 32000
+  br i1 %653, label %654, label %649, !llvm.loop !96
+
+654:                                              ; preds = %654, %649
+  %655 = phi i64 [ %659, %654 ], [ 0, %649 ]
+  %656 = phi <4 x i32> [ %660, %654 ], [ <i32 0, i32 1, i32 2, i32 3>, %649 ]
+  %657 = call <4 x float> @_wyvern_slice_init__102007472(<4 x i32> %656)
+  %658 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 3, i64 %655
+  store <4 x float> %657, ptr %658, align 16, !tbaa !13
+  %659 = add nuw nsw i64 %655, 4
+  %660 = add <4 x i32> %656, <i32 4, i32 4, i32 4, i32 4>
+  %661 = icmp eq i64 %659, 32000
+  br i1 %661, label %3043, label %654, !llvm.loop !97
+
+662:                                              ; preds = %646
+  %663 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.29) #12
+  %664 = icmp eq i32 %663, 0
+  br i1 %664, label %665, label %678
+
+665:                                              ; preds = %665, %662
+  %666 = phi i64 [ %668, %665 ], [ 0, %662 ]
+  %667 = getelementptr inbounds float, ptr @global_data, i64 %666
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %667, align 16, !tbaa !13
+  %668 = add nuw nsw i64 %666, 4
+  %669 = icmp eq i64 %668, 32000
+  br i1 %669, label %670, label %665, !llvm.loop !98
+
+670:                                              ; preds = %670, %665
+  %671 = phi i64 [ %675, %670 ], [ 0, %665 ]
+  %672 = phi <4 x i32> [ %676, %670 ], [ <i32 0, i32 1, i32 2, i32 3>, %665 ]
+  %673 = call <4 x float> @_wyvern_slice_init__102007472(<4 x i32> %672)
+  %674 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 3, i64 %671
+  store <4 x float> %673, ptr %674, align 16, !tbaa !13
+  %675 = add nuw nsw i64 %671, 4
+  %676 = add <4 x i32> %672, <i32 4, i32 4, i32 4, i32 4>
+  %677 = icmp eq i64 %675, 32000
+  br i1 %677, label %3043, label %670, !llvm.loop !99
+
+678:                                              ; preds = %662
+  %679 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.30) #12
+  %680 = icmp eq i32 %679, 0
+  br i1 %680, label %681, label %702
+
+681:                                              ; preds = %681, %678
+  %682 = phi i64 [ %684, %681 ], [ 0, %678 ]
+  %683 = getelementptr inbounds float, ptr @global_data, i64 %682
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %683, align 16, !tbaa !13
+  %684 = add nuw nsw i64 %682, 4
+  %685 = icmp eq i64 %684, 32000
+  br i1 %685, label %686, label %681, !llvm.loop !100
+
+686:                                              ; preds = %686, %681
+  %687 = phi i64 [ %691, %686 ], [ 0, %681 ]
+  %688 = phi <4 x i32> [ %692, %686 ], [ <i32 0, i32 1, i32 2, i32 3>, %681 ]
+  %689 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %688)
+  %690 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 3, i64 %687
+  store <4 x float> %689, ptr %690, align 16, !tbaa !13
+  %691 = add nuw nsw i64 %687, 4
+  %692 = add <4 x i32> %688, <i32 4, i32 4, i32 4, i32 4>
+  %693 = icmp eq i64 %691, 32000
+  br i1 %693, label %694, label %686, !llvm.loop !101
+
+694:                                              ; preds = %694, %686
+  %695 = phi i64 [ %699, %694 ], [ 0, %686 ]
+  %696 = phi <4 x i32> [ %700, %694 ], [ <i32 0, i32 1, i32 2, i32 3>, %686 ]
+  %697 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %696)
+  %698 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 6, i64 %695
+  store <4 x float> %697, ptr %698, align 16, !tbaa !13
+  %699 = add nuw nsw i64 %695, 4
+  %700 = add <4 x i32> %696, <i32 4, i32 4, i32 4, i32 4>
+  %701 = icmp eq i64 %699, 32000
+  br i1 %701, label %3043, label %694, !llvm.loop !102
+
+702:                                              ; preds = %678
+  %703 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.31) #12
+  %704 = icmp eq i32 %703, 0
+  br i1 %704, label %705, label %735
+
+705:                                              ; preds = %702
+  tail call void @llvm.memset.p0.i64(ptr noundef nonnull align 16 dereferenceable(128000) @global_data, i8 0, i64 128000, i1 false), !tbaa !13
+  br label %706
+
+706:                                              ; preds = %706, %705
+  %707 = phi i64 [ 0, %705 ], [ %709, %706 ]
+  %708 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 3, i64 %707
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %708, align 16, !tbaa !13
+  %709 = add nuw nsw i64 %707, 4
+  %710 = icmp eq i64 %709, 32000
+  br i1 %710, label %711, label %706, !llvm.loop !103
+
+711:                                              ; preds = %711, %706
+  %712 = phi i64 [ %716, %711 ], [ 0, %706 ]
+  %713 = phi <4 x i32> [ %717, %711 ], [ <i32 0, i32 1, i32 2, i32 3>, %706 ]
+  %714 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %713)
+  %715 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 6, i64 %712
+  store <4 x float> %714, ptr %715, align 16, !tbaa !13
+  %716 = add nuw nsw i64 %712, 4
+  %717 = add <4 x i32> %713, <i32 4, i32 4, i32 4, i32 4>
+  %718 = icmp eq i64 %716, 32000
+  br i1 %718, label %719, label %711, !llvm.loop !104
+
+719:                                              ; preds = %719, %711
+  %720 = phi i64 [ %724, %719 ], [ 0, %711 ]
+  %721 = phi <4 x i32> [ %725, %719 ], [ <i32 0, i32 1, i32 2, i32 3>, %711 ]
+  %722 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %721)
+  %723 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 9, i64 %720
+  store <4 x float> %722, ptr %723, align 16, !tbaa !13
+  %724 = add nuw nsw i64 %720, 4
+  %725 = add <4 x i32> %721, <i32 4, i32 4, i32 4, i32 4>
+  %726 = icmp eq i64 %724, 32000
+  br i1 %726, label %727, label %719, !llvm.loop !105
+
+727:                                              ; preds = %727, %719
+  %728 = phi i64 [ %732, %727 ], [ 0, %719 ]
+  %729 = phi <4 x i32> [ %733, %727 ], [ <i32 0, i32 1, i32 2, i32 3>, %719 ]
+  %730 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %729)
+  %731 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 12, i64 %728
+  store <4 x float> %730, ptr %731, align 16, !tbaa !13
+  %732 = add nuw nsw i64 %728, 4
+  %733 = add <4 x i32> %729, <i32 4, i32 4, i32 4, i32 4>
+  %734 = icmp eq i64 %732, 32000
+  br i1 %734, label %3043, label %727, !llvm.loop !106
+
+735:                                              ; preds = %702
+  %736 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.32) #12
+  %737 = icmp eq i32 %736, 0
+  br i1 %737, label %738, label %764
+
+738:                                              ; preds = %738, %735
+  %739 = phi i64 [ %743, %738 ], [ 0, %735 ]
+  %740 = phi <4 x i32> [ %744, %738 ], [ <i32 0, i32 1, i32 2, i32 3>, %735 ]
+  %741 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %740)
+  %742 = getelementptr inbounds float, ptr @global_data, i64 %739
+  store <4 x float> %741, ptr %742, align 16, !tbaa !13
+  %743 = add nuw nsw i64 %739, 4
+  %744 = add <4 x i32> %740, <i32 4, i32 4, i32 4, i32 4>
+  %745 = icmp eq i64 %743, 32000
+  br i1 %745, label %746, label %738, !llvm.loop !107
+
+746:                                              ; preds = %746, %738
+  %747 = phi i64 [ %749, %746 ], [ 0, %738 ]
+  %748 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 3, i64 %747
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %748, align 16, !tbaa !13
+  %749 = add nuw nsw i64 %747, 4
+  %750 = icmp eq i64 %749, 32000
+  br i1 %750, label %751, label %746, !llvm.loop !108
+
+751:                                              ; preds = %751, %746
+  %752 = phi i64 [ %754, %751 ], [ 0, %746 ]
+  %753 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 6, i64 %752
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %753, align 16, !tbaa !13
+  %754 = add nuw nsw i64 %752, 4
+  %755 = icmp eq i64 %754, 32000
+  br i1 %755, label %756, label %751, !llvm.loop !109
+
+756:                                              ; preds = %756, %751
+  %757 = phi i64 [ %761, %756 ], [ 0, %751 ]
+  %758 = phi <4 x i32> [ %762, %756 ], [ <i32 0, i32 1, i32 2, i32 3>, %751 ]
+  %759 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %758)
+  %760 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 9, i64 %757
+  store <4 x float> %759, ptr %760, align 16, !tbaa !13
+  %761 = add nuw nsw i64 %757, 4
+  %762 = add <4 x i32> %758, <i32 4, i32 4, i32 4, i32 4>
+  %763 = icmp eq i64 %761, 32000
+  br i1 %763, label %3043, label %756, !llvm.loop !110
+
+764:                                              ; preds = %735
+  %765 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.33) #12
+  %766 = icmp eq i32 %765, 0
+  br i1 %766, label %767, label %796
+
+767:                                              ; preds = %767, %764
+  %768 = phi i64 [ %770, %767 ], [ 0, %764 ]
+  %769 = getelementptr inbounds float, ptr @global_data, i64 %768
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %769, align 16, !tbaa !13
+  %770 = add nuw nsw i64 %768, 4
+  %771 = icmp eq i64 %770, 32000
+  br i1 %771, label %772, label %767, !llvm.loop !111
+
+772:                                              ; preds = %772, %767
+  %773 = phi i64 [ %777, %772 ], [ 0, %767 ]
+  %774 = phi <4 x i32> [ %778, %772 ], [ <i32 0, i32 1, i32 2, i32 3>, %767 ]
+  %775 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %774)
+  %776 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 3, i64 %773
+  store <4 x float> %775, ptr %776, align 16, !tbaa !13
+  %777 = add nuw nsw i64 %773, 4
+  %778 = add <4 x i32> %774, <i32 4, i32 4, i32 4, i32 4>
+  %779 = icmp eq i64 %777, 32000
+  br i1 %779, label %780, label %772, !llvm.loop !112
+
+780:                                              ; preds = %780, %772
+  %781 = phi i64 [ %785, %780 ], [ 0, %772 ]
+  %782 = phi <4 x i32> [ %786, %780 ], [ <i32 0, i32 1, i32 2, i32 3>, %772 ]
+  %783 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %782)
+  %784 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 6, i64 %781
+  store <4 x float> %783, ptr %784, align 16, !tbaa !13
+  %785 = add nuw nsw i64 %781, 4
+  %786 = add <4 x i32> %782, <i32 4, i32 4, i32 4, i32 4>
+  %787 = icmp eq i64 %785, 32000
+  br i1 %787, label %788, label %780, !llvm.loop !113
+
+788:                                              ; preds = %788, %780
+  %789 = phi i64 [ %793, %788 ], [ 0, %780 ]
+  %790 = phi <4 x i32> [ %794, %788 ], [ <i32 0, i32 1, i32 2, i32 3>, %780 ]
+  %791 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %790)
+  %792 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 9, i64 %789
+  store <4 x float> %791, ptr %792, align 16, !tbaa !13
+  %793 = add nuw nsw i64 %789, 4
+  %794 = add <4 x i32> %790, <i32 4, i32 4, i32 4, i32 4>
+  %795 = icmp eq i64 %793, 32000
+  br i1 %795, label %3043, label %788, !llvm.loop !114
+
+796:                                              ; preds = %764
+  %797 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.34) #12
+  %798 = icmp eq i32 %797, 0
+  br i1 %798, label %799, label %810
+
+799:                                              ; preds = %796
+  tail call void @llvm.memset.p0.i64(ptr noundef nonnull align 16 dereferenceable(128000) @global_data, i8 0, i64 128000, i1 false), !tbaa !13
+  br label %800
+
+800:                                              ; preds = %800, %799
+  %801 = phi i64 [ 0, %799 ], [ %803, %800 ]
+  %802 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 3, i64 %801
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %802, align 16, !tbaa !13
+  %803 = add nuw nsw i64 %801, 4
+  %804 = icmp eq i64 %803, 32000
+  br i1 %804, label %805, label %800, !llvm.loop !115
+
+805:                                              ; preds = %805, %800
+  %806 = phi i64 [ %808, %805 ], [ 0, %800 ]
+  %807 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 6, i64 %806
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %807, align 16, !tbaa !13
+  %808 = add nuw nsw i64 %806, 4
+  %809 = icmp eq i64 %808, 32000
+  br i1 %809, label %3043, label %805, !llvm.loop !116
+
+810:                                              ; preds = %796
+  %811 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.35) #12
+  %812 = icmp eq i32 %811, 0
+  br i1 %812, label %813, label %839
+
+813:                                              ; preds = %820, %810
+  %814 = phi i64 [ %821, %820 ], [ 0, %810 ]
+  br label %815
+
+815:                                              ; preds = %815, %813
+  %816 = phi i64 [ 0, %813 ], [ %818, %815 ]
+  %817 = getelementptr inbounds [256 x float], ptr getelementptr inbounds (%struct.GlobalData, ptr @global_data, i64 0, i32 15, i64 0, i64 0), i64 %814, i64 %816
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %817, align 16, !tbaa !13
+  %818 = add nuw nsw i64 %816, 4
+  %819 = icmp eq i64 %818, 256
+  br i1 %819, label %820, label %815, !llvm.loop !117
+
+820:                                              ; preds = %815
+  %821 = add nuw nsw i64 %814, 1
+  %822 = icmp eq i64 %821, 256
+  br i1 %822, label %823, label %813
+
+823:                                              ; preds = %837, %820
+  %824 = phi i64 [ %825, %837 ], [ 0, %820 ]
+  %825 = add nuw nsw i64 %824, 1
+  %826 = trunc i64 %825 to i32
+  %827 = mul nsw i32 %826, %826
+  %828 = sitofp i32 %827 to float
+  %829 = fdiv float 1.000000e+00, %828
+  %830 = insertelement <4 x float> poison, float %829, i64 0
+  %831 = shufflevector <4 x float> %830, <4 x float> poison, <4 x i32> zeroinitializer
+  br label %832
+
+832:                                              ; preds = %832, %823
+  %833 = phi i64 [ 0, %823 ], [ %835, %832 ]
+  %834 = getelementptr inbounds [256 x float], ptr getelementptr inbounds (%struct.GlobalData, ptr @global_data, i64 0, i32 18, i64 0, i64 0), i64 %824, i64 %833
+  store <4 x float> %831, ptr %834, align 16, !tbaa !13
+  %835 = add nuw nsw i64 %833, 4
+  %836 = icmp eq i64 %835, 256
+  br i1 %836, label %837, label %832, !llvm.loop !118
+
+837:                                              ; preds = %832
+  %838 = icmp eq i64 %825, 256
+  br i1 %838, label %3043, label %823
+
+839:                                              ; preds = %810
+  %840 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.36) #12
+  %841 = icmp eq i32 %840, 0
+  br i1 %841, label %842, label %853
+
+842:                                              ; preds = %849, %839
+  %843 = phi i64 [ %850, %849 ], [ 0, %839 ]
+  br label %844
+
+844:                                              ; preds = %844, %842
+  %845 = phi i64 [ 0, %842 ], [ %847, %844 ]
+  %846 = getelementptr inbounds [256 x float], ptr getelementptr inbounds (%struct.GlobalData, ptr @global_data, i64 0, i32 15, i64 0, i64 0), i64 %843, i64 %845
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %846, align 16, !tbaa !13
+  %847 = add nuw nsw i64 %845, 4
+  %848 = icmp eq i64 %847, 256
+  br i1 %848, label %849, label %844, !llvm.loop !119
+
+849:                                              ; preds = %844
+  %850 = add nuw nsw i64 %843, 1
+  %851 = icmp eq i64 %850, 256
+  br i1 %851, label %852, label %842
+
+852:                                              ; preds = %849
+  tail call void @llvm.memset.p0.i64(ptr noundef nonnull align 16 dereferenceable(262144) getelementptr inbounds (%struct.GlobalData, ptr @global_data, i64 0, i32 18, i64 0, i64 0), i8 0, i64 262144, i1 false), !tbaa !13
+  br label %3043
+
+853:                                              ; preds = %839
+  %854 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.37) #12
+  %855 = icmp eq i32 %854, 0
+  br i1 %855, label %856, label %901
+
+856:                                              ; preds = %869, %853
+  %857 = phi i64 [ %858, %869 ], [ 0, %853 ]
+  %858 = add nuw nsw i64 %857, 1
+  %859 = trunc i64 %858 to i32
+  %860 = sitofp i32 %859 to float
+  %861 = fdiv float 1.000000e+00, %860
+  %862 = insertelement <4 x float> poison, float %861, i64 0
+  %863 = shufflevector <4 x float> %862, <4 x float> poison, <4 x i32> zeroinitializer
+  br label %864
+
+864:                                              ; preds = %864, %856
+  %865 = phi i64 [ 0, %856 ], [ %867, %864 ]
+  %866 = getelementptr inbounds [256 x float], ptr getelementptr inbounds (%struct.GlobalData, ptr @global_data, i64 0, i32 15, i64 0, i64 0), i64 %857, i64 %865
+  store <4 x float> %863, ptr %866, align 16, !tbaa !13
+  %867 = add nuw nsw i64 %865, 4
+  %868 = icmp eq i64 %867, 256
+  br i1 %868, label %869, label %864, !llvm.loop !120
+
+869:                                              ; preds = %864
+  %870 = icmp eq i64 %858, 256
+  br i1 %870, label %871, label %856
+
+871:                                              ; preds = %884, %869
+  %872 = phi i64 [ %873, %884 ], [ 0, %869 ]
+  %873 = add nuw nsw i64 %872, 1
+  %874 = trunc i64 %873 to i32
+  %875 = sitofp i32 %874 to float
+  %876 = fdiv float 1.000000e+00, %875
+  %877 = insertelement <4 x float> poison, float %876, i64 0
+  %878 = shufflevector <4 x float> %877, <4 x float> poison, <4 x i32> zeroinitializer
+  br label %879
+
+879:                                              ; preds = %879, %871
+  %880 = phi i64 [ 0, %871 ], [ %882, %879 ]
+  %881 = getelementptr inbounds [256 x float], ptr getelementptr inbounds (%struct.GlobalData, ptr @global_data, i64 0, i32 18, i64 0, i64 0), i64 %872, i64 %880
+  store <4 x float> %878, ptr %881, align 16, !tbaa !13
+  %882 = add nuw nsw i64 %880, 4
+  %883 = icmp eq i64 %882, 256
+  br i1 %883, label %884, label %879, !llvm.loop !121
+
+884:                                              ; preds = %879
+  %885 = icmp eq i64 %873, 256
+  br i1 %885, label %886, label %871
+
+886:                                              ; preds = %899, %884
+  %887 = phi i64 [ %888, %899 ], [ 0, %884 ]
+  %888 = add nuw nsw i64 %887, 1
+  %889 = trunc i64 %888 to i32
+  %890 = sitofp i32 %889 to float
+  %891 = fdiv float 1.000000e+00, %890
+  %892 = insertelement <4 x float> poison, float %891, i64 0
+  %893 = shufflevector <4 x float> %892, <4 x float> poison, <4 x i32> zeroinitializer
+  br label %894
+
+894:                                              ; preds = %894, %886
+  %895 = phi i64 [ 0, %886 ], [ %897, %894 ]
+  %896 = getelementptr inbounds [256 x float], ptr getelementptr inbounds (%struct.GlobalData, ptr @global_data, i64 0, i32 21, i64 0, i64 0), i64 %887, i64 %895
+  store <4 x float> %893, ptr %896, align 16, !tbaa !13
+  %897 = add nuw nsw i64 %895, 4
+  %898 = icmp eq i64 %897, 256
+  br i1 %898, label %899, label %894, !llvm.loop !122
+
+899:                                              ; preds = %894
+  %900 = icmp eq i64 %888, 256
+  br i1 %900, label %3043, label %886
+
+901:                                              ; preds = %853
+  %902 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.38) #12
+  %903 = icmp eq i32 %902, 0
+  br i1 %903, label %904, label %944
+
+904:                                              ; preds = %911, %901
+  %905 = phi i64 [ %912, %911 ], [ 0, %901 ]
+  br label %906
+
+906:                                              ; preds = %906, %904
+  %907 = phi i64 [ 0, %904 ], [ %909, %906 ]
+  %908 = getelementptr inbounds [256 x float], ptr getelementptr inbounds (%struct.GlobalData, ptr @global_data, i64 0, i32 15, i64 0, i64 0), i64 %905, i64 %907
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %908, align 16, !tbaa !13
+  %909 = add nuw nsw i64 %907, 4
+  %910 = icmp eq i64 %909, 256
+  br i1 %910, label %911, label %906, !llvm.loop !123
+
+911:                                              ; preds = %906
+  %912 = add nuw nsw i64 %905, 1
+  %913 = icmp eq i64 %912, 256
+  br i1 %913, label %914, label %904
+
+914:                                              ; preds = %927, %911
+  %915 = phi i64 [ %916, %927 ], [ 0, %911 ]
+  %916 = add nuw nsw i64 %915, 1
+  %917 = trunc i64 %916 to i32
+  %918 = sitofp i32 %917 to float
+  %919 = fdiv float 1.000000e+00, %918
+  %920 = insertelement <4 x float> poison, float %919, i64 0
+  %921 = shufflevector <4 x float> %920, <4 x float> poison, <4 x i32> zeroinitializer
+  br label %922
+
+922:                                              ; preds = %922, %914
+  %923 = phi i64 [ 0, %914 ], [ %925, %922 ]
+  %924 = getelementptr inbounds [256 x float], ptr getelementptr inbounds (%struct.GlobalData, ptr @global_data, i64 0, i32 18, i64 0, i64 0), i64 %915, i64 %923
+  store <4 x float> %921, ptr %924, align 16, !tbaa !13
+  %925 = add nuw nsw i64 %923, 4
+  %926 = icmp eq i64 %925, 256
+  br i1 %926, label %927, label %922, !llvm.loop !124
+
+927:                                              ; preds = %922
+  %928 = icmp eq i64 %916, 256
+  br i1 %928, label %929, label %914
+
+929:                                              ; preds = %942, %927
+  %930 = phi i64 [ %931, %942 ], [ 0, %927 ]
+  %931 = add nuw nsw i64 %930, 1
+  %932 = trunc i64 %931 to i32
+  %933 = sitofp i32 %932 to float
+  %934 = fdiv float 1.000000e+00, %933
+  %935 = insertelement <4 x float> poison, float %934, i64 0
+  %936 = shufflevector <4 x float> %935, <4 x float> poison, <4 x i32> zeroinitializer
+  br label %937
+
+937:                                              ; preds = %937, %929
+  %938 = phi i64 [ 0, %929 ], [ %940, %937 ]
+  %939 = getelementptr inbounds [256 x float], ptr getelementptr inbounds (%struct.GlobalData, ptr @global_data, i64 0, i32 21, i64 0, i64 0), i64 %930, i64 %938
+  store <4 x float> %936, ptr %939, align 16, !tbaa !13
+  %940 = add nuw nsw i64 %938, 4
+  %941 = icmp eq i64 %940, 256
+  br i1 %941, label %942, label %937, !llvm.loop !125
+
+942:                                              ; preds = %937
+  %943 = icmp eq i64 %931, 256
+  br i1 %943, label %3043, label %929
+
+944:                                              ; preds = %901
+  %945 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.39) #12
+  %946 = icmp eq i32 %945, 0
+  br i1 %946, label %947, label %994
+
+947:                                              ; preds = %947, %944
+  %948 = phi i64 [ %950, %947 ], [ 0, %944 ]
+  %949 = getelementptr inbounds float, ptr @global_data, i64 %948
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %949, align 16, !tbaa !13
+  %950 = add nuw nsw i64 %948, 4
+  %951 = icmp eq i64 %950, 32000
+  br i1 %951, label %952, label %947, !llvm.loop !126
+
+952:                                              ; preds = %952, %947
+  %953 = phi i64 [ %957, %952 ], [ 0, %947 ]
+  %954 = phi <4 x i32> [ %958, %952 ], [ <i32 0, i32 1, i32 2, i32 3>, %947 ]
+  %955 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %954)
+  %956 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 3, i64 %953
+  store <4 x float> %955, ptr %956, align 16, !tbaa !13
+  %957 = add nuw nsw i64 %953, 4
+  %958 = add <4 x i32> %954, <i32 4, i32 4, i32 4, i32 4>
+  %959 = icmp eq i64 %957, 32000
+  br i1 %959, label %960, label %952, !llvm.loop !127
+
+960:                                              ; preds = %960, %952
+  %961 = phi i64 [ %965, %960 ], [ 0, %952 ]
+  %962 = phi <4 x i32> [ %966, %960 ], [ <i32 0, i32 1, i32 2, i32 3>, %952 ]
+  %963 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %962)
+  %964 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 6, i64 %961
+  store <4 x float> %963, ptr %964, align 16, !tbaa !13
+  %965 = add nuw nsw i64 %961, 4
+  %966 = add <4 x i32> %962, <i32 4, i32 4, i32 4, i32 4>
+  %967 = icmp eq i64 %965, 32000
+  br i1 %967, label %968, label %960, !llvm.loop !128
+
+968:                                              ; preds = %975, %960
+  %969 = phi i64 [ %976, %975 ], [ 0, %960 ]
+  br label %970
+
+970:                                              ; preds = %970, %968
+  %971 = phi i64 [ 0, %968 ], [ %973, %970 ]
+  %972 = getelementptr inbounds [256 x float], ptr getelementptr inbounds (%struct.GlobalData, ptr @global_data, i64 0, i32 15, i64 0, i64 0), i64 %969, i64 %971
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %972, align 16, !tbaa !13
+  %973 = add nuw nsw i64 %971, 4
+  %974 = icmp eq i64 %973, 256
+  br i1 %974, label %975, label %970, !llvm.loop !129
+
+975:                                              ; preds = %970
+  %976 = add nuw nsw i64 %969, 1
+  %977 = icmp eq i64 %976, 256
+  br i1 %977, label %978, label %968
+
+978:                                              ; preds = %992, %975
+  %979 = phi i64 [ %980, %992 ], [ 0, %975 ]
+  %980 = add nuw nsw i64 %979, 1
+  %981 = trunc i64 %980 to i32
+  %982 = mul nsw i32 %981, %981
+  %983 = sitofp i32 %982 to float
+  %984 = fdiv float 1.000000e+00, %983
+  %985 = insertelement <4 x float> poison, float %984, i64 0
+  %986 = shufflevector <4 x float> %985, <4 x float> poison, <4 x i32> zeroinitializer
+  br label %987
+
+987:                                              ; preds = %987, %978
+  %988 = phi i64 [ 0, %978 ], [ %990, %987 ]
+  %989 = getelementptr inbounds [256 x float], ptr getelementptr inbounds (%struct.GlobalData, ptr @global_data, i64 0, i32 18, i64 0, i64 0), i64 %979, i64 %988
+  store <4 x float> %986, ptr %989, align 16, !tbaa !13
+  %990 = add nuw nsw i64 %988, 4
+  %991 = icmp eq i64 %990, 256
+  br i1 %991, label %992, label %987, !llvm.loop !130
+
+992:                                              ; preds = %987
+  %993 = icmp eq i64 %980, 256
+  br i1 %993, label %3043, label %978
+
+994:                                              ; preds = %944
+  %995 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.40) #12
+  %996 = icmp eq i32 %995, 0
+  br i1 %996, label %997, label %1017
+
+997:                                              ; preds = %997, %994
+  %998 = phi i64 [ %1000, %997 ], [ 0, %994 ]
+  %999 = getelementptr inbounds float, ptr @global_data, i64 %998
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %999, align 16, !tbaa !13
+  %1000 = add nuw nsw i64 %998, 4
+  %1001 = icmp eq i64 %1000, 32000
+  br i1 %1001, label %1002, label %997, !llvm.loop !131
+
+1002:                                             ; preds = %1002, %997
+  %1003 = phi i64 [ %1005, %1002 ], [ 0, %997 ]
+  %1004 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 3, i64 %1003
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %1004, align 16, !tbaa !13
+  %1005 = add nuw nsw i64 %1003, 4
+  %1006 = icmp eq i64 %1005, 32000
+  br i1 %1006, label %1007, label %1002, !llvm.loop !132
+
+1007:                                             ; preds = %1007, %1002
+  %1008 = phi i64 [ %1010, %1007 ], [ 0, %1002 ]
+  %1009 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 6, i64 %1008
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %1009, align 16, !tbaa !13
+  %1010 = add nuw nsw i64 %1008, 4
+  %1011 = icmp eq i64 %1010, 32000
+  br i1 %1011, label %1012, label %1007, !llvm.loop !133
+
+1012:                                             ; preds = %1012, %1007
+  %1013 = phi i64 [ %1015, %1012 ], [ 0, %1007 ]
+  %1014 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 9, i64 %1013
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %1014, align 16, !tbaa !13
+  %1015 = add nuw nsw i64 %1013, 4
+  %1016 = icmp eq i64 %1015, 32000
+  br i1 %1016, label %3043, label %1012, !llvm.loop !134
+
+1017:                                             ; preds = %994
+  %1018 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.41) #12
+  %1019 = icmp eq i32 %1018, 0
+  br i1 %1019, label %1020, label %1040
+
+1020:                                             ; preds = %1020, %1017
+  %1021 = phi i64 [ %1023, %1020 ], [ 0, %1017 ]
+  %1022 = getelementptr inbounds float, ptr @global_data, i64 %1021
+  store <4 x float> <float 0x3EB0C6F7A0000000, float 0x3EB0C6F7A0000000, float 0x3EB0C6F7A0000000, float 0x3EB0C6F7A0000000>, ptr %1022, align 16, !tbaa !13
+  %1023 = add nuw nsw i64 %1021, 4
+  %1024 = icmp eq i64 %1023, 32000
+  br i1 %1024, label %1025, label %1020, !llvm.loop !135
+
+1025:                                             ; preds = %1025, %1020
+  %1026 = phi i64 [ %1028, %1025 ], [ 0, %1020 ]
+  %1027 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 3, i64 %1026
+  store <4 x float> <float 0x3EB0C6F7A0000000, float 0x3EB0C6F7A0000000, float 0x3EB0C6F7A0000000, float 0x3EB0C6F7A0000000>, ptr %1027, align 16, !tbaa !13
+  %1028 = add nuw nsw i64 %1026, 4
+  %1029 = icmp eq i64 %1028, 32000
+  br i1 %1029, label %1030, label %1025, !llvm.loop !136
+
+1030:                                             ; preds = %1030, %1025
+  %1031 = phi i64 [ %1033, %1030 ], [ 0, %1025 ]
+  %1032 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 6, i64 %1031
+  store <4 x float> <float 0x3EB0C6F7A0000000, float 0x3EB0C6F7A0000000, float 0x3EB0C6F7A0000000, float 0x3EB0C6F7A0000000>, ptr %1032, align 16, !tbaa !13
+  %1033 = add nuw nsw i64 %1031, 4
+  %1034 = icmp eq i64 %1033, 32000
+  br i1 %1034, label %1035, label %1030, !llvm.loop !137
+
+1035:                                             ; preds = %1035, %1030
+  %1036 = phi i64 [ %1038, %1035 ], [ 0, %1030 ]
+  %1037 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 9, i64 %1036
+  store <4 x float> <float 0x3EB0C6F7A0000000, float 0x3EB0C6F7A0000000, float 0x3EB0C6F7A0000000, float 0x3EB0C6F7A0000000>, ptr %1037, align 16, !tbaa !13
+  %1038 = add nuw nsw i64 %1036, 4
+  %1039 = icmp eq i64 %1038, 32000
+  br i1 %1039, label %3043, label %1035, !llvm.loop !138
+
+1040:                                             ; preds = %1017
+  %1041 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.42) #12
+  %1042 = icmp eq i32 %1041, 0
+  br i1 %1042, label %1043, label %1073
+
+1043:                                             ; preds = %1040
+  tail call void @llvm.memset.p0.i64(ptr noundef nonnull align 16 dereferenceable(128000) @global_data, i8 0, i64 128000, i1 false), !tbaa !13
+  br label %1044
+
+1044:                                             ; preds = %1044, %1043
+  %1045 = phi i64 [ 0, %1043 ], [ %1047, %1044 ]
+  %1046 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 3, i64 %1045
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %1046, align 16, !tbaa !13
+  %1047 = add nuw nsw i64 %1045, 4
+  %1048 = icmp eq i64 %1047, 32000
+  br i1 %1048, label %1049, label %1044, !llvm.loop !139
+
+1049:                                             ; preds = %1049, %1044
+  %1050 = phi i64 [ %1054, %1049 ], [ 0, %1044 ]
+  %1051 = phi <4 x i32> [ %1055, %1049 ], [ <i32 0, i32 1, i32 2, i32 3>, %1044 ]
+  %1052 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %1051)
+  %1053 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 6, i64 %1050
+  store <4 x float> %1052, ptr %1053, align 16, !tbaa !13
+  %1054 = add nuw nsw i64 %1050, 4
+  %1055 = add <4 x i32> %1051, <i32 4, i32 4, i32 4, i32 4>
+  %1056 = icmp eq i64 %1054, 32000
+  br i1 %1056, label %1057, label %1049, !llvm.loop !140
+
+1057:                                             ; preds = %1057, %1049
+  %1058 = phi i64 [ %1062, %1057 ], [ 0, %1049 ]
+  %1059 = phi <4 x i32> [ %1063, %1057 ], [ <i32 0, i32 1, i32 2, i32 3>, %1049 ]
+  %1060 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %1059)
+  %1061 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 9, i64 %1058
+  store <4 x float> %1060, ptr %1061, align 16, !tbaa !13
+  %1062 = add nuw nsw i64 %1058, 4
+  %1063 = add <4 x i32> %1059, <i32 4, i32 4, i32 4, i32 4>
+  %1064 = icmp eq i64 %1062, 32000
+  br i1 %1064, label %1065, label %1057, !llvm.loop !141
+
+1065:                                             ; preds = %1065, %1057
+  %1066 = phi i64 [ %1070, %1065 ], [ 0, %1057 ]
+  %1067 = phi <4 x i32> [ %1071, %1065 ], [ <i32 0, i32 1, i32 2, i32 3>, %1057 ]
+  %1068 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %1067)
+  %1069 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 12, i64 %1066
+  store <4 x float> %1068, ptr %1069, align 16, !tbaa !13
+  %1070 = add nuw nsw i64 %1066, 4
+  %1071 = add <4 x i32> %1067, <i32 4, i32 4, i32 4, i32 4>
+  %1072 = icmp eq i64 %1070, 32000
+  br i1 %1072, label %3043, label %1065, !llvm.loop !142
+
+1073:                                             ; preds = %1040
+  %1074 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.43) #12
+  %1075 = icmp eq i32 %1074, 0
+  br i1 %1075, label %1076, label %1092
+
+1076:                                             ; preds = %1073
+  tail call void @llvm.memset.p0.i64(ptr noundef nonnull align 16 dereferenceable(128000) @global_data, i8 0, i64 128000, i1 false), !tbaa !13
+  br label %1077
+
+1077:                                             ; preds = %1077, %1076
+  %1078 = phi i64 [ 0, %1076 ], [ %1080, %1077 ]
+  %1079 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 3, i64 %1078
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %1079, align 16, !tbaa !13
+  %1080 = add nuw nsw i64 %1078, 4
+  %1081 = icmp eq i64 %1080, 32000
+  br i1 %1081, label %1082, label %1077, !llvm.loop !143
+
+1082:                                             ; preds = %1082, %1077
+  %1083 = phi i64 [ %1085, %1082 ], [ 0, %1077 ]
+  %1084 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 6, i64 %1083
+  store <4 x float> <float 0x3EB0C6F7A0000000, float 0x3EB0C6F7A0000000, float 0x3EB0C6F7A0000000, float 0x3EB0C6F7A0000000>, ptr %1084, align 16, !tbaa !13
+  %1085 = add nuw nsw i64 %1083, 4
+  %1086 = icmp eq i64 %1085, 32000
+  br i1 %1086, label %1087, label %1082, !llvm.loop !144
+
+1087:                                             ; preds = %1087, %1082
+  %1088 = phi i64 [ %1090, %1087 ], [ 0, %1082 ]
+  %1089 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 9, i64 %1088
+  store <4 x float> <float 0x3EB0C6F7A0000000, float 0x3EB0C6F7A0000000, float 0x3EB0C6F7A0000000, float 0x3EB0C6F7A0000000>, ptr %1089, align 16, !tbaa !13
+  %1090 = add nuw nsw i64 %1088, 4
+  %1091 = icmp eq i64 %1090, 32000
+  br i1 %1091, label %3043, label %1087, !llvm.loop !145
+
+1092:                                             ; preds = %1073
+  %1093 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.44) #12
+  %1094 = icmp eq i32 %1093, 0
+  br i1 %1094, label %1095, label %1125
+
+1095:                                             ; preds = %1092
+  tail call void @llvm.memset.p0.i64(ptr noundef nonnull align 16 dereferenceable(128000) @global_data, i8 0, i64 128000, i1 false), !tbaa !13
+  br label %1096
+
+1096:                                             ; preds = %1096, %1095
+  %1097 = phi i64 [ 0, %1095 ], [ %1099, %1096 ]
+  %1098 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 3, i64 %1097
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %1098, align 16, !tbaa !13
+  %1099 = add nuw nsw i64 %1097, 4
+  %1100 = icmp eq i64 %1099, 32000
+  br i1 %1100, label %1101, label %1096, !llvm.loop !146
+
+1101:                                             ; preds = %1101, %1096
+  %1102 = phi i64 [ %1106, %1101 ], [ 0, %1096 ]
+  %1103 = phi <4 x i32> [ %1107, %1101 ], [ <i32 0, i32 1, i32 2, i32 3>, %1096 ]
+  %1104 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %1103)
+  %1105 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 6, i64 %1102
+  store <4 x float> %1104, ptr %1105, align 16, !tbaa !13
+  %1106 = add nuw nsw i64 %1102, 4
+  %1107 = add <4 x i32> %1103, <i32 4, i32 4, i32 4, i32 4>
+  %1108 = icmp eq i64 %1106, 32000
+  br i1 %1108, label %1109, label %1101, !llvm.loop !147
+
+1109:                                             ; preds = %1109, %1101
+  %1110 = phi i64 [ %1114, %1109 ], [ 0, %1101 ]
+  %1111 = phi <4 x i32> [ %1115, %1109 ], [ <i32 0, i32 1, i32 2, i32 3>, %1101 ]
+  %1112 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %1111)
+  %1113 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 9, i64 %1110
+  store <4 x float> %1112, ptr %1113, align 16, !tbaa !13
+  %1114 = add nuw nsw i64 %1110, 4
+  %1115 = add <4 x i32> %1111, <i32 4, i32 4, i32 4, i32 4>
+  %1116 = icmp eq i64 %1114, 32000
+  br i1 %1116, label %1117, label %1109, !llvm.loop !148
+
+1117:                                             ; preds = %1117, %1109
+  %1118 = phi i64 [ %1122, %1117 ], [ 0, %1109 ]
+  %1119 = phi <4 x i32> [ %1123, %1117 ], [ <i32 0, i32 1, i32 2, i32 3>, %1109 ]
+  %1120 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %1119)
+  %1121 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 12, i64 %1118
+  store <4 x float> %1120, ptr %1121, align 16, !tbaa !13
+  %1122 = add nuw nsw i64 %1118, 4
+  %1123 = add <4 x i32> %1119, <i32 4, i32 4, i32 4, i32 4>
+  %1124 = icmp eq i64 %1122, 32000
+  br i1 %1124, label %3043, label %1117, !llvm.loop !149
+
+1125:                                             ; preds = %1092
+  %1126 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.45) #12
+  %1127 = icmp eq i32 %1126, 0
+  br i1 %1127, label %1128, label %1139
+
+1128:                                             ; preds = %1125
+  tail call void @llvm.memset.p0.i64(ptr noundef nonnull align 16 dereferenceable(128000) @global_data, i8 0, i64 128000, i1 false), !tbaa !13
+  br label %1129
+
+1129:                                             ; preds = %1129, %1128
+  %1130 = phi i64 [ 0, %1128 ], [ %1132, %1129 ]
+  %1131 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 3, i64 %1130
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %1131, align 16, !tbaa !13
+  %1132 = add nuw nsw i64 %1130, 4
+  %1133 = icmp eq i64 %1132, 32000
+  br i1 %1133, label %1134, label %1129, !llvm.loop !150
+
+1134:                                             ; preds = %1134, %1129
+  %1135 = phi i64 [ %1137, %1134 ], [ 0, %1129 ]
+  %1136 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 6, i64 %1135
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %1136, align 16, !tbaa !13
+  %1137 = add nuw nsw i64 %1135, 4
+  %1138 = icmp eq i64 %1137, 32000
+  br i1 %1138, label %3043, label %1134, !llvm.loop !151
+
+1139:                                             ; preds = %1125
+  %1140 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.46) #12
+  %1141 = icmp eq i32 %1140, 0
+  br i1 %1141, label %1142, label %1165
+
+1142:                                             ; preds = %1142, %1139
+  %1143 = phi i64 [ %1145, %1142 ], [ 0, %1139 ]
+  %1144 = getelementptr inbounds float, ptr @global_data, i64 %1143
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %1144, align 16, !tbaa !13
+  %1145 = add nuw nsw i64 %1143, 4
+  %1146 = icmp eq i64 %1145, 32000
+  br i1 %1146, label %1147, label %1142, !llvm.loop !152
+
+1147:                                             ; preds = %1147, %1142
+  %1148 = phi i64 [ %1150, %1147 ], [ 0, %1142 ]
+  %1149 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 3, i64 %1148
+  store <4 x float> <float 0x3EB0C6F7A0000000, float 0x3EB0C6F7A0000000, float 0x3EB0C6F7A0000000, float 0x3EB0C6F7A0000000>, ptr %1149, align 16, !tbaa !13
+  %1150 = add nuw nsw i64 %1148, 4
+  %1151 = icmp eq i64 %1150, 32000
+  br i1 %1151, label %1152, label %1147, !llvm.loop !153
+
+1152:                                             ; preds = %1152, %1147
+  %1153 = phi i64 [ %1155, %1152 ], [ 0, %1147 ]
+  %1154 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 6, i64 %1153
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %1154, align 16, !tbaa !13
+  %1155 = add nuw nsw i64 %1153, 4
+  %1156 = icmp eq i64 %1155, 32000
+  br i1 %1156, label %1157, label %1152, !llvm.loop !154
+
+1157:                                             ; preds = %1157, %1152
+  %1158 = phi i64 [ %1162, %1157 ], [ 0, %1152 ]
+  %1159 = phi <4 x i32> [ %1163, %1157 ], [ <i32 0, i32 1, i32 2, i32 3>, %1152 ]
+  %1160 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %1159)
+  %1161 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 9, i64 %1158
+  store <4 x float> %1160, ptr %1161, align 16, !tbaa !13
+  %1162 = add nuw nsw i64 %1158, 4
+  %1163 = add <4 x i32> %1159, <i32 4, i32 4, i32 4, i32 4>
+  %1164 = icmp eq i64 %1162, 32000
+  br i1 %1164, label %3043, label %1157, !llvm.loop !155
+
+1165:                                             ; preds = %1139
+  %1166 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.47) #12
+  %1167 = icmp eq i32 %1166, 0
+  br i1 %1167, label %1168, label %1174
+
+1168:                                             ; preds = %1165
+  tail call void @llvm.memset.p0.i64(ptr noundef nonnull align 16 dereferenceable(128000) @global_data, i8 0, i64 128000, i1 false), !tbaa !13
+  br label %1169
+
+1169:                                             ; preds = %1169, %1168
+  %1170 = phi i64 [ 0, %1168 ], [ %1172, %1169 ]
+  %1171 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 3, i64 %1170
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %1171, align 16, !tbaa !13
+  %1172 = add nuw nsw i64 %1170, 4
+  %1173 = icmp eq i64 %1172, 32000
+  br i1 %1173, label %3043, label %1169, !llvm.loop !156
+
+1174:                                             ; preds = %1165
+  %1175 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.48) #12
+  %1176 = icmp eq i32 %1175, 0
+  br i1 %1176, label %1177, label %1183
+
+1177:                                             ; preds = %1174
+  tail call void @llvm.memset.p0.i64(ptr noundef nonnull align 16 dereferenceable(128000) @global_data, i8 0, i64 128000, i1 false), !tbaa !13
+  br label %1178
+
+1178:                                             ; preds = %1178, %1177
+  %1179 = phi i64 [ 0, %1177 ], [ %1181, %1178 ]
+  %1180 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 3, i64 %1179
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %1180, align 16, !tbaa !13
+  %1181 = add nuw nsw i64 %1179, 4
+  %1182 = icmp eq i64 %1181, 32000
+  br i1 %1182, label %3043, label %1178, !llvm.loop !157
+
+1183:                                             ; preds = %1174
+  %1184 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.49) #12
+  %1185 = icmp eq i32 %1184, 0
+  br i1 %1185, label %1186, label %1211
+
+1186:                                             ; preds = %1186, %1183
+  %1187 = phi i64 [ %1189, %1186 ], [ 0, %1183 ]
+  %1188 = getelementptr inbounds float, ptr @global_data, i64 %1187
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %1188, align 16, !tbaa !13
+  %1189 = add nuw nsw i64 %1187, 4
+  %1190 = icmp eq i64 %1189, 32000
+  br i1 %1190, label %1191, label %1186, !llvm.loop !158
+
+1191:                                             ; preds = %1198, %1186
+  %1192 = phi i64 [ %1199, %1198 ], [ 0, %1186 ]
+  br label %1193
+
+1193:                                             ; preds = %1193, %1191
+  %1194 = phi i64 [ 0, %1191 ], [ %1196, %1193 ]
+  %1195 = getelementptr inbounds [256 x float], ptr getelementptr inbounds (%struct.GlobalData, ptr @global_data, i64 0, i32 15, i64 0, i64 0), i64 %1192, i64 %1194
+  store <4 x float> <float 2.000000e+00, float 2.000000e+00, float 2.000000e+00, float 2.000000e+00>, ptr %1195, align 16, !tbaa !13
+  %1196 = add nuw nsw i64 %1194, 4
+  %1197 = icmp eq i64 %1196, 256
+  br i1 %1197, label %1198, label %1193, !llvm.loop !159
+
+1198:                                             ; preds = %1193
+  %1199 = add nuw nsw i64 %1192, 1
+  %1200 = icmp eq i64 %1199, 256
+  br i1 %1200, label %1201, label %1191
+
+1201:                                             ; preds = %1208, %1198
+  %1202 = phi i64 [ %1209, %1208 ], [ 0, %1198 ]
+  br label %1203
+
+1203:                                             ; preds = %1203, %1201
+  %1204 = phi i64 [ 0, %1201 ], [ %1206, %1203 ]
+  %1205 = getelementptr inbounds [256 x float], ptr getelementptr inbounds (%struct.GlobalData, ptr @global_data, i64 0, i32 18, i64 0, i64 0), i64 %1202, i64 %1204
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %1205, align 16, !tbaa !13
+  %1206 = add nuw nsw i64 %1204, 4
+  %1207 = icmp eq i64 %1206, 256
+  br i1 %1207, label %1208, label %1203, !llvm.loop !160
+
+1208:                                             ; preds = %1203
+  %1209 = add nuw nsw i64 %1202, 1
+  %1210 = icmp eq i64 %1209, 256
+  br i1 %1210, label %3043, label %1201
+
+1211:                                             ; preds = %1183
+  %1212 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.50) #12
+  %1213 = icmp eq i32 %1212, 0
+  br i1 %1213, label %1214, label %1239
+
+1214:                                             ; preds = %1214, %1211
+  %1215 = phi i64 [ %1217, %1214 ], [ 0, %1211 ]
+  %1216 = getelementptr inbounds float, ptr @global_data, i64 %1215
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %1216, align 16, !tbaa !13
+  %1217 = add nuw nsw i64 %1215, 4
+  %1218 = icmp eq i64 %1217, 32000
+  br i1 %1218, label %1219, label %1214, !llvm.loop !161
+
+1219:                                             ; preds = %1226, %1214
+  %1220 = phi i64 [ %1227, %1226 ], [ 0, %1214 ]
+  br label %1221
+
+1221:                                             ; preds = %1221, %1219
+  %1222 = phi i64 [ 0, %1219 ], [ %1224, %1221 ]
+  %1223 = getelementptr inbounds [256 x float], ptr getelementptr inbounds (%struct.GlobalData, ptr @global_data, i64 0, i32 15, i64 0, i64 0), i64 %1220, i64 %1222
+  store <4 x float> <float 2.000000e+00, float 2.000000e+00, float 2.000000e+00, float 2.000000e+00>, ptr %1223, align 16, !tbaa !13
+  %1224 = add nuw nsw i64 %1222, 4
+  %1225 = icmp eq i64 %1224, 256
+  br i1 %1225, label %1226, label %1221, !llvm.loop !162
+
+1226:                                             ; preds = %1221
+  %1227 = add nuw nsw i64 %1220, 1
+  %1228 = icmp eq i64 %1227, 256
+  br i1 %1228, label %1229, label %1219
+
+1229:                                             ; preds = %1236, %1226
+  %1230 = phi i64 [ %1237, %1236 ], [ 0, %1226 ]
+  br label %1231
+
+1231:                                             ; preds = %1231, %1229
+  %1232 = phi i64 [ 0, %1229 ], [ %1234, %1231 ]
+  %1233 = getelementptr inbounds [256 x float], ptr getelementptr inbounds (%struct.GlobalData, ptr @global_data, i64 0, i32 18, i64 0, i64 0), i64 %1230, i64 %1232
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %1233, align 16, !tbaa !13
+  %1234 = add nuw nsw i64 %1232, 4
+  %1235 = icmp eq i64 %1234, 256
+  br i1 %1235, label %1236, label %1231, !llvm.loop !163
+
+1236:                                             ; preds = %1231
+  %1237 = add nuw nsw i64 %1230, 1
+  %1238 = icmp eq i64 %1237, 256
+  br i1 %1238, label %3043, label %1229
+
+1239:                                             ; preds = %1211
+  %1240 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.51) #12
+  %1241 = icmp eq i32 %1240, 0
+  br i1 %1241, label %1242, label %1283
+
+1242:                                             ; preds = %1242, %1239
+  %1243 = phi i64 [ %1247, %1242 ], [ 0, %1239 ]
+  %1244 = phi <4 x i32> [ %1248, %1242 ], [ <i32 0, i32 1, i32 2, i32 3>, %1239 ]
+  %1245 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %1244)
+  %1246 = getelementptr inbounds float, ptr @global_data, i64 %1243
+  store <4 x float> %1245, ptr %1246, align 16, !tbaa !13
+  %1247 = add nuw nsw i64 %1243, 4
+  %1248 = add <4 x i32> %1244, <i32 4, i32 4, i32 4, i32 4>
+  %1249 = icmp eq i64 %1247, 32000
+  br i1 %1249, label %1250, label %1242, !llvm.loop !164
+
+1250:                                             ; preds = %1242
+  tail call void @llvm.memset.p0.i64(ptr noundef nonnull align 16 dereferenceable(128000) getelementptr inbounds (%struct.GlobalData, ptr @global_data, i64 0, i32 3, i64 0), i8 0, i64 128000, i1 false), !tbaa !13
+  br label %1251
+
+1251:                                             ; preds = %1251, %1250
+  %1252 = phi i64 [ 0, %1250 ], [ %1256, %1251 ]
+  %1253 = phi <4 x i32> [ <i32 0, i32 1, i32 2, i32 3>, %1250 ], [ %1257, %1251 ]
+  %1254 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %1253)
+  %1255 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 6, i64 %1252
+  store <4 x float> %1254, ptr %1255, align 16, !tbaa !13
+  %1256 = add nuw nsw i64 %1252, 4
+  %1257 = add <4 x i32> %1253, <i32 4, i32 4, i32 4, i32 4>
+  %1258 = icmp eq i64 %1256, 32000
+  br i1 %1258, label %1259, label %1251, !llvm.loop !165
+
+1259:                                             ; preds = %1259, %1251
+  %1260 = phi i64 [ %1264, %1259 ], [ 0, %1251 ]
+  %1261 = phi <4 x i32> [ %1265, %1259 ], [ <i32 0, i32 1, i32 2, i32 3>, %1251 ]
+  %1262 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %1261)
+  %1263 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 9, i64 %1260
+  store <4 x float> %1262, ptr %1263, align 16, !tbaa !13
+  %1264 = add nuw nsw i64 %1260, 4
+  %1265 = add <4 x i32> %1261, <i32 4, i32 4, i32 4, i32 4>
+  %1266 = icmp eq i64 %1264, 32000
+  br i1 %1266, label %1267, label %1259, !llvm.loop !166
+
+1267:                                             ; preds = %1259
+  tail call void @llvm.memset.p0.i64(ptr noundef nonnull align 16 dereferenceable(128000) getelementptr inbounds (%struct.GlobalData, ptr @global_data, i64 0, i32 12, i64 0), i8 0, i64 128000, i1 false), !tbaa !13
+  br label %1268
+
+1268:                                             ; preds = %1281, %1267
+  %1269 = phi i64 [ %1270, %1281 ], [ 0, %1267 ]
+  %1270 = add nuw nsw i64 %1269, 1
+  %1271 = trunc i64 %1270 to i32
+  %1272 = sitofp i32 %1271 to float
+  %1273 = fdiv float 1.000000e+00, %1272
+  %1274 = insertelement <4 x float> poison, float %1273, i64 0
+  %1275 = shufflevector <4 x float> %1274, <4 x float> poison, <4 x i32> zeroinitializer
+  br label %1276
+
+1276:                                             ; preds = %1276, %1268
+  %1277 = phi i64 [ 0, %1268 ], [ %1279, %1276 ]
+  %1278 = getelementptr inbounds [256 x float], ptr getelementptr inbounds (%struct.GlobalData, ptr @global_data, i64 0, i32 15, i64 0, i64 0), i64 %1269, i64 %1277
+  store <4 x float> %1275, ptr %1278, align 16, !tbaa !13
+  %1279 = add nuw nsw i64 %1277, 4
+  %1280 = icmp eq i64 %1279, 256
+  br i1 %1280, label %1281, label %1276, !llvm.loop !167
+
+1281:                                             ; preds = %1276
+  %1282 = icmp eq i64 %1270, 256
+  br i1 %1282, label %3043, label %1268
+
+1283:                                             ; preds = %1239
+  %1284 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.52) #12
+  %1285 = icmp eq i32 %1284, 0
+  br i1 %1285, label %1286, label %1312
+
+1286:                                             ; preds = %1286, %1283
+  %1287 = phi i64 [ %1289, %1286 ], [ 0, %1283 ]
+  %1288 = getelementptr inbounds float, ptr @global_data, i64 %1287
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %1288, align 16, !tbaa !13
+  %1289 = add nuw nsw i64 %1287, 4
+  %1290 = icmp eq i64 %1289, 32000
+  br i1 %1290, label %1291, label %1286, !llvm.loop !168
+
+1291:                                             ; preds = %1291, %1286
+  %1292 = phi i64 [ %1296, %1291 ], [ 0, %1286 ]
+  %1293 = phi <4 x i32> [ %1297, %1291 ], [ <i32 0, i32 1, i32 2, i32 3>, %1286 ]
+  %1294 = call <4 x float> @_wyvern_slice_init__102007472(<4 x i32> %1293)
+  %1295 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 3, i64 %1292
+  store <4 x float> %1294, ptr %1295, align 16, !tbaa !13
+  %1296 = add nuw nsw i64 %1292, 4
+  %1297 = add <4 x i32> %1293, <i32 4, i32 4, i32 4, i32 4>
+  %1298 = icmp eq i64 %1296, 32000
+  br i1 %1298, label %1299, label %1291, !llvm.loop !169
+
+1299:                                             ; preds = %1299, %1291
+  %1300 = phi i64 [ %1304, %1299 ], [ 0, %1291 ]
+  %1301 = phi <4 x i32> [ %1305, %1299 ], [ <i32 0, i32 1, i32 2, i32 3>, %1291 ]
+  %1302 = call <4 x float> @_wyvern_slice_init__102007472(<4 x i32> %1301)
+  %1303 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 6, i64 %1300
+  store <4 x float> %1302, ptr %1303, align 16, !tbaa !13
+  %1304 = add nuw nsw i64 %1300, 4
+  %1305 = add <4 x i32> %1301, <i32 4, i32 4, i32 4, i32 4>
+  %1306 = icmp eq i64 %1304, 32000
+  br i1 %1306, label %1307, label %1299, !llvm.loop !170
+
+1307:                                             ; preds = %1307, %1299
+  %1308 = phi i64 [ %1310, %1307 ], [ 0, %1299 ]
+  %1309 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 9, i64 %1308
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %1309, align 16, !tbaa !13
+  %1310 = add nuw nsw i64 %1308, 4
+  %1311 = icmp eq i64 %1310, 32000
+  br i1 %1311, label %3043, label %1307, !llvm.loop !171
+
+1312:                                             ; preds = %1283
+  %1313 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.53) #12
+  %1314 = icmp eq i32 %1313, 0
+  br i1 %1314, label %1315, label %1336
+
+1315:                                             ; preds = %1315, %1312
+  %1316 = phi i64 [ %1318, %1315 ], [ 0, %1312 ]
+  %1317 = getelementptr inbounds float, ptr @global_data, i64 %1316
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %1317, align 16, !tbaa !13
+  %1318 = add nuw nsw i64 %1316, 4
+  %1319 = icmp eq i64 %1318, 32000
+  br i1 %1319, label %1320, label %1315, !llvm.loop !172
+
+1320:                                             ; preds = %1320, %1315
+  %1321 = phi i64 [ %1325, %1320 ], [ 0, %1315 ]
+  %1322 = phi <4 x i32> [ %1326, %1320 ], [ <i32 0, i32 1, i32 2, i32 3>, %1315 ]
+  %1323 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %1322)
+  %1324 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 3, i64 %1321
+  store <4 x float> %1323, ptr %1324, align 16, !tbaa !13
+  %1325 = add nuw nsw i64 %1321, 4
+  %1326 = add <4 x i32> %1322, <i32 4, i32 4, i32 4, i32 4>
+  %1327 = icmp eq i64 %1325, 32000
+  br i1 %1327, label %1328, label %1320, !llvm.loop !173
+
+1328:                                             ; preds = %1328, %1320
+  %1329 = phi i64 [ %1333, %1328 ], [ 0, %1320 ]
+  %1330 = phi <4 x i32> [ %1334, %1328 ], [ <i32 0, i32 1, i32 2, i32 3>, %1320 ]
+  %1331 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %1330)
+  %1332 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 6, i64 %1329
+  store <4 x float> %1331, ptr %1332, align 16, !tbaa !13
+  %1333 = add nuw nsw i64 %1329, 4
+  %1334 = add <4 x i32> %1330, <i32 4, i32 4, i32 4, i32 4>
+  %1335 = icmp eq i64 %1333, 32000
+  br i1 %1335, label %3043, label %1328, !llvm.loop !174
+
+1336:                                             ; preds = %1312
+  %1337 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.54) #12
+  %1338 = icmp eq i32 %1337, 0
+  br i1 %1338, label %1339, label %1370
+
+1339:                                             ; preds = %1339, %1336
+  %1340 = phi i64 [ %1342, %1339 ], [ 0, %1336 ]
+  %1341 = getelementptr inbounds float, ptr @global_data, i64 %1340
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %1341, align 16, !tbaa !13
+  %1342 = add nuw nsw i64 %1340, 4
+  %1343 = icmp eq i64 %1342, 32000
+  br i1 %1343, label %1344, label %1339, !llvm.loop !175
+
+1344:                                             ; preds = %1344, %1339
+  %1345 = phi i64 [ %1347, %1344 ], [ 0, %1339 ]
+  %1346 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 3, i64 %1345
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %1346, align 16, !tbaa !13
+  %1347 = add nuw nsw i64 %1345, 4
+  %1348 = icmp eq i64 %1347, 32000
+  br i1 %1348, label %1349, label %1344, !llvm.loop !176
+
+1349:                                             ; preds = %1349, %1344
+  %1350 = phi i64 [ %1354, %1349 ], [ 0, %1344 ]
+  %1351 = phi <4 x i32> [ %1355, %1349 ], [ <i32 0, i32 1, i32 2, i32 3>, %1344 ]
+  %1352 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %1351)
+  %1353 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 6, i64 %1350
+  store <4 x float> %1352, ptr %1353, align 16, !tbaa !13
+  %1354 = add nuw nsw i64 %1350, 4
+  %1355 = add <4 x i32> %1351, <i32 4, i32 4, i32 4, i32 4>
+  %1356 = icmp eq i64 %1354, 32000
+  br i1 %1356, label %1357, label %1349, !llvm.loop !177
+
+1357:                                             ; preds = %1357, %1349
+  %1358 = phi i64 [ %1362, %1357 ], [ 0, %1349 ]
+  %1359 = phi <4 x i32> [ %1363, %1357 ], [ <i32 0, i32 1, i32 2, i32 3>, %1349 ]
+  %1360 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %1359)
+  %1361 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 9, i64 %1358
+  store <4 x float> %1360, ptr %1361, align 16, !tbaa !13
+  %1362 = add nuw nsw i64 %1358, 4
+  %1363 = add <4 x i32> %1359, <i32 4, i32 4, i32 4, i32 4>
+  %1364 = icmp eq i64 %1362, 32000
+  br i1 %1364, label %1365, label %1357, !llvm.loop !178
+
+1365:                                             ; preds = %1365, %1357
+  %1366 = phi i64 [ %1368, %1365 ], [ 0, %1357 ]
+  %1367 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 12, i64 %1366
+  store <4 x float> <float 2.000000e+00, float 2.000000e+00, float 2.000000e+00, float 2.000000e+00>, ptr %1367, align 16, !tbaa !13
+  %1368 = add nuw nsw i64 %1366, 4
+  %1369 = icmp eq i64 %1368, 32000
+  br i1 %1369, label %3043, label %1365, !llvm.loop !179
+
+1370:                                             ; preds = %1336
+  %1371 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.55) #12
+  %1372 = icmp eq i32 %1371, 0
+  br i1 %1372, label %1373, label %1401
+
+1373:                                             ; preds = %1373, %1370
+  %1374 = phi i64 [ %1376, %1373 ], [ 0, %1370 ]
+  %1375 = getelementptr inbounds float, ptr @global_data, i64 %1374
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %1375, align 16, !tbaa !13
+  %1376 = add nuw nsw i64 %1374, 4
+  %1377 = icmp eq i64 %1376, 32000
+  br i1 %1377, label %1378, label %1373, !llvm.loop !180
+
+1378:                                             ; preds = %1378, %1373
+  %1379 = phi i64 [ %1381, %1378 ], [ 0, %1373 ]
+  %1380 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 3, i64 %1379
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %1380, align 16, !tbaa !13
+  %1381 = add nuw nsw i64 %1379, 4
+  %1382 = icmp eq i64 %1381, 32000
+  br i1 %1382, label %1383, label %1378, !llvm.loop !181
+
+1383:                                             ; preds = %1383, %1378
+  %1384 = phi i64 [ %1386, %1383 ], [ 0, %1378 ]
+  %1385 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 6, i64 %1384
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %1385, align 16, !tbaa !13
+  %1386 = add nuw nsw i64 %1384, 4
+  %1387 = icmp eq i64 %1386, 32000
+  br i1 %1387, label %1388, label %1383, !llvm.loop !182
+
+1388:                                             ; preds = %1388, %1383
+  %1389 = phi i64 [ %1391, %1388 ], [ 0, %1383 ]
+  %1390 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 9, i64 %1389
+  store <4 x float> <float 0x3EB0C6F7A0000000, float 0x3EB0C6F7A0000000, float 0x3EB0C6F7A0000000, float 0x3EB0C6F7A0000000>, ptr %1390, align 16, !tbaa !13
+  %1391 = add nuw nsw i64 %1389, 4
+  %1392 = icmp eq i64 %1391, 32000
+  br i1 %1392, label %1393, label %1388, !llvm.loop !183
+
+1393:                                             ; preds = %1393, %1388
+  %1394 = phi i64 [ %1398, %1393 ], [ 0, %1388 ]
+  %1395 = phi <4 x i32> [ %1399, %1393 ], [ <i32 0, i32 1, i32 2, i32 3>, %1388 ]
+  %1396 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %1395)
+  %1397 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 12, i64 %1394
+  store <4 x float> %1396, ptr %1397, align 16, !tbaa !13
+  %1398 = add nuw nsw i64 %1394, 4
+  %1399 = add <4 x i32> %1395, <i32 4, i32 4, i32 4, i32 4>
+  %1400 = icmp eq i64 %1398, 32000
+  br i1 %1400, label %3043, label %1393, !llvm.loop !184
+
+1401:                                             ; preds = %1370
+  %1402 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.56) #12
+  %1403 = icmp eq i32 %1402, 0
+  br i1 %1403, label %1404, label %1431
+
+1404:                                             ; preds = %1401
+  tail call void @llvm.memset.p0.i64(ptr noundef nonnull align 16 dereferenceable(128000) @global_data, i8 0, i64 128000, i1 false), !tbaa !13
+  br label %1405
+
+1405:                                             ; preds = %1405, %1404
+  %1406 = phi i64 [ 0, %1404 ], [ %1408, %1405 ]
+  %1407 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 3, i64 %1406
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %1407, align 16, !tbaa !13
+  %1408 = add nuw nsw i64 %1406, 4
+  %1409 = icmp eq i64 %1408, 32000
+  br i1 %1409, label %1410, label %1405, !llvm.loop !185
+
+1410:                                             ; preds = %1410, %1405
+  %1411 = phi i64 [ %1413, %1410 ], [ 0, %1405 ]
+  %1412 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 6, i64 %1411
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %1412, align 16, !tbaa !13
+  %1413 = add nuw nsw i64 %1411, 4
+  %1414 = icmp eq i64 %1413, 32000
+  br i1 %1414, label %1415, label %1410, !llvm.loop !186
+
+1415:                                             ; preds = %1415, %1410
+  %1416 = phi i64 [ %1420, %1415 ], [ 0, %1410 ]
+  %1417 = phi <4 x i32> [ %1421, %1415 ], [ <i32 0, i32 1, i32 2, i32 3>, %1410 ]
+  %1418 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %1417)
+  %1419 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 9, i64 %1416
+  store <4 x float> %1418, ptr %1419, align 16, !tbaa !13
+  %1420 = add nuw nsw i64 %1416, 4
+  %1421 = add <4 x i32> %1417, <i32 4, i32 4, i32 4, i32 4>
+  %1422 = icmp eq i64 %1420, 32000
+  br i1 %1422, label %1423, label %1415, !llvm.loop !187
+
+1423:                                             ; preds = %1423, %1415
+  %1424 = phi i64 [ %1428, %1423 ], [ 0, %1415 ]
+  %1425 = phi <4 x i32> [ %1429, %1423 ], [ <i32 0, i32 1, i32 2, i32 3>, %1415 ]
+  %1426 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %1425)
+  %1427 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 12, i64 %1424
+  store <4 x float> %1426, ptr %1427, align 16, !tbaa !13
+  %1428 = add nuw nsw i64 %1424, 4
+  %1429 = add <4 x i32> %1425, <i32 4, i32 4, i32 4, i32 4>
+  %1430 = icmp eq i64 %1428, 32000
+  br i1 %1430, label %3043, label %1423, !llvm.loop !188
+
+1431:                                             ; preds = %1401
+  %1432 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.57) #12
+  %1433 = icmp eq i32 %1432, 0
+  br i1 %1433, label %1434, label %1464
+
+1434:                                             ; preds = %1441, %1431
+  %1435 = phi i64 [ %1442, %1441 ], [ 0, %1431 ]
+  br label %1436
+
+1436:                                             ; preds = %1436, %1434
+  %1437 = phi i64 [ 0, %1434 ], [ %1439, %1436 ]
+  %1438 = getelementptr inbounds [256 x float], ptr getelementptr inbounds (%struct.GlobalData, ptr @global_data, i64 0, i32 15, i64 0, i64 0), i64 %1435, i64 %1437
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %1438, align 16, !tbaa !13
+  %1439 = add nuw nsw i64 %1437, 4
+  %1440 = icmp eq i64 %1439, 256
+  br i1 %1440, label %1441, label %1436, !llvm.loop !189
+
+1441:                                             ; preds = %1436
+  %1442 = add nuw nsw i64 %1435, 1
+  %1443 = icmp eq i64 %1442, 256
+  br i1 %1443, label %1444, label %1434
+
+1444:                                             ; preds = %1451, %1441
+  %1445 = phi i64 [ %1452, %1451 ], [ 0, %1441 ]
+  br label %1446
+
+1446:                                             ; preds = %1446, %1444
+  %1447 = phi i64 [ 0, %1444 ], [ %1449, %1446 ]
+  %1448 = getelementptr inbounds [256 x float], ptr getelementptr inbounds (%struct.GlobalData, ptr @global_data, i64 0, i32 18, i64 0, i64 0), i64 %1445, i64 %1447
+  store <4 x float> <float 0x3EB0C6F7A0000000, float 0x3EB0C6F7A0000000, float 0x3EB0C6F7A0000000, float 0x3EB0C6F7A0000000>, ptr %1448, align 16, !tbaa !13
+  %1449 = add nuw nsw i64 %1447, 4
+  %1450 = icmp eq i64 %1449, 256
+  br i1 %1450, label %1451, label %1446, !llvm.loop !190
+
+1451:                                             ; preds = %1446
+  %1452 = add nuw nsw i64 %1445, 1
+  %1453 = icmp eq i64 %1452, 256
+  br i1 %1453, label %1454, label %1444
+
+1454:                                             ; preds = %1461, %1451
+  %1455 = phi i64 [ %1462, %1461 ], [ 0, %1451 ]
+  br label %1456
+
+1456:                                             ; preds = %1456, %1454
+  %1457 = phi i64 [ 0, %1454 ], [ %1459, %1456 ]
+  %1458 = getelementptr inbounds [256 x float], ptr getelementptr inbounds (%struct.GlobalData, ptr @global_data, i64 0, i32 21, i64 0, i64 0), i64 %1455, i64 %1457
+  store <4 x float> <float 0x3EB0C6F7A0000000, float 0x3EB0C6F7A0000000, float 0x3EB0C6F7A0000000, float 0x3EB0C6F7A0000000>, ptr %1458, align 16, !tbaa !13
+  %1459 = add nuw nsw i64 %1457, 4
+  %1460 = icmp eq i64 %1459, 256
+  br i1 %1460, label %1461, label %1456, !llvm.loop !191
+
+1461:                                             ; preds = %1456
+  %1462 = add nuw nsw i64 %1455, 1
+  %1463 = icmp eq i64 %1462, 256
+  br i1 %1463, label %3043, label %1454
+
+1464:                                             ; preds = %1431
+  %1465 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.58) #12
+  %1466 = icmp eq i32 %1465, 0
+  br i1 %1466, label %1467, label %1496
+
+1467:                                             ; preds = %1467, %1464
+  %1468 = phi i64 [ %1470, %1467 ], [ 0, %1464 ]
+  %1469 = getelementptr inbounds float, ptr @global_data, i64 %1468
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %1469, align 16, !tbaa !13
+  %1470 = add nuw nsw i64 %1468, 4
+  %1471 = icmp eq i64 %1470, 32000
+  br i1 %1471, label %1472, label %1467, !llvm.loop !192
+
+1472:                                             ; preds = %1472, %1467
+  %1473 = phi i64 [ %1477, %1472 ], [ 0, %1467 ]
+  %1474 = phi <4 x i32> [ %1478, %1472 ], [ <i32 0, i32 1, i32 2, i32 3>, %1467 ]
+  %1475 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %1474)
+  %1476 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 3, i64 %1473
+  store <4 x float> %1475, ptr %1476, align 16, !tbaa !13
+  %1477 = add nuw nsw i64 %1473, 4
+  %1478 = add <4 x i32> %1474, <i32 4, i32 4, i32 4, i32 4>
+  %1479 = icmp eq i64 %1477, 32000
+  br i1 %1479, label %1480, label %1472, !llvm.loop !193
+
+1480:                                             ; preds = %1480, %1472
+  %1481 = phi i64 [ %1485, %1480 ], [ 0, %1472 ]
+  %1482 = phi <4 x i32> [ %1486, %1480 ], [ <i32 0, i32 1, i32 2, i32 3>, %1472 ]
+  %1483 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %1482)
+  %1484 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 6, i64 %1481
+  store <4 x float> %1483, ptr %1484, align 16, !tbaa !13
+  %1485 = add nuw nsw i64 %1481, 4
+  %1486 = add <4 x i32> %1482, <i32 4, i32 4, i32 4, i32 4>
+  %1487 = icmp eq i64 %1485, 32000
+  br i1 %1487, label %1488, label %1480, !llvm.loop !194
+
+1488:                                             ; preds = %1488, %1480
+  %1489 = phi i64 [ %1493, %1488 ], [ 0, %1480 ]
+  %1490 = phi <4 x i32> [ %1494, %1488 ], [ <i32 0, i32 1, i32 2, i32 3>, %1480 ]
+  %1491 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %1490)
+  %1492 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 9, i64 %1489
+  store <4 x float> %1491, ptr %1492, align 16, !tbaa !13
+  %1493 = add nuw nsw i64 %1489, 4
+  %1494 = add <4 x i32> %1490, <i32 4, i32 4, i32 4, i32 4>
+  %1495 = icmp eq i64 %1493, 32000
+  br i1 %1495, label %3043, label %1488, !llvm.loop !195
+
+1496:                                             ; preds = %1464
+  %1497 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.59) #12
+  %1498 = icmp eq i32 %1497, 0
+  br i1 %1498, label %1499, label %1538
+
+1499:                                             ; preds = %1499, %1496
+  %1500 = phi i64 [ %1502, %1499 ], [ 0, %1496 ]
+  %1501 = getelementptr inbounds float, ptr @global_data, i64 %1500
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %1501, align 16, !tbaa !13
+  %1502 = add nuw nsw i64 %1500, 4
+  %1503 = icmp eq i64 %1502, 32000
+  br i1 %1503, label %1504, label %1499, !llvm.loop !196
+
+1504:                                             ; preds = %1504, %1499
+  %1505 = phi i64 [ %1507, %1504 ], [ 0, %1499 ]
+  %1506 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 3, i64 %1505
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %1506, align 16, !tbaa !13
+  %1507 = add nuw nsw i64 %1505, 4
+  %1508 = icmp eq i64 %1507, 32000
+  br i1 %1508, label %1509, label %1504, !llvm.loop !197
+
+1509:                                             ; preds = %1509, %1504
+  %1510 = phi i64 [ %1512, %1509 ], [ 0, %1504 ]
+  %1511 = getelementptr inbounds float, ptr getelementptr inbounds (%struct.GlobalData, ptr @global_data, i64 0, i32 3, i64 16000), i64 %1510
+  store <4 x float> <float -1.000000e+00, float -1.000000e+00, float -1.000000e+00, float -1.000000e+00>, ptr %1511, align 16, !tbaa !13
+  %1512 = add nuw nsw i64 %1510, 4
+  %1513 = icmp eq i64 %1512, 32000
+  br i1 %1513, label %1514, label %1509, !llvm.loop !198
+
+1514:                                             ; preds = %1514, %1509
+  %1515 = phi i64 [ %1519, %1514 ], [ 0, %1509 ]
+  %1516 = phi <4 x i32> [ %1520, %1514 ], [ <i32 0, i32 1, i32 2, i32 3>, %1509 ]
+  %1517 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %1516)
+  %1518 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 6, i64 %1515
+  store <4 x float> %1517, ptr %1518, align 16, !tbaa !13
+  %1519 = add nuw nsw i64 %1515, 4
+  %1520 = add <4 x i32> %1516, <i32 4, i32 4, i32 4, i32 4>
+  %1521 = icmp eq i64 %1519, 32000
+  br i1 %1521, label %1522, label %1514, !llvm.loop !199
+
+1522:                                             ; preds = %1522, %1514
+  %1523 = phi i64 [ %1527, %1522 ], [ 0, %1514 ]
+  %1524 = phi <4 x i32> [ %1528, %1522 ], [ <i32 0, i32 1, i32 2, i32 3>, %1514 ]
+  %1525 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %1524)
+  %1526 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 9, i64 %1523
+  store <4 x float> %1525, ptr %1526, align 16, !tbaa !13
+  %1527 = add nuw nsw i64 %1523, 4
+  %1528 = add <4 x i32> %1524, <i32 4, i32 4, i32 4, i32 4>
+  %1529 = icmp eq i64 %1527, 32000
+  br i1 %1529, label %1530, label %1522, !llvm.loop !200
+
+1530:                                             ; preds = %1530, %1522
+  %1531 = phi i64 [ %1535, %1530 ], [ 0, %1522 ]
+  %1532 = phi <4 x i32> [ %1536, %1530 ], [ <i32 0, i32 1, i32 2, i32 3>, %1522 ]
+  %1533 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %1532)
+  %1534 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 12, i64 %1531
+  store <4 x float> %1533, ptr %1534, align 16, !tbaa !13
+  %1535 = add nuw nsw i64 %1531, 4
+  %1536 = add <4 x i32> %1532, <i32 4, i32 4, i32 4, i32 4>
+  %1537 = icmp eq i64 %1535, 32000
+  br i1 %1537, label %3043, label %1530, !llvm.loop !201
+
+1538:                                             ; preds = %1496
+  %1539 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.60) #12
+  %1540 = icmp eq i32 %1539, 0
+  br i1 %1540, label %1541, label %1580
+
+1541:                                             ; preds = %1541, %1538
+  %1542 = phi i64 [ %1544, %1541 ], [ 0, %1538 ]
+  %1543 = getelementptr inbounds float, ptr @global_data, i64 %1542
+  store <4 x float> <float -1.000000e+00, float -1.000000e+00, float -1.000000e+00, float -1.000000e+00>, ptr %1543, align 16, !tbaa !13
+  %1544 = add nuw nsw i64 %1542, 4
+  %1545 = icmp eq i64 %1544, 32000
+  br i1 %1545, label %1546, label %1541, !llvm.loop !202
+
+1546:                                             ; preds = %1546, %1541
+  %1547 = phi i64 [ %1549, %1546 ], [ 0, %1541 ]
+  %1548 = getelementptr inbounds float, ptr getelementptr inbounds (%struct.GlobalData, ptr @global_data, i64 0, i32 0, i64 16000), i64 %1547
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %1548, align 16, !tbaa !13
+  %1549 = add nuw nsw i64 %1547, 4
+  %1550 = icmp eq i64 %1549, 32000
+  br i1 %1550, label %1551, label %1546, !llvm.loop !203
+
+1551:                                             ; preds = %1551, %1546
+  %1552 = phi i64 [ %1554, %1551 ], [ 0, %1546 ]
+  %1553 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 3, i64 %1552
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %1553, align 16, !tbaa !13
+  %1554 = add nuw nsw i64 %1552, 4
+  %1555 = icmp eq i64 %1554, 32000
+  br i1 %1555, label %1556, label %1551, !llvm.loop !204
+
+1556:                                             ; preds = %1556, %1551
+  %1557 = phi i64 [ %1561, %1556 ], [ 0, %1551 ]
+  %1558 = phi <4 x i32> [ %1562, %1556 ], [ <i32 0, i32 1, i32 2, i32 3>, %1551 ]
+  %1559 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %1558)
+  %1560 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 6, i64 %1557
+  store <4 x float> %1559, ptr %1560, align 16, !tbaa !13
+  %1561 = add nuw nsw i64 %1557, 4
+  %1562 = add <4 x i32> %1558, <i32 4, i32 4, i32 4, i32 4>
+  %1563 = icmp eq i64 %1561, 32000
+  br i1 %1563, label %1564, label %1556, !llvm.loop !205
+
+1564:                                             ; preds = %1564, %1556
+  %1565 = phi i64 [ %1569, %1564 ], [ 0, %1556 ]
+  %1566 = phi <4 x i32> [ %1570, %1564 ], [ <i32 0, i32 1, i32 2, i32 3>, %1556 ]
+  %1567 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %1566)
+  %1568 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 9, i64 %1565
+  store <4 x float> %1567, ptr %1568, align 16, !tbaa !13
+  %1569 = add nuw nsw i64 %1565, 4
+  %1570 = add <4 x i32> %1566, <i32 4, i32 4, i32 4, i32 4>
+  %1571 = icmp eq i64 %1569, 32000
+  br i1 %1571, label %1572, label %1564, !llvm.loop !206
+
+1572:                                             ; preds = %1572, %1564
+  %1573 = phi i64 [ %1577, %1572 ], [ 0, %1564 ]
+  %1574 = phi <4 x i32> [ %1578, %1572 ], [ <i32 0, i32 1, i32 2, i32 3>, %1564 ]
+  %1575 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %1574)
+  %1576 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 12, i64 %1573
+  store <4 x float> %1575, ptr %1576, align 16, !tbaa !13
+  %1577 = add nuw nsw i64 %1573, 4
+  %1578 = add <4 x i32> %1574, <i32 4, i32 4, i32 4, i32 4>
+  %1579 = icmp eq i64 %1577, 32000
+  br i1 %1579, label %3043, label %1572, !llvm.loop !207
+
+1580:                                             ; preds = %1538
+  %1581 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.61) #12
+  %1582 = icmp eq i32 %1581, 0
+  br i1 %1582, label %1583, label %1622
+
+1583:                                             ; preds = %1583, %1580
+  %1584 = phi i64 [ %1586, %1583 ], [ 0, %1580 ]
+  %1585 = getelementptr inbounds float, ptr @global_data, i64 %1584
+  store <4 x float> <float -1.000000e+00, float -1.000000e+00, float -1.000000e+00, float -1.000000e+00>, ptr %1585, align 16, !tbaa !13
+  %1586 = add nuw nsw i64 %1584, 4
+  %1587 = icmp eq i64 %1586, 32000
+  br i1 %1587, label %1588, label %1583, !llvm.loop !208
+
+1588:                                             ; preds = %1588, %1583
+  %1589 = phi i64 [ %1591, %1588 ], [ 0, %1583 ]
+  %1590 = getelementptr inbounds float, ptr getelementptr inbounds (%struct.GlobalData, ptr @global_data, i64 0, i32 0, i64 16000), i64 %1589
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %1590, align 16, !tbaa !13
+  %1591 = add nuw nsw i64 %1589, 4
+  %1592 = icmp eq i64 %1591, 32000
+  br i1 %1592, label %1593, label %1588, !llvm.loop !209
+
+1593:                                             ; preds = %1593, %1588
+  %1594 = phi i64 [ %1596, %1593 ], [ 0, %1588 ]
+  %1595 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 3, i64 %1594
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %1595, align 16, !tbaa !13
+  %1596 = add nuw nsw i64 %1594, 4
+  %1597 = icmp eq i64 %1596, 32000
+  br i1 %1597, label %1598, label %1593, !llvm.loop !210
+
+1598:                                             ; preds = %1598, %1593
+  %1599 = phi i64 [ %1603, %1598 ], [ 0, %1593 ]
+  %1600 = phi <4 x i32> [ %1604, %1598 ], [ <i32 0, i32 1, i32 2, i32 3>, %1593 ]
+  %1601 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %1600)
+  %1602 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 6, i64 %1599
+  store <4 x float> %1601, ptr %1602, align 16, !tbaa !13
+  %1603 = add nuw nsw i64 %1599, 4
+  %1604 = add <4 x i32> %1600, <i32 4, i32 4, i32 4, i32 4>
+  %1605 = icmp eq i64 %1603, 32000
+  br i1 %1605, label %1606, label %1598, !llvm.loop !211
+
+1606:                                             ; preds = %1606, %1598
+  %1607 = phi i64 [ %1611, %1606 ], [ 0, %1598 ]
+  %1608 = phi <4 x i32> [ %1612, %1606 ], [ <i32 0, i32 1, i32 2, i32 3>, %1598 ]
+  %1609 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %1608)
+  %1610 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 9, i64 %1607
+  store <4 x float> %1609, ptr %1610, align 16, !tbaa !13
+  %1611 = add nuw nsw i64 %1607, 4
+  %1612 = add <4 x i32> %1608, <i32 4, i32 4, i32 4, i32 4>
+  %1613 = icmp eq i64 %1611, 32000
+  br i1 %1613, label %1614, label %1606, !llvm.loop !212
+
+1614:                                             ; preds = %1614, %1606
+  %1615 = phi i64 [ %1619, %1614 ], [ 0, %1606 ]
+  %1616 = phi <4 x i32> [ %1620, %1614 ], [ <i32 0, i32 1, i32 2, i32 3>, %1606 ]
+  %1617 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %1616)
+  %1618 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 12, i64 %1615
+  store <4 x float> %1617, ptr %1618, align 16, !tbaa !13
+  %1619 = add nuw nsw i64 %1615, 4
+  %1620 = add <4 x i32> %1616, <i32 4, i32 4, i32 4, i32 4>
+  %1621 = icmp eq i64 %1619, 32000
+  br i1 %1621, label %3043, label %1614, !llvm.loop !213
+
+1622:                                             ; preds = %1580
+  %1623 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.62) #12
+  %1624 = icmp eq i32 %1623, 0
+  br i1 %1624, label %1625, label %1659
+
+1625:                                             ; preds = %1625, %1622
+  %1626 = phi i64 [ %1628, %1625 ], [ 0, %1622 ]
+  %1627 = getelementptr inbounds float, ptr @global_data, i64 %1626
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %1627, align 16, !tbaa !13
+  %1628 = add nuw nsw i64 %1626, 4
+  %1629 = icmp eq i64 %1628, 32000
+  br i1 %1629, label %1630, label %1625, !llvm.loop !214
+
+1630:                                             ; preds = %1630, %1625
+  %1631 = phi i64 [ %1633, %1630 ], [ 0, %1625 ]
+  %1632 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 3, i64 %1631
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %1632, align 16, !tbaa !13
+  %1633 = add nuw nsw i64 %1631, 4
+  %1634 = icmp eq i64 %1633, 32000
+  br i1 %1634, label %1635, label %1630, !llvm.loop !215
+
+1635:                                             ; preds = %1635, %1630
+  %1636 = phi i64 [ %1640, %1635 ], [ 0, %1630 ]
+  %1637 = phi <4 x i32> [ %1641, %1635 ], [ <i32 0, i32 1, i32 2, i32 3>, %1630 ]
+  %1638 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %1637)
+  %1639 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 6, i64 %1636
+  store <4 x float> %1638, ptr %1639, align 16, !tbaa !13
+  %1640 = add nuw nsw i64 %1636, 4
+  %1641 = add <4 x i32> %1637, <i32 4, i32 4, i32 4, i32 4>
+  %1642 = icmp eq i64 %1640, 32000
+  br i1 %1642, label %1643, label %1635, !llvm.loop !216
+
+1643:                                             ; preds = %1643, %1635
+  %1644 = phi i64 [ %1648, %1643 ], [ 0, %1635 ]
+  %1645 = phi <4 x i32> [ %1649, %1643 ], [ <i32 0, i32 1, i32 2, i32 3>, %1635 ]
+  %1646 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %1645)
+  %1647 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 9, i64 %1644
+  store <4 x float> %1646, ptr %1647, align 16, !tbaa !13
+  %1648 = add nuw nsw i64 %1644, 4
+  %1649 = add <4 x i32> %1645, <i32 4, i32 4, i32 4, i32 4>
+  %1650 = icmp eq i64 %1648, 32000
+  br i1 %1650, label %1651, label %1643, !llvm.loop !217
+
+1651:                                             ; preds = %1651, %1643
+  %1652 = phi i64 [ %1656, %1651 ], [ 0, %1643 ]
+  %1653 = phi <4 x i32> [ %1657, %1651 ], [ <i32 0, i32 1, i32 2, i32 3>, %1643 ]
+  %1654 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %1653)
+  %1655 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 12, i64 %1652
+  store <4 x float> %1654, ptr %1655, align 16, !tbaa !13
+  %1656 = add nuw nsw i64 %1652, 4
+  %1657 = add <4 x i32> %1653, <i32 4, i32 4, i32 4, i32 4>
+  %1658 = icmp eq i64 %1656, 32000
+  br i1 %1658, label %3043, label %1651, !llvm.loop !218
+
+1659:                                             ; preds = %1622
+  %1660 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.63) #12
+  %1661 = icmp eq i32 %1660, 0
+  br i1 %1661, label %1662, label %1683
+
+1662:                                             ; preds = %1662, %1659
+  %1663 = phi i64 [ %1665, %1662 ], [ 0, %1659 ]
+  %1664 = getelementptr inbounds float, ptr @global_data, i64 %1663
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %1664, align 16, !tbaa !13
+  %1665 = add nuw nsw i64 %1663, 4
+  %1666 = icmp eq i64 %1665, 32000
+  br i1 %1666, label %1667, label %1662, !llvm.loop !219
+
+1667:                                             ; preds = %1667, %1662
+  %1668 = phi i64 [ %1672, %1667 ], [ 0, %1662 ]
+  %1669 = phi <4 x i32> [ %1673, %1667 ], [ <i32 0, i32 1, i32 2, i32 3>, %1662 ]
+  %1670 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %1669)
+  %1671 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 3, i64 %1668
+  store <4 x float> %1670, ptr %1671, align 16, !tbaa !13
+  %1672 = add nuw nsw i64 %1668, 4
+  %1673 = add <4 x i32> %1669, <i32 4, i32 4, i32 4, i32 4>
+  %1674 = icmp eq i64 %1672, 32000
+  br i1 %1674, label %1675, label %1667, !llvm.loop !220
+
+1675:                                             ; preds = %1675, %1667
+  %1676 = phi i64 [ %1680, %1675 ], [ 0, %1667 ]
+  %1677 = phi <4 x i32> [ %1681, %1675 ], [ <i32 0, i32 1, i32 2, i32 3>, %1667 ]
+  %1678 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %1677)
+  %1679 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 6, i64 %1676
+  store <4 x float> %1678, ptr %1679, align 16, !tbaa !13
+  %1680 = add nuw nsw i64 %1676, 4
+  %1681 = add <4 x i32> %1677, <i32 4, i32 4, i32 4, i32 4>
+  %1682 = icmp eq i64 %1680, 32000
+  br i1 %1682, label %3043, label %1675, !llvm.loop !221
+
+1683:                                             ; preds = %1659
+  %1684 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.64) #12
+  %1685 = icmp eq i32 %1684, 0
+  br i1 %1685, label %1686, label %1707
+
+1686:                                             ; preds = %1686, %1683
+  %1687 = phi i64 [ %1689, %1686 ], [ 0, %1683 ]
+  %1688 = getelementptr inbounds float, ptr @global_data, i64 %1687
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %1688, align 16, !tbaa !13
+  %1689 = add nuw nsw i64 %1687, 4
+  %1690 = icmp eq i64 %1689, 32000
+  br i1 %1690, label %1691, label %1686, !llvm.loop !222
+
+1691:                                             ; preds = %1691, %1686
+  %1692 = phi i64 [ %1696, %1691 ], [ 0, %1686 ]
+  %1693 = phi <4 x i32> [ %1697, %1691 ], [ <i32 0, i32 1, i32 2, i32 3>, %1686 ]
+  %1694 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %1693)
+  %1695 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 3, i64 %1692
+  store <4 x float> %1694, ptr %1695, align 16, !tbaa !13
+  %1696 = add nuw nsw i64 %1692, 4
+  %1697 = add <4 x i32> %1693, <i32 4, i32 4, i32 4, i32 4>
+  %1698 = icmp eq i64 %1696, 32000
+  br i1 %1698, label %1699, label %1691, !llvm.loop !223
+
+1699:                                             ; preds = %1699, %1691
+  %1700 = phi i64 [ %1704, %1699 ], [ 0, %1691 ]
+  %1701 = phi <4 x i32> [ %1705, %1699 ], [ <i32 0, i32 1, i32 2, i32 3>, %1691 ]
+  %1702 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %1701)
+  %1703 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 6, i64 %1700
+  store <4 x float> %1702, ptr %1703, align 16, !tbaa !13
+  %1704 = add nuw nsw i64 %1700, 4
+  %1705 = add <4 x i32> %1701, <i32 4, i32 4, i32 4, i32 4>
+  %1706 = icmp eq i64 %1704, 32000
+  br i1 %1706, label %3043, label %1699, !llvm.loop !224
+
+1707:                                             ; preds = %1683
+  %1708 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.65) #12
+  %1709 = icmp eq i32 %1708, 0
+  br i1 %1709, label %1710, label %1721
+
+1710:                                             ; preds = %1707
+  tail call void @llvm.memset.p0.i64(ptr noundef nonnull align 16 dereferenceable(128000) @global_data, i8 0, i64 128000, i1 false), !tbaa !13
+  br label %1711
+
+1711:                                             ; preds = %1711, %1710
+  %1712 = phi i64 [ 0, %1710 ], [ %1714, %1711 ]
+  %1713 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 3, i64 %1712
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %1713, align 16, !tbaa !13
+  %1714 = add nuw nsw i64 %1712, 4
+  %1715 = icmp eq i64 %1714, 32000
+  br i1 %1715, label %1716, label %1711, !llvm.loop !225
+
+1716:                                             ; preds = %1716, %1711
+  %1717 = phi i64 [ %1719, %1716 ], [ 0, %1711 ]
+  %1718 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 6, i64 %1717
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %1718, align 16, !tbaa !13
+  %1719 = add nuw nsw i64 %1717, 4
+  %1720 = icmp eq i64 %1719, 32000
+  br i1 %1720, label %3043, label %1716, !llvm.loop !226
+
+1721:                                             ; preds = %1707
+  %1722 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.66) #12
+  %1723 = icmp eq i32 %1722, 0
+  br i1 %1723, label %1724, label %1730
+
+1724:                                             ; preds = %1721
+  tail call void @llvm.memset.p0.i64(ptr noundef nonnull align 16 dereferenceable(128000) @global_data, i8 0, i64 128000, i1 false), !tbaa !13
+  br label %1725
+
+1725:                                             ; preds = %1725, %1724
+  %1726 = phi i64 [ 0, %1724 ], [ %1728, %1725 ]
+  %1727 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 3, i64 %1726
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %1727, align 16, !tbaa !13
+  %1728 = add nuw nsw i64 %1726, 4
+  %1729 = icmp eq i64 %1728, 32000
+  br i1 %1729, label %3043, label %1725, !llvm.loop !227
+
+1730:                                             ; preds = %1721
+  %1731 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.67) #12
+  %1732 = icmp eq i32 %1731, 0
+  br i1 %1732, label %1733, label %1739
+
+1733:                                             ; preds = %1730
+  tail call void @llvm.memset.p0.i64(ptr noundef nonnull align 16 dereferenceable(128000) @global_data, i8 0, i64 128000, i1 false), !tbaa !13
+  br label %1734
+
+1734:                                             ; preds = %1734, %1733
+  %1735 = phi i64 [ 0, %1733 ], [ %1737, %1734 ]
+  %1736 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 3, i64 %1735
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %1736, align 16, !tbaa !13
+  %1737 = add nuw nsw i64 %1735, 4
+  %1738 = icmp eq i64 %1737, 32000
+  br i1 %1738, label %3043, label %1734, !llvm.loop !228
+
+1739:                                             ; preds = %1730
+  %1740 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.68) #12
+  %1741 = icmp eq i32 %1740, 0
+  br i1 %1741, label %1742, label %1750
+
+1742:                                             ; preds = %1742, %1739
+  %1743 = phi i64 [ %1747, %1742 ], [ 0, %1739 ]
+  %1744 = phi <4 x i32> [ %1748, %1742 ], [ <i32 0, i32 1, i32 2, i32 3>, %1739 ]
+  %1745 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %1744)
+  %1746 = getelementptr inbounds float, ptr @global_data, i64 %1743
+  store <4 x float> %1745, ptr %1746, align 16, !tbaa !13
+  %1747 = add nuw nsw i64 %1743, 4
+  %1748 = add <4 x i32> %1744, <i32 4, i32 4, i32 4, i32 4>
+  %1749 = icmp eq i64 %1747, 32000
+  br i1 %1749, label %3043, label %1742, !llvm.loop !229
+
+1750:                                             ; preds = %1739
+  %1751 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.69) #12
+  %1752 = icmp eq i32 %1751, 0
+  br i1 %1752, label %1753, label %1793
+
+1753:                                             ; preds = %1760, %1750
+  %1754 = phi i64 [ %1761, %1760 ], [ 0, %1750 ]
+  br label %1755
+
+1755:                                             ; preds = %1755, %1753
+  %1756 = phi i64 [ 0, %1753 ], [ %1758, %1755 ]
+  %1757 = getelementptr inbounds [256 x float], ptr getelementptr inbounds (%struct.GlobalData, ptr @global_data, i64 0, i32 15, i64 0, i64 0), i64 %1754, i64 %1756
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %1757, align 16, !tbaa !13
+  %1758 = add nuw nsw i64 %1756, 4
+  %1759 = icmp eq i64 %1758, 256
+  br i1 %1759, label %1760, label %1755, !llvm.loop !230
+
+1760:                                             ; preds = %1755
+  %1761 = add nuw nsw i64 %1754, 1
+  %1762 = icmp eq i64 %1761, 256
+  br i1 %1762, label %1763, label %1753
+
+1763:                                             ; preds = %1776, %1760
+  %1764 = phi i64 [ %1765, %1776 ], [ 0, %1760 ]
+  %1765 = add nuw nsw i64 %1764, 1
+  %1766 = trunc i64 %1765 to i32
+  %1767 = sitofp i32 %1766 to float
+  %1768 = fdiv float 1.000000e+00, %1767
+  %1769 = insertelement <4 x float> poison, float %1768, i64 0
+  %1770 = shufflevector <4 x float> %1769, <4 x float> poison, <4 x i32> zeroinitializer
+  br label %1771
+
+1771:                                             ; preds = %1771, %1763
+  %1772 = phi i64 [ 0, %1763 ], [ %1774, %1771 ]
+  %1773 = getelementptr inbounds [256 x float], ptr getelementptr inbounds (%struct.GlobalData, ptr @global_data, i64 0, i32 18, i64 0, i64 0), i64 %1764, i64 %1772
+  store <4 x float> %1770, ptr %1773, align 16, !tbaa !13
+  %1774 = add nuw nsw i64 %1772, 4
+  %1775 = icmp eq i64 %1774, 256
+  br i1 %1775, label %1776, label %1771, !llvm.loop !231
+
+1776:                                             ; preds = %1771
+  %1777 = icmp eq i64 %1765, 256
+  br i1 %1777, label %1778, label %1763
+
+1778:                                             ; preds = %1791, %1776
+  %1779 = phi i64 [ %1780, %1791 ], [ 0, %1776 ]
+  %1780 = add nuw nsw i64 %1779, 1
+  %1781 = trunc i64 %1780 to i32
+  %1782 = sitofp i32 %1781 to float
+  %1783 = fdiv float 1.000000e+00, %1782
+  %1784 = insertelement <4 x float> poison, float %1783, i64 0
+  %1785 = shufflevector <4 x float> %1784, <4 x float> poison, <4 x i32> zeroinitializer
+  br label %1786
+
+1786:                                             ; preds = %1786, %1778
+  %1787 = phi i64 [ 0, %1778 ], [ %1789, %1786 ]
+  %1788 = getelementptr inbounds [256 x float], ptr getelementptr inbounds (%struct.GlobalData, ptr @global_data, i64 0, i32 21, i64 0, i64 0), i64 %1779, i64 %1787
+  store <4 x float> %1785, ptr %1788, align 16, !tbaa !13
+  %1789 = add nuw nsw i64 %1787, 4
+  %1790 = icmp eq i64 %1789, 256
+  br i1 %1790, label %1791, label %1786, !llvm.loop !232
+
+1791:                                             ; preds = %1786
+  %1792 = icmp eq i64 %1780, 256
+  br i1 %1792, label %3043, label %1778
+
+1793:                                             ; preds = %1750
+  %1794 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.70) #12
+  %1795 = icmp eq i32 %1794, 0
+  br i1 %1795, label %1796, label %1797
+
+1796:                                             ; preds = %1793
+  tail call void @llvm.memset.p0.i64(ptr noundef nonnull align 16 dereferenceable(262144) getelementptr inbounds (%struct.GlobalData, ptr @global_data, i64 0, i32 15, i64 0, i64 0), i8 0, i64 262144, i1 false), !tbaa !13
+  br label %3043
+
+1797:                                             ; preds = %1793
+  %1798 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.71) #12
+  %1799 = icmp eq i32 %1798, 0
+  br i1 %1799, label %1800, label %1801
+
+1800:                                             ; preds = %1797
+  tail call void @llvm.memset.p0.i64(ptr noundef nonnull align 16 dereferenceable(262144) getelementptr inbounds (%struct.GlobalData, ptr @global_data, i64 0, i32 15, i64 0, i64 0), i8 0, i64 262144, i1 false), !tbaa !13
+  br label %3043
+
+1801:                                             ; preds = %1797
+  %1802 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.72) #12
+  %1803 = icmp eq i32 %1802, 0
+  br i1 %1803, label %1804, label %1812
+
+1804:                                             ; preds = %1804, %1801
+  %1805 = phi i64 [ %1809, %1804 ], [ 0, %1801 ]
+  %1806 = phi <4 x i32> [ %1810, %1804 ], [ <i32 0, i32 1, i32 2, i32 3>, %1801 ]
+  %1807 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %1806)
+  %1808 = getelementptr inbounds float, ptr @global_data, i64 %1805
+  store <4 x float> %1807, ptr %1808, align 16, !tbaa !13
+  %1809 = add nuw nsw i64 %1805, 4
+  %1810 = add <4 x i32> %1806, <i32 4, i32 4, i32 4, i32 4>
+  %1811 = icmp eq i64 %1809, 32000
+  br i1 %1811, label %3043, label %1804, !llvm.loop !233
+
+1812:                                             ; preds = %1801
+  %1813 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.73) #12
+  %1814 = icmp eq i32 %1813, 0
+  br i1 %1814, label %1815, label %1820
+
+1815:                                             ; preds = %1815, %1812
+  %1816 = phi i64 [ %1818, %1815 ], [ 0, %1812 ]
+  %1817 = getelementptr inbounds float, ptr @global_data, i64 %1816
+  store <4 x float> <float 0x3FF0000100000000, float 0x3FF0000100000000, float 0x3FF0000100000000, float 0x3FF0000100000000>, ptr %1817, align 16, !tbaa !13
+  %1818 = add nuw nsw i64 %1816, 4
+  %1819 = icmp eq i64 %1818, 32000
+  br i1 %1819, label %3043, label %1815, !llvm.loop !234
+
+1820:                                             ; preds = %1812
+  %1821 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.74) #12
+  %1822 = icmp eq i32 %1821, 0
+  br i1 %1822, label %1823, label %1839
+
+1823:                                             ; preds = %1823, %1820
+  %1824 = phi i64 [ %1828, %1823 ], [ 0, %1820 ]
+  %1825 = phi <4 x i32> [ %1829, %1823 ], [ <i32 0, i32 1, i32 2, i32 3>, %1820 ]
+  %1826 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %1825)
+  %1827 = getelementptr inbounds float, ptr @global_data, i64 %1824
+  store <4 x float> %1826, ptr %1827, align 16, !tbaa !13
+  %1828 = add nuw nsw i64 %1824, 4
+  %1829 = add <4 x i32> %1825, <i32 4, i32 4, i32 4, i32 4>
+  %1830 = icmp eq i64 %1828, 32000
+  br i1 %1830, label %1831, label %1823, !llvm.loop !235
+
+1831:                                             ; preds = %1831, %1823
+  %1832 = phi i64 [ %1836, %1831 ], [ 0, %1823 ]
+  %1833 = phi <4 x i32> [ %1837, %1831 ], [ <i32 0, i32 1, i32 2, i32 3>, %1823 ]
+  %1834 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %1833)
+  %1835 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 3, i64 %1832
+  store <4 x float> %1834, ptr %1835, align 16, !tbaa !13
+  %1836 = add nuw nsw i64 %1832, 4
+  %1837 = add <4 x i32> %1833, <i32 4, i32 4, i32 4, i32 4>
+  %1838 = icmp eq i64 %1836, 32000
+  br i1 %1838, label %3043, label %1831, !llvm.loop !236
+
+1839:                                             ; preds = %1820
+  %1840 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.75) #12
+  %1841 = icmp eq i32 %1840, 0
+  br i1 %1841, label %1842, label %1850
+
+1842:                                             ; preds = %1842, %1839
+  %1843 = phi i64 [ %1847, %1842 ], [ 0, %1839 ]
+  %1844 = phi <4 x i32> [ %1848, %1842 ], [ <i32 0, i32 1, i32 2, i32 3>, %1839 ]
+  %1845 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %1844)
+  %1846 = getelementptr inbounds float, ptr @global_data, i64 %1843
+  store <4 x float> %1845, ptr %1846, align 16, !tbaa !13
+  %1847 = add nuw nsw i64 %1843, 4
+  %1848 = add <4 x i32> %1844, <i32 4, i32 4, i32 4, i32 4>
+  %1849 = icmp eq i64 %1847, 32000
+  br i1 %1849, label %3043, label %1842, !llvm.loop !237
+
+1850:                                             ; preds = %1839
+  %1851 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.76) #12
+  %1852 = icmp eq i32 %1851, 0
+  br i1 %1852, label %1853, label %1861
+
+1853:                                             ; preds = %1853, %1850
+  %1854 = phi i64 [ %1858, %1853 ], [ 0, %1850 ]
+  %1855 = phi <4 x i32> [ %1859, %1853 ], [ <i32 0, i32 1, i32 2, i32 3>, %1850 ]
+  %1856 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %1855)
+  %1857 = getelementptr inbounds float, ptr @global_data, i64 %1854
+  store <4 x float> %1856, ptr %1857, align 16, !tbaa !13
+  %1858 = add nuw nsw i64 %1854, 4
+  %1859 = add <4 x i32> %1855, <i32 4, i32 4, i32 4, i32 4>
+  %1860 = icmp eq i64 %1858, 32000
+  br i1 %1860, label %3043, label %1853, !llvm.loop !238
+
+1861:                                             ; preds = %1850
+  %1862 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.77) #12
+  %1863 = icmp eq i32 %1862, 0
+  br i1 %1863, label %1864, label %1872
+
+1864:                                             ; preds = %1864, %1861
+  %1865 = phi i64 [ %1869, %1864 ], [ 0, %1861 ]
+  %1866 = phi <4 x i32> [ %1870, %1864 ], [ <i32 0, i32 1, i32 2, i32 3>, %1861 ]
+  %1867 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %1866)
+  %1868 = getelementptr inbounds float, ptr @global_data, i64 %1865
+  store <4 x float> %1867, ptr %1868, align 16, !tbaa !13
+  %1869 = add nuw nsw i64 %1865, 4
+  %1870 = add <4 x i32> %1866, <i32 4, i32 4, i32 4, i32 4>
+  %1871 = icmp eq i64 %1869, 32000
+  br i1 %1871, label %3043, label %1864, !llvm.loop !239
+
+1872:                                             ; preds = %1861
+  %1873 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.78) #12
+  %1874 = icmp eq i32 %1873, 0
+  br i1 %1874, label %3043, label %1875
+
+1875:                                             ; preds = %1872
+  %1876 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.79) #12
+  %1877 = icmp eq i32 %1876, 0
+  br i1 %1877, label %1878, label %1887
+
+1878:                                             ; preds = %1878, %1875
+  %1879 = phi i64 [ %1883, %1878 ], [ 0, %1875 ]
+  %1880 = phi <4 x i32> [ %1884, %1878 ], [ <i32 0, i32 1, i32 2, i32 3>, %1875 ]
+  %1881 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %1880)
+  %1882 = getelementptr inbounds float, ptr @global_data, i64 %1879
+  store <4 x float> %1881, ptr %1882, align 16, !tbaa !13
+  %1883 = add nuw nsw i64 %1879, 4
+  %1884 = add <4 x i32> %1880, <i32 4, i32 4, i32 4, i32 4>
+  %1885 = icmp eq i64 %1883, 32000
+  br i1 %1885, label %1886, label %1878, !llvm.loop !240
+
+1886:                                             ; preds = %1878
+  store float -2.000000e+00, ptr getelementptr inbounds (%struct.GlobalData, ptr @global_data, i64 0, i32 0, i64 31999), align 4, !tbaa !13
+  br label %3043
+
+1887:                                             ; preds = %1875
+  %1888 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.80) #12
+  %1889 = icmp eq i32 %1888, 0
+  br i1 %1889, label %1890, label %1915
+
+1890:                                             ; preds = %1887
+  tail call void @llvm.memset.p0.i64(ptr noundef nonnull align 16 dereferenceable(128000) @global_data, i8 0, i64 128000, i1 false), !tbaa !13
+  tail call void @llvm.memset.p0.i64(ptr noundef nonnull align 16 dereferenceable(128000) getelementptr inbounds (%struct.GlobalData, ptr @global_data, i64 0, i32 3, i64 0), i8 0, i64 128000, i1 false), !tbaa !13
+  br label %1891
+
+1891:                                             ; preds = %1891, %1890
+  %1892 = phi i64 [ 0, %1890 ], [ %1896, %1891 ]
+  %1893 = phi <4 x i32> [ <i32 0, i32 1, i32 2, i32 3>, %1890 ], [ %1897, %1891 ]
+  %1894 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %1893)
+  %1895 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 6, i64 %1892
+  store <4 x float> %1894, ptr %1895, align 16, !tbaa !13
+  %1896 = add nuw nsw i64 %1892, 4
+  %1897 = add <4 x i32> %1893, <i32 4, i32 4, i32 4, i32 4>
+  %1898 = icmp eq i64 %1896, 32000
+  br i1 %1898, label %1899, label %1891, !llvm.loop !241
+
+1899:                                             ; preds = %1899, %1891
+  %1900 = phi i64 [ %1904, %1899 ], [ 0, %1891 ]
+  %1901 = phi <4 x i32> [ %1905, %1899 ], [ <i32 0, i32 1, i32 2, i32 3>, %1891 ]
+  %1902 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %1901)
+  %1903 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 9, i64 %1900
+  store <4 x float> %1902, ptr %1903, align 16, !tbaa !13
+  %1904 = add nuw nsw i64 %1900, 4
+  %1905 = add <4 x i32> %1901, <i32 4, i32 4, i32 4, i32 4>
+  %1906 = icmp eq i64 %1904, 32000
+  br i1 %1906, label %1907, label %1899, !llvm.loop !242
+
+1907:                                             ; preds = %1907, %1899
+  %1908 = phi i64 [ %1912, %1907 ], [ 0, %1899 ]
+  %1909 = phi <4 x i32> [ %1913, %1907 ], [ <i32 0, i32 1, i32 2, i32 3>, %1899 ]
+  %1910 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %1909)
+  %1911 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 12, i64 %1908
+  store <4 x float> %1910, ptr %1911, align 16, !tbaa !13
+  %1912 = add nuw nsw i64 %1908, 4
+  %1913 = add <4 x i32> %1909, <i32 4, i32 4, i32 4, i32 4>
+  %1914 = icmp eq i64 %1912, 32000
+  br i1 %1914, label %3043, label %1907, !llvm.loop !243
+
+1915:                                             ; preds = %1887
+  %1916 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.81) #12
+  %1917 = icmp eq i32 %1916, 0
+  br i1 %1917, label %1918, label %1934
+
+1918:                                             ; preds = %1931, %1915
+  %1919 = phi i64 [ %1920, %1931 ], [ 0, %1915 ]
+  %1920 = add nuw nsw i64 %1919, 1
+  %1921 = trunc i64 %1920 to i32
+  %1922 = sitofp i32 %1921 to float
+  %1923 = fdiv float 1.000000e+00, %1922
+  %1924 = insertelement <4 x float> poison, float %1923, i64 0
+  %1925 = shufflevector <4 x float> %1924, <4 x float> poison, <4 x i32> zeroinitializer
+  br label %1926
+
+1926:                                             ; preds = %1926, %1918
+  %1927 = phi i64 [ 0, %1918 ], [ %1929, %1926 ]
+  %1928 = getelementptr inbounds [256 x float], ptr getelementptr inbounds (%struct.GlobalData, ptr @global_data, i64 0, i32 15, i64 0, i64 0), i64 %1919, i64 %1927
+  store <4 x float> %1925, ptr %1928, align 16, !tbaa !13
+  %1929 = add nuw nsw i64 %1927, 4
+  %1930 = icmp eq i64 %1929, 256
+  br i1 %1930, label %1931, label %1926, !llvm.loop !244
+
+1931:                                             ; preds = %1926
+  %1932 = icmp eq i64 %1920, 256
+  br i1 %1932, label %1933, label %1918
+
+1933:                                             ; preds = %1931
+  store float 2.000000e+00, ptr getelementptr inbounds (%struct.GlobalData, ptr @global_data, i64 0, i32 15, i64 255, i64 255), align 4, !tbaa !13
+  br label %3043
+
+1934:                                             ; preds = %1915
+  %1935 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.82) #12
+  %1936 = icmp eq i32 %1935, 0
+  br i1 %1936, label %1937, label %1945
+
+1937:                                             ; preds = %1937, %1934
+  %1938 = phi i64 [ %1942, %1937 ], [ 0, %1934 ]
+  %1939 = phi <4 x i32> [ %1943, %1937 ], [ <i32 0, i32 1, i32 2, i32 3>, %1934 ]
+  %1940 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %1939)
+  %1941 = getelementptr inbounds float, ptr @global_data, i64 %1938
+  store <4 x float> %1940, ptr %1941, align 16, !tbaa !13
+  %1942 = add nuw nsw i64 %1938, 4
+  %1943 = add <4 x i32> %1939, <i32 4, i32 4, i32 4, i32 4>
+  %1944 = icmp eq i64 %1942, 32000
+  br i1 %1944, label %3043, label %1937, !llvm.loop !245
+
+1945:                                             ; preds = %1934
+  %1946 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.83) #12
+  %1947 = icmp eq i32 %1946, 0
+  br i1 %1947, label %1948, label %1957
+
+1948:                                             ; preds = %1948, %1945
+  %1949 = phi i64 [ %1953, %1948 ], [ 0, %1945 ]
+  %1950 = phi <4 x i32> [ %1954, %1948 ], [ <i32 0, i32 1, i32 2, i32 3>, %1945 ]
+  %1951 = call <4 x float> @_wyvern_slice_init__102007472(<4 x i32> %1950)
+  %1952 = getelementptr inbounds float, ptr @global_data, i64 %1949
+  store <4 x float> %1951, ptr %1952, align 16, !tbaa !13
+  %1953 = add nuw nsw i64 %1949, 4
+  %1954 = add <4 x i32> %1950, <i32 4, i32 4, i32 4, i32 4>
+  %1955 = icmp eq i64 %1953, 32000
+  br i1 %1955, label %1956, label %1948, !llvm.loop !246
+
+1956:                                             ; preds = %1948
+  tail call void @llvm.memset.p0.i64(ptr noundef nonnull align 16 dereferenceable(128000) getelementptr inbounds (%struct.GlobalData, ptr @global_data, i64 0, i32 3, i64 0), i8 0, i64 128000, i1 false), !tbaa !13
+  br label %3043
+
+1957:                                             ; preds = %1945
+  %1958 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.84) #12
+  %1959 = icmp eq i32 %1958, 0
+  br i1 %1959, label %1960, label %1969
+
+1960:                                             ; preds = %1960, %1957
+  %1961 = phi i64 [ %1965, %1960 ], [ 0, %1957 ]
+  %1962 = phi <4 x i32> [ %1966, %1960 ], [ <i32 0, i32 1, i32 2, i32 3>, %1957 ]
+  %1963 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %1962)
+  %1964 = getelementptr inbounds float, ptr @global_data, i64 %1961
+  store <4 x float> %1963, ptr %1964, align 16, !tbaa !13
+  %1965 = add nuw nsw i64 %1961, 4
+  %1966 = add <4 x i32> %1962, <i32 4, i32 4, i32 4, i32 4>
+  %1967 = icmp eq i64 %1965, 32000
+  br i1 %1967, label %1968, label %1960, !llvm.loop !247
+
+1968:                                             ; preds = %1960
+  store float -2.000000e+00, ptr getelementptr inbounds (%struct.GlobalData, ptr @global_data, i64 0, i32 0, i64 31999), align 4, !tbaa !13
+  br label %3043
+
+1969:                                             ; preds = %1957
+  %1970 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.85) #12
+  %1971 = icmp eq i32 %1970, 0
+  br i1 %1971, label %1972, label %1978
+
+1972:                                             ; preds = %1972, %1969
+  %1973 = phi i64 [ %1975, %1972 ], [ 0, %1969 ]
+  %1974 = getelementptr inbounds float, ptr @global_data, i64 %1973
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %1974, align 16, !tbaa !13
+  %1975 = add nuw nsw i64 %1973, 4
+  %1976 = icmp eq i64 %1975, 32000
+  br i1 %1976, label %1977, label %1972, !llvm.loop !248
+
+1977:                                             ; preds = %1972
+  tail call void @llvm.memset.p0.i64(ptr noundef nonnull align 16 dereferenceable(128000) getelementptr inbounds (%struct.GlobalData, ptr @global_data, i64 0, i32 3, i64 0), i8 0, i64 128000, i1 false), !tbaa !13
+  br label %3043
+
+1978:                                             ; preds = %1969
+  %1979 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.86) #12
+  %1980 = icmp eq i32 %1979, 0
+  br i1 %1980, label %1981, label %1987
+
+1981:                                             ; preds = %1981, %1978
+  %1982 = phi i64 [ %1984, %1981 ], [ 0, %1978 ]
+  %1983 = getelementptr inbounds float, ptr @global_data, i64 %1982
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %1983, align 16, !tbaa !13
+  %1984 = add nuw nsw i64 %1982, 4
+  %1985 = icmp eq i64 %1984, 32000
+  br i1 %1985, label %1986, label %1981, !llvm.loop !249
+
+1986:                                             ; preds = %1981
+  tail call void @llvm.memset.p0.i64(ptr noundef nonnull align 16 dereferenceable(128000) getelementptr inbounds (%struct.GlobalData, ptr @global_data, i64 0, i32 3, i64 0), i8 0, i64 128000, i1 false), !tbaa !13
+  tail call void @llvm.memset.p0.i64(ptr noundef nonnull align 16 dereferenceable(128000) getelementptr inbounds (%struct.GlobalData, ptr @global_data, i64 0, i32 6, i64 0), i8 0, i64 128000, i1 false), !tbaa !13
+  br label %3043
+
+1987:                                             ; preds = %1978
+  %1988 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.87) #12
+  %1989 = icmp eq i32 %1988, 0
+  br i1 %1989, label %1990, label %2024
+
+1990:                                             ; preds = %1990, %1987
+  %1991 = phi i64 [ %1993, %1990 ], [ 0, %1987 ]
+  %1992 = getelementptr inbounds float, ptr @global_data, i64 %1991
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %1992, align 16, !tbaa !13
+  %1993 = add nuw nsw i64 %1991, 4
+  %1994 = icmp eq i64 %1993, 32000
+  br i1 %1994, label %1995, label %1990, !llvm.loop !250
+
+1995:                                             ; preds = %1995, %1990
+  %1996 = phi i64 [ %1998, %1995 ], [ 0, %1990 ]
+  %1997 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 3, i64 %1996
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %1997, align 16, !tbaa !13
+  %1998 = add nuw nsw i64 %1996, 4
+  %1999 = icmp eq i64 %1998, 32000
+  br i1 %1999, label %2000, label %1995, !llvm.loop !251
+
+2000:                                             ; preds = %2000, %1995
+  %2001 = phi i64 [ %2005, %2000 ], [ 0, %1995 ]
+  %2002 = phi <4 x i32> [ %2006, %2000 ], [ <i32 0, i32 1, i32 2, i32 3>, %1995 ]
+  %2003 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %2002)
+  %2004 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 6, i64 %2001
+  store <4 x float> %2003, ptr %2004, align 16, !tbaa !13
+  %2005 = add nuw nsw i64 %2001, 4
+  %2006 = add <4 x i32> %2002, <i32 4, i32 4, i32 4, i32 4>
+  %2007 = icmp eq i64 %2005, 32000
+  br i1 %2007, label %2008, label %2000, !llvm.loop !252
+
+2008:                                             ; preds = %2008, %2000
+  %2009 = phi i64 [ %2013, %2008 ], [ 0, %2000 ]
+  %2010 = phi <4 x i32> [ %2014, %2008 ], [ <i32 0, i32 1, i32 2, i32 3>, %2000 ]
+  %2011 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %2010)
+  %2012 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 9, i64 %2009
+  store <4 x float> %2011, ptr %2012, align 16, !tbaa !13
+  %2013 = add nuw nsw i64 %2009, 4
+  %2014 = add <4 x i32> %2010, <i32 4, i32 4, i32 4, i32 4>
+  %2015 = icmp eq i64 %2013, 32000
+  br i1 %2015, label %2016, label %2008, !llvm.loop !253
+
+2016:                                             ; preds = %2016, %2008
+  %2017 = phi i64 [ %2021, %2016 ], [ 0, %2008 ]
+  %2018 = phi <4 x i32> [ %2022, %2016 ], [ <i32 0, i32 1, i32 2, i32 3>, %2008 ]
+  %2019 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %2018)
+  %2020 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 12, i64 %2017
+  store <4 x float> %2019, ptr %2020, align 16, !tbaa !13
+  %2021 = add nuw nsw i64 %2017, 4
+  %2022 = add <4 x i32> %2018, <i32 4, i32 4, i32 4, i32 4>
+  %2023 = icmp eq i64 %2021, 32000
+  br i1 %2023, label %3043, label %2016, !llvm.loop !254
+
+2024:                                             ; preds = %1987
+  %2025 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.88) #12
+  %2026 = icmp eq i32 %2025, 0
+  br i1 %2026, label %2027, label %2036
+
+2027:                                             ; preds = %2027, %2024
+  %2028 = phi i64 [ %2032, %2027 ], [ 0, %2024 ]
+  %2029 = phi <4 x i32> [ %2033, %2027 ], [ <i32 0, i32 1, i32 2, i32 3>, %2024 ]
+  %2030 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %2029)
+  %2031 = getelementptr inbounds float, ptr @global_data, i64 %2028
+  store <4 x float> %2030, ptr %2031, align 16, !tbaa !13
+  %2032 = add nuw nsw i64 %2028, 4
+  %2033 = add <4 x i32> %2029, <i32 4, i32 4, i32 4, i32 4>
+  %2034 = icmp eq i64 %2032, 32000
+  br i1 %2034, label %2035, label %2027, !llvm.loop !255
+
+2035:                                             ; preds = %2027
+  store float -1.000000e+00, ptr getelementptr inbounds (%struct.GlobalData, ptr @global_data, i64 0, i32 0, i64 31999), align 4, !tbaa !13
+  br label %3043
+
+2036:                                             ; preds = %2024
+  %2037 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.89) #12
+  %2038 = icmp eq i32 %2037, 0
+  br i1 %2038, label %2039, label %2048
+
+2039:                                             ; preds = %2039, %2036
+  %2040 = phi i64 [ %2044, %2039 ], [ 0, %2036 ]
+  %2041 = phi <4 x i32> [ %2045, %2039 ], [ <i32 0, i32 1, i32 2, i32 3>, %2036 ]
+  %2042 = call <4 x float> @_wyvern_slice_init__102007472(<4 x i32> %2041)
+  %2043 = getelementptr inbounds float, ptr @global_data, i64 %2040
+  store <4 x float> %2042, ptr %2043, align 16, !tbaa !13
+  %2044 = add nuw nsw i64 %2040, 4
+  %2045 = add <4 x i32> %2041, <i32 4, i32 4, i32 4, i32 4>
+  %2046 = icmp eq i64 %2044, 32000
+  br i1 %2046, label %2047, label %2039, !llvm.loop !256
+
+2047:                                             ; preds = %2039
+  store float 2.000000e+00, ptr getelementptr inbounds (%struct.GlobalData, ptr @global_data, i64 0, i32 0, i64 31999), align 4, !tbaa !13
+  br label %3043
+
+2048:                                             ; preds = %2036
+  %2049 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.90) #12
+  %2050 = icmp eq i32 %2049, 0
+  br i1 %2050, label %2051, label %2060
+
+2051:                                             ; preds = %2048
+  tail call void @llvm.memset.p0.i64(ptr noundef nonnull align 16 dereferenceable(128000) @global_data, i8 0, i64 128000, i1 false), !tbaa !13
+  br label %2052
+
+2052:                                             ; preds = %2052, %2051
+  %2053 = phi i64 [ 0, %2051 ], [ %2057, %2052 ]
+  %2054 = phi <4 x i32> [ <i32 0, i32 1, i32 2, i32 3>, %2051 ], [ %2058, %2052 ]
+  %2055 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %2054)
+  %2056 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 3, i64 %2053
+  store <4 x float> %2055, ptr %2056, align 16, !tbaa !13
+  %2057 = add nuw nsw i64 %2053, 4
+  %2058 = add <4 x i32> %2054, <i32 4, i32 4, i32 4, i32 4>
+  %2059 = icmp eq i64 %2057, 32000
+  br i1 %2059, label %3043, label %2052, !llvm.loop !257
+
+2060:                                             ; preds = %2048
+  %2061 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.91) #12
+  %2062 = icmp eq i32 %2061, 0
+  br i1 %2062, label %2063, label %2079
+
+2063:                                             ; preds = %2063, %2060
+  %2064 = phi i64 [ %2068, %2063 ], [ 0, %2060 ]
+  %2065 = phi <4 x i32> [ %2069, %2063 ], [ <i32 0, i32 1, i32 2, i32 3>, %2060 ]
+  %2066 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %2065)
+  %2067 = getelementptr inbounds float, ptr @global_data, i64 %2064
+  store <4 x float> %2066, ptr %2067, align 16, !tbaa !13
+  %2068 = add nuw nsw i64 %2064, 4
+  %2069 = add <4 x i32> %2065, <i32 4, i32 4, i32 4, i32 4>
+  %2070 = icmp eq i64 %2068, 32000
+  br i1 %2070, label %2071, label %2063, !llvm.loop !258
+
+2071:                                             ; preds = %2071, %2063
+  %2072 = phi i64 [ %2076, %2071 ], [ 0, %2063 ]
+  %2073 = phi <4 x i32> [ %2077, %2071 ], [ <i32 0, i32 1, i32 2, i32 3>, %2063 ]
+  %2074 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %2073)
+  %2075 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 3, i64 %2072
+  store <4 x float> %2074, ptr %2075, align 16, !tbaa !13
+  %2076 = add nuw nsw i64 %2072, 4
+  %2077 = add <4 x i32> %2073, <i32 4, i32 4, i32 4, i32 4>
+  %2078 = icmp eq i64 %2076, 32000
+  br i1 %2078, label %3043, label %2071, !llvm.loop !259
+
+2079:                                             ; preds = %2060
+  %2080 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.92) #12
+  %2081 = icmp eq i32 %2080, 0
+  br i1 %2081, label %2082, label %2107
+
+2082:                                             ; preds = %2095, %2079
+  %2083 = phi i64 [ %2084, %2095 ], [ 0, %2079 ]
+  %2084 = add nuw nsw i64 %2083, 1
+  %2085 = trunc i64 %2084 to i32
+  %2086 = sitofp i32 %2085 to float
+  %2087 = fdiv float 1.000000e+00, %2086
+  %2088 = insertelement <4 x float> poison, float %2087, i64 0
+  %2089 = shufflevector <4 x float> %2088, <4 x float> poison, <4 x i32> zeroinitializer
+  br label %2090
+
+2090:                                             ; preds = %2090, %2082
+  %2091 = phi i64 [ 0, %2082 ], [ %2093, %2090 ]
+  %2092 = getelementptr inbounds [256 x float], ptr getelementptr inbounds (%struct.GlobalData, ptr @global_data, i64 0, i32 15, i64 0, i64 0), i64 %2083, i64 %2091
+  store <4 x float> %2089, ptr %2092, align 16, !tbaa !13
+  %2093 = add nuw nsw i64 %2091, 4
+  %2094 = icmp eq i64 %2093, 256
+  br i1 %2094, label %2095, label %2090, !llvm.loop !260
+
+2095:                                             ; preds = %2090
+  %2096 = icmp eq i64 %2084, 256
+  br i1 %2096, label %2097, label %2082
+
+2097:                                             ; preds = %2104, %2095
+  %2098 = phi i64 [ %2105, %2104 ], [ 0, %2095 ]
+  br label %2099
+
+2099:                                             ; preds = %2099, %2097
+  %2100 = phi i64 [ 0, %2097 ], [ %2102, %2099 ]
+  %2101 = getelementptr inbounds [256 x float], ptr getelementptr inbounds (%struct.GlobalData, ptr @global_data, i64 0, i32 18, i64 0, i64 0), i64 %2098, i64 %2100
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %2101, align 16, !tbaa !13
+  %2102 = add nuw nsw i64 %2100, 4
+  %2103 = icmp eq i64 %2102, 256
+  br i1 %2103, label %2104, label %2099, !llvm.loop !261
+
+2104:                                             ; preds = %2099
+  %2105 = add nuw nsw i64 %2098, 1
+  %2106 = icmp eq i64 %2105, 256
+  br i1 %2106, label %3043, label %2097
+
+2107:                                             ; preds = %2079
+  %2108 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.93) #12
+  %2109 = icmp eq i32 %2108, 0
+  br i1 %2109, label %2110, label %2121
+
+2110:                                             ; preds = %2110, %2107
+  %2111 = phi i64 [ %2113, %2110 ], [ 0, %2107 ]
+  %2112 = getelementptr inbounds float, ptr @global_data, i64 %2111
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %2112, align 16, !tbaa !13
+  %2113 = add nuw nsw i64 %2111, 4
+  %2114 = icmp eq i64 %2113, 32000
+  br i1 %2114, label %2115, label %2110, !llvm.loop !262
+
+2115:                                             ; preds = %2115, %2110
+  %2116 = phi i64 [ %2118, %2115 ], [ 0, %2110 ]
+  %2117 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 3, i64 %2116
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %2117, align 16, !tbaa !13
+  %2118 = add nuw nsw i64 %2116, 4
+  %2119 = icmp eq i64 %2118, 32000
+  br i1 %2119, label %2120, label %2115, !llvm.loop !263
+
+2120:                                             ; preds = %2115
+  store float 1.000000e+00, ptr getelementptr inbounds (%struct.GlobalData, ptr @global_data, i64 0, i32 6, i64 0), align 16, !tbaa !13
+  br label %3043
+
+2121:                                             ; preds = %2107
+  %2122 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.94) #12
+  %2123 = icmp eq i32 %2122, 0
+  br i1 %2123, label %2124, label %2140
+
+2124:                                             ; preds = %2124, %2121
+  %2125 = phi i64 [ %2129, %2124 ], [ 0, %2121 ]
+  %2126 = phi <4 x i32> [ %2130, %2124 ], [ <i32 0, i32 1, i32 2, i32 3>, %2121 ]
+  %2127 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %2126)
+  %2128 = getelementptr inbounds float, ptr @global_data, i64 %2125
+  store <4 x float> %2127, ptr %2128, align 16, !tbaa !13
+  %2129 = add nuw nsw i64 %2125, 4
+  %2130 = add <4 x i32> %2126, <i32 4, i32 4, i32 4, i32 4>
+  %2131 = icmp eq i64 %2129, 32000
+  br i1 %2131, label %2132, label %2124, !llvm.loop !264
+
+2132:                                             ; preds = %2132, %2124
+  %2133 = phi i64 [ %2137, %2132 ], [ 0, %2124 ]
+  %2134 = phi <4 x i32> [ %2138, %2132 ], [ <i32 0, i32 1, i32 2, i32 3>, %2124 ]
+  %2135 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %2134)
+  %2136 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 3, i64 %2133
+  store <4 x float> %2135, ptr %2136, align 16, !tbaa !13
+  %2137 = add nuw nsw i64 %2133, 4
+  %2138 = add <4 x i32> %2134, <i32 4, i32 4, i32 4, i32 4>
+  %2139 = icmp eq i64 %2137, 32000
+  br i1 %2139, label %3043, label %2132, !llvm.loop !265
+
+2140:                                             ; preds = %2121
+  %2141 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.95) #12
+  %2142 = icmp eq i32 %2141, 0
+  br i1 %2142, label %2143, label %2154
+
+2143:                                             ; preds = %2143, %2140
+  %2144 = phi i64 [ %2146, %2143 ], [ 0, %2140 ]
+  %2145 = getelementptr inbounds float, ptr @global_data, i64 %2144
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %2145, align 16, !tbaa !13
+  %2146 = add nuw nsw i64 %2144, 4
+  %2147 = icmp eq i64 %2146, 32000
+  br i1 %2147, label %2148, label %2143, !llvm.loop !266
+
+2148:                                             ; preds = %2148, %2143
+  %2149 = phi i64 [ %2151, %2148 ], [ 0, %2143 ]
+  %2150 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 3, i64 %2149
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %2150, align 16, !tbaa !13
+  %2151 = add nuw nsw i64 %2149, 4
+  %2152 = icmp eq i64 %2151, 32000
+  br i1 %2152, label %2153, label %2148, !llvm.loop !267
+
+2153:                                             ; preds = %2148
+  store float 1.000000e+00, ptr getelementptr inbounds (%struct.GlobalData, ptr @global_data, i64 0, i32 6, i64 0), align 16, !tbaa !13
+  br label %3043
+
+2154:                                             ; preds = %2140
+  %2155 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.96) #12
+  %2156 = icmp eq i32 %2155, 0
+  br i1 %2156, label %2157, label %2178
+
+2157:                                             ; preds = %2157, %2154
+  %2158 = phi i64 [ %2160, %2157 ], [ 0, %2154 ]
+  %2159 = getelementptr inbounds float, ptr @global_data, i64 %2158
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %2159, align 16, !tbaa !13
+  %2160 = add nuw nsw i64 %2158, 4
+  %2161 = icmp eq i64 %2160, 32000
+  br i1 %2161, label %2162, label %2157, !llvm.loop !268
+
+2162:                                             ; preds = %2162, %2157
+  %2163 = phi i64 [ %2167, %2162 ], [ 0, %2157 ]
+  %2164 = phi <4 x i32> [ %2168, %2162 ], [ <i32 0, i32 1, i32 2, i32 3>, %2157 ]
+  %2165 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %2164)
+  %2166 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 3, i64 %2163
+  store <4 x float> %2165, ptr %2166, align 16, !tbaa !13
+  %2167 = add nuw nsw i64 %2163, 4
+  %2168 = add <4 x i32> %2164, <i32 4, i32 4, i32 4, i32 4>
+  %2169 = icmp eq i64 %2167, 32000
+  br i1 %2169, label %2170, label %2162, !llvm.loop !269
+
+2170:                                             ; preds = %2170, %2162
+  %2171 = phi i64 [ %2175, %2170 ], [ 0, %2162 ]
+  %2172 = phi <4 x i32> [ %2176, %2170 ], [ <i32 0, i32 1, i32 2, i32 3>, %2162 ]
+  %2173 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %2172)
+  %2174 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 6, i64 %2171
+  store <4 x float> %2173, ptr %2174, align 16, !tbaa !13
+  %2175 = add nuw nsw i64 %2171, 4
+  %2176 = add <4 x i32> %2172, <i32 4, i32 4, i32 4, i32 4>
+  %2177 = icmp eq i64 %2175, 32000
+  br i1 %2177, label %3043, label %2170, !llvm.loop !270
+
+2178:                                             ; preds = %2154
+  %2179 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.97) #12
+  %2180 = icmp eq i32 %2179, 0
+  br i1 %2180, label %2181, label %2202
+
+2181:                                             ; preds = %2181, %2178
+  %2182 = phi i64 [ %2184, %2181 ], [ 0, %2178 ]
+  %2183 = getelementptr inbounds float, ptr @global_data, i64 %2182
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %2183, align 16, !tbaa !13
+  %2184 = add nuw nsw i64 %2182, 4
+  %2185 = icmp eq i64 %2184, 32000
+  br i1 %2185, label %2186, label %2181, !llvm.loop !271
+
+2186:                                             ; preds = %2186, %2181
+  %2187 = phi i64 [ %2191, %2186 ], [ 0, %2181 ]
+  %2188 = phi <4 x i32> [ %2192, %2186 ], [ <i32 0, i32 1, i32 2, i32 3>, %2181 ]
+  %2189 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %2188)
+  %2190 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 3, i64 %2187
+  store <4 x float> %2189, ptr %2190, align 16, !tbaa !13
+  %2191 = add nuw nsw i64 %2187, 4
+  %2192 = add <4 x i32> %2188, <i32 4, i32 4, i32 4, i32 4>
+  %2193 = icmp eq i64 %2191, 32000
+  br i1 %2193, label %2194, label %2186, !llvm.loop !272
+
+2194:                                             ; preds = %2194, %2186
+  %2195 = phi i64 [ %2199, %2194 ], [ 0, %2186 ]
+  %2196 = phi <4 x i32> [ %2200, %2194 ], [ <i32 0, i32 1, i32 2, i32 3>, %2186 ]
+  %2197 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %2196)
+  %2198 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 6, i64 %2195
+  store <4 x float> %2197, ptr %2198, align 16, !tbaa !13
+  %2199 = add nuw nsw i64 %2195, 4
+  %2200 = add <4 x i32> %2196, <i32 4, i32 4, i32 4, i32 4>
+  %2201 = icmp eq i64 %2199, 32000
+  br i1 %2201, label %3043, label %2194, !llvm.loop !273
+
+2202:                                             ; preds = %2178
+  %2203 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.98) #12
+  %2204 = icmp eq i32 %2203, 0
+  br i1 %2204, label %2205, label %2232
+
+2205:                                             ; preds = %2202
+  tail call void @llvm.memset.p0.i64(ptr noundef nonnull align 16 dereferenceable(128000) @global_data, i8 0, i64 128000, i1 false), !tbaa !13
+  br label %2206
+
+2206:                                             ; preds = %2206, %2205
+  %2207 = phi i64 [ 0, %2205 ], [ %2209, %2206 ]
+  %2208 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 3, i64 %2207
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %2208, align 16, !tbaa !13
+  %2209 = add nuw nsw i64 %2207, 4
+  %2210 = icmp eq i64 %2209, 32000
+  br i1 %2210, label %2211, label %2206, !llvm.loop !274
+
+2211:                                             ; preds = %2211, %2206
+  %2212 = phi i64 [ %2214, %2211 ], [ 0, %2206 ]
+  %2213 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 6, i64 %2212
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %2213, align 16, !tbaa !13
+  %2214 = add nuw nsw i64 %2212, 4
+  %2215 = icmp eq i64 %2214, 32000
+  br i1 %2215, label %2216, label %2211, !llvm.loop !275
+
+2216:                                             ; preds = %2216, %2211
+  %2217 = phi i64 [ %2221, %2216 ], [ 0, %2211 ]
+  %2218 = phi <4 x i32> [ %2222, %2216 ], [ <i32 0, i32 1, i32 2, i32 3>, %2211 ]
+  %2219 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %2218)
+  %2220 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 9, i64 %2217
+  store <4 x float> %2219, ptr %2220, align 16, !tbaa !13
+  %2221 = add nuw nsw i64 %2217, 4
+  %2222 = add <4 x i32> %2218, <i32 4, i32 4, i32 4, i32 4>
+  %2223 = icmp eq i64 %2221, 32000
+  br i1 %2223, label %2224, label %2216, !llvm.loop !276
+
+2224:                                             ; preds = %2224, %2216
+  %2225 = phi i64 [ %2229, %2224 ], [ 0, %2216 ]
+  %2226 = phi <4 x i32> [ %2230, %2224 ], [ <i32 0, i32 1, i32 2, i32 3>, %2216 ]
+  %2227 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %2226)
+  %2228 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 12, i64 %2225
+  store <4 x float> %2227, ptr %2228, align 16, !tbaa !13
+  %2229 = add nuw nsw i64 %2225, 4
+  %2230 = add <4 x i32> %2226, <i32 4, i32 4, i32 4, i32 4>
+  %2231 = icmp eq i64 %2229, 32000
+  br i1 %2231, label %3043, label %2224, !llvm.loop !277
+
+2232:                                             ; preds = %2202
+  %2233 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.99) #12
+  %2234 = icmp eq i32 %2233, 0
+  br i1 %2234, label %2235, label %2275
+
+2235:                                             ; preds = %2242, %2232
+  %2236 = phi i64 [ %2243, %2242 ], [ 0, %2232 ]
+  br label %2237
+
+2237:                                             ; preds = %2237, %2235
+  %2238 = phi i64 [ 0, %2235 ], [ %2240, %2237 ]
+  %2239 = getelementptr inbounds [256 x float], ptr getelementptr inbounds (%struct.GlobalData, ptr @global_data, i64 0, i32 15, i64 0, i64 0), i64 %2236, i64 %2238
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %2239, align 16, !tbaa !13
+  %2240 = add nuw nsw i64 %2238, 4
+  %2241 = icmp eq i64 %2240, 256
+  br i1 %2241, label %2242, label %2237, !llvm.loop !278
+
+2242:                                             ; preds = %2237
+  %2243 = add nuw nsw i64 %2236, 1
+  %2244 = icmp eq i64 %2243, 256
+  br i1 %2244, label %2245, label %2235
+
+2245:                                             ; preds = %2258, %2242
+  %2246 = phi i64 [ %2247, %2258 ], [ 0, %2242 ]
+  %2247 = add nuw nsw i64 %2246, 1
+  %2248 = trunc i64 %2247 to i32
+  %2249 = sitofp i32 %2248 to float
+  %2250 = fdiv float 1.000000e+00, %2249
+  %2251 = insertelement <4 x float> poison, float %2250, i64 0
+  %2252 = shufflevector <4 x float> %2251, <4 x float> poison, <4 x i32> zeroinitializer
+  br label %2253
+
+2253:                                             ; preds = %2253, %2245
+  %2254 = phi i64 [ 0, %2245 ], [ %2256, %2253 ]
+  %2255 = getelementptr inbounds [256 x float], ptr getelementptr inbounds (%struct.GlobalData, ptr @global_data, i64 0, i32 18, i64 0, i64 0), i64 %2246, i64 %2254
+  store <4 x float> %2252, ptr %2255, align 16, !tbaa !13
+  %2256 = add nuw nsw i64 %2254, 4
+  %2257 = icmp eq i64 %2256, 256
+  br i1 %2257, label %2258, label %2253, !llvm.loop !279
+
+2258:                                             ; preds = %2253
+  %2259 = icmp eq i64 %2247, 256
+  br i1 %2259, label %2260, label %2245
+
+2260:                                             ; preds = %2273, %2258
+  %2261 = phi i64 [ %2262, %2273 ], [ 0, %2258 ]
+  %2262 = add nuw nsw i64 %2261, 1
+  %2263 = trunc i64 %2262 to i32
+  %2264 = sitofp i32 %2263 to float
+  %2265 = fdiv float 1.000000e+00, %2264
+  %2266 = insertelement <4 x float> poison, float %2265, i64 0
+  %2267 = shufflevector <4 x float> %2266, <4 x float> poison, <4 x i32> zeroinitializer
+  br label %2268
+
+2268:                                             ; preds = %2268, %2260
+  %2269 = phi i64 [ 0, %2260 ], [ %2271, %2268 ]
+  %2270 = getelementptr inbounds [256 x float], ptr getelementptr inbounds (%struct.GlobalData, ptr @global_data, i64 0, i32 21, i64 0, i64 0), i64 %2261, i64 %2269
+  store <4 x float> %2267, ptr %2270, align 16, !tbaa !13
+  %2271 = add nuw nsw i64 %2269, 4
+  %2272 = icmp eq i64 %2271, 256
+  br i1 %2272, label %2273, label %2268, !llvm.loop !280
+
+2273:                                             ; preds = %2268
+  %2274 = icmp eq i64 %2262, 256
+  br i1 %2274, label %3043, label %2260
+
+2275:                                             ; preds = %2232
+  %2276 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.100) #12
+  %2277 = icmp eq i32 %2276, 0
+  br i1 %2277, label %2278, label %2300
+
+2278:                                             ; preds = %2278, %2275
+  %2279 = phi i64 [ %2281, %2278 ], [ 0, %2275 ]
+  %2280 = getelementptr inbounds float, ptr @global_data, i64 %2279
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %2280, align 16, !tbaa !13
+  %2281 = add nuw nsw i64 %2279, 4
+  %2282 = icmp eq i64 %2281, 32000
+  br i1 %2282, label %2283, label %2278, !llvm.loop !281
+
+2283:                                             ; preds = %2283, %2278
+  %2284 = phi i64 [ %2288, %2283 ], [ 0, %2278 ]
+  %2285 = phi <4 x i32> [ %2289, %2283 ], [ <i32 0, i32 1, i32 2, i32 3>, %2278 ]
+  %2286 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %2285)
+  %2287 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 3, i64 %2284
+  store <4 x float> %2286, ptr %2287, align 16, !tbaa !13
+  %2288 = add nuw nsw i64 %2284, 4
+  %2289 = add <4 x i32> %2285, <i32 4, i32 4, i32 4, i32 4>
+  %2290 = icmp eq i64 %2288, 32000
+  br i1 %2290, label %2291, label %2283, !llvm.loop !282
+
+2291:                                             ; preds = %2291, %2283
+  %2292 = phi i64 [ %2296, %2291 ], [ 0, %2283 ]
+  %2293 = phi <4 x i32> [ %2297, %2291 ], [ <i32 0, i32 1, i32 2, i32 3>, %2283 ]
+  %2294 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %2293)
+  %2295 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 6, i64 %2292
+  store <4 x float> %2294, ptr %2295, align 16, !tbaa !13
+  %2296 = add nuw nsw i64 %2292, 4
+  %2297 = add <4 x i32> %2293, <i32 4, i32 4, i32 4, i32 4>
+  %2298 = icmp eq i64 %2296, 32000
+  br i1 %2298, label %2299, label %2291, !llvm.loop !283
+
+2299:                                             ; preds = %2291
+  store float -1.000000e+00, ptr getelementptr inbounds (%struct.GlobalData, ptr @global_data, i64 0, i32 0, i64 31999), align 4, !tbaa !13
+  br label %3043
+
+2300:                                             ; preds = %2275
+  %2301 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.101) #12
+  %2302 = icmp eq i32 %2301, 0
+  br i1 %2302, label %2303, label %2316
+
+2303:                                             ; preds = %2303, %2300
+  %2304 = phi i64 [ %2308, %2303 ], [ 0, %2300 ]
+  %2305 = phi <4 x i32> [ %2309, %2303 ], [ <i32 0, i32 1, i32 2, i32 3>, %2300 ]
+  %2306 = call <4 x float> @_wyvern_slice_init__102007472(<4 x i32> %2305)
+  %2307 = getelementptr inbounds float, ptr @global_data, i64 %2304
+  store <4 x float> %2306, ptr %2307, align 16, !tbaa !13
+  %2308 = add nuw nsw i64 %2304, 4
+  %2309 = add <4 x i32> %2305, <i32 4, i32 4, i32 4, i32 4>
+  %2310 = icmp eq i64 %2308, 32000
+  br i1 %2310, label %2311, label %2303, !llvm.loop !284
+
+2311:                                             ; preds = %2311, %2303
+  %2312 = phi i64 [ %2314, %2311 ], [ 0, %2303 ]
+  %2313 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 3, i64 %2312
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %2313, align 16, !tbaa !13
+  %2314 = add nuw nsw i64 %2312, 4
+  %2315 = icmp eq i64 %2314, 32000
+  br i1 %2315, label %3043, label %2311, !llvm.loop !285
+
+2316:                                             ; preds = %2300
+  %2317 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.102) #12
+  %2318 = icmp eq i32 %2317, 0
+  br i1 %2318, label %2319, label %2332
+
+2319:                                             ; preds = %2319, %2316
+  %2320 = phi i64 [ %2322, %2319 ], [ 0, %2316 ]
+  %2321 = getelementptr inbounds float, ptr @array, i64 %2320
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %2321, align 16, !tbaa !13
+  %2322 = add nuw nsw i64 %2320, 4
+  %2323 = icmp eq i64 %2322, 32000
+  br i1 %2323, label %2324, label %2319, !llvm.loop !286
+
+2324:                                             ; preds = %2324, %2319
+  %2325 = phi i64 [ %2329, %2324 ], [ 0, %2319 ]
+  %2326 = phi <4 x i32> [ %2330, %2324 ], [ <i32 0, i32 1, i32 2, i32 3>, %2319 ]
+  %2327 = call <4 x float> @_wyvern_slice_init__102007472(<4 x i32> %2326)
+  %2328 = getelementptr inbounds float, ptr @global_data, i64 %2325
+  store <4 x float> %2327, ptr %2328, align 16, !tbaa !13
+  %2329 = add nuw nsw i64 %2325, 4
+  %2330 = add <4 x i32> %2326, <i32 4, i32 4, i32 4, i32 4>
+  %2331 = icmp eq i64 %2329, 32000
+  br i1 %2331, label %3043, label %2324, !llvm.loop !287
+
+2332:                                             ; preds = %2316
+  %2333 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.103) #12
+  %2334 = icmp eq i32 %2333, 0
+  br i1 %2334, label %2335, label %2344
+
+2335:                                             ; preds = %2332
+  tail call void @llvm.memset.p0.i64(ptr noundef nonnull align 16 dereferenceable(128000) @array, i8 0, i64 128000, i1 false), !tbaa !13
+  br label %2336
+
+2336:                                             ; preds = %2336, %2335
+  %2337 = phi i64 [ 0, %2335 ], [ %2341, %2336 ]
+  %2338 = phi <4 x i32> [ <i32 0, i32 1, i32 2, i32 3>, %2335 ], [ %2342, %2336 ]
+  %2339 = call <4 x float> @_wyvern_slice_init__102007472(<4 x i32> %2338)
+  %2340 = getelementptr inbounds float, ptr @global_data, i64 %2337
+  store <4 x float> %2339, ptr %2340, align 16, !tbaa !13
+  %2341 = add nuw nsw i64 %2337, 4
+  %2342 = add <4 x i32> %2338, <i32 4, i32 4, i32 4, i32 4>
+  %2343 = icmp eq i64 %2341, 32000
+  br i1 %2343, label %3043, label %2336, !llvm.loop !288
+
+2344:                                             ; preds = %2332
+  %2345 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.104) #12
+  %2346 = icmp eq i32 %2345, 0
+  br i1 %2346, label %2347, label %2360
+
+2347:                                             ; preds = %2347, %2344
+  %2348 = phi i64 [ %2350, %2347 ], [ 0, %2344 ]
+  %2349 = getelementptr inbounds float, ptr @array, i64 %2348
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %2349, align 16, !tbaa !13
+  %2350 = add nuw nsw i64 %2348, 4
+  %2351 = icmp eq i64 %2350, 32000
+  br i1 %2351, label %2352, label %2347, !llvm.loop !289
+
+2352:                                             ; preds = %2352, %2347
+  %2353 = phi i64 [ %2357, %2352 ], [ 0, %2347 ]
+  %2354 = phi <4 x i32> [ %2358, %2352 ], [ <i32 0, i32 1, i32 2, i32 3>, %2347 ]
+  %2355 = call <4 x float> @_wyvern_slice_init__102007472(<4 x i32> %2354)
+  %2356 = getelementptr inbounds float, ptr @global_data, i64 %2353
+  store <4 x float> %2355, ptr %2356, align 16, !tbaa !13
+  %2357 = add nuw nsw i64 %2353, 4
+  %2358 = add <4 x i32> %2354, <i32 4, i32 4, i32 4, i32 4>
+  %2359 = icmp eq i64 %2357, 32000
+  br i1 %2359, label %3043, label %2352, !llvm.loop !290
+
+2360:                                             ; preds = %2344
+  %2361 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.105) #12
+  %2362 = icmp eq i32 %2361, 0
+  br i1 %2362, label %2363, label %2376
+
+2363:                                             ; preds = %2363, %2360
+  %2364 = phi i64 [ %2366, %2363 ], [ 0, %2360 ]
+  %2365 = getelementptr inbounds float, ptr @global_data, i64 %2364
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %2365, align 16, !tbaa !13
+  %2366 = add nuw nsw i64 %2364, 4
+  %2367 = icmp eq i64 %2366, 32000
+  br i1 %2367, label %2368, label %2363, !llvm.loop !291
+
+2368:                                             ; preds = %2368, %2363
+  %2369 = phi i64 [ %2373, %2368 ], [ 0, %2363 ]
+  %2370 = phi <4 x i32> [ %2374, %2368 ], [ <i32 0, i32 1, i32 2, i32 3>, %2363 ]
+  %2371 = call <4 x float> @_wyvern_slice_init__102007472(<4 x i32> %2370)
+  %2372 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 3, i64 %2369
+  store <4 x float> %2371, ptr %2372, align 16, !tbaa !13
+  %2373 = add nuw nsw i64 %2369, 4
+  %2374 = add <4 x i32> %2370, <i32 4, i32 4, i32 4, i32 4>
+  %2375 = icmp eq i64 %2373, 32000
+  br i1 %2375, label %3043, label %2368, !llvm.loop !292
+
+2376:                                             ; preds = %2360
+  %2377 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.106) #12
+  %2378 = icmp eq i32 %2377, 0
+  br i1 %2378, label %2379, label %2392
+
+2379:                                             ; preds = %2379, %2376
+  %2380 = phi i64 [ %2382, %2379 ], [ 0, %2376 ]
+  %2381 = getelementptr inbounds float, ptr @global_data, i64 %2380
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %2381, align 16, !tbaa !13
+  %2382 = add nuw nsw i64 %2380, 4
+  %2383 = icmp eq i64 %2382, 32000
+  br i1 %2383, label %2384, label %2379, !llvm.loop !293
+
+2384:                                             ; preds = %2384, %2379
+  %2385 = phi i64 [ %2389, %2384 ], [ 0, %2379 ]
+  %2386 = phi <4 x i32> [ %2390, %2384 ], [ <i32 0, i32 1, i32 2, i32 3>, %2379 ]
+  %2387 = call <4 x float> @_wyvern_slice_init__102007472(<4 x i32> %2386)
+  %2388 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 3, i64 %2385
+  store <4 x float> %2387, ptr %2388, align 16, !tbaa !13
+  %2389 = add nuw nsw i64 %2385, 4
+  %2390 = add <4 x i32> %2386, <i32 4, i32 4, i32 4, i32 4>
+  %2391 = icmp eq i64 %2389, 32000
+  br i1 %2391, label %3043, label %2384, !llvm.loop !294
+
+2392:                                             ; preds = %2376
+  %2393 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.107) #12
+  %2394 = icmp eq i32 %2393, 0
+  br i1 %2394, label %2395, label %2427
+
+2395:                                             ; preds = %2395, %2392
+  %2396 = phi i64 [ %2398, %2395 ], [ 0, %2392 ]
+  %2397 = getelementptr inbounds float, ptr @global_data, i64 %2396
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %2397, align 16, !tbaa !13
+  %2398 = add nuw nsw i64 %2396, 4
+  %2399 = icmp eq i64 %2398, 32000
+  br i1 %2399, label %2400, label %2395, !llvm.loop !295
+
+2400:                                             ; preds = %2400, %2395
+  %2401 = phi i64 [ %2405, %2400 ], [ 0, %2395 ]
+  %2402 = phi <4 x i32> [ %2406, %2400 ], [ <i32 0, i32 1, i32 2, i32 3>, %2395 ]
+  %2403 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %2402)
+  %2404 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 3, i64 %2401
+  store <4 x float> %2403, ptr %2404, align 16, !tbaa !13
+  %2405 = add nuw nsw i64 %2401, 4
+  %2406 = add <4 x i32> %2402, <i32 4, i32 4, i32 4, i32 4>
+  %2407 = icmp eq i64 %2405, 32000
+  br i1 %2407, label %2408, label %2400, !llvm.loop !296
+
+2408:                                             ; preds = %2408, %2400
+  %2409 = phi i64 [ %2413, %2408 ], [ 0, %2400 ]
+  %2410 = phi <4 x i32> [ %2414, %2408 ], [ <i32 0, i32 1, i32 2, i32 3>, %2400 ]
+  %2411 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %2410)
+  %2412 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 6, i64 %2409
+  store <4 x float> %2411, ptr %2412, align 16, !tbaa !13
+  %2413 = add nuw nsw i64 %2409, 4
+  %2414 = add <4 x i32> %2410, <i32 4, i32 4, i32 4, i32 4>
+  %2415 = icmp eq i64 %2413, 32000
+  br i1 %2415, label %2416, label %2408, !llvm.loop !297
+
+2416:                                             ; preds = %2416, %2408
+  %2417 = phi i64 [ %2419, %2416 ], [ 0, %2408 ]
+  %2418 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 9, i64 %2417
+  store <4 x float> <float -1.000000e+00, float -1.000000e+00, float -1.000000e+00, float -1.000000e+00>, ptr %2418, align 16, !tbaa !13
+  %2419 = add nuw nsw i64 %2417, 4
+  %2420 = icmp eq i64 %2419, 32000
+  br i1 %2420, label %2421, label %2416, !llvm.loop !298
+
+2421:                                             ; preds = %2416
+  tail call void @llvm.memset.p0.i64(ptr noundef nonnull align 8 dereferenceable(128000) getelementptr inbounds (%struct.GlobalData, ptr @global_data, i64 0, i32 9, i64 10666), i8 0, i64 128000, i1 false), !tbaa !13
+  br label %2422
+
+2422:                                             ; preds = %2422, %2421
+  %2423 = phi i64 [ 0, %2421 ], [ %2425, %2422 ]
+  %2424 = getelementptr inbounds float, ptr getelementptr inbounds (%struct.GlobalData, ptr @global_data, i64 0, i32 9, i64 21333), i64 %2423
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %2424, align 4, !tbaa !13
+  %2425 = add nuw nsw i64 %2423, 4
+  %2426 = icmp eq i64 %2425, 32000
+  br i1 %2426, label %3043, label %2422, !llvm.loop !299
+
+2427:                                             ; preds = %2392
+  %2428 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.108) #12
+  %2429 = icmp eq i32 %2428, 0
+  br i1 %2429, label %2430, label %2467
+
+2430:                                             ; preds = %2430, %2427
+  %2431 = phi i64 [ %2433, %2430 ], [ 0, %2427 ]
+  %2432 = getelementptr inbounds float, ptr @global_data, i64 %2431
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %2432, align 16, !tbaa !13
+  %2433 = add nuw nsw i64 %2431, 4
+  %2434 = icmp eq i64 %2433, 32000
+  br i1 %2434, label %2435, label %2430, !llvm.loop !300
+
+2435:                                             ; preds = %2435, %2430
+  %2436 = phi i64 [ %2440, %2435 ], [ 0, %2430 ]
+  %2437 = phi <4 x i32> [ %2441, %2435 ], [ <i32 0, i32 1, i32 2, i32 3>, %2430 ]
+  %2438 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %2437)
+  %2439 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 3, i64 %2436
+  store <4 x float> %2438, ptr %2439, align 16, !tbaa !13
+  %2440 = add nuw nsw i64 %2436, 4
+  %2441 = add <4 x i32> %2437, <i32 4, i32 4, i32 4, i32 4>
+  %2442 = icmp eq i64 %2440, 32000
+  br i1 %2442, label %2443, label %2435, !llvm.loop !301
+
+2443:                                             ; preds = %2443, %2435
+  %2444 = phi i64 [ %2448, %2443 ], [ 0, %2435 ]
+  %2445 = phi <4 x i32> [ %2449, %2443 ], [ <i32 0, i32 1, i32 2, i32 3>, %2435 ]
+  %2446 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %2445)
+  %2447 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 6, i64 %2444
+  store <4 x float> %2446, ptr %2447, align 16, !tbaa !13
+  %2448 = add nuw nsw i64 %2444, 4
+  %2449 = add <4 x i32> %2445, <i32 4, i32 4, i32 4, i32 4>
+  %2450 = icmp eq i64 %2448, 32000
+  br i1 %2450, label %2451, label %2443, !llvm.loop !302
+
+2451:                                             ; preds = %2451, %2443
+  %2452 = phi i64 [ %2456, %2451 ], [ 0, %2443 ]
+  %2453 = phi <4 x i32> [ %2457, %2451 ], [ <i32 0, i32 1, i32 2, i32 3>, %2443 ]
+  %2454 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %2453)
+  %2455 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 9, i64 %2452
+  store <4 x float> %2454, ptr %2455, align 16, !tbaa !13
+  %2456 = add nuw nsw i64 %2452, 4
+  %2457 = add <4 x i32> %2453, <i32 4, i32 4, i32 4, i32 4>
+  %2458 = icmp eq i64 %2456, 32000
+  br i1 %2458, label %2459, label %2451, !llvm.loop !303
+
+2459:                                             ; preds = %2459, %2451
+  %2460 = phi i64 [ %2464, %2459 ], [ 0, %2451 ]
+  %2461 = phi <4 x i32> [ %2465, %2459 ], [ <i32 0, i32 1, i32 2, i32 3>, %2451 ]
+  %2462 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %2461)
+  %2463 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 12, i64 %2460
+  store <4 x float> %2462, ptr %2463, align 16, !tbaa !13
+  %2464 = add nuw nsw i64 %2460, 4
+  %2465 = add <4 x i32> %2461, <i32 4, i32 4, i32 4, i32 4>
+  %2466 = icmp eq i64 %2464, 32000
+  br i1 %2466, label %3043, label %2459, !llvm.loop !304
+
+2467:                                             ; preds = %2427
+  %2468 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.109) #12
+  %2469 = icmp eq i32 %2468, 0
+  br i1 %2469, label %2470, label %2491
+
+2470:                                             ; preds = %2470, %2467
+  %2471 = phi i64 [ %2473, %2470 ], [ 0, %2467 ]
+  %2472 = getelementptr inbounds float, ptr @global_data, i64 %2471
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %2472, align 16, !tbaa !13
+  %2473 = add nuw nsw i64 %2471, 4
+  %2474 = icmp eq i64 %2473, 32000
+  br i1 %2474, label %2475, label %2470, !llvm.loop !305
+
+2475:                                             ; preds = %2475, %2470
+  %2476 = phi i64 [ %2480, %2475 ], [ 0, %2470 ]
+  %2477 = phi <4 x i32> [ %2481, %2475 ], [ <i32 0, i32 1, i32 2, i32 3>, %2470 ]
+  %2478 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %2477)
+  %2479 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 3, i64 %2476
+  store <4 x float> %2478, ptr %2479, align 16, !tbaa !13
+  %2480 = add nuw nsw i64 %2476, 4
+  %2481 = add <4 x i32> %2477, <i32 4, i32 4, i32 4, i32 4>
+  %2482 = icmp eq i64 %2480, 32000
+  br i1 %2482, label %2483, label %2475, !llvm.loop !306
+
+2483:                                             ; preds = %2483, %2475
+  %2484 = phi i64 [ %2488, %2483 ], [ 0, %2475 ]
+  %2485 = phi <4 x i32> [ %2489, %2483 ], [ <i32 0, i32 1, i32 2, i32 3>, %2475 ]
+  %2486 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %2485)
+  %2487 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 6, i64 %2484
+  store <4 x float> %2486, ptr %2487, align 16, !tbaa !13
+  %2488 = add nuw nsw i64 %2484, 4
+  %2489 = add <4 x i32> %2485, <i32 4, i32 4, i32 4, i32 4>
+  %2490 = icmp eq i64 %2488, 32000
+  br i1 %2490, label %3043, label %2483, !llvm.loop !307
+
+2491:                                             ; preds = %2467
+  %2492 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.110) #12
+  %2493 = icmp eq i32 %2492, 0
+  br i1 %2493, label %2494, label %2510
+
+2494:                                             ; preds = %2494, %2491
+  %2495 = phi i64 [ %2499, %2494 ], [ 0, %2491 ]
+  %2496 = phi <4 x i32> [ %2500, %2494 ], [ <i32 0, i32 1, i32 2, i32 3>, %2491 ]
+  %2497 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %2496)
+  %2498 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 3, i64 %2495
+  store <4 x float> %2497, ptr %2498, align 16, !tbaa !13
+  %2499 = add nuw nsw i64 %2495, 4
+  %2500 = add <4 x i32> %2496, <i32 4, i32 4, i32 4, i32 4>
+  %2501 = icmp eq i64 %2499, 32000
+  br i1 %2501, label %2502, label %2494, !llvm.loop !308
+
+2502:                                             ; preds = %2502, %2494
+  %2503 = phi i64 [ %2507, %2502 ], [ 0, %2494 ]
+  %2504 = phi <4 x i32> [ %2508, %2502 ], [ <i32 0, i32 1, i32 2, i32 3>, %2494 ]
+  %2505 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %2504)
+  %2506 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 6, i64 %2503
+  store <4 x float> %2505, ptr %2506, align 16, !tbaa !13
+  %2507 = add nuw nsw i64 %2503, 4
+  %2508 = add <4 x i32> %2504, <i32 4, i32 4, i32 4, i32 4>
+  %2509 = icmp eq i64 %2507, 32000
+  br i1 %2509, label %3043, label %2502, !llvm.loop !309
+
+2510:                                             ; preds = %2491
+  %2511 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.111) #12
+  %2512 = icmp eq i32 %2511, 0
+  br i1 %2512, label %2513, label %2524
+
+2513:                                             ; preds = %2510
+  tail call void @llvm.memset.p0.i64(ptr noundef nonnull align 16 dereferenceable(128000) @global_data, i8 0, i64 128000, i1 false), !tbaa !13
+  br label %2514
+
+2514:                                             ; preds = %2514, %2513
+  %2515 = phi i64 [ 0, %2513 ], [ %2517, %2514 ]
+  %2516 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 3, i64 %2515
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %2516, align 16, !tbaa !13
+  %2517 = add nuw nsw i64 %2515, 4
+  %2518 = icmp eq i64 %2517, 32000
+  br i1 %2518, label %2519, label %2514, !llvm.loop !310
+
+2519:                                             ; preds = %2519, %2514
+  %2520 = phi i64 [ %2522, %2519 ], [ 0, %2514 ]
+  %2521 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 6, i64 %2520
+  store <4 x float> <float 0x3EB0C6F7A0000000, float 0x3EB0C6F7A0000000, float 0x3EB0C6F7A0000000, float 0x3EB0C6F7A0000000>, ptr %2521, align 16, !tbaa !13
+  %2522 = add nuw nsw i64 %2520, 4
+  %2523 = icmp eq i64 %2522, 32000
+  br i1 %2523, label %3043, label %2519, !llvm.loop !311
+
+2524:                                             ; preds = %2510
+  %2525 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.112) #12
+  %2526 = icmp eq i32 %2525, 0
+  br i1 %2526, label %2527, label %2536
+
+2527:                                             ; preds = %2524
+  tail call void @llvm.memset.p0.i64(ptr noundef nonnull align 16 dereferenceable(128000) @global_data, i8 0, i64 128000, i1 false), !tbaa !13
+  br label %2528
+
+2528:                                             ; preds = %2528, %2527
+  %2529 = phi i64 [ 0, %2527 ], [ %2533, %2528 ]
+  %2530 = phi <4 x i32> [ <i32 0, i32 1, i32 2, i32 3>, %2527 ], [ %2534, %2528 ]
+  %2531 = call <4 x float> @_wyvern_slice_init__102007472(<4 x i32> %2530)
+  %2532 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 3, i64 %2529
+  store <4 x float> %2531, ptr %2532, align 16, !tbaa !13
+  %2533 = add nuw nsw i64 %2529, 4
+  %2534 = add <4 x i32> %2530, <i32 4, i32 4, i32 4, i32 4>
+  %2535 = icmp eq i64 %2533, 32000
+  br i1 %2535, label %3043, label %2528, !llvm.loop !312
+
+2536:                                             ; preds = %2524
+  %2537 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.113) #12
+  %2538 = icmp eq i32 %2537, 0
+  br i1 %2538, label %2539, label %2570
+
+2539:                                             ; preds = %2539, %2536
+  %2540 = phi i64 [ %2542, %2539 ], [ 0, %2536 ]
+  %2541 = getelementptr inbounds float, ptr @global_data, i64 %2540
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %2541, align 16, !tbaa !13
+  %2542 = add nuw nsw i64 %2540, 4
+  %2543 = icmp eq i64 %2542, 32000
+  br i1 %2543, label %2544, label %2539, !llvm.loop !313
+
+2544:                                             ; preds = %2544, %2539
+  %2545 = phi i64 [ %2547, %2544 ], [ 0, %2539 ]
+  %2546 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 3, i64 %2545
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %2546, align 16, !tbaa !13
+  %2547 = add nuw nsw i64 %2545, 4
+  %2548 = icmp eq i64 %2547, 32000
+  br i1 %2548, label %2549, label %2544, !llvm.loop !314
+
+2549:                                             ; preds = %2549, %2544
+  %2550 = phi i64 [ %2552, %2549 ], [ 0, %2544 ]
+  %2551 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 6, i64 %2550
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %2551, align 16, !tbaa !13
+  %2552 = add nuw nsw i64 %2550, 4
+  %2553 = icmp eq i64 %2552, 32000
+  br i1 %2553, label %2554, label %2549, !llvm.loop !315
+
+2554:                                             ; preds = %2554, %2549
+  %2555 = phi i64 [ %2559, %2554 ], [ 0, %2549 ]
+  %2556 = phi <4 x i32> [ %2560, %2554 ], [ <i32 0, i32 1, i32 2, i32 3>, %2549 ]
+  %2557 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %2556)
+  %2558 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 9, i64 %2555
+  store <4 x float> %2557, ptr %2558, align 16, !tbaa !13
+  %2559 = add nuw nsw i64 %2555, 4
+  %2560 = add <4 x i32> %2556, <i32 4, i32 4, i32 4, i32 4>
+  %2561 = icmp eq i64 %2559, 32000
+  br i1 %2561, label %2562, label %2554, !llvm.loop !316
+
+2562:                                             ; preds = %2562, %2554
+  %2563 = phi i64 [ %2567, %2562 ], [ 0, %2554 ]
+  %2564 = phi <4 x i32> [ %2568, %2562 ], [ <i32 0, i32 1, i32 2, i32 3>, %2554 ]
+  %2565 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %2564)
+  %2566 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 12, i64 %2563
+  store <4 x float> %2565, ptr %2566, align 16, !tbaa !13
+  %2567 = add nuw nsw i64 %2563, 4
+  %2568 = add <4 x i32> %2564, <i32 4, i32 4, i32 4, i32 4>
+  %2569 = icmp eq i64 %2567, 32000
+  br i1 %2569, label %3043, label %2562, !llvm.loop !317
+
+2570:                                             ; preds = %2536
+  %2571 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.114) #12
+  %2572 = icmp eq i32 %2571, 0
+  br i1 %2572, label %2573, label %2602
+
+2573:                                             ; preds = %2573, %2570
+  %2574 = phi i64 [ %2576, %2573 ], [ 0, %2570 ]
+  %2575 = getelementptr inbounds float, ptr @global_data, i64 %2574
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %2575, align 16, !tbaa !13
+  %2576 = add nuw nsw i64 %2574, 4
+  %2577 = icmp eq i64 %2576, 32000
+  br i1 %2577, label %2578, label %2573, !llvm.loop !318
+
+2578:                                             ; preds = %2578, %2573
+  %2579 = phi i64 [ %2583, %2578 ], [ 0, %2573 ]
+  %2580 = phi <4 x i32> [ %2584, %2578 ], [ <i32 0, i32 1, i32 2, i32 3>, %2573 ]
+  %2581 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %2580)
+  %2582 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 3, i64 %2579
+  store <4 x float> %2581, ptr %2582, align 16, !tbaa !13
+  %2583 = add nuw nsw i64 %2579, 4
+  %2584 = add <4 x i32> %2580, <i32 4, i32 4, i32 4, i32 4>
+  %2585 = icmp eq i64 %2583, 32000
+  br i1 %2585, label %2586, label %2578, !llvm.loop !319
+
+2586:                                             ; preds = %2586, %2578
+  %2587 = phi i64 [ %2591, %2586 ], [ 0, %2578 ]
+  %2588 = phi <4 x i32> [ %2592, %2586 ], [ <i32 0, i32 1, i32 2, i32 3>, %2578 ]
+  %2589 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %2588)
+  %2590 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 6, i64 %2587
+  store <4 x float> %2589, ptr %2590, align 16, !tbaa !13
+  %2591 = add nuw nsw i64 %2587, 4
+  %2592 = add <4 x i32> %2588, <i32 4, i32 4, i32 4, i32 4>
+  %2593 = icmp eq i64 %2591, 32000
+  br i1 %2593, label %2594, label %2586, !llvm.loop !320
+
+2594:                                             ; preds = %2594, %2586
+  %2595 = phi i64 [ %2599, %2594 ], [ 0, %2586 ]
+  %2596 = phi <4 x i32> [ %2600, %2594 ], [ <i32 0, i32 1, i32 2, i32 3>, %2586 ]
+  %2597 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %2596)
+  %2598 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 9, i64 %2595
+  store <4 x float> %2597, ptr %2598, align 16, !tbaa !13
+  %2599 = add nuw nsw i64 %2595, 4
+  %2600 = add <4 x i32> %2596, <i32 4, i32 4, i32 4, i32 4>
+  %2601 = icmp eq i64 %2599, 32000
+  br i1 %2601, label %3043, label %2594, !llvm.loop !321
+
+2602:                                             ; preds = %2570
+  %2603 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.115) #12
+  %2604 = icmp eq i32 %2603, 0
+  br i1 %2604, label %2605, label %2626
+
+2605:                                             ; preds = %2605, %2602
+  %2606 = phi i64 [ %2608, %2605 ], [ 0, %2602 ]
+  %2607 = getelementptr inbounds float, ptr @global_data, i64 %2606
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %2607, align 16, !tbaa !13
+  %2608 = add nuw nsw i64 %2606, 4
+  %2609 = icmp eq i64 %2608, 32000
+  br i1 %2609, label %2610, label %2605, !llvm.loop !322
+
+2610:                                             ; preds = %2610, %2605
+  %2611 = phi i64 [ %2615, %2610 ], [ 0, %2605 ]
+  %2612 = phi <4 x i32> [ %2616, %2610 ], [ <i32 0, i32 1, i32 2, i32 3>, %2605 ]
+  %2613 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %2612)
+  %2614 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 3, i64 %2611
+  store <4 x float> %2613, ptr %2614, align 16, !tbaa !13
+  %2615 = add nuw nsw i64 %2611, 4
+  %2616 = add <4 x i32> %2612, <i32 4, i32 4, i32 4, i32 4>
+  %2617 = icmp eq i64 %2615, 32000
+  br i1 %2617, label %2618, label %2610, !llvm.loop !323
+
+2618:                                             ; preds = %2618, %2610
+  %2619 = phi i64 [ %2623, %2618 ], [ 0, %2610 ]
+  %2620 = phi <4 x i32> [ %2624, %2618 ], [ <i32 0, i32 1, i32 2, i32 3>, %2610 ]
+  %2621 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %2620)
+  %2622 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 6, i64 %2619
+  store <4 x float> %2621, ptr %2622, align 16, !tbaa !13
+  %2623 = add nuw nsw i64 %2619, 4
+  %2624 = add <4 x i32> %2620, <i32 4, i32 4, i32 4, i32 4>
+  %2625 = icmp eq i64 %2623, 32000
+  br i1 %2625, label %3043, label %2618, !llvm.loop !324
+
+2626:                                             ; preds = %2602
+  %2627 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.116) #12
+  %2628 = icmp eq i32 %2627, 0
+  br i1 %2628, label %2629, label %2651
+
+2629:                                             ; preds = %2626
+  tail call void @llvm.memset.p0.i64(ptr noundef nonnull align 16 dereferenceable(128000) @global_data, i8 0, i64 128000, i1 false), !tbaa !13
+  br label %2630
+
+2630:                                             ; preds = %2630, %2629
+  %2631 = phi i64 [ 0, %2629 ], [ %2633, %2630 ]
+  %2632 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 3, i64 %2631
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %2632, align 16, !tbaa !13
+  %2633 = add nuw nsw i64 %2631, 4
+  %2634 = icmp eq i64 %2633, 32000
+  br i1 %2634, label %2635, label %2630, !llvm.loop !325
+
+2635:                                             ; preds = %2635, %2630
+  %2636 = phi i64 [ %2640, %2635 ], [ 0, %2630 ]
+  %2637 = phi <4 x i32> [ %2641, %2635 ], [ <i32 0, i32 1, i32 2, i32 3>, %2630 ]
+  %2638 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %2637)
+  %2639 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 6, i64 %2636
+  store <4 x float> %2638, ptr %2639, align 16, !tbaa !13
+  %2640 = add nuw nsw i64 %2636, 4
+  %2641 = add <4 x i32> %2637, <i32 4, i32 4, i32 4, i32 4>
+  %2642 = icmp eq i64 %2640, 32000
+  br i1 %2642, label %2643, label %2635, !llvm.loop !326
+
+2643:                                             ; preds = %2643, %2635
+  %2644 = phi i64 [ %2648, %2643 ], [ 0, %2635 ]
+  %2645 = phi <4 x i32> [ %2649, %2643 ], [ <i32 0, i32 1, i32 2, i32 3>, %2635 ]
+  %2646 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %2645)
+  %2647 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 9, i64 %2644
+  store <4 x float> %2646, ptr %2647, align 16, !tbaa !13
+  %2648 = add nuw nsw i64 %2644, 4
+  %2649 = add <4 x i32> %2645, <i32 4, i32 4, i32 4, i32 4>
+  %2650 = icmp eq i64 %2648, 32000
+  br i1 %2650, label %3043, label %2643, !llvm.loop !327
+
+2651:                                             ; preds = %2626
+  %2652 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.117) #12
+  %2653 = icmp eq i32 %2652, 0
+  br i1 %2653, label %2654, label %2667
+
+2654:                                             ; preds = %2654, %2651
+  %2655 = phi i64 [ %2657, %2654 ], [ 0, %2651 ]
+  %2656 = getelementptr inbounds float, ptr @global_data, i64 %2655
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %2656, align 16, !tbaa !13
+  %2657 = add nuw nsw i64 %2655, 4
+  %2658 = icmp eq i64 %2657, 32000
+  br i1 %2658, label %2659, label %2654, !llvm.loop !328
+
+2659:                                             ; preds = %2659, %2654
+  %2660 = phi i64 [ %2664, %2659 ], [ 0, %2654 ]
+  %2661 = phi <4 x i32> [ %2665, %2659 ], [ <i32 0, i32 1, i32 2, i32 3>, %2654 ]
+  %2662 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %2661)
+  %2663 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 3, i64 %2660
+  store <4 x float> %2662, ptr %2663, align 16, !tbaa !13
+  %2664 = add nuw nsw i64 %2660, 4
+  %2665 = add <4 x i32> %2661, <i32 4, i32 4, i32 4, i32 4>
+  %2666 = icmp eq i64 %2664, 32000
+  br i1 %2666, label %3043, label %2659, !llvm.loop !329
+
+2667:                                             ; preds = %2651
+  %2668 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.118) #12
+  %2669 = icmp eq i32 %2668, 0
+  br i1 %2669, label %2670, label %2684
+
+2670:                                             ; preds = %2667
+  tail call void @llvm.memset.p0.i64(ptr noundef nonnull align 16 dereferenceable(128000) @global_data, i8 0, i64 128000, i1 false), !tbaa !13
+  br label %2671
+
+2671:                                             ; preds = %2671, %2670
+  %2672 = phi i64 [ 0, %2670 ], [ %2674, %2671 ]
+  %2673 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 3, i64 %2672
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %2673, align 16, !tbaa !13
+  %2674 = add nuw nsw i64 %2672, 4
+  %2675 = icmp eq i64 %2674, 32000
+  br i1 %2675, label %2676, label %2671, !llvm.loop !330
+
+2676:                                             ; preds = %2676, %2671
+  %2677 = phi i64 [ %2681, %2676 ], [ 0, %2671 ]
+  %2678 = phi <4 x i32> [ %2682, %2676 ], [ <i32 0, i32 1, i32 2, i32 3>, %2671 ]
+  %2679 = call <4 x float> @_wyvern_slice_init__102007472(<4 x i32> %2678)
+  %2680 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 6, i64 %2677
+  store <4 x float> %2679, ptr %2680, align 16, !tbaa !13
+  %2681 = add nuw nsw i64 %2677, 4
+  %2682 = add <4 x i32> %2678, <i32 4, i32 4, i32 4, i32 4>
+  %2683 = icmp eq i64 %2681, 32000
+  br i1 %2683, label %3043, label %2676, !llvm.loop !331
+
+2684:                                             ; preds = %2667
+  %2685 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.119) #12
+  %2686 = icmp eq i32 %2685, 0
+  br i1 %2686, label %2687, label %2709
+
+2687:                                             ; preds = %2684
+  tail call void @llvm.memset.p0.i64(ptr noundef nonnull align 16 dereferenceable(128000) @global_data, i8 0, i64 128000, i1 false), !tbaa !13
+  br label %2688
+
+2688:                                             ; preds = %2688, %2687
+  %2689 = phi i64 [ 0, %2687 ], [ %2691, %2688 ]
+  %2690 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 3, i64 %2689
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %2690, align 16, !tbaa !13
+  %2691 = add nuw nsw i64 %2689, 4
+  %2692 = icmp eq i64 %2691, 32000
+  br i1 %2692, label %2693, label %2688, !llvm.loop !332
+
+2693:                                             ; preds = %2693, %2688
+  %2694 = phi i64 [ %2698, %2693 ], [ 0, %2688 ]
+  %2695 = phi <4 x i32> [ %2699, %2693 ], [ <i32 0, i32 1, i32 2, i32 3>, %2688 ]
+  %2696 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %2695)
+  %2697 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 6, i64 %2694
+  store <4 x float> %2696, ptr %2697, align 16, !tbaa !13
+  %2698 = add nuw nsw i64 %2694, 4
+  %2699 = add <4 x i32> %2695, <i32 4, i32 4, i32 4, i32 4>
+  %2700 = icmp eq i64 %2698, 32000
+  br i1 %2700, label %2701, label %2693, !llvm.loop !333
+
+2701:                                             ; preds = %2701, %2693
+  %2702 = phi i64 [ %2706, %2701 ], [ 0, %2693 ]
+  %2703 = phi <4 x i32> [ %2707, %2701 ], [ <i32 0, i32 1, i32 2, i32 3>, %2693 ]
+  %2704 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %2703)
+  %2705 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 9, i64 %2702
+  store <4 x float> %2704, ptr %2705, align 16, !tbaa !13
+  %2706 = add nuw nsw i64 %2702, 4
+  %2707 = add <4 x i32> %2703, <i32 4, i32 4, i32 4, i32 4>
+  %2708 = icmp eq i64 %2706, 32000
+  br i1 %2708, label %3043, label %2701, !llvm.loop !334
+
+2709:                                             ; preds = %2684
+  %2710 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.120) #12
+  %2711 = icmp eq i32 %2710, 0
+  br i1 %2711, label %2712, label %2728
+
+2712:                                             ; preds = %2712, %2709
+  %2713 = phi i64 [ %2717, %2712 ], [ 0, %2709 ]
+  %2714 = phi <4 x i32> [ %2718, %2712 ], [ <i32 0, i32 1, i32 2, i32 3>, %2709 ]
+  %2715 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %2714)
+  %2716 = getelementptr inbounds float, ptr @global_data, i64 %2713
+  store <4 x float> %2715, ptr %2716, align 16, !tbaa !13
+  %2717 = add nuw nsw i64 %2713, 4
+  %2718 = add <4 x i32> %2714, <i32 4, i32 4, i32 4, i32 4>
+  %2719 = icmp eq i64 %2717, 32000
+  br i1 %2719, label %2720, label %2712, !llvm.loop !335
+
+2720:                                             ; preds = %2720, %2712
+  %2721 = phi i64 [ %2725, %2720 ], [ 0, %2712 ]
+  %2722 = phi <4 x i32> [ %2726, %2720 ], [ <i32 0, i32 1, i32 2, i32 3>, %2712 ]
+  %2723 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %2722)
+  %2724 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 3, i64 %2721
+  store <4 x float> %2723, ptr %2724, align 16, !tbaa !13
+  %2725 = add nuw nsw i64 %2721, 4
+  %2726 = add <4 x i32> %2722, <i32 4, i32 4, i32 4, i32 4>
+  %2727 = icmp eq i64 %2725, 32000
+  br i1 %2727, label %3043, label %2720, !llvm.loop !336
+
+2728:                                             ; preds = %2709
+  %2729 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.121) #12
+  %2730 = icmp eq i32 %2729, 0
+  br i1 %2730, label %2731, label %2754
+
+2731:                                             ; preds = %2731, %2728
+  %2732 = phi i64 [ %2736, %2731 ], [ 0, %2728 ]
+  %2733 = phi <4 x i32> [ %2737, %2731 ], [ <i32 0, i32 1, i32 2, i32 3>, %2728 ]
+  %2734 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %2733)
+  %2735 = getelementptr inbounds float, ptr @global_data, i64 %2732
+  store <4 x float> %2734, ptr %2735, align 16, !tbaa !13
+  %2736 = add nuw nsw i64 %2732, 4
+  %2737 = add <4 x i32> %2733, <i32 4, i32 4, i32 4, i32 4>
+  %2738 = icmp eq i64 %2736, 32000
+  br i1 %2738, label %2739, label %2731, !llvm.loop !337
+
+2739:                                             ; preds = %2752, %2731
+  %2740 = phi i64 [ %2741, %2752 ], [ 0, %2731 ]
+  %2741 = add nuw nsw i64 %2740, 1
+  %2742 = trunc i64 %2741 to i32
+  %2743 = sitofp i32 %2742 to float
+  %2744 = fdiv float 1.000000e+00, %2743
+  %2745 = insertelement <4 x float> poison, float %2744, i64 0
+  %2746 = shufflevector <4 x float> %2745, <4 x float> poison, <4 x i32> zeroinitializer
+  br label %2747
+
+2747:                                             ; preds = %2747, %2739
+  %2748 = phi i64 [ 0, %2739 ], [ %2750, %2747 ]
+  %2749 = getelementptr inbounds [256 x float], ptr getelementptr inbounds (%struct.GlobalData, ptr @global_data, i64 0, i32 15, i64 0, i64 0), i64 %2740, i64 %2748
+  store <4 x float> %2746, ptr %2749, align 16, !tbaa !13
+  %2750 = add nuw nsw i64 %2748, 4
+  %2751 = icmp eq i64 %2750, 256
+  br i1 %2751, label %2752, label %2747, !llvm.loop !338
+
+2752:                                             ; preds = %2747
+  %2753 = icmp eq i64 %2741, 256
+  br i1 %2753, label %3043, label %2739
+
+2754:                                             ; preds = %2728
+  %2755 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.122) #12
+  %2756 = icmp eq i32 %2755, 0
+  br i1 %2756, label %2757, label %2779
+
+2757:                                             ; preds = %2754
+  tail call void @llvm.memset.p0.i64(ptr noundef nonnull align 16 dereferenceable(128000) @global_data, i8 0, i64 128000, i1 false), !tbaa !13
+  br label %2758
+
+2758:                                             ; preds = %2758, %2757
+  %2759 = phi i64 [ 0, %2757 ], [ %2761, %2758 ]
+  %2760 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 3, i64 %2759
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %2760, align 16, !tbaa !13
+  %2761 = add nuw nsw i64 %2759, 4
+  %2762 = icmp eq i64 %2761, 32000
+  br i1 %2762, label %2763, label %2758, !llvm.loop !339
+
+2763:                                             ; preds = %2763, %2758
+  %2764 = phi i64 [ %2768, %2763 ], [ 0, %2758 ]
+  %2765 = phi <4 x i32> [ %2769, %2763 ], [ <i32 0, i32 1, i32 2, i32 3>, %2758 ]
+  %2766 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %2765)
+  %2767 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 6, i64 %2764
+  store <4 x float> %2766, ptr %2767, align 16, !tbaa !13
+  %2768 = add nuw nsw i64 %2764, 4
+  %2769 = add <4 x i32> %2765, <i32 4, i32 4, i32 4, i32 4>
+  %2770 = icmp eq i64 %2768, 32000
+  br i1 %2770, label %2771, label %2763, !llvm.loop !340
+
+2771:                                             ; preds = %2771, %2763
+  %2772 = phi i64 [ %2776, %2771 ], [ 0, %2763 ]
+  %2773 = phi <4 x i32> [ %2777, %2771 ], [ <i32 0, i32 1, i32 2, i32 3>, %2763 ]
+  %2774 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %2773)
+  %2775 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 9, i64 %2772
+  store <4 x float> %2774, ptr %2775, align 16, !tbaa !13
+  %2776 = add nuw nsw i64 %2772, 4
+  %2777 = add <4 x i32> %2773, <i32 4, i32 4, i32 4, i32 4>
+  %2778 = icmp eq i64 %2776, 32000
+  br i1 %2778, label %3043, label %2771, !llvm.loop !341
+
+2779:                                             ; preds = %2754
+  %2780 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.123) #12
+  %2781 = icmp eq i32 %2780, 0
+  br i1 %2781, label %2782, label %2803
+
+2782:                                             ; preds = %2782, %2779
+  %2783 = phi i64 [ %2785, %2782 ], [ 0, %2779 ]
+  %2784 = getelementptr inbounds float, ptr @global_data, i64 %2783
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %2784, align 16, !tbaa !13
+  %2785 = add nuw nsw i64 %2783, 4
+  %2786 = icmp eq i64 %2785, 32000
+  br i1 %2786, label %2787, label %2782, !llvm.loop !342
+
+2787:                                             ; preds = %2787, %2782
+  %2788 = phi i64 [ %2792, %2787 ], [ 0, %2782 ]
+  %2789 = phi <4 x i32> [ %2793, %2787 ], [ <i32 0, i32 1, i32 2, i32 3>, %2782 ]
+  %2790 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %2789)
+  %2791 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 3, i64 %2788
+  store <4 x float> %2790, ptr %2791, align 16, !tbaa !13
+  %2792 = add nuw nsw i64 %2788, 4
+  %2793 = add <4 x i32> %2789, <i32 4, i32 4, i32 4, i32 4>
+  %2794 = icmp eq i64 %2792, 32000
+  br i1 %2794, label %2795, label %2787, !llvm.loop !343
+
+2795:                                             ; preds = %2795, %2787
+  %2796 = phi i64 [ %2800, %2795 ], [ 0, %2787 ]
+  %2797 = phi <4 x i32> [ %2801, %2795 ], [ <i32 0, i32 1, i32 2, i32 3>, %2787 ]
+  %2798 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %2797)
+  %2799 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 6, i64 %2796
+  store <4 x float> %2798, ptr %2799, align 16, !tbaa !13
+  %2800 = add nuw nsw i64 %2796, 4
+  %2801 = add <4 x i32> %2797, <i32 4, i32 4, i32 4, i32 4>
+  %2802 = icmp eq i64 %2800, 32000
+  br i1 %2802, label %3043, label %2795, !llvm.loop !344
+
+2803:                                             ; preds = %2779
+  %2804 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(4) @.str.124) #12
+  %2805 = icmp eq i32 %2804, 0
+  br i1 %2805, label %2806, label %2815
+
+2806:                                             ; preds = %2803
+  tail call void @llvm.memset.p0.i64(ptr noundef nonnull align 16 dereferenceable(128000) @global_data, i8 0, i64 128000, i1 false), !tbaa !13
+  br label %2807
+
+2807:                                             ; preds = %2807, %2806
+  %2808 = phi i64 [ 0, %2806 ], [ %2812, %2807 ]
+  %2809 = phi <4 x i32> [ <i32 0, i32 1, i32 2, i32 3>, %2806 ], [ %2813, %2807 ]
+  %2810 = call <4 x float> @_wyvern_slice_init__102007472(<4 x i32> %2809)
+  %2811 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 3, i64 %2808
+  store <4 x float> %2810, ptr %2811, align 16, !tbaa !13
+  %2812 = add nuw nsw i64 %2808, 4
+  %2813 = add <4 x i32> %2809, <i32 4, i32 4, i32 4, i32 4>
+  %2814 = icmp eq i64 %2812, 32000
+  br i1 %2814, label %3043, label %2807, !llvm.loop !345
+
+2815:                                             ; preds = %2803
+  %2816 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.125) #12
+  %2817 = icmp eq i32 %2816, 0
+  br i1 %2817, label %2818, label %2827
+
+2818:                                             ; preds = %2815
+  tail call void @llvm.memset.p0.i64(ptr noundef nonnull align 16 dereferenceable(128000) @global_data, i8 0, i64 128000, i1 false), !tbaa !13
+  br label %2819
+
+2819:                                             ; preds = %2819, %2818
+  %2820 = phi i64 [ 0, %2818 ], [ %2824, %2819 ]
+  %2821 = phi <4 x i32> [ <i32 0, i32 1, i32 2, i32 3>, %2818 ], [ %2825, %2819 ]
+  %2822 = call <4 x float> @_wyvern_slice_init__102007472(<4 x i32> %2821)
+  %2823 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 3, i64 %2820
+  store <4 x float> %2822, ptr %2823, align 16, !tbaa !13
+  %2824 = add nuw nsw i64 %2820, 4
+  %2825 = add <4 x i32> %2821, <i32 4, i32 4, i32 4, i32 4>
+  %2826 = icmp eq i64 %2824, 32000
+  br i1 %2826, label %3043, label %2819, !llvm.loop !346
+
+2827:                                             ; preds = %2815
+  %2828 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.126) #12
+  %2829 = icmp eq i32 %2828, 0
+  br i1 %2829, label %2830, label %2839
+
+2830:                                             ; preds = %2827
+  tail call void @llvm.memset.p0.i64(ptr noundef nonnull align 16 dereferenceable(128000) @global_data, i8 0, i64 128000, i1 false), !tbaa !13
+  br label %2831
+
+2831:                                             ; preds = %2831, %2830
+  %2832 = phi i64 [ 0, %2830 ], [ %2836, %2831 ]
+  %2833 = phi <4 x i32> [ <i32 0, i32 1, i32 2, i32 3>, %2830 ], [ %2837, %2831 ]
+  %2834 = call <4 x float> @_wyvern_slice_init__102007472(<4 x i32> %2833)
+  %2835 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 3, i64 %2832
+  store <4 x float> %2834, ptr %2835, align 16, !tbaa !13
+  %2836 = add nuw nsw i64 %2832, 4
+  %2837 = add <4 x i32> %2833, <i32 4, i32 4, i32 4, i32 4>
+  %2838 = icmp eq i64 %2836, 32000
+  br i1 %2838, label %3043, label %2831, !llvm.loop !347
+
+2839:                                             ; preds = %2827
+  %2840 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.127) #12
+  %2841 = icmp eq i32 %2840, 0
+  br i1 %2841, label %2842, label %2851
+
+2842:                                             ; preds = %2839
+  tail call void @llvm.memset.p0.i64(ptr noundef nonnull align 16 dereferenceable(128000) @global_data, i8 0, i64 128000, i1 false), !tbaa !13
+  br label %2843
+
+2843:                                             ; preds = %2843, %2842
+  %2844 = phi i64 [ 0, %2842 ], [ %2848, %2843 ]
+  %2845 = phi <4 x i32> [ <i32 0, i32 1, i32 2, i32 3>, %2842 ], [ %2849, %2843 ]
+  %2846 = call <4 x float> @_wyvern_slice_init__102007472(<4 x i32> %2845)
+  %2847 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 3, i64 %2844
+  store <4 x float> %2846, ptr %2847, align 16, !tbaa !13
+  %2848 = add nuw nsw i64 %2844, 4
+  %2849 = add <4 x i32> %2845, <i32 4, i32 4, i32 4, i32 4>
+  %2850 = icmp eq i64 %2848, 32000
+  br i1 %2850, label %3043, label %2843, !llvm.loop !348
+
+2851:                                             ; preds = %2839
+  %2852 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.128) #12
+  %2853 = icmp eq i32 %2852, 0
+  br i1 %2853, label %2854, label %2863
+
+2854:                                             ; preds = %2851
+  tail call void @llvm.memset.p0.i64(ptr noundef nonnull align 16 dereferenceable(128000) @global_data, i8 0, i64 128000, i1 false), !tbaa !13
+  br label %2855
+
+2855:                                             ; preds = %2855, %2854
+  %2856 = phi i64 [ 0, %2854 ], [ %2860, %2855 ]
+  %2857 = phi <4 x i32> [ <i32 0, i32 1, i32 2, i32 3>, %2854 ], [ %2861, %2855 ]
+  %2858 = call <4 x float> @_wyvern_slice_init__102007472(<4 x i32> %2857)
+  %2859 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 3, i64 %2856
+  store <4 x float> %2858, ptr %2859, align 16, !tbaa !13
+  %2860 = add nuw nsw i64 %2856, 4
+  %2861 = add <4 x i32> %2857, <i32 4, i32 4, i32 4, i32 4>
+  %2862 = icmp eq i64 %2860, 32000
+  br i1 %2862, label %3043, label %2855, !llvm.loop !349
+
+2863:                                             ; preds = %2851
+  %2864 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.129) #12
+  %2865 = icmp eq i32 %2864, 0
+  br i1 %2865, label %2866, label %2876
+
+2866:                                             ; preds = %2866, %2863
+  %2867 = phi i64 [ %2869, %2866 ], [ 0, %2863 ]
+  %2868 = getelementptr inbounds float, ptr @global_data, i64 %2867
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %2868, align 16, !tbaa !13
+  %2869 = add nuw nsw i64 %2867, 4
+  %2870 = icmp eq i64 %2869, 32000
+  br i1 %2870, label %2871, label %2866, !llvm.loop !350
+
+2871:                                             ; preds = %2871, %2866
+  %2872 = phi i64 [ %2874, %2871 ], [ 0, %2866 ]
+  %2873 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 3, i64 %2872
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %2873, align 16, !tbaa !13
+  %2874 = add nuw nsw i64 %2872, 4
+  %2875 = icmp eq i64 %2874, 32000
+  br i1 %2875, label %3043, label %2871, !llvm.loop !351
+
+2876:                                             ; preds = %2863
+  %2877 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.130) #12
+  %2878 = icmp eq i32 %2877, 0
+  br i1 %2878, label %2879, label %2900
+
+2879:                                             ; preds = %2879, %2876
+  %2880 = phi i64 [ %2882, %2879 ], [ 0, %2876 ]
+  %2881 = getelementptr inbounds float, ptr @global_data, i64 %2880
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %2881, align 16, !tbaa !13
+  %2882 = add nuw nsw i64 %2880, 4
+  %2883 = icmp eq i64 %2882, 32000
+  br i1 %2883, label %2884, label %2879, !llvm.loop !352
+
+2884:                                             ; preds = %2884, %2879
+  %2885 = phi i64 [ %2889, %2884 ], [ 0, %2879 ]
+  %2886 = phi <4 x i32> [ %2890, %2884 ], [ <i32 0, i32 1, i32 2, i32 3>, %2879 ]
+  %2887 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %2886)
+  %2888 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 3, i64 %2885
+  store <4 x float> %2887, ptr %2888, align 16, !tbaa !13
+  %2889 = add nuw nsw i64 %2885, 4
+  %2890 = add <4 x i32> %2886, <i32 4, i32 4, i32 4, i32 4>
+  %2891 = icmp eq i64 %2889, 32000
+  br i1 %2891, label %2892, label %2884, !llvm.loop !353
+
+2892:                                             ; preds = %2892, %2884
+  %2893 = phi i64 [ %2897, %2892 ], [ 0, %2884 ]
+  %2894 = phi <4 x i32> [ %2898, %2892 ], [ <i32 0, i32 1, i32 2, i32 3>, %2884 ]
+  %2895 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %2894)
+  %2896 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 6, i64 %2893
+  store <4 x float> %2895, ptr %2896, align 16, !tbaa !13
+  %2897 = add nuw nsw i64 %2893, 4
+  %2898 = add <4 x i32> %2894, <i32 4, i32 4, i32 4, i32 4>
+  %2899 = icmp eq i64 %2897, 32000
+  br i1 %2899, label %3043, label %2892, !llvm.loop !354
+
+2900:                                             ; preds = %2876
+  %2901 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.131) #12
+  %2902 = icmp eq i32 %2901, 0
+  br i1 %2902, label %2903, label %2916
+
+2903:                                             ; preds = %2903, %2900
+  %2904 = phi i64 [ %2906, %2903 ], [ 0, %2900 ]
+  %2905 = getelementptr inbounds float, ptr @global_data, i64 %2904
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %2905, align 16, !tbaa !13
+  %2906 = add nuw nsw i64 %2904, 4
+  %2907 = icmp eq i64 %2906, 32000
+  br i1 %2907, label %2908, label %2903, !llvm.loop !355
+
+2908:                                             ; preds = %2908, %2903
+  %2909 = phi i64 [ %2913, %2908 ], [ 0, %2903 ]
+  %2910 = phi <4 x i32> [ %2914, %2908 ], [ <i32 0, i32 1, i32 2, i32 3>, %2903 ]
+  %2911 = call <4 x float> @_wyvern_slice_init__102007472(<4 x i32> %2910)
+  %2912 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 3, i64 %2909
+  store <4 x float> %2911, ptr %2912, align 16, !tbaa !13
+  %2913 = add nuw nsw i64 %2909, 4
+  %2914 = add <4 x i32> %2910, <i32 4, i32 4, i32 4, i32 4>
+  %2915 = icmp eq i64 %2913, 32000
+  br i1 %2915, label %3043, label %2908, !llvm.loop !356
+
+2916:                                             ; preds = %2900
+  %2917 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.132) #12
+  %2918 = icmp eq i32 %2917, 0
+  br i1 %2918, label %2919, label %2937
+
+2919:                                             ; preds = %2919, %2916
+  %2920 = phi i64 [ %2924, %2919 ], [ 0, %2916 ]
+  %2921 = phi <4 x i32> [ %2925, %2919 ], [ <i32 0, i32 1, i32 2, i32 3>, %2916 ]
+  %2922 = call <4 x float> @_wyvern_slice_init__102007472(<4 x i32> %2921)
+  %2923 = getelementptr inbounds float, ptr @global_data, i64 %2920
+  store <4 x float> %2922, ptr %2923, align 16, !tbaa !13
+  %2924 = add nuw nsw i64 %2920, 4
+  %2925 = add <4 x i32> %2921, <i32 4, i32 4, i32 4, i32 4>
+  %2926 = icmp eq i64 %2924, 32000
+  br i1 %2926, label %2927, label %2919, !llvm.loop !357
+
+2927:                                             ; preds = %2927, %2919
+  %2928 = phi i64 [ %2930, %2927 ], [ 0, %2919 ]
+  %2929 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 3, i64 %2928
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %2929, align 16, !tbaa !13
+  %2930 = add nuw nsw i64 %2928, 4
+  %2931 = icmp eq i64 %2930, 32000
+  br i1 %2931, label %2932, label %2927, !llvm.loop !358
+
+2932:                                             ; preds = %2932, %2927
+  %2933 = phi i64 [ %2935, %2932 ], [ 0, %2927 ]
+  %2934 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 6, i64 %2933
+  store <4 x float> <float -1.000000e+00, float -1.000000e+00, float -1.000000e+00, float -1.000000e+00>, ptr %2934, align 16, !tbaa !13
+  %2935 = add nuw nsw i64 %2933, 4
+  %2936 = icmp eq i64 %2935, 32000
+  br i1 %2936, label %3043, label %2932, !llvm.loop !359
+
+2937:                                             ; preds = %2916
+  %2938 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.133) #12
+  %2939 = icmp eq i32 %2938, 0
+  br i1 %2939, label %2940, label %2955
+
+2940:                                             ; preds = %2940, %2937
+  %2941 = phi i64 [ %2943, %2940 ], [ 0, %2937 ]
+  %2942 = getelementptr inbounds float, ptr @global_data, i64 %2941
+  store <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, ptr %2942, align 16, !tbaa !13
+  %2943 = add nuw nsw i64 %2941, 4
+  %2944 = icmp eq i64 %2943, 32000
+  br i1 %2944, label %2945, label %2940, !llvm.loop !360
+
+2945:                                             ; preds = %2945, %2940
+  %2946 = phi i64 [ %2948, %2945 ], [ 0, %2940 ]
+  %2947 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 3, i64 %2946
+  store <4 x float> <float 2.000000e+00, float 2.000000e+00, float 2.000000e+00, float 2.000000e+00>, ptr %2947, align 16, !tbaa !13
+  %2948 = add nuw nsw i64 %2946, 4
+  %2949 = icmp eq i64 %2948, 32000
+  br i1 %2949, label %2950, label %2945, !llvm.loop !361
+
+2950:                                             ; preds = %2950, %2945
+  %2951 = phi i64 [ %2953, %2950 ], [ 0, %2945 ]
+  %2952 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 6, i64 %2951
+  store <4 x float> <float 5.000000e-01, float 5.000000e-01, float 5.000000e-01, float 5.000000e-01>, ptr %2952, align 16, !tbaa !13
+  %2953 = add nuw nsw i64 %2951, 4
+  %2954 = icmp eq i64 %2953, 32000
+  br i1 %2954, label %3043, label %2950, !llvm.loop !362
+
+2955:                                             ; preds = %2937
+  %2956 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.134) #12
+  %2957 = icmp eq i32 %2956, 0
+  br i1 %2957, label %2958, label %2966
+
+2958:                                             ; preds = %2958, %2955
+  %2959 = phi i64 [ %2963, %2958 ], [ 0, %2955 ]
+  %2960 = phi <4 x i32> [ %2964, %2958 ], [ <i32 0, i32 1, i32 2, i32 3>, %2955 ]
+  %2961 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %2960)
+  %2962 = getelementptr inbounds float, ptr @global_data, i64 %2959
+  store <4 x float> %2961, ptr %2962, align 16, !tbaa !13
+  %2963 = add nuw nsw i64 %2959, 4
+  %2964 = add <4 x i32> %2960, <i32 4, i32 4, i32 4, i32 4>
+  %2965 = icmp eq i64 %2963, 32000
+  br i1 %2965, label %3043, label %2958, !llvm.loop !363
+
+2966:                                             ; preds = %2955
+  %2967 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.135) #12
+  %2968 = icmp eq i32 %2967, 0
+  br i1 %2968, label %2969, label %2985
+
+2969:                                             ; preds = %2969, %2966
+  %2970 = phi i64 [ %2974, %2969 ], [ 0, %2966 ]
+  %2971 = phi <4 x i32> [ %2975, %2969 ], [ <i32 0, i32 1, i32 2, i32 3>, %2966 ]
+  %2972 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %2971)
+  %2973 = getelementptr inbounds float, ptr @global_data, i64 %2970
+  store <4 x float> %2972, ptr %2973, align 16, !tbaa !13
+  %2974 = add nuw nsw i64 %2970, 4
+  %2975 = add <4 x i32> %2971, <i32 4, i32 4, i32 4, i32 4>
+  %2976 = icmp eq i64 %2974, 32000
+  br i1 %2976, label %2977, label %2969, !llvm.loop !364
+
+2977:                                             ; preds = %2977, %2969
+  %2978 = phi i64 [ %2982, %2977 ], [ 0, %2969 ]
+  %2979 = phi <4 x i32> [ %2983, %2977 ], [ <i32 0, i32 1, i32 2, i32 3>, %2969 ]
+  %2980 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %2979)
+  %2981 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 3, i64 %2978
+  store <4 x float> %2980, ptr %2981, align 16, !tbaa !13
+  %2982 = add nuw nsw i64 %2978, 4
+  %2983 = add <4 x i32> %2979, <i32 4, i32 4, i32 4, i32 4>
+  %2984 = icmp eq i64 %2982, 32000
+  br i1 %2984, label %3043, label %2977, !llvm.loop !365
+
+2985:                                             ; preds = %2966
+  %2986 = tail call i32 @strcmp(ptr noundef nonnull dereferenceable(1) %0, ptr noundef nonnull dereferenceable(6) @.str.136) #12
+  %2987 = icmp eq i32 %2986, 0
+  br i1 %2987, label %2988, label %3043
+
+2988:                                             ; preds = %2988, %2985
+  %2989 = phi i64 [ %2993, %2988 ], [ 0, %2985 ]
+  %2990 = phi <4 x i32> [ %2994, %2988 ], [ <i32 0, i32 1, i32 2, i32 3>, %2985 ]
+  %2991 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %2990)
+  %2992 = getelementptr inbounds float, ptr @global_data, i64 %2989
+  store <4 x float> %2991, ptr %2992, align 16, !tbaa !13
+  %2993 = add nuw nsw i64 %2989, 4
+  %2994 = add <4 x i32> %2990, <i32 4, i32 4, i32 4, i32 4>
+  %2995 = icmp eq i64 %2993, 32000
+  br i1 %2995, label %2996, label %2988, !llvm.loop !366
+
+2996:                                             ; preds = %2996, %2988
+  %2997 = phi i64 [ %3001, %2996 ], [ 0, %2988 ]
+  %2998 = phi <4 x i32> [ %3002, %2996 ], [ <i32 0, i32 1, i32 2, i32 3>, %2988 ]
+  %2999 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %2998)
+  %3000 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 3, i64 %2997
+  store <4 x float> %2999, ptr %3000, align 16, !tbaa !13
+  %3001 = add nuw nsw i64 %2997, 4
+  %3002 = add <4 x i32> %2998, <i32 4, i32 4, i32 4, i32 4>
+  %3003 = icmp eq i64 %3001, 32000
+  br i1 %3003, label %3004, label %2996, !llvm.loop !367
+
+3004:                                             ; preds = %3004, %2996
+  %3005 = phi i64 [ %3009, %3004 ], [ 0, %2996 ]
+  %3006 = phi <4 x i32> [ %3010, %3004 ], [ <i32 0, i32 1, i32 2, i32 3>, %2996 ]
+  %3007 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %3006)
+  %3008 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 6, i64 %3005
+  store <4 x float> %3007, ptr %3008, align 16, !tbaa !13
+  %3009 = add nuw nsw i64 %3005, 4
+  %3010 = add <4 x i32> %3006, <i32 4, i32 4, i32 4, i32 4>
+  %3011 = icmp eq i64 %3009, 32000
+  br i1 %3011, label %3012, label %3004, !llvm.loop !368
+
+3012:                                             ; preds = %3012, %3004
+  %3013 = phi i64 [ %3017, %3012 ], [ 0, %3004 ]
+  %3014 = phi <4 x i32> [ %3018, %3012 ], [ <i32 0, i32 1, i32 2, i32 3>, %3004 ]
+  %3015 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %3014)
+  %3016 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 9, i64 %3013
+  store <4 x float> %3015, ptr %3016, align 16, !tbaa !13
+  %3017 = add nuw nsw i64 %3013, 4
+  %3018 = add <4 x i32> %3014, <i32 4, i32 4, i32 4, i32 4>
+  %3019 = icmp eq i64 %3017, 32000
+  br i1 %3019, label %3020, label %3012, !llvm.loop !369
+
+3020:                                             ; preds = %3020, %3012
+  %3021 = phi i64 [ %3025, %3020 ], [ 0, %3012 ]
+  %3022 = phi <4 x i32> [ %3026, %3020 ], [ <i32 0, i32 1, i32 2, i32 3>, %3012 ]
+  %3023 = call <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %3022)
+  %3024 = getelementptr inbounds %struct.GlobalData, ptr @global_data, i64 0, i32 12, i64 %3021
+  store <4 x float> %3023, ptr %3024, align 16, !tbaa !13
+  %3025 = add nuw nsw i64 %3021, 4
+  %3026 = add <4 x i32> %3022, <i32 4, i32 4, i32 4, i32 4>
+  %3027 = icmp eq i64 %3025, 32000
+  br i1 %3027, label %3028, label %3020, !llvm.loop !370
+
+3028:                                             ; preds = %3041, %3020
+  %3029 = phi i64 [ %3030, %3041 ], [ 0, %3020 ]
+  %3030 = add nuw nsw i64 %3029, 1
+  %3031 = trunc i64 %3030 to i32
+  %3032 = sitofp i32 %3031 to float
+  %3033 = fdiv float 1.000000e+00, %3032
+  %3034 = insertelement <4 x float> poison, float %3033, i64 0
+  %3035 = shufflevector <4 x float> %3034, <4 x float> poison, <4 x i32> zeroinitializer
+  br label %3036
+
+3036:                                             ; preds = %3036, %3028
+  %3037 = phi i64 [ 0, %3028 ], [ %3039, %3036 ]
+  %3038 = getelementptr inbounds [256 x float], ptr getelementptr inbounds (%struct.GlobalData, ptr @global_data, i64 0, i32 15, i64 0, i64 0), i64 %3029, i64 %3037
+  store <4 x float> %3035, ptr %3038, align 16, !tbaa !13
+  %3039 = add nuw nsw i64 %3037, 4
+  %3040 = icmp eq i64 %3039, 256
+  br i1 %3040, label %3041, label %3036, !llvm.loop !371
+
+3041:                                             ; preds = %3036
+  %3042 = icmp eq i64 %3030, 256
+  br i1 %3042, label %3043, label %3028
+
+3043:                                             ; preds = %3041, %2985, %2977, %2958, %2950, %2932, %2908, %2892, %2871, %2855, %2843, %2831, %2819, %2807, %2795, %2771, %2752, %2720, %2701, %2676, %2659, %2643, %2618, %2594, %2562, %2528, %2519, %2502, %2483, %2459, %2422, %2384, %2368, %2352, %2336, %2324, %2311, %2299, %2273, %2224, %2194, %2170, %2153, %2132, %2120, %2104, %2071, %2052, %2047, %2035, %2016, %1986, %1977, %1968, %1956, %1937, %1933, %1907, %1886, %1872, %1864, %1853, %1842, %1831, %1815, %1804, %1800, %1796, %1791, %1742, %1734, %1725, %1716, %1699, %1675, %1651, %1614, %1572, %1530, %1488, %1461, %1423, %1393, %1365, %1328, %1307, %1281, %1236, %1208, %1178, %1169, %1157, %1134, %1117, %1087, %1065, %1035, %1012, %992, %942, %899, %852, %837, %805, %788, %756, %727, %694, %670, %654, %638, %622, %606, %590, %566, %527, %494, %484, %454, %425, %412, %390, %363, %326, %287, %257, %227, %211, %201, %171, %151, %145, %108, %68, %52, %36, %1
+  ret void
+}
+
+; Function Attrs: nofree nounwind optsize uwtable
+define internal fastcc void @check(i32 noundef %0) unnamed_addr #0 {
+  br label %2
+
+2:                                                ; preds = %2, %1
+  %3 = phi i64 [ 0, %1 ], [ %8, %2 ]
+  %4 = phi float [ 0.000000e+00, %1 ], [ %7, %2 ]
+  %5 = getelementptr inbounds float, ptr @global_data, i64 %3
+  %6 = load float, ptr %5, align 4, !tbaa !13
+  %7 = fadd float %4, %6
+  %8 = add nuw nsw i64 %3, 1
+  %9 = icmp eq i64 %8, 32000
+  br i1 %9, label %11, label %2
+
+10:                                               ; preds = %11
+  %.lcssa1.lcssa = phi float [ %.lcssa1, %11 ]
+  %.lcssa = phi float [ %16, %11 ]
+  switch i32 %0, label %25 [
+    i32 1, label %20
+    i32 0, label %19
+  ]
+
+11:                                               ; preds = %11, %2
+  %.lcssa1 = phi float [ %.lcssa1, %11 ], [ %7, %2 ]
+  %12 = phi i64 [ %17, %11 ], [ 0, %2 ]
+  %13 = phi float [ %16, %11 ], [ 0.000000e+00, %2 ]
+  %14 = getelementptr inbounds [65536 x float], ptr @array, i64 0, i64 %12
+  %15 = load float, ptr %14, align 4, !tbaa !13
+  %16 = fadd float %13, %15
+  %17 = add nuw nsw i64 %12, 1
+  %18 = icmp eq i64 %17, 65536
+  br i1 %18, label %10, label %11
+
+19:                                               ; preds = %10
+  br label %20
+
+20:                                               ; preds = %19, %10
+  %21 = phi float [ %.lcssa, %19 ], [ %.lcssa1.lcssa, %10 ]
+  %22 = load i32, ptr @digits, align 4, !tbaa !7
+  %23 = fpext float %21 to double
+  %24 = tail call i32 (ptr, ...) @printf(ptr noundef nonnull dereferenceable(1) @.str, i32 noundef %22, double noundef %23) #11
+  br label %25
+
+25:                                               ; preds = %20, %10
+  ret void
+}
+
+; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
+declare void @llvm.lifetime.end.p0(i64 immarg, ptr nocapture) #1
+
+; Function Attrs: mustprogress nofree nounwind optsize willreturn memory(argmem: read)
+declare i32 @strcmp(ptr nocapture noundef, ptr nocapture noundef) local_unnamed_addr #6
+
+; Function Attrs: nocallback nofree nounwind willreturn memory(argmem: write)
+declare void @llvm.memset.p0.i64(ptr nocapture writeonly, i8, i64, i1 immarg) #7
+
+; Function Attrs: noinline nounwind optsize willreturn
+define internal <4 x float> @_wyvern_slice_init__102007472(<4 x i32> %0) #8 {
+sliceclone_:
+  %1 = add <4 x i32> %0, <i32 1, i32 1, i32 1, i32 1>
+  %2 = mul <4 x i32> %1, %1
+  %3 = sitofp <4 x i32> %2 to <4 x float>
+  %4 = fdiv <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, %3
+  ret <4 x float> %4
+}
+
+; Function Attrs: noinline nounwind optsize willreturn
+define internal <4 x float> @_wyvern_slice_init__101799371(<4 x i32> %0) #8 {
+sliceclone_:
+  %1 = add <4 x i32> %0, <i32 1, i32 1, i32 1, i32 1>
+  %2 = sitofp <4 x i32> %1 to <4 x float>
+  %3 = fdiv <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, %2
+  ret <4 x float> %3
+}
+
+attributes #0 = { nofree nounwind optsize uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+attributes #1 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
+attributes #2 = { nofree nounwind optsize "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+attributes #3 = { mustprogress nofree nounwind optsize willreturn memory(read) "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+attributes #4 = { nofree nounwind }
+attributes #5 = { nofree nounwind optsize memory(write, argmem: read, inaccessiblemem: none) uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+attributes #6 = { mustprogress nofree nounwind optsize willreturn memory(argmem: read) "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+attributes #7 = { nocallback nofree nounwind willreturn memory(argmem: write) }
+attributes #8 = { noinline nounwind optsize willreturn "Daedalus"="1" }
+attributes #9 = { nounwind }
+attributes #10 = { nounwind optsize }
+attributes #11 = { optsize }
+attributes #12 = { nounwind optsize willreturn memory(read) }
+
+!llvm.ident = !{!0, !0}
+!llvm.module.flags = !{!1, !2, !3, !4, !5, !6}
+
+!0 = !{!"clang version 17.0.6 (https://github.com/Casperento/llvm-project.git 9b0073551ece0d22bf3378af2b03e456a26031b6)"}
+!1 = !{i32 1, !"wchar_size", i32 4}
+!2 = !{i32 8, !"PIC Level", i32 2}
+!3 = !{i32 7, !"PIE Level", i32 2}
+!4 = !{i32 7, !"uwtable", i32 2}
+!5 = !{i32 1, !"ThinLTO", i32 0}
+!6 = !{i32 1, !"EnableSplitLTOUnit", i32 1}
+!7 = !{!8, !8, i64 0}
+!8 = !{!"int", !9, i64 0}
+!9 = !{!"omnipotent char", !10, i64 0}
+!10 = !{!"Simple C/C++ TBAA"}
+!11 = !{!12, !12, i64 0}
+!12 = !{!"any pointer", !9, i64 0}
+!13 = !{!14, !14, i64 0}
+!14 = !{!"float", !9, i64 0}
+!15 = distinct !{!15, !16, !17}
+!16 = !{!"llvm.loop.isvectorized", i32 1}
+!17 = !{!"llvm.loop.unroll.runtime.disable"}
+!18 = distinct !{!18, !16, !17}
+!19 = distinct !{!19, !16, !17}
+!20 = distinct !{!20, !16, !17}
+!21 = distinct !{!21, !16, !17}
+!22 = distinct !{!22, !16, !17}
+!23 = distinct !{!23, !16, !17}
+!24 = distinct !{!24, !16, !17}
+!25 = distinct !{!25, !16, !17}
+!26 = distinct !{!26, !16, !17}
+!27 = distinct !{!27, !16, !17}
+!28 = distinct !{!28, !16, !17}
+!29 = distinct !{!29, !16, !17}
+!30 = distinct !{!30, !16, !17}
+!31 = distinct !{!31, !16, !17}
+!32 = distinct !{!32, !16, !17}
+!33 = distinct !{!33, !16, !17}
+!34 = distinct !{!34, !16, !17}
+!35 = distinct !{!35, !16, !17}
+!36 = distinct !{!36, !16, !17}
+!37 = distinct !{!37, !16, !17}
+!38 = distinct !{!38, !16, !17}
+!39 = distinct !{!39, !16, !17}
+!40 = distinct !{!40, !16, !17}
+!41 = distinct !{!41, !16, !17}
+!42 = distinct !{!42, !16, !17}
+!43 = distinct !{!43, !16, !17}
+!44 = distinct !{!44, !16, !17}
+!45 = distinct !{!45, !16, !17}
+!46 = distinct !{!46, !16, !17}
+!47 = distinct !{!47, !16, !17}
+!48 = distinct !{!48, !16, !17}
+!49 = distinct !{!49, !16, !17}
+!50 = distinct !{!50, !16, !17}
+!51 = distinct !{!51, !16, !17}
+!52 = distinct !{!52, !16, !17}
+!53 = distinct !{!53, !16, !17}
+!54 = distinct !{!54, !16, !17}
+!55 = distinct !{!55, !16, !17}
+!56 = distinct !{!56, !16, !17}
+!57 = distinct !{!57, !16, !17}
+!58 = distinct !{!58, !16, !17}
+!59 = distinct !{!59, !16, !17}
+!60 = distinct !{!60, !16, !17}
+!61 = distinct !{!61, !16, !17}
+!62 = distinct !{!62, !16, !17}
+!63 = distinct !{!63, !16, !17}
+!64 = distinct !{!64, !16, !17}
+!65 = distinct !{!65, !16, !17}
+!66 = distinct !{!66, !16, !17}
+!67 = distinct !{!67, !16, !17}
+!68 = distinct !{!68, !16, !17}
+!69 = distinct !{!69, !16, !17}
+!70 = distinct !{!70, !16, !17}
+!71 = distinct !{!71, !16, !17}
+!72 = distinct !{!72, !16, !17}
+!73 = distinct !{!73, !16, !17}
+!74 = distinct !{!74, !16, !17}
+!75 = distinct !{!75, !16, !17}
+!76 = distinct !{!76, !16, !17}
+!77 = distinct !{!77, !16, !17}
+!78 = distinct !{!78, !16, !17}
+!79 = distinct !{!79, !16, !17}
+!80 = distinct !{!80, !16, !17}
+!81 = distinct !{!81, !16, !17}
+!82 = distinct !{!82, !16, !17}
+!83 = distinct !{!83, !16, !17}
+!84 = distinct !{!84, !16, !17}
+!85 = distinct !{!85, !16, !17}
+!86 = distinct !{!86, !16, !17}
+!87 = distinct !{!87, !16, !17}
+!88 = distinct !{!88, !16, !17}
+!89 = distinct !{!89, !16, !17}
+!90 = distinct !{!90, !16, !17}
+!91 = distinct !{!91, !16, !17}
+!92 = distinct !{!92, !16, !17}
+!93 = distinct !{!93, !16, !17}
+!94 = distinct !{!94, !16, !17}
+!95 = distinct !{!95, !16, !17}
+!96 = distinct !{!96, !16, !17}
+!97 = distinct !{!97, !16, !17}
+!98 = distinct !{!98, !16, !17}
+!99 = distinct !{!99, !16, !17}
+!100 = distinct !{!100, !16, !17}
+!101 = distinct !{!101, !16, !17}
+!102 = distinct !{!102, !16, !17}
+!103 = distinct !{!103, !16, !17}
+!104 = distinct !{!104, !16, !17}
+!105 = distinct !{!105, !16, !17}
+!106 = distinct !{!106, !16, !17}
+!107 = distinct !{!107, !16, !17}
+!108 = distinct !{!108, !16, !17}
+!109 = distinct !{!109, !16, !17}
+!110 = distinct !{!110, !16, !17}
+!111 = distinct !{!111, !16, !17}
+!112 = distinct !{!112, !16, !17}
+!113 = distinct !{!113, !16, !17}
+!114 = distinct !{!114, !16, !17}
+!115 = distinct !{!115, !16, !17}
+!116 = distinct !{!116, !16, !17}
+!117 = distinct !{!117, !16, !17}
+!118 = distinct !{!118, !16, !17}
+!119 = distinct !{!119, !16, !17}
+!120 = distinct !{!120, !16, !17}
+!121 = distinct !{!121, !16, !17}
+!122 = distinct !{!122, !16, !17}
+!123 = distinct !{!123, !16, !17}
+!124 = distinct !{!124, !16, !17}
+!125 = distinct !{!125, !16, !17}
+!126 = distinct !{!126, !16, !17}
+!127 = distinct !{!127, !16, !17}
+!128 = distinct !{!128, !16, !17}
+!129 = distinct !{!129, !16, !17}
+!130 = distinct !{!130, !16, !17}
+!131 = distinct !{!131, !16, !17}
+!132 = distinct !{!132, !16, !17}
+!133 = distinct !{!133, !16, !17}
+!134 = distinct !{!134, !16, !17}
+!135 = distinct !{!135, !16, !17}
+!136 = distinct !{!136, !16, !17}
+!137 = distinct !{!137, !16, !17}
+!138 = distinct !{!138, !16, !17}
+!139 = distinct !{!139, !16, !17}
+!140 = distinct !{!140, !16, !17}
+!141 = distinct !{!141, !16, !17}
+!142 = distinct !{!142, !16, !17}
+!143 = distinct !{!143, !16, !17}
+!144 = distinct !{!144, !16, !17}
+!145 = distinct !{!145, !16, !17}
+!146 = distinct !{!146, !16, !17}
+!147 = distinct !{!147, !16, !17}
+!148 = distinct !{!148, !16, !17}
+!149 = distinct !{!149, !16, !17}
+!150 = distinct !{!150, !16, !17}
+!151 = distinct !{!151, !16, !17}
+!152 = distinct !{!152, !16, !17}
+!153 = distinct !{!153, !16, !17}
+!154 = distinct !{!154, !16, !17}
+!155 = distinct !{!155, !16, !17}
+!156 = distinct !{!156, !16, !17}
+!157 = distinct !{!157, !16, !17}
+!158 = distinct !{!158, !16, !17}
+!159 = distinct !{!159, !16, !17}
+!160 = distinct !{!160, !16, !17}
+!161 = distinct !{!161, !16, !17}
+!162 = distinct !{!162, !16, !17}
+!163 = distinct !{!163, !16, !17}
+!164 = distinct !{!164, !16, !17}
+!165 = distinct !{!165, !16, !17}
+!166 = distinct !{!166, !16, !17}
+!167 = distinct !{!167, !16, !17}
+!168 = distinct !{!168, !16, !17}
+!169 = distinct !{!169, !16, !17}
+!170 = distinct !{!170, !16, !17}
+!171 = distinct !{!171, !16, !17}
+!172 = distinct !{!172, !16, !17}
+!173 = distinct !{!173, !16, !17}
+!174 = distinct !{!174, !16, !17}
+!175 = distinct !{!175, !16, !17}
+!176 = distinct !{!176, !16, !17}
+!177 = distinct !{!177, !16, !17}
+!178 = distinct !{!178, !16, !17}
+!179 = distinct !{!179, !16, !17}
+!180 = distinct !{!180, !16, !17}
+!181 = distinct !{!181, !16, !17}
+!182 = distinct !{!182, !16, !17}
+!183 = distinct !{!183, !16, !17}
+!184 = distinct !{!184, !16, !17}
+!185 = distinct !{!185, !16, !17}
+!186 = distinct !{!186, !16, !17}
+!187 = distinct !{!187, !16, !17}
+!188 = distinct !{!188, !16, !17}
+!189 = distinct !{!189, !16, !17}
+!190 = distinct !{!190, !16, !17}
+!191 = distinct !{!191, !16, !17}
+!192 = distinct !{!192, !16, !17}
+!193 = distinct !{!193, !16, !17}
+!194 = distinct !{!194, !16, !17}
+!195 = distinct !{!195, !16, !17}
+!196 = distinct !{!196, !16, !17}
+!197 = distinct !{!197, !16, !17}
+!198 = distinct !{!198, !16, !17}
+!199 = distinct !{!199, !16, !17}
+!200 = distinct !{!200, !16, !17}
+!201 = distinct !{!201, !16, !17}
+!202 = distinct !{!202, !16, !17}
+!203 = distinct !{!203, !16, !17}
+!204 = distinct !{!204, !16, !17}
+!205 = distinct !{!205, !16, !17}
+!206 = distinct !{!206, !16, !17}
+!207 = distinct !{!207, !16, !17}
+!208 = distinct !{!208, !16, !17}
+!209 = distinct !{!209, !16, !17}
+!210 = distinct !{!210, !16, !17}
+!211 = distinct !{!211, !16, !17}
+!212 = distinct !{!212, !16, !17}
+!213 = distinct !{!213, !16, !17}
+!214 = distinct !{!214, !16, !17}
+!215 = distinct !{!215, !16, !17}
+!216 = distinct !{!216, !16, !17}
+!217 = distinct !{!217, !16, !17}
+!218 = distinct !{!218, !16, !17}
+!219 = distinct !{!219, !16, !17}
+!220 = distinct !{!220, !16, !17}
+!221 = distinct !{!221, !16, !17}
+!222 = distinct !{!222, !16, !17}
+!223 = distinct !{!223, !16, !17}
+!224 = distinct !{!224, !16, !17}
+!225 = distinct !{!225, !16, !17}
+!226 = distinct !{!226, !16, !17}
+!227 = distinct !{!227, !16, !17}
+!228 = distinct !{!228, !16, !17}
+!229 = distinct !{!229, !16, !17}
+!230 = distinct !{!230, !16, !17}
+!231 = distinct !{!231, !16, !17}
+!232 = distinct !{!232, !16, !17}
+!233 = distinct !{!233, !16, !17}
+!234 = distinct !{!234, !16, !17}
+!235 = distinct !{!235, !16, !17}
+!236 = distinct !{!236, !16, !17}
+!237 = distinct !{!237, !16, !17}
+!238 = distinct !{!238, !16, !17}
+!239 = distinct !{!239, !16, !17}
+!240 = distinct !{!240, !16, !17}
+!241 = distinct !{!241, !16, !17}
+!242 = distinct !{!242, !16, !17}
+!243 = distinct !{!243, !16, !17}
+!244 = distinct !{!244, !16, !17}
+!245 = distinct !{!245, !16, !17}
+!246 = distinct !{!246, !16, !17}
+!247 = distinct !{!247, !16, !17}
+!248 = distinct !{!248, !16, !17}
+!249 = distinct !{!249, !16, !17}
+!250 = distinct !{!250, !16, !17}
+!251 = distinct !{!251, !16, !17}
+!252 = distinct !{!252, !16, !17}
+!253 = distinct !{!253, !16, !17}
+!254 = distinct !{!254, !16, !17}
+!255 = distinct !{!255, !16, !17}
+!256 = distinct !{!256, !16, !17}
+!257 = distinct !{!257, !16, !17}
+!258 = distinct !{!258, !16, !17}
+!259 = distinct !{!259, !16, !17}
+!260 = distinct !{!260, !16, !17}
+!261 = distinct !{!261, !16, !17}
+!262 = distinct !{!262, !16, !17}
+!263 = distinct !{!263, !16, !17}
+!264 = distinct !{!264, !16, !17}
+!265 = distinct !{!265, !16, !17}
+!266 = distinct !{!266, !16, !17}
+!267 = distinct !{!267, !16, !17}
+!268 = distinct !{!268, !16, !17}
+!269 = distinct !{!269, !16, !17}
+!270 = distinct !{!270, !16, !17}
+!271 = distinct !{!271, !16, !17}
+!272 = distinct !{!272, !16, !17}
+!273 = distinct !{!273, !16, !17}
+!274 = distinct !{!274, !16, !17}
+!275 = distinct !{!275, !16, !17}
+!276 = distinct !{!276, !16, !17}
+!277 = distinct !{!277, !16, !17}
+!278 = distinct !{!278, !16, !17}
+!279 = distinct !{!279, !16, !17}
+!280 = distinct !{!280, !16, !17}
+!281 = distinct !{!281, !16, !17}
+!282 = distinct !{!282, !16, !17}
+!283 = distinct !{!283, !16, !17}
+!284 = distinct !{!284, !16, !17}
+!285 = distinct !{!285, !16, !17}
+!286 = distinct !{!286, !16, !17}
+!287 = distinct !{!287, !16, !17}
+!288 = distinct !{!288, !16, !17}
+!289 = distinct !{!289, !16, !17}
+!290 = distinct !{!290, !16, !17}
+!291 = distinct !{!291, !16, !17}
+!292 = distinct !{!292, !16, !17}
+!293 = distinct !{!293, !16, !17}
+!294 = distinct !{!294, !16, !17}
+!295 = distinct !{!295, !16, !17}
+!296 = distinct !{!296, !16, !17}
+!297 = distinct !{!297, !16, !17}
+!298 = distinct !{!298, !16, !17}
+!299 = distinct !{!299, !16, !17}
+!300 = distinct !{!300, !16, !17}
+!301 = distinct !{!301, !16, !17}
+!302 = distinct !{!302, !16, !17}
+!303 = distinct !{!303, !16, !17}
+!304 = distinct !{!304, !16, !17}
+!305 = distinct !{!305, !16, !17}
+!306 = distinct !{!306, !16, !17}
+!307 = distinct !{!307, !16, !17}
+!308 = distinct !{!308, !16, !17}
+!309 = distinct !{!309, !16, !17}
+!310 = distinct !{!310, !16, !17}
+!311 = distinct !{!311, !16, !17}
+!312 = distinct !{!312, !16, !17}
+!313 = distinct !{!313, !16, !17}
+!314 = distinct !{!314, !16, !17}
+!315 = distinct !{!315, !16, !17}
+!316 = distinct !{!316, !16, !17}
+!317 = distinct !{!317, !16, !17}
+!318 = distinct !{!318, !16, !17}
+!319 = distinct !{!319, !16, !17}
+!320 = distinct !{!320, !16, !17}
+!321 = distinct !{!321, !16, !17}
+!322 = distinct !{!322, !16, !17}
+!323 = distinct !{!323, !16, !17}
+!324 = distinct !{!324, !16, !17}
+!325 = distinct !{!325, !16, !17}
+!326 = distinct !{!326, !16, !17}
+!327 = distinct !{!327, !16, !17}
+!328 = distinct !{!328, !16, !17}
+!329 = distinct !{!329, !16, !17}
+!330 = distinct !{!330, !16, !17}
+!331 = distinct !{!331, !16, !17}
+!332 = distinct !{!332, !16, !17}
+!333 = distinct !{!333, !16, !17}
+!334 = distinct !{!334, !16, !17}
+!335 = distinct !{!335, !16, !17}
+!336 = distinct !{!336, !16, !17}
+!337 = distinct !{!337, !16, !17}
+!338 = distinct !{!338, !16, !17}
+!339 = distinct !{!339, !16, !17}
+!340 = distinct !{!340, !16, !17}
+!341 = distinct !{!341, !16, !17}
+!342 = distinct !{!342, !16, !17}
+!343 = distinct !{!343, !16, !17}
+!344 = distinct !{!344, !16, !17}
+!345 = distinct !{!345, !16, !17}
+!346 = distinct !{!346, !16, !17}
+!347 = distinct !{!347, !16, !17}
+!348 = distinct !{!348, !16, !17}
+!349 = distinct !{!349, !16, !17}
+!350 = distinct !{!350, !16, !17}
+!351 = distinct !{!351, !16, !17}
+!352 = distinct !{!352, !16, !17}
+!353 = distinct !{!353, !16, !17}
+!354 = distinct !{!354, !16, !17}
+!355 = distinct !{!355, !16, !17}
+!356 = distinct !{!356, !16, !17}
+!357 = distinct !{!357, !16, !17}
+!358 = distinct !{!358, !16, !17}
+!359 = distinct !{!359, !16, !17}
+!360 = distinct !{!360, !16, !17}
+!361 = distinct !{!361, !16, !17}
+!362 = distinct !{!362, !16, !17}
+!363 = distinct !{!363, !16, !17}
+!364 = distinct !{!364, !16, !17}
+!365 = distinct !{!365, !16, !17}
+!366 = distinct !{!366, !16, !17}
+!367 = distinct !{!367, !16, !17}
+!368 = distinct !{!368, !16, !17}
+!369 = distinct !{!369, !16, !17}
+!370 = distinct !{!370, !16, !17}
+!371 = distinct !{!371, !16, !17}

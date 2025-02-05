@@ -1,0 +1,318 @@
+== OUTLINING INST PHASE ==
+  %43 = add nsw i32 %42, %38
+[32moutlined![0m
+  %66 = add nsw i32 %65, %61
+[32moutlined![0m
+  %154 = and i64 %153, 4294967295
+Not self contained!
+  %177 = add nuw nsw i32 %173, 2
+Not self contained!
+  %198 = add nsw i32 %197, 1
+Not self contained!
+  %248 = add nsw i32 %212, 1
+Not self contained!
+  %48 = add nsw i32 %47, %39
+Not self contained!
+  %51 = add nsw i32 %50, %43
+Not self contained!
+  %54 = add nsw i32 %53, %43
+Not self contained!
+  %57 = add nsw i32 %56, %39
+Not self contained!
+  %62 = add nsw i32 %61, 1
+Not self contained!
+  %65 = add nsw i32 %64, 1
+Not self contained!
+  %68 = add nsw i32 %67, 1
+Not self contained!
+  %71 = add nsw i32 %70, 1
+Not self contained!
+  %80 = add nsw i32 %79, 1
+Not self contained!
+  %83 = add nsw i32 %82, 1
+Not self contained!
+  %92 = add nsw i32 %91, 1
+Not self contained!
+  %101 = add nsw i32 %100, 1
+Not self contained!
+  %104 = add nsw i32 %103, 1
+Not self contained!
+  %107 = add nsw i32 %106, 1
+Not self contained!
+  %110 = add nsw i32 %109, 1
+Not self contained!
+  %117 = add nsw i32 %116, 1
+Not self contained!
+  %120 = add nsw i32 %119, 1
+Not self contained!
+  %129 = add nsw i32 %128, 1
+Not self contained!
+  %134 = add nsw i32 %133, 1
+Not self contained!
+  %137 = add nsw i32 %136, 1
+Not self contained!
+  %140 = add nsw i32 %139, 1
+Not self contained!
+  %143 = add nsw i32 %142, 1
+Not self contained!
+  %150 = add nsw i32 %149, 1
+Not self contained!
+  %153 = add nsw i32 %152, 1
+Not self contained!
+  %162 = add nsw i32 %161, 1
+Not self contained!
+  %168 = add nsw i32 %167, 1
+Not self contained!
+  %174 = add nsw i32 %173, %39
+Not self contained!
+  %177 = add nsw i32 %176, %43
+Not self contained!
+  %180 = add nsw i32 %179, %43
+Not self contained!
+  %183 = add nsw i32 %182, %39
+Not self contained!
+  %188 = add nsw i32 %187, %39
+Not self contained!
+  %191 = add nsw i32 %190, %43
+Not self contained!
+  %194 = add nsw i32 %193, %43
+Not self contained!
+  %197 = add nsw i32 %196, %39
+Not self contained!
+  %206 = add nsw i32 %205, %39
+Not self contained!
+  %209 = add nsw i32 %208, %43
+Not self contained!
+  %212 = add nsw i32 %211, %43
+Not self contained!
+  %215 = add nsw i32 %214, %39
+Not self contained!
+  %306 = add nsw i32 %305, %303
+Not self contained!
+  %309 = add nsw i32 %306, %308
+Not self contained!
+  %264 = fdiv double %262, %263
+Not self contained!
+  %140 = add nsw i32 %139, %137
+Not self contained!
+  %143 = add nsw i32 %140, %142
+Not self contained!
+  %150 = fdiv double %148, %149
+Not self contained!
+  %157 = add nsw i32 %156, %154
+Not self contained!
+  %160 = add nsw i32 %157, %159
+Not self contained!
+  %167 = fdiv double %165, %166
+Not self contained!
+  %177 = fdiv double %175, %176
+Not self contained!
+  %185 = fdiv double %183, %184
+Not self contained!
+  %218 = add nsw i32 %217, %215
+Not self contained!
+  %221 = add nsw i32 %218, %220
+Not self contained!
+  %228 = fdiv double %226, %227
+Not self contained!
+  %236 = add nsw i32 %235, %233
+Not self contained!
+  %239 = add nsw i32 %236, %238
+Not self contained!
+  %246 = fdiv double %244, %245
+Not self contained!
+  %256 = fdiv double %254, %255
+Not self contained!
+  %316 = fdiv double %314, %315
+Not self contained!
+  %323 = add nsw i32 %322, %320
+Not self contained!
+  %326 = add nsw i32 %323, %325
+Not self contained!
+  %333 = fdiv double %331, %332
+Not self contained!
+  %343 = fdiv double %341, %342
+Not self contained!
+  %351 = fdiv double %349, %350
+Not self contained!
+  %384 = add nsw i32 %383, %381
+Not self contained!
+  %387 = add nsw i32 %384, %386
+Not self contained!
+  %394 = fdiv double %392, %393
+Not self contained!
+  %402 = add nsw i32 %401, %399
+Not self contained!
+  %405 = add nsw i32 %402, %404
+Not self contained!
+  %412 = fdiv double %410, %411
+Not self contained!
+  %422 = fdiv double %420, %421
+Not self contained!
+  %430 = fdiv double %428, %429
+Not self contained!
+  %1003 = add nsw i32 %1002, %1001
+Not self contained!
+  %1005 = add nsw i32 %1003, %1004
+Not self contained!
+  %1009 = fdiv double %1007, %1008
+Not self contained!
+  %953 = add nsw i32 %951, %952
+Not self contained!
+  %957 = fdiv double %955, %956
+Not self contained!
+  %129 = add nsw i32 %126, %124
+Not self contained!
+  %130 = add nsw i32 %129, %128
+Not self contained!
+  %874 = add nsw i32 %871, %869
+Not self contained!
+  %875 = add nsw i32 %874, %873
+Not self contained!
+  %882 = fdiv double %880, %881
+Not self contained!
+  %931 = add nsw i32 %930, -14
+Not self contained!
+  %951 = add nsw i32 %950, %949
+Not self contained!
+  %813 = or i1 %802, %812
+Not self contained!
+  %137 = fdiv double %135, %136
+Not self contained!
+  %204 = add nsw i32 %201, %199
+Not self contained!
+  %205 = add nsw i32 %204, %203
+Not self contained!
+  %212 = fdiv double %210, %211
+Not self contained!
+  %518 = fdiv double %516, %517
+Not self contained!
+  %284 = add nsw i32 %281, %279
+Not self contained!
+  %285 = add nsw i32 %284, %283
+Not self contained!
+  %292 = fdiv double %290, %291
+Not self contained!
+  %359 = add nsw i32 %356, %354
+Not self contained!
+  %360 = add nsw i32 %359, %358
+Not self contained!
+  %367 = fdiv double %365, %366
+Not self contained!
+  %435 = add nsw i32 %432, %430
+Not self contained!
+  %436 = add nsw i32 %435, %434
+Not self contained!
+  %443 = fdiv double %441, %442
+Not self contained!
+  %510 = add nsw i32 %507, %505
+Not self contained!
+  %511 = add nsw i32 %510, %509
+Not self contained!
+  %1035 = add nsw i32 %1034, -14
+Not self contained!
+  %1054 = sub nsw i32 %1052, %1053
+Not self contained!
+  %1057 = add nsw i32 %1056, %1055
+Not self contained!
+  %1059 = add nsw i32 %1057, %1058
+Not self contained!
+  %1063 = fdiv double %1061, %1062
+Not self contained!
+  %586 = add nsw i32 %583, %581
+Not self contained!
+  %587 = add nsw i32 %586, %585
+Not self contained!
+  %594 = fdiv double %592, %593
+Not self contained!
+  %661 = add nsw i32 %658, %656
+Not self contained!
+  %662 = add nsw i32 %661, %660
+Not self contained!
+  %669 = fdiv double %667, %668
+Not self contained!
+  %721 = and i64 %720, 1
+Not self contained!
+  %724 = and i64 %723, 1
+Not self contained!
+  %748 = and i1 %747, %746
+Not self contained!
+  %757 = and i64 %.lcssa, 4294967295
+Not self contained!
+  %1396 = sub nsw i32 %1393, %1395
+Not self contained!
+  %1486 = add nsw i32 %1485, %1478
+Not self contained!
+  %1489 = add nsw i32 %1488, %1477
+Not self contained!
+  %1492 = add nsw i32 %1491, %1476
+Not self contained!
+  %1388 = fdiv double %1386, %1387
+Not self contained!
+  %983 = add nsw i32 %982, -14
+Not self contained!
+  %1089 = add nsw i32 %1088, -14
+Not self contained!
+  %1127 = sub nsw i32 %1125, %1126
+Not self contained!
+  %1130 = add nsw i32 %1129, %1128
+Not self contained!
+  %1132 = add nsw i32 %1130, %1131
+Not self contained!
+  %1136 = fdiv double %1134, %1135
+Not self contained!
+  %1145 = add nsw i32 %1144, %1143
+Not self contained!
+  %1147 = add nsw i32 %1145, %1146
+Not self contained!
+  %1152 = sub nsw i32 %1150, %1151
+Not self contained!
+  %1155 = fdiv double %1153, %1154
+Not self contained!
+  %1162 = sub nsw i32 %1160, %1161
+Not self contained!
+  %1165 = add nsw i32 %1164, %1163
+Not self contained!
+  %1167 = add nsw i32 %1165, %1166
+Not self contained!
+  %1171 = fdiv double %1169, %1170
+Not self contained!
+  %1385 = sub nsw i32 %1382, %1384
+Not self contained!
+  %1376 = add nsw i32 %1375, %1374
+Not self contained!
+  %1369 = sub nsw i32 %1366, %1368
+Not self contained!
+  %1378 = add nsw i32 %1376, %1377
+Not self contained!
+  %1410 = shl nuw nsw i64 %1406, 2
+Not self contained!
+  %1411 = add nsw i64 %1410, -4
+Not self contained!
+  %1533 = sub nsw i32 %1530, %1532
+Not self contained!
+  %1539 = sub nsw i32 %1536, %1538
+Not self contained!
+  %1743 = or i1 %1742, %1741
+Not self contained!
+  %1748 = and i1 %1738, %1743
+Not self contained!
+  %1756 = and i64 %.lcssa37, 4294967295
+PLEASE submit a bug report to https://github.com/llvm/llvm-project/issues/ and include the crash backtrace.
+Stack dump:
+0.	Program arguments: opt -stats -debug-only=Daedalus -passes=daedalus -load-pass-plugin=../build/lib/libdaedalus.so -S football.e.bc.ll -o football.e.bc.d.ll
+ #0 0x00005e00f5c8243c llvm::sys::PrintStackTrace(llvm::raw_ostream&, int) (/home/pc2/llvm-rafael/build/bin/opt+0x1ca143c)
+ #1 0x00005e00f5c7f63b SignalHandler(int) Signals.cpp:0:0
+ #2 0x000077bef155d1d0 (/usr/lib/libc.so.6+0x3d1d0)
+ #3 0x00005e00f54aaea0 llvm::BasicBlock::moveBefore(llvm::ilist_iterator<llvm::ilist_detail::node_options<llvm::BasicBlock, true, false, void>, false, false>) (/home/pc2/llvm-rafael/build/bin/opt+0x14c9ea0)
+ #4 0x000077bef1aab666 llvm::BasicBlock::moveBefore(llvm::BasicBlock*) /home/pc2/llvm-rafael/llvm/include/llvm/IR/BasicBlock.h:256:3
+ #5 0x000077bef1ac2849 llvm::ProgramSlice::reorderBlocks(llvm::Function*) /home/pc2/workspace/Daedalus/include/wyvern/ProgramSlice.cpp:859:1
+ #6 0x000077bef1ac3634 llvm::ProgramSlice::outline() /home/pc2/workspace/Daedalus/include/wyvern/ProgramSlice.cpp:1075:14
+ #7 0x000077bef1aa8cea Daedalus::DaedalusPass::run(llvm::Module&, llvm::AnalysisManager<llvm::Module>&) /home/pc2/workspace/Daedalus/lib/daedalus.cpp:305:31
+ #8 0x000077bef1abdc61 llvm::detail::PassModel<llvm::Module, Daedalus::DaedalusPass, llvm::PreservedAnalyses, llvm::AnalysisManager<llvm::Module>>::run(llvm::Module&, llvm::AnalysisManager<llvm::Module>&) /home/pc2/llvm-rafael/llvm/include/llvm/IR/PassManagerInternal.h:90:3
+ #9 0x00005e00f56680d1 llvm::PassManager<llvm::Module, llvm::AnalysisManager<llvm::Module>>::run(llvm::Module&, llvm::AnalysisManager<llvm::Module>&) (/home/pc2/llvm-rafael/build/bin/opt+0x16870d1)
+#10 0x00005e00f4572e5b llvm::runPassPipeline(llvm::StringRef, llvm::Module&, llvm::TargetMachine*, llvm::TargetLibraryInfoImpl*, llvm::ToolOutputFile*, llvm::ToolOutputFile*, llvm::ToolOutputFile*, llvm::StringRef, llvm::ArrayRef<llvm::PassPlugin>, llvm::opt_tool::OutputKind, llvm::opt_tool::VerifierKind, bool, bool, bool, bool, bool, bool, bool) (/home/pc2/llvm-rafael/build/bin/opt+0x591e5b)
+#11 0x00005e00f44b156f main (/home/pc2/llvm-rafael/build/bin/opt+0x4d056f)
+#12 0x000077bef1545e08 (/usr/lib/libc.so.6+0x25e08)
+#13 0x000077bef1545ecc __libc_start_main (/usr/lib/libc.so.6+0x25ecc)
+#14 0x00005e00f4566755 _start (/home/pc2/llvm-rafael/build/bin/opt+0x585755)

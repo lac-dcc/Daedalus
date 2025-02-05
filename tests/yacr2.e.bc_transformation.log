@@ -1,0 +1,255 @@
+== OUTLINING INST PHASE ==
+  %786 = add i64 %782, 1
+Not self contained!
+  %788 = shl i64 %787, 3
+Not self contained!
+  %789 = add i64 %788, -8
+Not self contained!
+  %191 = shl i64 %186, 3
+Not self contained!
+  %61 = shl nuw nsw i64 %.lcssa3, 3
+Not self contained!
+  %62 = add nuw nsw i64 %61, 8
+Not self contained!
+  %106 = add i64 %105, 8
+Not self contained!
+  %111 = add nuw nsw i64 %110, 8
+Not self contained!
+  %160 = add i64 %159, 1
+Not self contained!
+  %183 = add nuw nsw i64 %182, 64
+Not self contained!
+  %186 = mul i64 %185, %185
+Not self contained!
+  %187 = shl i64 %186, 5
+Not self contained!
+  %222 = or i1 %220, %221
+Not self contained!
+  %268 = or i1 %266, %267
+Not self contained!
+  %317 = add i64 %312, 1
+Not self contained!
+  %318 = and i64 %317, -2
+Not self contained!
+  %319 = add i64 %312, -1
+Not self contained!
+  %345 = add i64 %340, 1
+Not self contained!
+  %346 = and i64 %345, -2
+Not self contained!
+  %347 = add i64 %340, -1
+Not self contained!
+  %466 = add i64 %445, -1
+Not self contained!
+  %478 = add i64 %445, 1
+Not self contained!
+  %487 = add nuw nsw i64 %477, 3
+Not self contained!
+  %490 = add nuw nsw i64 %477, 2
+Not self contained!
+  %962 = add nuw nsw i64 %961, 1
+Not self contained!
+  %965 = mul i64 %964, %962
+Not self contained!
+  %653 = add nuw nsw i64 %652, 24
+Not self contained!
+  %656 = mul i64 %655, %655
+Not self contained!
+  %657 = shl i64 %656, 3
+Not self contained!
+  %722 = add i64 %721, 16
+[32moutlined![0m
+  %1276 = add i64 %1243, -1
+Not self contained!
+  %1298 = add nuw i64 %1238, 1
+Not self contained!
+  %1322 = add nuw i64 %1238, 1
+Not self contained!
+  %836 = add i64 %833, 1
+Not self contained!
+  %876 = add i64 %871, 1
+Not self contained!
+  %878 = shl i64 %877, 3
+Not self contained!
+  %879 = add i64 %878, -8
+Not self contained!
+  %926 = add i64 %923, 1
+Not self contained!
+  %1251 = add i64 %1243, -1
+Not self contained!
+  %1005 = add i64 %1004, 4294967296
+Not self contained!
+  %1006 = mul i64 %1005, %1003
+Not self contained!
+  %1007 = ashr exact i64 %1006, 32
+Not self contained!
+  %1011 = ashr exact i64 %1005, 32
+Not self contained!
+  %1055 = mul i64 %1054, %1001
+Not self contained!
+  %1056 = add i64 %1055, %1041
+Not self contained!
+  %1065 = mul i64 %1064, %1001
+Not self contained!
+  %1066 = add i64 %1065, %1041
+Not self contained!
+  %1080 = mul i64 %1079, %1001
+Not self contained!
+  %1081 = add i64 %1080, %1041
+Not self contained!
+  %1093 = mul i64 %1092, %1001
+Not self contained!
+  %1094 = add i64 %1093, %1041
+Not self contained!
+  %1102 = mul i64 %1101, %1001
+Not self contained!
+  %1103 = add i64 %1102, %1041
+Not self contained!
+  %1529 = add i64 %1526, 1
+Not self contained!
+  %1372 = add i64 %1367, -1
+Not self contained!
+  %1373 = add i64 %1371, 1
+Not self contained!
+  %1376 = add i64 %1367, 1
+Not self contained!
+  %1377 = add i64 %1371, -1
+Not self contained!
+  %1386 = and i1 %1385, %1383
+Not self contained!
+  %1402 = or i1 %1396, %1401
+Not self contained!
+  %1403 = or i1 %1393, %1402
+Not self contained!
+  %1405 = or i1 %1404, %1403
+Not self contained!
+  %1422 = or i1 %1420, %1421
+Not self contained!
+  %1450 = or i1 %1448, %1449
+Not self contained!
+  %1473 = mul i64 %.lcssa41, %1345
+Not self contained!
+  %1474 = add i64 %1473, %1358
+Not self contained!
+  %1476 = add i64 %.lcssa39, %1473
+Not self contained!
+  %1478 = mul i64 %1367, %1345
+Not self contained!
+  %1479 = add i64 %.lcssa39, %1478
+Not self contained!
+  %1481 = mul i64 %.lcssa40, %1345
+Not self contained!
+  %1482 = add i64 %1481, %1358
+Not self contained!
+  %1484 = add i64 %.lcssa37, %1481
+Not self contained!
+  %1486 = mul i64 %1371, %1345
+Not self contained!
+  %1487 = add i64 %.lcssa37, %1486
+Not self contained!
+  %1567 = udiv i64 %1566, 100
+[32moutlined![0m
+  %1584 = urem i64 %1583, 100
+[32moutlined![0m
+  %1587 = udiv i8 %1586, 10
+[32moutlined![0m
+  %1604 = urem i64 %1603, 10
+[32moutlined![0m
+  %1639 = mul i64 %1636, %1631
+Not self contained!
+  %1640 = add i64 %1639, %1637
+Not self contained!
+  %1643 = and i8 %1642, 4
+Not self contained!
+  %1659 = mul i64 %1656, %1631
+Not self contained!
+  %1660 = add i64 %1659, %1657
+Not self contained!
+  %1663 = and i8 %1662, 1
+Not self contained!
+  %1668 = and i8 %1667, 1
+Not self contained!
+  %1676 = mul i64 %1675, %1631
+Not self contained!
+  %1677 = add i64 %1676, %1657
+Not self contained!
+  %1699 = mul i64 %1698, %1631
+Not self contained!
+  %1700 = add i64 %1699, %1657
+Not self contained!
+  %1703 = and i8 %1702, 2
+Not self contained!
+  %1708 = and i8 %1707, 2
+Not self contained!
+  %1726 = mul i64 %1723, %1631
+Not self contained!
+  %1727 = add i64 %1726, %1724
+Not self contained!
+  %1730 = and i8 %1729, 8
+Not self contained!
+  %1752 = mul i64 %1751, %1747
+[32moutlined![0m
+  %1773 = udiv i64 %1772, 100
+[32moutlined![0m
+  %1790 = urem i64 %1789, 100
+[32moutlined![0m
+  %1793 = udiv i8 %1792, 10
+[32moutlined![0m
+  %1810 = urem i64 %1809, 10
+[32moutlined![0m
+  %39 = add nuw i64 %.lcssa8, 1
+Not self contained!
+  %65 = add nuw i64 %.lcssa3, 1
+Not self contained!
+  %76 = add i64 %70, %75
+Not self contained!
+  %13 = shl i64 %12, 3
+Not self contained!
+  %14 = add i64 %13, -8
+Not self contained!
+  %40 = add i64 %39, %38
+Not self contained!
+  %44 = sub i64 %42, %39
+Not self contained!
+  %45 = mul i64 %44, %38
+Not self contained!
+  %47 = mul i64 %46, %39
+Not self contained!
+  %48 = add i64 %45, %47
+Not self contained!
+  %49 = udiv i64 %48, %40
+Not self contained!
+  %57 = sub i64 %42, %39
+Not self contained!
+  %59 = sub i64 %58, %40
+Not self contained!
+  %75 = or i1 %73, %74
+Not self contained!
+  %78 = mul i64 %77, 100
+Not self contained!
+  %84 = sub i64 %51, %63
+Not self contained!
+opt: /home/pc2/llvm-rafael/llvm/include/llvm/IR/Instructions.h:2889: llvm::Value* llvm::PHINode::removeIncomingValue(const llvm::BasicBlock*, bool): Assertion `Idx >= 0 && "Invalid basic block argument to remove!"' failed.
+PLEASE submit a bug report to https://github.com/llvm/llvm-project/issues/ and include the crash backtrace.
+Stack dump:
+0.	Program arguments: opt -stats -debug-only=Daedalus -passes=daedalus -load-pass-plugin=../build/lib/libdaedalus.so -S yacr2.e.bc.ll -o yacr2.e.bc.d.ll
+ #0 0x00005f65bda0c43c llvm::sys::PrintStackTrace(llvm::raw_ostream&, int) (/home/pc2/llvm-rafael/build/bin/opt+0x1ca143c)
+ #1 0x00005f65bda0963b SignalHandler(int) Signals.cpp:0:0
+ #2 0x00007afa7855d1d0 (/usr/lib/libc.so.6+0x3d1d0)
+ #3 0x00007afa785b63f4 (/usr/lib/libc.so.6+0x963f4)
+ #4 0x00007afa7855d120 raise (/usr/lib/libc.so.6+0x3d120)
+ #5 0x00007afa785444c3 abort (/usr/lib/libc.so.6+0x244c3)
+ #6 0x00007afa785443df (/usr/lib/libc.so.6+0x243df)
+ #7 0x00007afa78555177 (/usr/lib/libc.so.6+0x35177)
+ #8 0x00007afa784d1ffb llvm::PHINode::removeIncomingValue(llvm::BasicBlock const*, bool) /home/pc2/llvm-rafael/llvm/include/llvm/IR/Instructions.h:2890:31
+ #9 0x00007afa784cdece updatePHINodes(llvm::Function*) /home/pc2/workspace/Daedalus/include/wyvern/ProgramSlice.cpp:531:7
+#10 0x00007afa784ceb2d llvm::ProgramSlice::rerouteBranches(llvm::Function*) /home/pc2/workspace/Daedalus/include/wyvern/ProgramSlice.cpp:690:1
+#11 0x00007afa784d0602 llvm::ProgramSlice::outline() /home/pc2/workspace/Daedalus/include/wyvern/ProgramSlice.cpp:1073:17
+#12 0x00007afa784b5cea Daedalus::DaedalusPass::run(llvm::Module&, llvm::AnalysisManager<llvm::Module>&) /home/pc2/workspace/Daedalus/lib/daedalus.cpp:305:31
+#13 0x00007afa784cac61 llvm::detail::PassModel<llvm::Module, Daedalus::DaedalusPass, llvm::PreservedAnalyses, llvm::AnalysisManager<llvm::Module>>::run(llvm::Module&, llvm::AnalysisManager<llvm::Module>&) /home/pc2/llvm-rafael/llvm/include/llvm/IR/PassManagerInternal.h:90:3
+#14 0x00005f65bd3f20d1 llvm::PassManager<llvm::Module, llvm::AnalysisManager<llvm::Module>>::run(llvm::Module&, llvm::AnalysisManager<llvm::Module>&) (/home/pc2/llvm-rafael/build/bin/opt+0x16870d1)
+#15 0x00005f65bc2fce5b llvm::runPassPipeline(llvm::StringRef, llvm::Module&, llvm::TargetMachine*, llvm::TargetLibraryInfoImpl*, llvm::ToolOutputFile*, llvm::ToolOutputFile*, llvm::ToolOutputFile*, llvm::StringRef, llvm::ArrayRef<llvm::PassPlugin>, llvm::opt_tool::OutputKind, llvm::opt_tool::VerifierKind, bool, bool, bool, bool, bool, bool, bool) (/home/pc2/llvm-rafael/build/bin/opt+0x591e5b)
+#16 0x00005f65bc23b56f main (/home/pc2/llvm-rafael/build/bin/opt+0x4d056f)
+#17 0x00007afa78545e08 (/usr/lib/libc.so.6+0x25e08)
+#18 0x00007afa78545ecc __libc_start_main (/usr/lib/libc.so.6+0x25ecc)
+#19 0x00005f65bc2f0755 _start (/home/pc2/llvm-rafael/build/bin/opt+0x585755)

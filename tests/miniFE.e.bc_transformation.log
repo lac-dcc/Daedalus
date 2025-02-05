@@ -1,0 +1,229 @@
+== OUTLINING INST PHASE ==
+  %36 = sub nsw i32 %34, %35
+Not self contained!
+  %38 = sub nsw i32 %8, %37
+Not self contained!
+  %42 = fdiv double %40, %41
+Not self contained!
+  %43 = fmul double %42, %39
+Not self contained!
+  %45 = sub nsw i32 %36, %44
+Not self contained!
+  %57 = add nsw i32 %56, %45
+Not self contained!
+  %59 = add nsw i32 %37, %0
+Not self contained!
+  %67 = add nsw i32 %37, %0
+Not self contained!
+  %70 = add nsw i32 %69, %45
+Not self contained!
+  %71 = add i32 %69, %36
+Not self contained!
+  %65 = and i32 %64, 2
+Not self contained!
+  %16 = and i32 %15, 2
+Not self contained!
+  %39 = add i64 %38, 1
+Not self contained!
+  %114 = add i64 %113, 1
+Not self contained!
+  %397 = add i64 %396, 1
+Not self contained!
+  %235 = add i64 %234, 1
+Not self contained!
+  %132 = add i64 %131, 1
+Not self contained!
+  %49 = add i64 %48, 1
+Not self contained!
+  %67 = add i64 %66, 1
+Not self contained!
+  %379 = add i64 %378, 1
+Not self contained!
+  %169 = add nsw i32 %168, 1900
+Not self contained!
+  %172 = add nsw i32 %171, 1
+Not self contained!
+  %261 = sub i64 %259, %260
+Not self contained!
+  %262 = ashr exact i64 %261, 3
+Not self contained!
+  %304 = add i64 %303, 1
+Not self contained!
+  %322 = add i64 %321, 1
+Not self contained!
+  %454 = add i64 %453, 1
+Not self contained!
+  %7 = sub i64 %5, %6
+[32moutlined![0m
+  %6 = sub i64 4611686018427387903, %5
+[32moutlined![0m
+  %6 = sub i64 4611686018427387903, %5
+[32moutlined![0m
+  %7 = sub i64 %5, %6
+[32moutlined![0m
+  %11 = sub i64 %7, %1
+Not self contained!
+  %9 = add i64 %8, %4
+Not self contained!
+  %42 = sub i64 %40, %41
+Not self contained!
+  %43 = ashr exact i64 %42, 3
+Not self contained!
+  %10 = sub i64 %8, %9
+Not self contained!
+  %11 = ashr exact i64 %10, 3
+Not self contained!
+  %24 = sub i64 %23, %8
+Not self contained!
+  %32 = ashr exact i64 %24, 3
+Not self contained!
+  %9 = sub i64 %7, %8
+[32moutlined![0m
+  %12 = sub nsw i64 1152921504606846975, %11
+Not self contained!
+  %17 = add i64 %16, %11
+Not self contained!
+  %20 = or i1 %18, %19
+Not self contained!
+  %19 = sub i64 %17, %18
+Not self contained!
+  %82 = fsub double %80, %76
+Not self contained!
+  %88 = sub i64 %86, %87
+Not self contained!
+  %89 = lshr exact i64 %88, 2
+Not self contained!
+  %1091 = fdiv double %1088, %1090
+Not self contained!
+  %103 = fsub double %101, %98
+Not self contained!
+  %250 = add nsw i32 %64, 1
+Not self contained!
+  %251 = add nsw i32 %66, 1
+Not self contained!
+  %252 = add nsw i32 %68, 1
+Not self contained!
+  %268 = sub i64 %266, %267
+Not self contained!
+  %269 = lshr exact i64 %268, 2
+Not self contained!
+  %443 = mul i32 %66, %64
+Not self contained!
+  %444 = mul i32 %443, %68
+Not self contained!
+  %446 = fmul double %445, 2.000000e+00
+Not self contained!
+  %448 = fmul double %447, 2.000000e+00
+Not self contained!
+  %449 = fmul double %447, 3.000000e+00
+Not self contained!
+  %451 = add nsw i32 %450, 1
+Not self contained!
+  %453 = fmul double %446, %452
+Not self contained!
+  %454 = shl nsw i32 %450, 1
+Not self contained!
+  %456 = fmul double %448, %455
+Not self contained!
+  %457 = mul nsw i32 %450, 3
+Not self contained!
+  %458 = add nsw i32 %457, 2
+Not self contained!
+  %460 = fmul double %449, %459
+Not self contained!
+  %461 = fadd double %453, %456
+Not self contained!
+  %462 = fadd double %461, %460
+Not self contained!
+  %466 = fdiv double %453, %464
+Not self contained!
+  %467 = fmul double %466, 0x3EB0C6F7A0B5ED8D
+Not self contained!
+  %472 = fdiv double %456, %470
+Not self contained!
+  %473 = fmul double %472, 0x3EB0C6F7A0B5ED8D
+Not self contained!
+  %477 = fdiv double %460, %475
+Not self contained!
+  %478 = fmul double %477, 0x3EB0C6F7A0B5ED8D
+Not self contained!
+  %483 = fdiv double %462, %481
+Not self contained!
+  %484 = fmul double %483, 0x3EB0C6F7A0B5ED8D
+Not self contained!
+  %28 = add nsw i32 %13, 1
+Not self contained!
+  %29 = add nsw i32 %15, 1
+Not self contained!
+  %30 = add nsw i32 %17, 1
+Not self contained!
+  %57 = mul i32 %29, %28
+Not self contained!
+  %58 = mul i32 %57, %30
+Not self contained!
+  %59 = sub nsw i32 %38, %33
+Not self contained!
+  %60 = sub nsw i32 %47, %42
+Not self contained!
+  %61 = sub nsw i32 %56, %51
+Not self contained!
+  %62 = mul nsw i32 %60, %59
+Not self contained!
+  %63 = mul nsw i32 %62, %61
+Not self contained!
+  %117 = add nsw i32 %63, 1
+Not self contained!
+  %120 = mul nsw i32 %63, 3
+Not self contained!
+  %138 = mul i32 %133, %29
+Not self contained!
+  %154 = or i32 %150, %133
+Not self contained!
+  %156 = add i32 %150, %138
+Not self contained!
+  %157 = mul i32 %156, %28
+Not self contained!
+  %172 = or i32 %154, %169
+Not self contained!
+  %176 = and i1 %155, %175
+Not self contained!
+  %177 = and i1 %137, %176
+Not self contained!
+  %178 = add i32 %169, %157
+Not self contained!
+  %201 = add nsw <4 x i32> %200, <i32 -1, i32 0, i32 1, i32 2>
+[32moutlined![0m
+  %207 = add nsw i32 %205, %133
+Not self contained!
+  %209 = mul i32 %207, %29
+Not self contained!
+  %219 = add nsw i32 %217, %150
+Not self contained!
+opt: /home/pc2/llvm-rafael/llvm/include/llvm/Support/Casting.h:109: static bool llvm::isa_impl_cl<To, const From*>::doit(const From*) [with To = llvm::Instruction; From = llvm::Value]: Assertion `Val && "isa<> used on a null pointer"' failed.
+PLEASE submit a bug report to https://github.com/llvm/llvm-project/issues/ and include the crash backtrace.
+Stack dump:
+0.	Program arguments: opt -stats -debug-only=Daedalus -passes=daedalus -load-pass-plugin=../build/lib/libdaedalus.so -S miniFE.e.bc.ll -o miniFE.e.bc.d.ll
+ #0 0x0000568a340bf43c llvm::sys::PrintStackTrace(llvm::raw_ostream&, int) (/home/pc2/llvm-rafael/build/bin/opt+0x1ca143c)
+ #1 0x0000568a340bc63b SignalHandler(int) Signals.cpp:0:0
+ #2 0x0000733850b5d1d0 (/usr/lib/libc.so.6+0x3d1d0)
+ #3 0x0000733850bb63f4 (/usr/lib/libc.so.6+0x963f4)
+ #4 0x0000733850b5d120 raise (/usr/lib/libc.so.6+0x3d120)
+ #5 0x0000733850b444c3 abort (/usr/lib/libc.so.6+0x244c3)
+ #6 0x0000733850b443df (/usr/lib/libc.so.6+0x243df)
+ #7 0x0000733850b55177 (/usr/lib/libc.so.6+0x35177)
+ #8 0x0000733850ac5e9f llvm::isa_impl_cl<llvm::Instruction, llvm::Value const*>::doit(llvm::Value const*) /home/pc2/llvm-rafael/llvm/include/llvm/Support/Casting.h:110:36
+ #9 0x0000733850ac4400 llvm::isa_impl_wrap<llvm::Instruction, llvm::Value const*, llvm::Value const*>::doit(llvm::Value const* const&) /home/pc2/llvm-rafael/llvm/include/llvm/Support/Casting.h:138:3
+#10 0x0000733850add862 llvm::isa_impl_wrap<llvm::Instruction, llvm::Value* const, llvm::Value const*>::doit(llvm::Value* const&) /home/pc2/llvm-rafael/llvm/include/llvm/Support/Casting.h:130:3
+#11 0x0000733850ad8e2e llvm::CastIsPossible<llvm::Instruction, llvm::Value*, void>::isPossible(llvm::Value* const&) /home/pc2/llvm-rafael/llvm/include/llvm/Support/Casting.h:258:3
+#12 0x0000733850ad9c30 llvm::CastInfo<llvm::Instruction, llvm::Use const, void>::isPossible(llvm::Use const&) /home/pc2/llvm-rafael/llvm/include/llvm/Support/Casting.h:511:3
+#13 0x0000733850ad5732 bool llvm::isa<llvm::Instruction, llvm::Use>(llvm::Use const&) /home/pc2/llvm-rafael/llvm/include/llvm/Support/Casting.h:550:1
+#14 0x0000733850acc198 get_data_dependences_for(llvm::Instruction&, std::unordered_map<llvm::BasicBlock const*, llvm::SmallVector<llvm::Value const*, 6u>, std::hash<llvm::BasicBlock const*>, std::equal_to<llvm::BasicBlock const*>, std::allocator<std::pair<llvm::BasicBlock const* const, llvm::SmallVector<llvm::Value const*, 6u>>>>&, llvm::PostDominatorTree&, llvm::Function&, llvm::AnalysisManager<llvm::Function>&) /home/pc2/workspace/Daedalus/include/wyvern/ProgramSlice.cpp:201:13
+#15 0x0000733850acca6c llvm::ProgramSlice::ProgramSlice(llvm::Instruction&, llvm::Function&, llvm::PostDominatorTree&, llvm::AnalysisManager<llvm::Function>&) /home/pc2/workspace/Daedalus/include/wyvern/ProgramSlice.cpp:279:9
+#16 0x0000733850ab5cdb Daedalus::DaedalusPass::run(llvm::Module&, llvm::AnalysisManager<llvm::Module>&) /home/pc2/workspace/Daedalus/lib/daedalus.cpp:305:31
+#17 0x0000733850acac61 llvm::detail::PassModel<llvm::Module, Daedalus::DaedalusPass, llvm::PreservedAnalyses, llvm::AnalysisManager<llvm::Module>>::run(llvm::Module&, llvm::AnalysisManager<llvm::Module>&) /home/pc2/llvm-rafael/llvm/include/llvm/IR/PassManagerInternal.h:90:3
+#18 0x0000568a33aa50d1 llvm::PassManager<llvm::Module, llvm::AnalysisManager<llvm::Module>>::run(llvm::Module&, llvm::AnalysisManager<llvm::Module>&) (/home/pc2/llvm-rafael/build/bin/opt+0x16870d1)
+#19 0x0000568a329afe5b llvm::runPassPipeline(llvm::StringRef, llvm::Module&, llvm::TargetMachine*, llvm::TargetLibraryInfoImpl*, llvm::ToolOutputFile*, llvm::ToolOutputFile*, llvm::ToolOutputFile*, llvm::StringRef, llvm::ArrayRef<llvm::PassPlugin>, llvm::opt_tool::OutputKind, llvm::opt_tool::VerifierKind, bool, bool, bool, bool, bool, bool, bool) (/home/pc2/llvm-rafael/build/bin/opt+0x591e5b)
+#20 0x0000568a328ee56f main (/home/pc2/llvm-rafael/build/bin/opt+0x4d056f)
+#21 0x0000733850b45e08 (/usr/lib/libc.so.6+0x25e08)
+#22 0x0000733850b45ecc __libc_start_main (/usr/lib/libc.so.6+0x25ecc)
+#23 0x0000568a329a3755 _start (/home/pc2/llvm-rafael/build/bin/opt+0x585755)
