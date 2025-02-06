@@ -8,8 +8,10 @@
 #include "../include/ProgramSlice.h"
 #include "../include/debugCommon.h"
 #include "../include/reports.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/Analysis/CFGPrinter.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/PostDominators.h"
 #include "llvm/Analysis/TargetLibraryInfo.h"
@@ -21,15 +23,21 @@
 #include "llvm/IR/PassManager.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/GraphWriter.h"
 #include "llvm/Support/NativeFormatting.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/IPO/MergeFunctions.h"
+#include <filesystem>
 #include <llvm/Pass.h>
 // #include "llvm/Transforms/IPO/FunctionMerging.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Transforms/Utils/ValueMapper.h"
 #include <csignal>
 #include <memory>
 #include <set>
+#include <string>
+#include <system_error>
 
 using namespace llvm;
 
@@ -42,6 +50,9 @@ STATISTIC(SizeOfLargestSliceBeforeMerging,
           "Size of the largest slice function before merging step");
 STATISTIC(SizeOfLargestSliceAfterMerging,
           "Size of the largest slice function after merging step");
+static cl::opt<bool>
+    dumpDot("dump-dot", cl::desc("Export function slices CFG to 'dot' files"),
+            cl::init(false));
 
 /**
  * @brief Determines if an instruction type can be sliced.
@@ -283,6 +294,36 @@ numberOfMergedFunctions(Function *F,
   return mergedFuncCount;
 }
 
+void functionSlicesToDot(std::map<Function *, Function *>& funcMap) {
+  SmallPtrSet<Function *, 8> checkedFunctions;
+  for (auto [deletedFunc, newFunc] : funcMap) {
+    if (newFunc->hasName() && !checkedFunctions.contains(newFunc)) {
+      checkedFunctions.insert(newFunc);
+
+      // Filesystem, creating dot file and 
+      // error handling by reporting and skipping erroneous current files
+      std::filesystem::path dotFilePath = newFunc->getName().str() + ".dot";
+      std::error_code errorCode;
+      raw_fd_ostream sliceDotFile(dotFilePath.string(), errorCode);
+
+      if (errorCode) {
+        errs() << "Error couldn't open file '"
+                << std::filesystem::absolute(dotFilePath)
+                << "' "
+                << errorCode.message()
+                << "Skipping...\n";
+                continue;
+      }
+
+      errs() << "Writing '" << std::filesystem::absolute(dotFilePath) << "'... ";
+      // BlockFrequency and BlockFreqency analysis
+      DOTFuncInfo fnInfo(newFunc);
+      WriteGraph(sliceDotFile, &fnInfo);
+      sliceDotFile.close();
+      errs() << "Done.\n";
+    }
+  }
+}
 namespace Daedalus {
 
 /**
@@ -482,6 +523,9 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
       LLVM_DEBUG(dbgs() << "Metadata written into '" << exportedFileName
                         << "' file...\n"););
 
+  if (dumpDot) {
+    functionSlicesToDot(delToNewFunc);
+  }
   return PreservedAnalyses::none();
 }
 } // namespace Daedalus
