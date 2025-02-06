@@ -28,8 +28,6 @@ pip install -r requirements.txt
 
 ## Run
 
-**Note**: activate the venv before running any script from this folder.
-
 1. Create a jupyter notebook from the provided source:
 ```bash
 jupytext --to ipynb slices-analysis.py
@@ -39,3 +37,5 @@ jupytext --to ipynb slices-analysis.py
 ```bash
 jupyter lab
 ```
+
+**Note**: every time you save your modifications to the `.ipynb`, the relative `.py` file will be updated and available to be commited.
