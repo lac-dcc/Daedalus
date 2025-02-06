@@ -1,2 +1,4 @@
 matplotlib
 pandas
+jupytext
+jupyterlab
