@@ -294,26 +294,24 @@ numberOfMergedFunctions(Function *F,
   return mergedFuncCount;
 }
 
-void functionSlicesToDot(const std::set<Function *>& newFunctions) {
+void functionSlicesToDot(const std::set<Function *> &newFunctions) {
   for (const auto newFunc : newFunctions) {
     if (newFunc->hasName()) {
-      // Filesystem, creating dot file and 
-      // error handling by reporting and skipping erroneous current files
+      // Create a DOT file for the function and handle errors gracefully.
       std::filesystem::path dotFilePath = newFunc->getName().str() + ".dot";
       std::error_code errorCode;
       raw_fd_ostream sliceDotFile(dotFilePath.string(), errorCode);
 
+      // If the file cannot be opened, report the error and skip processing.
       if (errorCode) {
         errs() << "Error couldn't open file '"
-                << std::filesystem::absolute(dotFilePath)
-                << "' "
-                << errorCode.message()
-                << "Skipping...\n";
-                continue;
+               << std::filesystem::absolute(dotFilePath) << "' "
+               << errorCode.message() << " Skipping...\n";
+        continue;
       }
 
-      errs() << "Writing '" << std::filesystem::absolute(dotFilePath) << "'... ";
-      // BlockFrequency and BlockFreqency analysis
+      errs() << "Writing '" << std::filesystem::absolute(dotFilePath)
+             << "'... ";
       DOTFuncInfo fnInfo(newFunc);
       WriteGraph(sliceDotFile, &fnInfo);
       sliceDotFile.close();
@@ -321,6 +319,7 @@ void functionSlicesToDot(const std::set<Function *>& newFunctions) {
     }
   }
 }
+
 namespace Daedalus {
 
 /**
