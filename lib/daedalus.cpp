@@ -8,7 +8,6 @@
 #include "../include/ProgramSlice.h"
 #include "../include/debugCommon.h"
 #include "../include/reports.h"
-#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Analysis/CFGPrinter.h"
