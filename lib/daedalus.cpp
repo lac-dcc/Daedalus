@@ -35,7 +35,6 @@
 #include <csignal>
 #include <memory>
 #include <set>
-#include <string>
 #include <system_error>
 
 using namespace llvm;
