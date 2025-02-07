@@ -294,12 +294,9 @@ numberOfMergedFunctions(Function *F,
   return mergedFuncCount;
 }
 
-void functionSlicesToDot(std::map<Function *, Function *>& funcMap) {
-  SmallPtrSet<Function *, 8> checkedFunctions;
-  for (auto [deletedFunc, newFunc] : funcMap) {
-    if (newFunc->hasName() && !checkedFunctions.contains(newFunc)) {
-      checkedFunctions.insert(newFunc);
-
+void functionSlicesToDot(const std::set<Function *>& newFunctions) {
+  for (const auto newFunc : newFunctions) {
+    if (newFunc->hasName()) {
       // Filesystem, creating dot file and 
       // error handling by reporting and skipping erroneous current files
       std::filesystem::path dotFilePath = newFunc->getName().str() + ".dot";
@@ -524,7 +521,7 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
                         << "' file...\n"););
 
   if (dumpDot) {
-    functionSlicesToDot(delToNewFunc);
+    functionSlicesToDot(toSimplify);
   }
   return PreservedAnalyses::none();
 }
