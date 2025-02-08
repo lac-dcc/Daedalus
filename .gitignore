@@ -4,8 +4,5 @@ compile_commands.json
 .obsidian-notes
 docs/
 sandbox.md
-tests/*.ll
-tests/*.bin
-tests/*.log
 venv/
 .venv/

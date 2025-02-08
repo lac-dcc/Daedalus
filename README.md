@@ -37,25 +37,25 @@ $ cmake --build .
 
 ## Running
 
-After building Daedalus, you can test it using the source files inside the `tests/` folder. Run the following sequence of commands in bash to generate test executables and IR files:
+After building Daedalus, you can test it using the source files inside the `tests/` folder.
+
+Run the following commands to run tests:
 
 ```shell
-$ cd tests
-$ ./generate_tests.sh -v
+$ cd build
+$ ctest
 ```
 
-For a given test file name (without its extension), the following files are created:
+For a given test file name (without its extension), the following files are created inside the `build/tests/` folder:
 
-Test Name: `test6.c`
-- `test6.ll`: IR file created before running Daedalus;
-- `test6.d.ll`: IR file created after running Daedalus;
-- `test6.bin`: executable created before running Daedalus;
-- `test6.d.bin`: executable created after running Daedalus;
+Test Name: `test.c`
+- `test.ll`: IR file created before running Daedalus;
+- `test.d.ll`: IR file created after running Daedalus;
+- `test.bin`: executable created before running Daedalus;
+- `test.d.bin`: executable created after running Daedalus;
 
 If you prefer to run the pass directly, you can simply do the following:
 
 ```shell
-$ clang -S -Xclang -disable-O0-optnone -emit-llvm {path_to_ll_file} -o {path_to_output_ll_file}
-$ opt -S -passes=mem2reg,lcssa {path_to_output_ll_file} -o {path_to_output_ll_file}
-$ opt -debug-only=daedalus -passes=daedalus -load-pass-plugin=path/to/lib/libdaedalus.so -S {path_to_ll_file} -o {path_to_output_ll_file} 2>&1
+$ opt -passes=daedalus -load-pass-plugin=path/to/lib/libdaedalus.so -S {path_to_ll_file} -o {path_to_output_ll_file} 2>&1
 ```
