@@ -9,3 +9,9 @@ tests/*.bin
 tests/*.log
 venv/
 .venv/
+*.ipynb
+.ipynb_checkpoints
+*.DS_Store
+__pycache__/
+*.py[cod]
+*$py.class
