@@ -1,7 +1,7 @@
 #!/bin/bash
 
-if [ $# -ne 1 ]; then
-  printf "Usage: %s SOURCEFILENAME" "$0"
+if [ $# -ne 2 ]; then
+  printf "Usage: %s SOURCEFILENAME ARGUMENTS" "$0"
   exit 1
 fi
 
@@ -19,6 +19,7 @@ remove_old_file() {
 }
 
 SOURCEFILENAME="$1"
+ARGUMENTS="$2"
 BUILDPATH=$(realpath "$(dirname "$SOURCEFILENAME")/../build")
 BUILDTESTSPATH="$BUILDPATH/tests"
 SHAREDOBJECTFILE="$BUILDPATH/lib/libdaedalus.so"
@@ -40,10 +41,10 @@ opt -stats -debug-only=Daedalus -passes=daedalus -load-pass-plugin="$SHAREDOBJEC
 clang -Os "$SOURCEFILENAMEDLL" -o "$FINAL_EXECUTABLE"
 
 if [ -e "$FINAL_EXECUTABLE" ]; then
-    "$FINAL_EXECUTABLE" 12 > "${SOURCEFILEBASENAMEWEXT}.output"
+    "$FINAL_EXECUTABLE" "$ARGUMENTS" > "${SOURCEFILEBASENAMEWEXT}.output"
 fi
 if [ -e "$ORIGINAL_EXECUTABLE" ]; then
-    "$ORIGINAL_EXECUTABLE" 12 > "${SOURCEFILEBASENAMEWEXT}.reference_output"
+    "$ORIGINAL_EXECUTABLE" "$ARGUMENTS" > "${SOURCEFILEBASENAMEWEXT}.reference_output"
 fi
 
 if cmp -s "${SOURCEFILEBASENAMEWEXT}.output" "${SOURCEFILEBASENAMEWEXT}.reference_output"; then
