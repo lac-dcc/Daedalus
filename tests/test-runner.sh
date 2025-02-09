@@ -30,22 +30,14 @@ TRANSFORMATIONLOGFILE="$BUILDTESTSPATH/${SOURCEFILEBASENAMEWEXT}_transformation.
 ORIGINAL_EXECUTABLE="$BUILDTESTSPATH/$SOURCEFILEBASENAMEWEXT.bin"
 FINAL_EXECUTABLE="$BUILDTESTSPATH/$SOURCEFILEBASENAMEWEXT.d.bin"
 
+remove_old_file "$SLICESREPORTLOGFILE"
+remove_old_file "$TRANSFORMATIONLOGFILE"
+
 clang -Os -flto -fuse-ld=lld -Wl,--plugin-opt=-lto-embed-bitcode=post-merge-pre-opt "$SOURCEFILENAME" -o "$ORIGINAL_EXECUTABLE"
 llvm-objcopy --dump-section .llvmbc="$SOURCEFILENAMELL" "$ORIGINAL_EXECUTABLE"
-
-if [ -e "$SOURCEFILENAMELL" ]; then
-    opt -S -passes=mem2reg,lcssa "$SOURCEFILENAMELL" -o "$SOURCEFILENAMELL"
-
-    remove_old_file "$SLICESREPORTLOGFILE"
-    TESTLOGNAME="$TRANSFORMATIONLOGFILE"
-    remove_old_file "$TESTLOGNAME"
-
-    opt -stats -debug-only=Daedalus -passes=daedalus -load-pass-plugin="$SHAREDOBJECTFILE" -S "$SOURCEFILENAMELL" -o "$SOURCEFILENAMEDLL" &>> "$TESTLOGNAME"
-
-    if [ -e "$SOURCEFILENAMEDLL" ]; then
-        clang -Os "$SOURCEFILENAMEDLL" -o "$FINAL_EXECUTABLE"
-    fi
-fi
+opt -S -passes=mem2reg,lcssa "$SOURCEFILENAMELL" -o "$SOURCEFILENAMELL"
+opt -stats -debug-only=Daedalus -passes=daedalus -load-pass-plugin="$SHAREDOBJECTFILE" -S "$SOURCEFILENAMELL" -o "$SOURCEFILENAMEDLL" &>> "$TRANSFORMATIONLOGFILE"
+clang -Os "$SOURCEFILENAMEDLL" -o "$FINAL_EXECUTABLE"
 
 if [ -e "$FINAL_EXECUTABLE" ]; then
     "$FINAL_EXECUTABLE" 12 > "${SOURCEFILEBASENAMEWEXT}.output"

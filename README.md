@@ -37,15 +37,6 @@ $ cmake --build .
 
 ## Running
 
-After building Daedalus, you can test it using the source files inside the `tests/` folder.
-
-Run the following commands to run tests:
-
-```shell
-$ cd build
-$ ctest
-```
-
 For a given test file name (without its extension), the following files are created inside the `build/tests/` folder:
 
 Test Name: `test.c`
@@ -57,5 +48,17 @@ Test Name: `test.c`
 If you prefer to run the pass directly, you can simply do the following:
 
 ```shell
+$ opt -passes=mem2reg,lcssa -S {path_to_ll_file} -o {path_to_output_ll_file}
 $ opt -passes=daedalus -load-pass-plugin=path/to/lib/libdaedalus.so -S {path_to_ll_file} -o {path_to_output_ll_file} 2>&1
+```
+
+### Tests
+
+After building Daedalus, you can test it using the source files inside the `tests/` folder.
+
+Run the following commands to run tests:
+
+```shell
+$ cd build
+$ ctest
 ```
