@@ -1,29 +1,27 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <time.h>
 
-int h(int a, int b){
-	return (b+b%a)/a;
+int a;
+int b;
+
+int f(){
+    printf("%d\n", a+b);
+    return a + b;
 }
 
-int g(int a){
-	return (a+a%10)/10; // ceil
+void g(int c){
+    b = c*b+a;
+    a = c+a;
 }
 
-int f(int a, int b){
-	if(a < b) return h(a,b);
-	return (a+a%b)/b;
-}
-
-int main(void){
-	int a,b;
-	srand(time(NULL));
-
-	a = rand() % 100 + 1;
-	b = rand() % 100 + 1;
-
-	int c = g(a);
-	printf("%d\n", c);
-	printf("%d\n", f(a,b));
-	return 1;
+int main(int argc, char **argv){
+    if(argc < 2) return 42;
+    a = 3;
+    b = atoi(argv[1]);
+    f();
+    g(b+a);
+    a = atoi(argv[1]);
+    f();
+    g(b+a);
+    f();
 }
