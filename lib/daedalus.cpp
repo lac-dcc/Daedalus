@@ -298,7 +298,7 @@ void functionSlicesToDot(Module &M, const std::set<Function *> &newFunctions) {
 
   // Create directory
   std::filesystem::path dotDir = 
-    std::filesystem::current_path() / (M.getSourceFileName() + ".dump_dot");
+    std::filesystem::current_path() / (M.getModuleIdentifier() + ".dump_dot");
 
   std::error_code errorCode;
   
