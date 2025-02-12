@@ -9,3 +9,4 @@ tests/*.bin
 tests/*.log
 venv/
 .venv/
+*.dot
