@@ -10,6 +10,7 @@
 #include "../include/reports.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/Analysis/CFGPrinter.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/PostDominators.h"
 #include "llvm/Analysis/TargetLibraryInfo.h"
@@ -21,15 +22,20 @@
 #include "llvm/IR/PassManager.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/GraphWriter.h"
 #include "llvm/Support/NativeFormatting.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/IPO/MergeFunctions.h"
+#include <filesystem>
 #include <llvm/Pass.h>
 // #include "llvm/Transforms/IPO/FunctionMerging.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Transforms/Utils/ValueMapper.h"
 #include <csignal>
 #include <memory>
 #include <set>
+#include <system_error>
 
 using namespace llvm;
 
@@ -42,6 +48,11 @@ STATISTIC(SizeOfLargestSliceBeforeMerging,
           "Size of the largest slice function before merging step");
 STATISTIC(SizeOfLargestSliceAfterMerging,
           "Size of the largest slice function after merging step");
+static cl::opt<bool>
+    dumpDot("dump-dot",
+            cl::desc("Export function slice CFGs as DOT graph files in a "
+                     "dedicated directory per source file"),
+            cl::init(false));
 
 /**
  * @brief Determines if an instruction type can be sliced.
@@ -282,6 +293,47 @@ numberOfMergedFunctions(Function *F,
     if (pair.second == F) mergedFuncCount++;
   return mergedFuncCount;
 }
+  
+void functionSlicesToDot(Module &M, const std::set<Function *> &newFunctions) {
+
+  // Create directory
+  std::filesystem::path dotDir = 
+    std::filesystem::current_path() / (M.getModuleIdentifier() + ".dump_dot");
+
+  std::error_code errorCode;
+  
+  std::filesystem::create_directory(dotDir, errorCode);
+
+  if (errorCode) {
+    errs() << "Failed to create directory '"
+           << std::filesystem::absolute(dotDir) << "' Reason: "
+           << errorCode.message() << "\n";
+    return;
+  }
+
+  for (const auto newFunc : newFunctions) {
+    if (newFunc->hasName()) {
+      // Create a DOT file for the function and handle errors gracefully.
+      auto dotFilePath = dotDir / (newFunc->getName().str() + ".dot");
+      raw_fd_ostream sliceDotFile(dotFilePath.string(), errorCode);
+
+      // If the file cannot be opened, report the error and skip processing.
+      if (errorCode) {
+        errs() << "Failed to create slice dot file '"
+               << std::filesystem::absolute(dotFilePath) << "' Reason: "
+               << errorCode.message() << "\n";
+        continue;
+      }
+
+      errs() << "Writing '" << std::filesystem::absolute(dotFilePath)
+             << "'... ";
+      DOTFuncInfo fnInfo(newFunc);
+      WriteGraph(sliceDotFile, &fnInfo);
+      sliceDotFile.close();
+      errs() << "Done.\n";
+    }
+  }
+}
 
 namespace Daedalus {
 
@@ -482,6 +534,9 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
       LLVM_DEBUG(dbgs() << "Metadata written into '" << exportedFileName
                         << "' file...\n"););
 
+  if (dumpDot) {
+    functionSlicesToDot(M, toSimplify);
+  }
   return PreservedAnalyses::none();
 }
 } // namespace Daedalus
