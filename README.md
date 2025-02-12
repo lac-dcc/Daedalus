@@ -52,6 +52,21 @@ $ opt -passes=mem2reg,lcssa -S {path_to_ll_file} -o {path_to_output_ll_file}
 $ opt -passes=daedalus -load-pass-plugin=path/to/lib/libdaedalus.so -S {path_to_ll_file} -o {path_to_output_ll_file} 2>&1
 ```
 
+### Visualize Generated Slices
+
+```bash
+$ opt -load-pass-plugin=path/to/lib/libdaedalus.so -passes=daedalus -dump-dot {path_to_ll_file}
+```
+Here's the result of the running above command assuming its ran on a source file named `test.ll` and the Daedalus path add a new function slice named **slice_foo**:
+
+-  `$(pwd)/test.ll.dump_dot/`: A new directory
+- `$(pwd)/test.ll.dump_dot/slice_foo.dot`: **slice_foo** CFG in DOT format
+
+Now that slice_foo.dot is generated we can visualize with graphviz by running the following command: 
+```bash
+dot -Tpng slice_foo.dot -o slice_foo.png
+```
+
 ### Tests
 
 After building Daedalus, you can test it using the source files inside the `tests/` folder.
