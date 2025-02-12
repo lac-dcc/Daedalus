@@ -49,7 +49,9 @@ STATISTIC(SizeOfLargestSliceBeforeMerging,
 STATISTIC(SizeOfLargestSliceAfterMerging,
           "Size of the largest slice function after merging step");
 static cl::opt<bool>
-    dumpDot("dump-dot", cl::desc("Export function slices CFG to 'dot' files"),
+    dumpDot("dump-dot",
+            cl::desc("Export function slice CFGs as DOT graph files in a "
+                     "dedicated directory per source file"),
             cl::init(false));
 
 /**
@@ -291,20 +293,35 @@ numberOfMergedFunctions(Function *F,
     if (pair.second == F) mergedFuncCount++;
   return mergedFuncCount;
 }
+  
+void functionSlicesToDot(Module &M, const std::set<Function *> &newFunctions) {
 
-void functionSlicesToDot(const std::set<Function *> &newFunctions) {
+  // Create directory
+  std::filesystem::path dotDir = 
+    std::filesystem::current_path() / (M.getSourceFileName() + ".dump_dot");
+
+  std::error_code errorCode;
+  
+  std::filesystem::create_directory(dotDir, errorCode);
+
+  if (errorCode) {
+    errs() << "Failed to create directory '"
+           << std::filesystem::absolute(dotDir) << "' Reason: "
+           << errorCode.message() << "\n";
+    return;
+  }
+
   for (const auto newFunc : newFunctions) {
     if (newFunc->hasName()) {
       // Create a DOT file for the function and handle errors gracefully.
-      std::filesystem::path dotFilePath = newFunc->getName().str() + ".dot";
-      std::error_code errorCode;
+      auto dotFilePath = dotDir / (newFunc->getName().str() + ".dot");
       raw_fd_ostream sliceDotFile(dotFilePath.string(), errorCode);
 
       // If the file cannot be opened, report the error and skip processing.
       if (errorCode) {
-        errs() << "Error couldn't open file '"
-               << std::filesystem::absolute(dotFilePath) << "' "
-               << errorCode.message() << " Skipping...\n";
+        errs() << "Failed to create slice dot file '"
+               << std::filesystem::absolute(dotFilePath) << "' Reason: "
+               << errorCode.message() << "\n";
         continue;
       }
 
@@ -518,7 +535,7 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
                         << "' file...\n"););
 
   if (dumpDot) {
-    functionSlicesToDot(toSimplify);
+    functionSlicesToDot(M, toSimplify);
   }
   return PreservedAnalyses::none();
 }
