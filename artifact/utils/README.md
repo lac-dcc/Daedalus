@@ -3,13 +3,14 @@
 The scripts contained in this folder helps doing diverse tasks such plotting graphs given a report file.
 
 ## Dependencies
+
 - Python 3.8+
 - venv
 - Required Python libraries (see `requirements.txt`).
 
 1. Create a virtual environment:
 ```bash
-python -m venv venv
+python3 -m venv venv
 ```
 2. Activate the virtual environment:
   - On Windows:
@@ -27,4 +28,14 @@ pip install -r requirements.txt
 
 ## Run
 
-Activate the venv before running any script from this folder.
+1. Create a jupyter notebook from the provided source:
+```bash
+jupytext --to ipynb slices-analysis.py
+```
+
+2. Start JupyterLab and run `slices-analysis.ipynb` notebook:
+```bash
+jupyter lab
+```
+
+**Note**: every time you save your modifications to the `.ipynb`, the relative `.py` file will be updated and available to be commited.
