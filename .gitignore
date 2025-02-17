@@ -1,9 +1,7 @@
 build/
 compile_commands.json
 .cache/
-.obsidian-notes
 docs/
-sandbox.md
 venv/
 .venv/
 *.ipynb
@@ -13,3 +11,4 @@ __pycache__/
 *.py[cod]
 *$py.class
 *.dot
+.vscode/
