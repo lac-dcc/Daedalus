@@ -195,6 +195,8 @@ get_data_dependences_for(
     worklist.pop();
 
     if (const Instruction *dep = dyn_cast<Instruction>(cur)) {
+      if (dep->getParent() == nullptr)
+        continue;
       BBs.insert(dep->getParent());
 
       for (const Use &U : dep->operands()) {
