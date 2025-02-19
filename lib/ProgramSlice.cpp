@@ -179,10 +179,8 @@ get_data_dependences_for(
   std::set<const Value *> visited;
   std::queue<const Value *> worklist;
   std::vector<std::pair<Type *, StringRef>> phiArguments;
-  std::set<Instruction *> toRemoveDeps;
   std::set<Value *> phiOnArgs;
 
-  toRemoveDeps.insert(&I);
   worklist.push(&I);
   deps.insert(&I);
   visited.insert(&I);
@@ -195,8 +193,7 @@ get_data_dependences_for(
     worklist.pop();
 
     if (const Instruction *dep = dyn_cast<Instruction>(cur)) {
-      if (dep->getParent() == nullptr)
-        continue;
+      assert(dep->getParent() != nullptr);
       BBs.insert(dep->getParent());
 
       for (const Use &U : dep->operands()) {
@@ -209,7 +206,6 @@ get_data_dependences_for(
             Argument *arg = new Argument(U->getType(), U->getName());
             deps.insert(arg);
             deps.insert(&I);
-            toRemoveDeps.clear();
             while (!worklist.empty()) worklist.pop();
             phiCrit = true;
             break;
@@ -231,7 +227,7 @@ get_data_dependences_for(
               visited.insert(U);
               continue;
             }
-            dbgs() << "On loop but not header\n";
+            LLVM_DEBUG(dbgs() << "On loop but not header\n");
           }
         }
         // Cannot have side effects.
