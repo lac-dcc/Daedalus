@@ -24,8 +24,7 @@ public:
   /**
    * @brief Constructs a ProgramSlice object.
    */
-  ProgramSlice(Instruction &I, Function &F, PostDominatorTree &PDT,
-               FunctionAnalysisManager &FAM);
+  ProgramSlice(Instruction &I, Function &F, FunctionAnalysisManager &FAM);
 
   /**
    * @brief Checks if outlining the slice is feasible.

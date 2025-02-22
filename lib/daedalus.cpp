@@ -12,7 +12,6 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Analysis/CFGPrinter.h"
 #include "llvm/Analysis/LoopInfo.h"
-#include "llvm/Analysis/PostDominators.h"
 #include "llvm/Analysis/TargetLibraryInfo.h"
 #include "llvm/IR/Attributes.h"
 #include "llvm/IR/Constants.h"
@@ -20,6 +19,7 @@
 #include "llvm/IR/InstrTypes.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/PassManager.h"
+#include "llvm/IR/Verifier.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/GraphWriter.h"
@@ -55,23 +55,44 @@ static cl::opt<bool>
             cl::init(false));
 
 /**
- * @brief Determines if an instruction type can be sliced.
+ * @brief Determines if an instruction type can be used as slice criterion
  *
  * @details This function checks if the given instruction is one of several
  * types that should not be considered for slicing, such as branch instructions,
  * return instructions, alloca instructions, comparison instructions, load
- * instructions, and store instructions.
+ * instructions, and store instructions. If the instruction is a PHI
+ * node, it must not have users that are also PHI nodes within the same basic
+ * block.
  *
  * @param I The instruction to check.
  * @return True if the instruction type can be sliced, false otherwise.
  */
-bool canSliceInstrType(Instruction &I) {
+bool canBeSliceCriterion(Instruction &I) {
   if (isa<BranchInst>(I)) return false; // Branch Instruction have badref
   if (isa<ReturnInst>(I)) return false;
   if (isa<AllocaInst>(I)) return false; // No needed
   if (isa<ICmpInst>(I)) return false;
   if (isa<LoadInst>(I)) return false;
   if (isa<StoreInst>(I)) return false;
+  
+  // PHINodes MUST be at the top of basic blocks. If our criterion
+  // is a PHINode, it will be replaced by a call site. Consequently,
+  // all PHINodes below it MUST be moved above our criterion. However,
+  // if at least one of these PHINodes is a user of our criterion, it
+  // will not dominate all its uses. In this case, we cannot replace it.
+  if (PHINode *phi = dyn_cast<PHINode>(&I)) {
+    for (User *use : phi->users()) {
+      if (Instruction *Iuse = dyn_cast<Instruction>(use))
+        if (isa<PHINode>(Iuse) && Iuse->getParent() == I.getParent()) {
+          LLVM_DEBUG(dbgs() << COLOR::RED
+                            << "Criterion is a phi-node which at least one of "
+                               "it's users are a Phi-Node and are in the same "
+                               "basic block!\n"
+                            << COLOR::CLEAN);
+          return false;
+        }
+    }
+  }
   return true;
 }
 
@@ -123,40 +144,6 @@ bool isSelfContained(std::set<Instruction *> origInst, Instruction *I,
     std::set<Instruction *> vis;
     if (I != J) {
       if (canRemove(J, I, origInst, vis, tempToRemove)) tempToRemove.insert(J);
-    }
-  }
-  return true;
-}
-
-/**
- * @brief Checks if a program slice can be created for an instruction.
- *
- * @details This function determines if a given instruction can be part of a
- * program slice. Specifically, it ensures that if the instruction is a PHI
- * node, it must not have users that are also PHI nodes within the same basic
- * block.
- *
- * @param I The instruction to check.
- * @return True if the instruction can be part of a program slice, false
- * otherwise.
- */
-bool canProgramSlice(Instruction *I) {
-  // PHINodes MUST be at the top of basic blocks. If our criterion
-  // is a PHINode, it will be replaced by a call site. Consequently,
-  // all PHINodes below it MUST be moved above our criterion. However,
-  // if at least one of these PHINodes is a user of our criterion, it
-  // will not dominate all its uses. In this case, we cannot replace it.
-  if (PHINode *phi = dyn_cast<PHINode>(I)) {
-    for (User *use : phi->users()) {
-      if (Instruction *Iuse = dyn_cast<Instruction>(use))
-        if (isa<PHINode>(Iuse) && Iuse->getParent() == I->getParent()) {
-          LLVM_DEBUG(dbgs() << COLOR::RED
-                            << "Criterion is a phi-node which at least one of "
-                               "it's users are a Phi-Node and are in the same "
-                               "basic block!\n"
-                            << COLOR::CLEAN);
-          return false;
-        }
     }
   }
   return true;
@@ -268,7 +255,7 @@ std::set<Instruction *> instSetMeetCriterion(Function *F) {
 
     for (Instruction &I : BB) {
       // if (isa<PHINode>(I)) S.insert(&I);
-      llvm::StringRef instName = I.getName();
+      // llvm::StringRef instName = I.getName();
       // if (instName.find("lcssa") == instName.npos) {
       //   S.insert(&I);
       // }
@@ -369,21 +356,23 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
   LLVM_DEBUG(dbgs() << "== OUTLINING INST PHASE ==\n");
   FunctionAnalysisManager &FAM =
       MAM.getResult<FunctionAnalysisManagerModuleProxy>(M).getManager();
-  for (Function *F : FtoMap) {
-    PostDominatorTree PDT;
-    PDT.recalculate(*F);
 
+  for (Function *F : FtoMap) {
     // Criterion Set
-    std::set<Instruction *> S = instSetMeetCriterion(
-        F); // filter binary instructions for building a set of instructions
-            // that can be used as slicing criterion. this function enables us
-            // to change how we manage the slicing criterion.
+    std::set<Instruction *> S = instSetMeetCriterion(F);
+    // filter binary instructions for building a set of instructions
+    // that can be used as slicing criterion. this function enables us
+    // to change how we manage the slicing criterion.
+
+    LLVM_DEBUG(dbgs() << "daedalus.cpp:368: Function: " << F->getName() << "\n");
 
     // Replace all uses of I with the correpondent call
     for (Instruction *I : S) {
-      if (!canSliceInstrType(*I)) continue;
-      if (!canProgramSlice(I)) continue;
-      ProgramSlice ps = ProgramSlice(*I, *F, PDT, FAM);
+      if (!canBeSliceCriterion(*I)) continue;
+
+      LLVM_DEBUG(dbgs() << "daedalus.cpp:368: Function: " << F->getName() << ",\n\tInstruction: " << *I << "\n");
+            
+      ProgramSlice ps = ProgramSlice(*I, *F, FAM);
       Function *G = ps.outline();
 
       if (G == NULL) continue;

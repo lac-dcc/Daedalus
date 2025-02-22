@@ -117,31 +117,31 @@ static const Value *getGate(const BasicBlock *BB) {
  */
 static const std::unordered_map<const BasicBlock *, SmallVector<const Value *>>
 computeGates(Function &F) {
-  std::unordered_map<const BasicBlock *, SmallVector<const Value *>> gates;
+  LLVM_DEBUG(dbgs() << "ProgramSlice.cpp:120: Function: " << F.getName() << "\n");
+  
   DominatorTree DT(F);
-  PostDominatorTree PDT;
-  PDT.recalculate(F);
+  PostDominatorTree PDT(F);
+  
+  std::unordered_map<const BasicBlock *, SmallVector<const Value *>> gates;
   for (const BasicBlock &BB : F) {
     SmallVector<const Value *> BB_gates;
     const unsigned num_preds = pred_size(&BB);
     if (num_preds > 1) {
-      // LLVM_DEBUG(dbgs() << BB.getName() << ":\n");
+      LLVM_DEBUG(dbgs() << BB.getName() << ":\n");
       for (const BasicBlock *pred : predecessors(&BB)) {
-        // LLVM_DEBUG(dbgs() << " - " << pred->getName() << " -> ");
+        LLVM_DEBUG(dbgs() << " - " << pred->getName() << " -> ");
         if (DT.dominates(pred, &BB) && !PDT.dominates(&BB, pred)) {
-          // LLVM_DEBUG(dbgs() << " DOM " << getGate(pred)->getName() << " ->
-          // ");
+          LLVM_DEBUG(dbgs() << " DOM " << getGate(pred)->getName() << " ->");
           BB_gates.push_back(getGate(pred));
         } else {
           const BasicBlock *ctrl_BB = getController(pred, DT, PDT);
           if (ctrl_BB) {
-            // LLVM_DEBUG(dbgs() << " R-CTRL " << "CTRL_BB: " <<
-            // ctrl_BB->getName()
-            // << " " << getGate(ctrl_BB)->getName());
+            LLVM_DEBUG(dbgs() << " R-CTRL " << "CTRL_BB: " << ctrl_BB->getName()
+                              << " " << getGate(ctrl_BB)->getName());
             BB_gates.push_back(getGate(ctrl_BB));
           }
         }
-        // LLVM_DEBUG(dbgs() << ";\n");
+        LLVM_DEBUG(dbgs() << ";\n");
       }
     }
     gates.emplace(std::make_pair(&BB, BB_gates));
@@ -161,7 +161,6 @@ computeGates(Function &F) {
  *
  * @param I The instruction for which to compute data dependences.
  * @param gates A map of basic blocks to their corresponding gating values.
- * @param PDT The post-dominator tree.
  * @return A tuple containing the set of basic blocks, the set of dependencies,
  * the vector of phi-function arguments, and a boolean flag indicating if the
  * criterion is a phi-node.
@@ -172,7 +171,7 @@ static std::tuple<std::set<const BasicBlock *>, std::set<const Value *>,
 get_data_dependences_for(
     Instruction &I,
     std::unordered_map<const BasicBlock *, SmallVector<const Value *>> &gates,
-    PostDominatorTree &PDT, Function &F, FunctionAnalysisManager &FAM) {
+    Function &F, FunctionAnalysisManager &FAM) {
 
   std::set<const Value *> deps;
   std::set<const BasicBlock *> BBs;
@@ -216,7 +215,7 @@ get_data_dependences_for(
         if (const PHINode *u = dyn_cast<PHINode>(U)) {
           LoopInfo &LI = FAM.getResult<LoopAnalysis>(F);
           Loop *L = LI.getLoopFor(I.getParent());
-          if (L){
+          if (L) {
             BasicBlock *header = L->getHeader();
             if (!header)
               LLVM_DEBUG(errs()
@@ -268,15 +267,16 @@ get_data_dependences_for(
  * @param PDT The post-dominator tree of the function.
  */
 ProgramSlice::ProgramSlice(Instruction &Initial, Function &F,
-                           PostDominatorTree &PDT, FunctionAnalysisManager &FAM)
+                           FunctionAnalysisManager &FAM)
     : _initial(&Initial), _parentFunction(&F) {
+
   assert(Initial.getParent()->getParent() == &F &&
          "Slicing instruction from different function!");
 
   std::unordered_map<const BasicBlock *, SmallVector<const Value *>> gates =
       computeGates(F);
   auto [BBsInSlice, valuesInSlice, phiTypes, phiCrit, phiOnArgs] =
-      get_data_dependences_for(Initial, gates, PDT, F, FAM);
+      get_data_dependences_for(Initial, gates, F, FAM);
   _phiCrit = phiCrit;
 
   std::set<const Instruction *> instsInSlice;
@@ -354,7 +354,7 @@ StructType *ProgramSlice::computeStructType(bool memo) {
   }
 
   thunkStructType->setBody(thunkTypes);
-  thunkStructType->setName("_wyvern_thunk_type");
+  thunkStructType->setName("_daedalus_thunk_type");
 
   return thunkStructType;
 }
@@ -577,7 +577,7 @@ void ProgramSlice::rerouteBranches(Function *F) {
   // Add an unreachable block to be the target of branches that should
   // be removed.
   BasicBlock *unreachableBlock =
-      BasicBlock::Create(F->getContext(), "_wyvern_unreachable", F);
+      BasicBlock::Create(F->getContext(), "_daedalus_unreachable", F);
   UnreachableInst *unreach =
       new UnreachableInst(F->getContext(), unreachableBlock);
 
@@ -1047,7 +1047,7 @@ Function *ProgramSlice::outline() {
   std::uniform_int_distribution<int64_t> dist(1, 1000000000);
   uint64_t random_num = dist(mt);
   std::string functionName =
-      "_wyvern_slice_" + _parentFunction->getName().str() + "_" +
+      "_daedalus_slice_" + _parentFunction->getName().str() + "_" +
       _initial->getName().str() + "_" + std::to_string(random_num);
   Function *F =
       Function::Create(delegateFunctionType, Function::ExternalLinkage,
@@ -1075,7 +1075,10 @@ Function *ProgramSlice::outline() {
   addReturnValue(F);
   reorderBlocks(F);
   replaceArgs(F, dt);
-  verifyFunction(*F);
+
+  assert(!verifyFunction(*F, &errs()));
+  assert(!verifyFunction(*_parentFunction, &errs()));
+  
   return F;
 }
 
