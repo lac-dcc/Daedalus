@@ -531,8 +531,12 @@ void updatePHINodes(Function *F) {
         break;
       }
       ++I_it;
+      std::set<BasicBlock *> S;
       for (unsigned PI = 0, PE = PN->getNumIncomingValues(); PI != PE; ++PI) {
         BasicBlock *incBB = PN->getIncomingBlock(PI);
+        S.insert(incBB);
+      }
+      for (auto incBB : S) {
         if (incBB && !preds.count(incBB)) {
           PN->removeIncomingValue(incBB);
         }

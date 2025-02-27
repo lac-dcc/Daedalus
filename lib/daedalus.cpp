@@ -364,13 +364,13 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
     // that can be used as slicing criterion. this function enables us
     // to change how we manage the slicing criterion.
 
-    LLVM_DEBUG(dbgs() << "daedalus.cpp:368: Function: " << F->getName() << "\n");
+    LLVM_DEBUG(dbgs() << "daedalus.cpp:367: Function: " << F->getName() << "\n");
 
     // Replace all uses of I with the correpondent call
     for (Instruction *I : S) {
       if (!canBeSliceCriterion(*I)) continue;
 
-      LLVM_DEBUG(dbgs() << "daedalus.cpp:368: Function: " << F->getName() << ",\n\tInstruction: " << *I << "\n");
+      LLVM_DEBUG(dbgs() << "daedalus.cpp:373: Function: " << F->getName() << ",\n\tInstruction: " << *I << "\n");
             
       ProgramSlice ps = ProgramSlice(*I, *F, FAM);
       Function *G = ps.outline();
