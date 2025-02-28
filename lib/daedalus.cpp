@@ -74,7 +74,7 @@ bool canBeSliceCriterion(Instruction &I) {
   if (isa<ICmpInst>(I)) return false;
   if (isa<LoadInst>(I)) return false;
   if (isa<StoreInst>(I)) return false;
-  
+
   // PHINodes MUST be at the top of basic blocks. If our criterion
   // is a PHINode, it will be replaced by a call site. Consequently,
   // all PHINodes below it MUST be moved above our criterion. However,
@@ -280,21 +280,21 @@ numberOfMergedFunctions(Function *F,
     if (pair.second == F) mergedFuncCount++;
   return mergedFuncCount;
 }
-  
+
 void functionSlicesToDot(Module &M, const std::set<Function *> &newFunctions) {
 
   // Create directory
-  std::filesystem::path dotDir = 
-    std::filesystem::current_path() / (M.getModuleIdentifier() + ".dump_dot");
+  std::filesystem::path dotDir =
+      std::filesystem::current_path() / (M.getModuleIdentifier() + ".dump_dot");
 
   std::error_code errorCode;
-  
+
   std::filesystem::create_directory(dotDir, errorCode);
 
   if (errorCode) {
     errs() << "Failed to create directory '"
-           << std::filesystem::absolute(dotDir) << "' Reason: "
-           << errorCode.message() << "\n";
+           << std::filesystem::absolute(dotDir)
+           << "' Reason: " << errorCode.message() << "\n";
     return;
   }
 
@@ -307,8 +307,8 @@ void functionSlicesToDot(Module &M, const std::set<Function *> &newFunctions) {
       // If the file cannot be opened, report the error and skip processing.
       if (errorCode) {
         errs() << "Failed to create slice dot file '"
-               << std::filesystem::absolute(dotFilePath) << "' Reason: "
-               << errorCode.message() << "\n";
+               << std::filesystem::absolute(dotFilePath)
+               << "' Reason: " << errorCode.message() << "\n";
         continue;
       }
 
@@ -364,14 +364,16 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
     // that can be used as slicing criterion. this function enables us
     // to change how we manage the slicing criterion.
 
-    LLVM_DEBUG(dbgs() << "daedalus.cpp:367: Function: " << F->getName() << "\n");
+    LLVM_DEBUG(dbgs() << "daedalus.cpp:367: Function: " << F->getName()
+                      << "\n");
 
     // Replace all uses of I with the correpondent call
     for (Instruction *I : S) {
       if (!canBeSliceCriterion(*I)) continue;
 
-      LLVM_DEBUG(dbgs() << "daedalus.cpp:373: Function: " << F->getName() << ",\n\tInstruction: " << *I << "\n");
-            
+      LLVM_DEBUG(dbgs() << "daedalus.cpp:373: Function: " << F->getName()
+                        << ",\n\tInstruction: " << *I << "\n");
+
       ProgramSlice ps = ProgramSlice(*I, *F, FAM);
       Function *G = ps.outline();
 
@@ -412,10 +414,8 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
     Function *originalF = I->getParent()->getParent();
     originalFunctions.insert(originalF);
     outlinedFunctions.insert(F);
-    LLVM_DEBUG(
-      if (numberOfInstructions(F) > SizeOfLargestSliceBeforeMerging)
-        SizeOfLargestSliceBeforeMerging = numberOfInstructions(F);
-    );
+    LLVM_DEBUG(if (numberOfInstructions(F) > SizeOfLargestSliceBeforeMerging)
+                   SizeOfLargestSliceBeforeMerging = numberOfInstructions(F););
   }
 
   LLVM_DEBUG(dbgs() << "== MERGE SLICES FUNC PHASE ==\n");
@@ -434,10 +434,8 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
       mergeTo; // Set of instruction such that some other slice merges to
   for (auto [A, B] : delToNewFunc) {
     if (B == nullptr) continue;
-    LLVM_DEBUG(
-      if (numberOfInstructions(B) > SizeOfLargestSliceAfterMerging)
-        SizeOfLargestSliceAfterMerging = numberOfInstructions(B);
-    );
+    LLVM_DEBUG(if (numberOfInstructions(B) > SizeOfLargestSliceAfterMerging)
+                   SizeOfLargestSliceAfterMerging = numberOfInstructions(B););
     mergeTo.insert(B);
   }
 
@@ -507,8 +505,8 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
                                 std::to_string(SizeOfLargestSliceAfterMerging));
       ReportWriterObj.writeLine("mergedSlicesMetadata:");
 
-      std::set<Function *> checkedFunctions;
-      for (auto [deletedFunc, newFunc] : delToNewFunc) {
+      std::set<Function *> checkedFunctions; for (auto [deletedFunc, newFunc]
+                                                  : delToNewFunc) {
         if (newFunc->hasName() && checkedFunctions.count(newFunc) == 0) {
           checkedFunctions.insert(newFunc);
           ReportWriterObj.writeLine("\t" + newFunc->getName().str() + ":");

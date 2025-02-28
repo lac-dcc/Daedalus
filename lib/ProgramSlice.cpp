@@ -117,11 +117,12 @@ static const Value *getGate(const BasicBlock *BB) {
  */
 static const std::unordered_map<const BasicBlock *, SmallVector<const Value *>>
 computeGates(Function &F) {
-  LLVM_DEBUG(dbgs() << "ProgramSlice.cpp:120: Function: " << F.getName() << "\n");
-  
+  LLVM_DEBUG(dbgs() << "ProgramSlice.cpp:120: Function: " << F.getName()
+                    << "\n");
+
   DominatorTree DT(F);
   PostDominatorTree PDT(F);
-  
+
   std::unordered_map<const BasicBlock *, SmallVector<const Value *>> gates;
   for (const BasicBlock &BB : F) {
     SmallVector<const Value *> BB_gates;
@@ -149,6 +150,19 @@ computeGates(Function &F) {
   return gates;
 }
 
+struct dataDependence {
+  std::set<const BasicBlock *> BBs;
+  std::set<const Value *> dependences;
+  std::vector<std::pair<Type *, StringRef>> typeAndName;
+  bool phiCrit;
+  std::set<Value *> phiOnArgs;
+};
+
+struct Status {
+  bool status;
+  std::string msg;
+};
+
 /**
  * @brief Computes the backwards data dependences for the given instruction.
  *
@@ -165,10 +179,7 @@ computeGates(Function &F) {
  * the vector of phi-function arguments, and a boolean flag indicating if the
  * criterion is a phi-node.
  */
-static std::tuple<std::set<const BasicBlock *>, std::set<const Value *>,
-                  std::vector<std::pair<Type *, StringRef>>, bool,
-                  std::set<Value *>>
-get_data_dependences_for(
+std::pair<Status, dataDependence> get_data_dependences_for(
     Instruction &I,
     std::unordered_map<const BasicBlock *, SmallVector<const Value *>> &gates,
     Function &F, FunctionAnalysisManager &FAM) {
@@ -179,6 +190,7 @@ get_data_dependences_for(
   std::queue<const Value *> worklist;
   std::vector<std::pair<Type *, StringRef>> phiArguments;
   std::set<Value *> phiOnArgs;
+  Status status = {true, ""};
 
   worklist.push(&I);
   deps.insert(&I);
@@ -191,6 +203,12 @@ get_data_dependences_for(
     visited.insert(cur);
     worklist.pop();
 
+    if (isa<InvokeInst>(cur)) {
+      status = {false, "Some dependency is on a try catch. Slices must to be "
+                       "pure functions."};
+      break;
+    }
+
     if (const Instruction *dep = dyn_cast<Instruction>(cur)) {
       assert(dep->getParent() != nullptr);
       BBs.insert(dep->getParent());
@@ -200,7 +218,7 @@ get_data_dependences_for(
 
         if (visited.count(U)) {
           if (isa<PHINode>(U) &&
-              U == &I) { // Phi criterions that depends on itself
+              U == &I) { // Phi-node is criterio and depends on itself.
             deps.clear();
             Argument *arg = new Argument(U->getType(), U->getName());
             deps.insert(arg);
@@ -247,8 +265,8 @@ get_data_dependences_for(
       }
     }
   }
-
-  return std::make_tuple(BBs, deps, phiArguments, phiCrit, phiOnArgs);
+  dataDependence ret = {BBs, deps, phiArguments, phiCrit, phiOnArgs};
+  return {status, ret};
 }
 
 /**
@@ -275,14 +293,21 @@ ProgramSlice::ProgramSlice(Instruction &Initial, Function &F,
 
   std::unordered_map<const BasicBlock *, SmallVector<const Value *>> gates =
       computeGates(F);
-  auto [BBsInSlice, valuesInSlice, phiTypes, phiCrit, phiOnArgs] =
-      get_data_dependences_for(Initial, gates, F, FAM);
-  _phiCrit = phiCrit;
+  auto [check, data] = get_data_dependences_for(Initial, gates, F, FAM);
+
+  if (!check.status) {
+    _canOutline.first = check.status;
+    _canOutline.second = check.msg;
+    return;
+  }
+
+  // auto [BBsInSlice, valuesInSlice, phiTypes, phiCrit, phiOnArgs] =
+  _phiCrit = data.phiCrit;
 
   std::set<const Instruction *> instsInSlice;
   SmallVector<Value *> depArgs;
 
-  for (auto &val : valuesInSlice) {
+  for (auto &val : data.dependences) {
     if (Argument *A = dyn_cast<Argument>(const_cast<Value *>(val))) {
       depArgs.push_back(A);
     } else if (const Instruction *I = dyn_cast<Instruction>(val)) {
@@ -290,7 +315,7 @@ ProgramSlice::ProgramSlice(Instruction &Initial, Function &F,
     }
   }
 
-  for (auto &val : phiOnArgs) depArgs.push_back(val);
+  for (auto &val : data.phiOnArgs) depArgs.push_back(val);
 
   if (isa<ReturnInst>(_initial)) {
     Value *FreturnValue = dyn_cast<ReturnInst>(_initial)->getReturnValue();
@@ -301,8 +326,8 @@ ProgramSlice::ProgramSlice(Instruction &Initial, Function &F,
 
   _instsInSlice = instsInSlice;
   _depArgs = depArgs;
-  _phiDepArgs = phiTypes;
-  _BBsInSlice = BBsInSlice;
+  _phiDepArgs = data.typeAndName;
+  _BBsInSlice = data.BBs;
 
   // We need to pre-compute struct types, because if we build it everytime
   // it's needed, LLVM creates multiple types with the same structure but
@@ -860,6 +885,7 @@ void ProgramSlice::reorderBlocks(Function *F) {
   for (BasicBlock &BB : *F) {
     if (BB.hasNPredecessors(0)) {
       realEntry = &BB;
+      break;
     }
   }
   realEntry->moveBefore(&F->getEntryBlock());
@@ -1010,6 +1036,10 @@ ReturnInst *ProgramSlice::addReturnValue(Function *F) {
  */
 Function *ProgramSlice::outline() {
   const int size = 3;
+  if(!_canOutline.first){
+    LLVM_DEBUG(dbgs() << _canOutline.second << '\n');
+    return NULL;
+  }
   if (_instsInSlice.size() < size) {
     LLVM_DEBUG(
         dbgs()
@@ -1082,7 +1112,7 @@ Function *ProgramSlice::outline() {
 
   assert(!verifyFunction(*F, &errs()));
   assert(!verifyFunction(*_parentFunction, &errs()));
-  
+
   return F;
 }
 
