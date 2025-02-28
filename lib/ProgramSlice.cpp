@@ -204,7 +204,7 @@ std::pair<Status, dataDependence> get_data_dependences_for(
     worklist.pop();
 
     if (isa<InvokeInst>(cur)) {
-      status = {false, "Some dependency is on a try catch. Slices must to be "
+      status = {false, "Some dependency is on a try catch. Slices must be "
                        "pure functions."};
       break;
     }
@@ -214,6 +214,7 @@ std::pair<Status, dataDependence> get_data_dependences_for(
       BBs.insert(dep->getParent());
 
       for (const Use &U : dep->operands()) {
+        assert(U != nullptr);
         if (!isa<Instruction>(U) && !isa<Argument>(U)) continue;
 
         if (visited.count(U)) {
@@ -888,7 +889,8 @@ void ProgramSlice::reorderBlocks(Function *F) {
       break;
     }
   }
-  realEntry->moveBefore(&F->getEntryBlock());
+  if (realEntry != nullptr)
+    realEntry->moveBefore(&F->getEntryBlock());
 }
 
 /**
@@ -1109,7 +1111,26 @@ Function *ProgramSlice::outline() {
   addReturnValue(F);
   reorderBlocks(F);
   replaceArgs(F, dt);
-
+  
+  LLVM_DEBUG(dbgs() << "Function being outlined:\n" << *F);
+  unsigned int numNoPreds = 0;
+  for (auto &block : *F) {
+    if (numNoPreds == 2) {
+      LLVM_DEBUG(dbgs() << "More than one block with no predecessors found: " << block.getName() << "\n");
+      return nullptr;
+    }
+    if (block.empty()) {
+      LLVM_DEBUG(dbgs() << "Empty basic block found: " << block.getName() << "\n");
+      return nullptr;
+    }
+    if (block.hasNPredecessors(0))
+      numNoPreds++;
+  }
+  if (numNoPreds == 0) {
+    LLVM_DEBUG(dbgs() << "No block with no predecessors found:...\n");
+    return nullptr;
+  }
+  
   assert(!verifyFunction(*F, &errs()));
   assert(!verifyFunction(*_parentFunction, &errs()));
 
