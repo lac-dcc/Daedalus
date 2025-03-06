@@ -184,9 +184,7 @@ std::pair<uint, uint> removeInstructions(std::vector<iSlice> &allSlices,
     Instruction *sliceCriterion = slice.I;
     CallInst *callInst = slice.callInst;
     Function *F = slice.F;
-    SmallVector<Value *> args = slice.args;
     std::set<Instruction *> origInst = slice.constOriginalInst;
-    bool wasRemoved = slice.wasRemoved;
     if (F == NULL) continue;
     F = callInst->getCalledFunction();
     if (mergeTo.count(F) == 0) {
