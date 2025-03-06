@@ -55,7 +55,7 @@ static cl::opt<bool>
             cl::init(false));
 
 /**
- * @brief Determines if an instruction type can be used as slice criterion
+ * @brief Determines if an instruction type can be used as slice criterion.
  *
  * @details This function checks if the given instruction is one of several
  * types that should not be considered for slicing, such as branch instructions,
@@ -137,6 +137,18 @@ bool canRemove(Instruction *I, Instruction *ini,
   return true;
 }
 
+/**
+ * @brief Checks if a given instruction is self-contained within a set of instructions.
+ *
+ * This function iterates over a set of original instructions and determines if the given 
+ * instruction `I` is self-contained. If an instruction `J` from the original set can be 
+ * removed without affecting `I`, it is added to the `tempToRemove` set.
+ *
+ * @param origInst A set of original instructions to check against.
+ * @param I The instruction to check for self-containment.
+ * @param tempToRemove A set of instructions that can be removed without affecting `I`.
+ * @return Always returns true.
+ */
 bool isSelfContained(std::set<Instruction *> origInst, Instruction *I,
                      std::set<Instruction *> &tempToRemove) {
   for (Instruction *J : origInst) {
@@ -149,8 +161,20 @@ bool isSelfContained(std::set<Instruction *> origInst, Instruction *I,
   return true;
 }
 
-/// Replace all calls of callInst with original instructions
-/// and remove new slice function
+
+/**
+ * @brief Removes a function and its call instructions from the LLVM IR.
+ *
+ * This function replaces all uses of a specified call instruction with a given
+ * criterion instruction, then erases the call instruction from its parent. It
+ * also removes the NoInline attribute from the function, if present, and
+ * replaces all uses of the function with an undefined value before erasing the
+ * function from its parent.
+ *
+ * @param F The function to be removed.
+ * @param callInst The call instruction to be replaced and erased.
+ * @param criterion The instruction to replace the call instruction with.
+ */
 void killSlice(Function *F, CallInst *callInst, Instruction *criterion) {
   callInst->replaceAllUsesWith(criterion);
   callInst->eraseFromParent();
@@ -172,6 +196,20 @@ void killSlice(Function *F, CallInst *callInst, Instruction *criterion) {
   F->eraseFromParent();
 }
 
+/**
+ * @brief Removes instructions from slices and simplifies functions.
+ *
+ * This function processes a collection of instruction slices, removing
+ * instructions that are not self-contained or belong to functions that
+ * should not be merged. It also simplifies functions by removing unnecessary
+ * instructions and updating function attributes.
+ *
+ * @param allSlices A vector of instruction slices to process.
+ * @param mergeTo A set of functions that are allowed to be merged.
+ * @param toSimplify A set of functions that need to be simplified.
+ * @return A pair of unsigned integers representing the count of slices that
+ *         were not merged and the count of slices that were not self-contained.
+ */
 std::pair<uint, uint> removeInstructions(std::vector<iSlice> &allSlices,
                                          const std::set<Function *> &mergeTo,
                                          std::set<Function *> &toSimplify) {
@@ -231,18 +269,14 @@ std::pair<uint, uint> removeInstructions(std::vector<iSlice> &allSlices,
 }
 
 /**
- * @brief Checks if a given instruction meets the slicing criteria.
+ * @brief Collects and returns a set of instructions from a given function that meet certain criteria.
  *
- * @details For each BasicBlock in the given Function, it checks the terminator
- * instruction. If the terminator is a ReturnInst and has operands, it adds
- * these operands to the set if they are Instructions. Then, for each
- * Instruction within each BasicBlock, if the instruction is a StoreInst, it
- * collects its operands into the set if they are Instructions.
+ * This function iterates over all basic blocks in the provided function and collects instructions
+ * that meet specific criteria into a set. The current criteria include:
+ * - Instructions that are instances of BinaryOperator.
  *
- * @param F Pointer to a LLVM function
- * @return A std::set containing Instruction* which meet specific criteria:
- * 1. The instruction is an operand of a ReturnInst.
- * 2. The instruction is an operand of a StoreInst.
+ * @param F A pointer to the function from which instructions are to be collected.
+ * @return A set of pointers to instructions that meet the specified criteria.
  */
 std::set<Instruction *> instSetMeetCriterion(Function *F) {
   std::set<Instruction *> S;
@@ -270,12 +304,31 @@ std::set<Instruction *> instSetMeetCriterion(Function *F) {
   return S;
 }
 
+/**
+ * @brief Counts the number of instructions in a given function.
+ *
+ * This function iterates over all basic blocks in the provided function
+ * and sums up the number of instructions in each basic block.
+ *
+ * @param F Pointer to the function whose instructions are to be counted.
+ * @return The total number of instructions in the function.
+ */
 unsigned int numberOfInstructions(Function *F) {
   unsigned int instCount = 0;
   for (BasicBlock &BB : *F) instCount += BB.size();
   return instCount;
 }
 
+/**
+ * @brief Counts the number of functions that have been merged into a given function.
+ *
+ * This function iterates through a map of deleted functions to their corresponding new functions
+ * and counts how many times the given function appears as a target of merging.
+ *
+ * @param F The function to check for merged functions.
+ * @param delToNewFunc A map where the key is a deleted function and the value is the function it was merged into.
+ * @return The number of functions that have been merged into the given function, including the function itself.
+ */
 unsigned int
 numberOfMergedFunctions(Function *F,
                         std::map<Function *, Function *> &delToNewFunc) {
@@ -285,6 +338,16 @@ numberOfMergedFunctions(Function *F,
   return mergedFuncCount;
 }
 
+/**
+ * @brief Generates DOT files for a set of functions and stores them in a directory.
+ *
+ * This function creates a directory named after the module identifier with a suffix ".dump_dot".
+ * It then iterates over the provided set of functions, and for each function that has a name,
+ * it generates a DOT file representing the function's structure.
+ *
+ * @param M The module containing the functions.
+ * @param newFunctions A set of pointers to functions for which DOT files will be generated.
+ */
 void functionSlicesToDot(Module &M, const std::set<Function *> &newFunctions) {
 
   // Create directory
