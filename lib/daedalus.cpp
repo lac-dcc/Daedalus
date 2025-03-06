@@ -364,14 +364,11 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
     // that can be used as slicing criterion. this function enables us
     // to change how we manage the slicing criterion.
 
-    LLVM_DEBUG(dbgs() << "daedalus.cpp:367: Function: " << F->getName()
-                      << "\n");
-
     // Replace all uses of I with the correpondent call
     for (Instruction *I : S) {
       if (!canBeSliceCriterion(*I)) continue;
 
-      LLVM_DEBUG(dbgs() << "daedalus.cpp:373: Function: " << F->getName()
+      LLVM_DEBUG(dbgs() << "daedalus.cpp: Function: " << F->getName()
                         << ",\n\tInstruction: " << *I << "\n");
 
       ProgramSlice ps = ProgramSlice(*I, *F, FAM);
@@ -434,7 +431,7 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
       mergeTo; // Set of instruction such that some other slice merges to
   for (auto [A, B] : delToNewFunc) {
     if (B == nullptr) continue;
-
+    while (delToNewFunc.count(B)) B = delToNewFunc[B];
     assert(!verifyFunction(*B, &errs()));
 
     LLVM_DEBUG(if (numberOfInstructions(B) > SizeOfLargestSliceAfterMerging)
@@ -510,6 +507,7 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
 
       std::set<Function *> checkedFunctions; for (auto [deletedFunc, newFunc]
                                                   : delToNewFunc) {
+        while (delToNewFunc.count(newFunc)) newFunc = delToNewFunc[newFunc];
         if (newFunc->hasName() && checkedFunctions.count(newFunc) == 0) {
           checkedFunctions.insert(newFunc);
           ReportWriterObj.writeLine("\t" + newFunc->getName().str() + ":");
