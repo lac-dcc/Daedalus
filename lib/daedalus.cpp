@@ -180,11 +180,17 @@ std::pair<uint, uint> removeInstructions(std::vector<iSlice> &allSlices,
 
   uint dontMerge = 0, notSelfContained = 0;
 
-  for (auto [I, callInst, F, args, origInst, wasRemoved] : allSlices) {
+  for (iSlice &slice : allSlices) {
+    Instruction *sliceCriterion = slice.I;
+    CallInst *callInst = slice.callInst;
+    Function *F = slice.F;
+    SmallVector<Value *> args = slice.args;
+    std::set<Instruction *> origInst = slice.constOriginalInst;
+    bool wasRemoved = slice.wasRemoved;
     if (F == NULL) continue;
     F = callInst->getCalledFunction();
     if (mergeTo.count(F) == 0) {
-      killSlice(F, callInst, I);
+      killSlice(F, callInst, sliceCriterion);
       ++dontMerge;
       continue;
     }
@@ -197,12 +203,12 @@ std::pair<uint, uint> removeInstructions(std::vector<iSlice> &allSlices,
     }
     realEntry->moveBefore(&F->getEntryBlock());
 
-    if (I->getParent() == nullptr) continue;
+    if (sliceCriterion->getParent() == nullptr) continue;
 
     std::set<Instruction *> tempToRemove;
-    if (!isSelfContained(origInst, I, tempToRemove)) {
+    if (!isSelfContained(origInst, sliceCriterion, tempToRemove)) {
       LLVM_DEBUG(dbgs() << "Not self contained!\n");
-      killSlice(F, callInst, I);
+      killSlice(F, callInst, sliceCriterion);
       ++notSelfContained;
       continue;
     } else {
@@ -216,7 +222,7 @@ std::pair<uint, uint> removeInstructions(std::vector<iSlice> &allSlices,
       }
     }
     toSimplify.insert(F);
-    toRemove.insert(I);
+    toRemove.insert(sliceCriterion);
   }
 
   for (auto &e : toRemove) {
@@ -407,8 +413,10 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
 
   std::set<Function *> originalFunctions;
   std::set<Function *> outlinedFunctions;
-  for (auto [I, call, F, args, origInst, wasRemoved] : allSlices) {
-    Function *originalF = I->getParent()->getParent();
+  for (iSlice &slice : allSlices) {
+    Instruction *sliceCriterion = slice.I;
+    Function *F = slice.F;
+    Function *originalF = sliceCriterion->getParent()->getParent();
     originalFunctions.insert(originalF);
     outlinedFunctions.insert(F);
     LLVM_DEBUG(if (numberOfInstructions(F) > SizeOfLargestSliceBeforeMerging)
@@ -428,14 +436,14 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
     LLVM_DEBUG(dbgs() << "MergeFunc returned false...\n");
 
   std::set<Function *>
-      mergeTo; // Set of instruction such that some other slice merges to
+      mergeTo; // Set of functions such that some other slice merges to them
   for (auto [A, B] : delToNewFunc) {
     if (B == nullptr) continue;
     while (delToNewFunc.count(B)) B = delToNewFunc[B];
     assert(!verifyFunction(*B, &errs()));
 
     LLVM_DEBUG(if (numberOfInstructions(B) > SizeOfLargestSliceAfterMerging)
-        SizeOfLargestSliceAfterMerging = numberOfInstructions(B););
+                   SizeOfLargestSliceAfterMerging = numberOfInstructions(B););
     mergeTo.insert(B);
   }
 
@@ -505,8 +513,8 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
                                 std::to_string(SizeOfLargestSliceAfterMerging));
       ReportWriterObj.writeLine("mergedSlicesMetadata:");
 
-      std::set<Function *> checkedFunctions; for (auto [deletedFunc, newFunc]
-                                                  : delToNewFunc) {
+      std::set<Function *> checkedFunctions;
+      for (auto [deletedFunc, newFunc] : delToNewFunc) {
         while (delToNewFunc.count(newFunc)) newFunc = delToNewFunc[newFunc];
         if (newFunc->hasName() && checkedFunctions.count(newFunc) == 0) {
           checkedFunctions.insert(newFunc);
