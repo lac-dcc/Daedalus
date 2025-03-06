@@ -203,7 +203,7 @@ std::pair<Status, dataDependence> get_data_dependences_for(
     visited.insert(cur);
     worklist.pop();
 
-    if (isa<InvokeInst>(cur)) {
+    if (isa<InvokeInst>(cur) || isa<LandingPadInst>(cur)) {
       status = {false, "Some dependency is on a try catch. Slices must be pure functions."};
       break;
     }
