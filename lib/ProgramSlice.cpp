@@ -71,7 +71,7 @@ static const BasicBlock *getController(const BasicBlock *BB, DominatorTree &DT,
       dom_node = dom_node->getIDom();
     }
   }
-  return NULL;
+  return nullptr;
 }
 
 /**
@@ -203,23 +203,23 @@ std::pair<Status, dataDependence> get_data_dependences_for(
     visited.insert(cur);
     worklist.pop();
 
-    if (isa<InvokeInst>(cur)) {
-      status = {false, "Some dependency is on a try catch. Slices must be "
-                       "pure functions."};
+    if (isa<InvokeInst>(cur) || isa<LandingPadInst>(cur)) {
+      status = {false, "Some dependency is on a try catch. Slices must be pure functions."};
       break;
     }
 
     if (const Instruction *dep = dyn_cast<Instruction>(cur)) {
-      assert(dep->getParent() != nullptr);
+      assert(dep->getParent() && "Instruction has no parent basic block");
+      assert(dep->getType() && "Instruction has null type");
+
       BBs.insert(dep->getParent());
-
       for (const Use &U : dep->operands()) {
-        assert(U != nullptr);
-        if (!isa<Instruction>(U) && !isa<Argument>(U)) continue;
+        assert(U && "Found null operand in instruction");
 
+        if (!isa<Instruction>(U) && !isa<Argument>(U)) continue;
         if (visited.count(U)) {
           if (isa<PHINode>(U) &&
-              U == &I) { // Phi-node is criterio and depends on itself.
+              U == &I) { // Phi-node is criterion and depends on itself.
             deps.clear();
             Argument *arg = new Argument(U->getType(), U->getName());
             deps.insert(arg);
@@ -230,7 +230,6 @@ std::pair<Status, dataDependence> get_data_dependences_for(
           }
           continue;
         }
-
         if (const PHINode *u = dyn_cast<PHINode>(U)) {
           LoopInfo &LI = FAM.getResult<LoopAnalysis>(F);
           Loop *L = LI.getLoopFor(I.getParent());
@@ -449,11 +448,11 @@ void ProgramSlice::printSlice() {
  * @param F Pointer to the sliced function to be printed.
  */
 void ProgramSlice::printFunctions(Function *F) {
-  dbgs() << "\n\n ==== Slicing instruction: [" << *_initial
+  LLVM_DEBUG(dbgs() << "\n\n ==== Slicing instruction: [" << *_initial
          << "] in function: " << _parentFunction->getName() << " with size "
          << _parentFunction->size() << " ====\n"
          << "\n======== SLICED FUNCTION ==========\n"
-         << *F;
+         << *F);
 }
 
 /**
@@ -1040,7 +1039,7 @@ Function *ProgramSlice::outline() {
   const int size = 3;
   if(!_canOutline.first){
     LLVM_DEBUG(dbgs() << _canOutline.second << '\n');
-    return NULL;
+    return nullptr;
   }
   if (_instsInSlice.size() < size) {
     LLVM_DEBUG(
@@ -1048,7 +1047,7 @@ Function *ProgramSlice::outline() {
         << "Insufficient number of instructions to outline a new slice...\n");
     LLVM_DEBUG(dbgs() << "The slice must have at least " << size
                       << " instructions to be outlined...\n");
-    return NULL;
+    return nullptr;
   }
   StructType *thunkStructType = getThunkStructType(false);
   PointerType *thunkStructPtrType = thunkStructType->getPointerTo();
