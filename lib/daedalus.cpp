@@ -364,15 +364,15 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
     // that can be used as slicing criterion. this function enables us
     // to change how we manage the slicing criterion.
 
-    LLVM_DEBUG(dbgs() << "daedalus.cpp:367: Function: " << F->getName()
-                      << "\n");
+    // LLVM_DEBUG(dbgs() << "daedalus.cpp:367: Function: " << F->getName()
+    //                   << "\n");
 
     // Replace all uses of I with the correpondent call
     for (Instruction *I : S) {
       if (!canBeSliceCriterion(*I)) continue;
 
-      LLVM_DEBUG(dbgs() << "daedalus.cpp:373: Function: " << F->getName()
-                        << ",\n\tInstruction: " << *I << "\n");
+      // LLVM_DEBUG(dbgs() << "daedalus.cpp:373: Function: " << F->getName()
+      //                   << ",\n\tInstruction: " << *I << "\n");
 
       ProgramSlice ps = ProgramSlice(*I, *F, FAM);
       Function *G = ps.outline();
@@ -404,7 +404,8 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
       iSlice slice = {I, callInst, G, funcArgs, originInstructionSet, false};
       allSlices.push_back(slice);
 
-      LLVM_DEBUG(dbgs() << COLOR::GREEN << "outlined!" << COLOR::CLEAN << '\n');
+      // LLVM_DEBUG(dbgs() << COLOR::GREEN << "outlined!" << COLOR::CLEAN <<
+      // '\n');
     }
   }
 
@@ -430,15 +431,14 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
   else
     LLVM_DEBUG(dbgs() << "MergeFunc returned false...\n");
 
-  std::set<Function *>
-      mergeTo; // Set of instruction such that some other slice merges to
+  std::set<Function *> mergeTo; // If a function is on this set, there are some
+                                // other function that merges with it.
   for (auto [A, B] : delToNewFunc) {
     if (B == nullptr) continue;
-
+    while(delToNewFunc.count(B)) B = delToNewFunc[B];
     assert(!verifyFunction(*B, &errs()));
-
     LLVM_DEBUG(if (numberOfInstructions(B) > SizeOfLargestSliceAfterMerging)
-        SizeOfLargestSliceAfterMerging = numberOfInstructions(B););
+                   SizeOfLargestSliceAfterMerging = numberOfInstructions(B););
     mergeTo.insert(B);
   }
 

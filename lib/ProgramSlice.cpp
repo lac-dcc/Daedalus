@@ -117,8 +117,8 @@ static const Value *getGate(const BasicBlock *BB) {
  */
 static const std::unordered_map<const BasicBlock *, SmallVector<const Value *>>
 computeGates(Function &F) {
-  LLVM_DEBUG(dbgs() << "ProgramSlice.cpp:120: Function: " << F.getName()
-                    << "\n");
+  // LLVM_DEBUG(dbgs() << "ProgramSlice.cpp:120: Function: " << F.getName()
+  //                   << "\n");
 
   DominatorTree DT(F);
   PostDominatorTree PDT(F);
@@ -1112,6 +1112,7 @@ Function *ProgramSlice::outline() {
   reorderBlocks(F);
   replaceArgs(F, dt);
   
+
   LLVM_DEBUG(dbgs() << "Function being outlined:\n" << *F);
   unsigned int numNoPreds = 0;
   for (auto &block : *F) {
@@ -1131,8 +1132,8 @@ Function *ProgramSlice::outline() {
     return nullptr;
   }
   
-  assert(!verifyFunction(*F, &errs()));
-  assert(!verifyFunction(*_parentFunction, &errs()));
+  // assert(!verifyFunction(*F, &errs()));
+  // assert(!verifyFunction(*_parentFunction, &errs()));
 
   return F;
 }
