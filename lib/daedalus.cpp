@@ -555,7 +555,6 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
   }
 
   LLVM_DEBUG(dbgs() << "== PRINT PHASE ==\n");
-  for (Function &F : M.getFunctionList()) LLVM_DEBUG(dbgs() << F << '\n');
 
   LLVM_DEBUG(
       LLVM_DEBUG(dbgs() << "== REPORT GENERATION ==\n");

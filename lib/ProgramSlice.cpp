@@ -1131,8 +1131,8 @@ Function *ProgramSlice::outline() {
     return nullptr;
   }
   
-  // assert(!verifyFunction(*F, &errs()));
-  // assert(!verifyFunction(*_parentFunction, &errs()));
+  assert(!verifyFunction(*F, &errs()));
+  assert(!verifyFunction(*_parentFunction, &errs()));
 
   return F;
 }
