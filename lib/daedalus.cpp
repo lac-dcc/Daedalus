@@ -41,7 +41,7 @@ using namespace llvm;
 
 #define DEBUG_TYPE "Daedalus"
 
-STATISTIC(TotalFunctionsOutlined, "Total number of functions outlined");
+STATISTIC(TotalFunctionsOutlined, "Total number of functions outlined!");
 STATISTIC(TotalSlicesMerged, "Total number of slices that got merged");
 STATISTIC(TotalSlicesDiscarded, "Total number of slices that got discarded");
 STATISTIC(SizeOfLargestSliceBeforeMerging,
