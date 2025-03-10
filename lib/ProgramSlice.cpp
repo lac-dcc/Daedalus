@@ -206,6 +206,9 @@ std::pair<Status, dataDependence> get_data_dependences_for(
     if (isa<InvokeInst>(cur) || isa<LandingPadInst>(cur)) {
       status = {false, "Some dependency is on a try catch. Slices must be pure functions."};
       break;
+    } else if (isa<GlobalVariable>(cur)){
+      status = {false, "Some dependency is on a Global Variable ."};
+      break;
     }
 
     if (const Instruction *dep = dyn_cast<Instruction>(cur)) {
