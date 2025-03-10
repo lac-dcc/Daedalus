@@ -204,10 +204,9 @@ std::pair<Status, dataDependence> get_data_dependences_for(
     worklist.pop();
 
     if (isa<InvokeInst>(cur) || isa<LandingPadInst>(cur)) {
-      status = {false, "Some dependency is on a try catch. Slices must be pure functions."};
-      break;
-    } else if (isa<GlobalVariable>(cur)){
-      status = {false, "Some dependency is on a Global Variable ."};
+      status = {
+          false,
+          "Some dependency is on a try catch. Slices must be pure functions."};
       break;
     }
 
@@ -216,7 +215,14 @@ std::pair<Status, dataDependence> get_data_dependences_for(
       assert(dep->getType() && "Instruction has null type");
 
       BBs.insert(dep->getParent());
+      // TODO: Refact this, make a function check operands.
+      bool signal = true;
       for (const Use &U : dep->operands()) {
+        if (isa<GlobalVariable>(U)) {
+          status = {false, "Some dependency is on a Global Variable ."};
+	  signal = false;
+          break;
+        }
         assert(U && "Found null operand in instruction");
 
         if (!isa<Instruction>(U) && !isa<Argument>(U)) continue;
@@ -254,6 +260,7 @@ std::pair<Status, dataDependence> get_data_dependences_for(
         visited.insert(U);
         worklist.push(U);
       }
+      if(!signal) break;
     }
     if (phiCrit) break;
 
@@ -452,10 +459,10 @@ void ProgramSlice::printSlice() {
  */
 void ProgramSlice::printFunctions(Function *F) {
   LLVM_DEBUG(dbgs() << "\n\n ==== Slicing instruction: [" << *_initial
-         << "] in function: " << _parentFunction->getName() << " with size "
-         << _parentFunction->size() << " ====\n"
-         << "\n======== SLICED FUNCTION ==========\n"
-         << *F);
+                    << "] in function: " << _parentFunction->getName()
+                    << " with size " << _parentFunction->size() << " ====\n"
+                    << "\n======== SLICED FUNCTION ==========\n"
+                    << *F);
 }
 
 /**
@@ -891,8 +898,7 @@ void ProgramSlice::reorderBlocks(Function *F) {
       break;
     }
   }
-  if (realEntry != nullptr)
-    realEntry->moveBefore(&F->getEntryBlock());
+  if (realEntry != nullptr) realEntry->moveBefore(&F->getEntryBlock());
 }
 
 /**
@@ -1040,7 +1046,7 @@ ReturnInst *ProgramSlice::addReturnValue(Function *F) {
  */
 Function *ProgramSlice::outline() {
   const int size = 3;
-  if(!_canOutline.first){
+  if (!_canOutline.first) {
     LLVM_DEBUG(dbgs() << _canOutline.second << '\n');
     return nullptr;
   }
@@ -1113,27 +1119,27 @@ Function *ProgramSlice::outline() {
   addReturnValue(F);
   reorderBlocks(F);
   replaceArgs(F, dt);
-  
 
   LLVM_DEBUG(dbgs() << "Function being outlined:\n" << *F);
   unsigned int numNoPreds = 0;
   for (auto &block : *F) {
     if (numNoPreds == 2) {
-      LLVM_DEBUG(dbgs() << "More than one block with no predecessors found: " << block.getName() << "\n");
+      LLVM_DEBUG(dbgs() << "More than one block with no predecessors found: "
+                        << block.getName() << "\n");
       return nullptr;
     }
     if (block.empty()) {
-      LLVM_DEBUG(dbgs() << "Empty basic block found: " << block.getName() << "\n");
+      LLVM_DEBUG(dbgs() << "Empty basic block found: " << block.getName()
+                        << "\n");
       return nullptr;
     }
-    if (block.hasNPredecessors(0))
-      numNoPreds++;
+    if (block.hasNPredecessors(0)) numNoPreds++;
   }
   if (numNoPreds == 0) {
     LLVM_DEBUG(dbgs() << "No block with no predecessors found:...\n");
     return nullptr;
   }
-  
+
   assert(!verifyFunction(*F, &errs()));
   assert(!verifyFunction(*_parentFunction, &errs()));
 
