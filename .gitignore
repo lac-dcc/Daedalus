@@ -12,3 +12,4 @@ __pycache__/
 *$py.class
 *.dot
 .vscode/
+tests/gen.sh

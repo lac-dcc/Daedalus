@@ -218,6 +218,12 @@ std::pair<Status, dataDependence> get_data_dependences_for(
       // TODO: Refact this, make a function check operands.
       bool signal = true;
       for (const Use &U : dep->operands()) {
+	if(!U.get()){
+          status = {false, "Some dependency is null."};
+	  signal = false;
+          break;
+	}
+
         if (isa<GlobalVariable>(U)) {
           status = {false, "Some dependency is on a Global Variable ."};
 	  signal = false;
