@@ -447,6 +447,9 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
     for (Instruction *I : S) {
       if (!canBeSliceCriterion(*I)) continue;
 
+      LLVM_DEBUG(dbgs() << "daedalus.cpp: Function: " << F->getName()
+                        << ",\n\tInstruction: " << *I << "\n");
+
       ProgramSlice ps = ProgramSlice(*I, *F, FAM);
       Function *G = ps.outline();
 
@@ -477,8 +480,8 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
       iSlice slice = {I, callInst, G, funcArgs, originInstructionSet, false};
       allSlices.push_back(slice);
 
-      // LLVM_DEBUG(dbgs() << COLOR::GREEN << "outlined!" << COLOR::CLEAN <<
-      // '\n');
+      LLVM_DEBUG(dbgs() << COLOR::GREEN << "outlined!" << COLOR::CLEAN <<
+      '\n');
     }
   }
 
@@ -560,8 +563,7 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
       LLVM_DEBUG(dbgs() << "== REPORT GENERATION ==\n");
       LLVM_DEBUG(dbgs() << "Exporting slices' metadata to disk...\n");
       std::filesystem::path sourceFileName = M.getModuleIdentifier();
-      std::filesystem::path exportedFileName =
-          sourceFileName.stem().string() + "_slices_report.log";
+      std::filesystem::path exportedFileName = sourceFileName.string() + "_slices_report.log";
 
       TotalFunctionsOutlined = allSlices.size();
       TotalSlicesMerged = delToNewFunc.size();
@@ -601,6 +603,22 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
 
   if (dumpDot) {
     functionSlicesToDot(M, toSimplify);
+  }
+
+  LLVM_DEBUG(dbgs() << "== MODULE VERIFICATION PHASE ==\n");
+
+  if (verifyModule(M, &errs())) {
+    errs() << "Module verification failed!\n";
+    std::error_code EC;
+    std::string failedModuleFilename = M.getModuleIdentifier() + "_failed_module.ll";
+    raw_fd_ostream OS(failedModuleFilename, EC, sys::fs::OF_None);
+    if (EC) {
+      errs() << "Error opening file for writing: " << EC.message() << "\n";
+    } else {
+      M.print(OS, nullptr);
+      errs() << "Module written to " << failedModuleFilename <<"\n";
+    }
+    assert(false && "Module verification failed!");
   }
   return PreservedAnalyses::none();
 }
