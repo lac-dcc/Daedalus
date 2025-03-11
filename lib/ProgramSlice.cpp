@@ -218,12 +218,12 @@ std::pair<Status, dataDependence> get_data_dependences_for(
       // TODO: Refact this, make a function check operands.
       bool signal = true;
       for (const Use &U : dep->operands()) {
-        if (isa<GlobalVariable>(U)) {
+        if (isa<GlobalVariable>(U.get())) {
           status = {false, "Some dependency is on a Global Variable ."};
 	  signal = false;
           break;
         }
-        assert(U && "Found null operand in instruction");
+        assert(U.get() && "Found null operand in instruction");
 
         if (!isa<Instruction>(U) && !isa<Argument>(U)) continue;
         if (visited.count(U)) {
@@ -1045,6 +1045,8 @@ ReturnInst *ProgramSlice::addReturnValue(Function *F) {
  * @return The newly created delegate Function that encapsulates the slice.
  */
 Function *ProgramSlice::outline() {
+  assert(!verifyFunction(*_parentFunction, &errs())); // assert parent function is valid
+  
   const int size = 3;
   if (!_canOutline.first) {
     LLVM_DEBUG(dbgs() << _canOutline.second << '\n');
@@ -1126,22 +1128,24 @@ Function *ProgramSlice::outline() {
     if (numNoPreds == 2) {
       LLVM_DEBUG(dbgs() << "More than one block with no predecessors found: "
                         << block.getName() << "\n");
+      F->eraseFromParent();
       return nullptr;
     }
     if (block.empty()) {
       LLVM_DEBUG(dbgs() << "Empty basic block found: " << block.getName()
                         << "\n");
+      F->eraseFromParent();
       return nullptr;
     }
     if (block.hasNPredecessors(0)) numNoPreds++;
   }
   if (numNoPreds == 0) {
     LLVM_DEBUG(dbgs() << "No block with no predecessors found:...\n");
+    F->eraseFromParent();
     return nullptr;
   }
 
   assert(!verifyFunction(*F, &errs()));
-  assert(!verifyFunction(*_parentFunction, &errs()));
 
   return F;
 }
