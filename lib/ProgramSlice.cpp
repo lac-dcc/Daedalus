@@ -1131,8 +1131,8 @@ Function *ProgramSlice::outline() {
   LLVM_DEBUG(dbgs() << "Function being outlined:\n" << *F);
   unsigned int numNoPreds = 0;
   for (auto &block : *F) {
-    if (numNoPreds == 2) {
-      LLVM_DEBUG(dbgs() << "More than one block with no predecessors found: "
+    if (numNoPreds >= 2) {
+      LLVM_DEBUG(dbgs() << "Slice with two entry points found: "
                         << block.getName() << "\n");
       F->eraseFromParent();
       return nullptr;
@@ -1146,7 +1146,7 @@ Function *ProgramSlice::outline() {
     if (block.hasNPredecessors(0)) numNoPreds++;
   }
   if (numNoPreds == 0) {
-    LLVM_DEBUG(dbgs() << "No block with no predecessors found:...\n");
+    LLVM_DEBUG(dbgs() << "Slice without entry point...\n");
     F->eraseFromParent();
     return nullptr;
   }
