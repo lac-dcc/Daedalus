@@ -455,6 +455,7 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
 
     // Replace all uses of I with the correpondent call
     for (Instruction *I : S) {
+      dbgs() << *I << '\n';
       if (!canBeSliceCriterion(*I)) continue;
 
       LLVM_DEBUG(dbgs() << "daedalus.cpp: Function: " << F->getName()

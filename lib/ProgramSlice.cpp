@@ -260,8 +260,7 @@ std::pair<Status, dataDependence> get_data_dependences_for(
             }
             LLVM_DEBUG(dbgs() << "On loop but not header\n");
           } else if (Instruction *J = dyn_cast<Instruction>(U)) {
-            Loop *Lj = Linfo.getLoopFor(J->getParent());
-            if (Lj && Lj == L) {
+            if (!L->contains(J->getParent())) {
               phiOnArgs.insert(U);
               visited.insert(U);
               continue;
@@ -1134,6 +1133,10 @@ Function *ProgramSlice::outline() {
   populateFunctionWithBBs(F);
   populateBBsWithInsts(F);
   reorganizeUses(F);
+  dbgs() << *_initial << '\n';
+  if (_initial->getMetadata("ddbg")) {
+    dbgs() << "HERE\n" << *F << '\n';
+  }
   rerouteBranches(F);
   addReturnValue(F);
   reorderBlocks(F);
@@ -1162,10 +1165,9 @@ Function *ProgramSlice::outline() {
     return nullptr;
   }
 
-  if (_initial->getMetadata("ddbg")) {
-    dbgs() << "HERE\n" << *F << '\n';
-  }
   assert(!verifyFunction(*F, &errs()));
+
+  dbgs() << *F << '\n';
 
   return F;
 }
