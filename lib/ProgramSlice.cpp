@@ -246,7 +246,7 @@ std::pair<Status, dataDependence> get_data_dependences_for(
         }
         LoopInfo &Linfo = FAM.getResult<LoopAnalysis>(F);
         Loop *L = Linfo.getLoopFor(I.getParent());
-        if (L){
+        if (L) {
           if (const PHINode *u = dyn_cast<PHINode>(U)) {
             BasicBlock *header = L->getHeader();
             if (!header)
@@ -259,14 +259,14 @@ std::pair<Status, dataDependence> get_data_dependences_for(
               continue;
             }
             LLVM_DEBUG(dbgs() << "On loop but not header\n");
+          } else if (Instruction *J = dyn_cast<Instruction>(U)) {
+            Loop *Lj = Linfo.getLoopFor(J->getParent());
+            if (Lj && Lj == L) {
+              phiOnArgs.insert(U);
+              visited.insert(U);
+              continue;
+            }
           }
-        } else if (Instruction *J = dyn_cast<Instruction>(U)) {
-          Loop *Lj = Linfo.getLoopFor(J->getParent());
-	  if(Lj && Lj == L){
-	    phiOnArgs.insert(U);
-	    visited.insert(U);
-	    continue;
-	  }
         }
 
         // If dep is defined outside the loop, then add it as argument
