@@ -254,7 +254,7 @@ std::pair<uint, uint> removeInstructions(std::vector<iSlice> &allSlices,
         toRemove.insert(inst);
         if (CallInst *cInst = dyn_cast<CallInst>(inst)) {
           Function *G = cInst->getCalledFunction();
-          if (G->hasFnAttribute(Attribute::NoInline))
+          if (G && G->hasFnAttribute(Attribute::NoInline))
             G->removeFnAttr(Attribute::NoInline);
         }
       }
