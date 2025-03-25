@@ -244,10 +244,10 @@ std::pair<Status, dataDependence> get_data_dependences_for(
           }
           continue;
         }
-        if (const PHINode *u = dyn_cast<PHINode>(U)) {
-          LoopInfo &LI = FAM.getResult<LoopAnalysis>(F);
-          Loop *L = LI.getLoopFor(I.getParent());
-          if (L) {
+        LoopInfo &Linfo = FAM.getResult<LoopAnalysis>(F);
+        Loop *L = Linfo.getLoopFor(I.getParent());
+        if (L){
+          if (const PHINode *u = dyn_cast<PHINode>(U)) {
             BasicBlock *header = L->getHeader();
             if (!header)
               LLVM_DEBUG(errs()
@@ -260,8 +260,17 @@ std::pair<Status, dataDependence> get_data_dependences_for(
             }
             LLVM_DEBUG(dbgs() << "On loop but not header\n");
           }
+        } else if (Instruction *J = dyn_cast<Instruction>(U)) {
+          Loop *Lj = Linfo.getLoopFor(J->getParent());
+	  if(Lj && Lj == L){
+	    phiOnArgs.insert(U);
+	    visited.insert(U);
+	    continue;
+	  }
         }
-        // Cannot have side effects.
+
+        // If dep is defined outside the loop, then add it as argument
+
         visited.insert(U);
         worklist.push(U);
       }
@@ -805,9 +814,11 @@ void ProgramSlice::populateFunctionWithBBs(Function *F) {
  * @param F The Function where the slice instructions will be populated.
  */
 void ProgramSlice::populateBBsWithInsts(Function *F) {
+  dbgs() << "Insts on " << *_initial << '\n';
   for (BasicBlock &BB : *_parentFunction) {
     for (Instruction &origInst : BB) {
       if (_instsInSlice.count(&origInst)) {
+        dbgs() << '\t' << origInst << '\n';
         Instruction *newInst = origInst.clone();
         newInst->setName(origInst.getName());
         _Imap.insert(std::make_pair(&origInst, newInst));
@@ -1151,6 +1162,9 @@ Function *ProgramSlice::outline() {
     return nullptr;
   }
 
+  if (_initial->getMetadata("ddbg")) {
+    dbgs() << "HERE\n" << *F << '\n';
+  }
   assert(!verifyFunction(*F, &errs()));
 
   return F;

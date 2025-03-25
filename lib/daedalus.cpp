@@ -283,8 +283,11 @@ std::pair<uint, uint> removeInstructions(std::vector<iSlice> &allSlices,
  * collected.
  * @return A set of pointers to instructions that meet the specified criteria.
  */
-std::set<Instruction *> instSetMeetCriterion(Function *F) {
+std::set<Instruction *> instSetMeetCriterion(FunctionAnalysisManager &FAM,
+                                             Function *F) {
   std::set<Instruction *> S;
+  LoopInfo &LI = FAM.getResult<LoopAnalysis>(*F);
+
   for (auto &BB : *F) {
     Instruction *term = BB.getTerminator();
     if (!term) {
@@ -302,7 +305,10 @@ std::set<Instruction *> instSetMeetCriterion(Function *F) {
       // if (instName.find("lcssa") == instName.npos) {
       //   S.insert(&I);
       // }
-      if (isa<BinaryOperator>(I)) S.insert(&I);
+      if (isa<BinaryOperator>(I)) {
+        Loop *L = LI.getLoopFor(I.getParent());
+        if (!L) S.insert(&I);
+      }
     }
   }
 
@@ -437,8 +443,12 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
       MAM.getResult<FunctionAnalysisManagerModuleProxy>(M).getManager();
 
   for (Function *F : FtoMap) {
+    uint ki = 0;
+    for (auto &BB : *F) {
+      BB.setName("BB_" + std::to_string(ki));
+    }
     // Criterion Set
-    std::set<Instruction *> S = instSetMeetCriterion(F);
+    std::set<Instruction *> S = instSetMeetCriterion(FAM, F);
     // filter binary instructions for building a set of instructions
     // that can be used as slicing criterion. this function enables us
     // to change how we manage the slicing criterion.
@@ -480,8 +490,7 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
       iSlice slice = {I, callInst, G, funcArgs, originInstructionSet, false};
       allSlices.push_back(slice);
 
-      LLVM_DEBUG(dbgs() << COLOR::GREEN << "outlined!" << COLOR::CLEAN <<
-      '\n');
+      LLVM_DEBUG(dbgs() << COLOR::GREEN << "outlined!" << COLOR::CLEAN << '\n');
     }
   }
 
@@ -563,7 +572,8 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
       LLVM_DEBUG(dbgs() << "== REPORT GENERATION ==\n");
       LLVM_DEBUG(dbgs() << "Exporting slices' metadata to disk...\n");
       std::filesystem::path sourceFileName = M.getModuleIdentifier();
-      std::filesystem::path exportedFileName = sourceFileName.string() + "_slices_report.log";
+      std::filesystem::path exportedFileName =
+          sourceFileName.string() + "_slices_report.log";
 
       TotalFunctionsOutlined = allSlices.size();
       TotalSlicesMerged = delToNewFunc.size();
@@ -610,13 +620,14 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
   if (verifyModule(M, &errs())) {
     errs() << "Module verification failed!\n";
     std::error_code EC;
-    std::string failedModuleFilename = M.getModuleIdentifier() + "_failed_module.ll";
+    std::string failedModuleFilename =
+        M.getModuleIdentifier() + "_failed_module.ll";
     raw_fd_ostream OS(failedModuleFilename, EC, sys::fs::OF_None);
     if (EC) {
       errs() << "Error opening file for writing: " << EC.message() << "\n";
     } else {
       M.print(OS, nullptr);
-      errs() << "Module written to " << failedModuleFilename <<"\n";
+      errs() << "Module written to " << failedModuleFilename << "\n";
     }
     assert(false && "Module verification failed!");
   }

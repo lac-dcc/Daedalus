@@ -13,3 +13,4 @@ __pycache__/
 *.dot
 .vscode/
 tests/gen.sh
+tests/genall.sh
