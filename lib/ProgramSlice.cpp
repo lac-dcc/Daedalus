@@ -254,7 +254,7 @@ std::pair<Status, dataDependence> get_data_dependences_for(
                          << "Loop does not have a header on " << F.getName());
 
             if (u->getParent() == header) {
-              phiOnArgs.insert(U);
+              phiOnArgs.insert(cast<Value>(U));
               visited.insert(U);
               continue;
             }
@@ -1165,7 +1165,15 @@ Function *ProgramSlice::outline() {
     return nullptr;
   }
 
-  assert(!verifyFunction(*F, &errs()));
+  if (_initial->getMetadata("ddbg")) {
+    dbgs() << "HERE\n" << *F << '\n';
+  }
+
+  if (verifyFunction(*F, &errs())) {
+    errs() << "Outlined function is broken...\n";
+    F->eraseFromParent();
+    return nullptr;
+  }
 
   dbgs() << *F << '\n';
 
