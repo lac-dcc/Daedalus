@@ -14,7 +14,3 @@ int main(int argc, char **argv) {
     printf("Total number of characters in argv: %d\n", char_count);
     return 0;
 }
-<<<<<<< HEAD
-
-=======
->>>>>>> b9fc762e756196b99357d88374eea934092bbb80
