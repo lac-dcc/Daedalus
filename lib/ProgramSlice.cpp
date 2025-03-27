@@ -265,6 +265,7 @@ std::pair<Status, dataDependence> get_data_dependences_for(
               visited.insert(U);
               continue;
             }
+            // print yes
           }
         }
 
@@ -813,11 +814,9 @@ void ProgramSlice::populateFunctionWithBBs(Function *F) {
  * @param F The Function where the slice instructions will be populated.
  */
 void ProgramSlice::populateBBsWithInsts(Function *F) {
-  dbgs() << "Insts on " << *_initial << '\n';
   for (BasicBlock &BB : *_parentFunction) {
     for (Instruction &origInst : BB) {
       if (_instsInSlice.count(&origInst)) {
-        dbgs() << '\t' << origInst << '\n';
         Instruction *newInst = origInst.clone();
         newInst->setName(origInst.getName());
         _Imap.insert(std::make_pair(&origInst, newInst));
