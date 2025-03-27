@@ -14,6 +14,7 @@
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/PassManager.h"
+#include "llvm/Support/Error.h"
 
 // #include "llvm/Transforms/IPO/FunctionMerging.h"
 
@@ -24,14 +25,12 @@ public:
   /**
    * @brief Constructs a ProgramSlice object.
    */
-  ProgramSlice(Instruction &I, Function &F, PostDominatorTree &PDT,
-               FunctionAnalysisManager &FAM);
+  ProgramSlice(Instruction &I, Function &F, FunctionAnalysisManager &FAM);
 
   /**
    * @brief Checks if outlining the slice is feasible.
    */
-  bool canOutline();
-  bool newcanOutline();
+  std::pair<bool, std::string> _canOutline = {true, ""};
 
   /**
    * @brief if a phi-function is the criterion and dont post dominates all phi
