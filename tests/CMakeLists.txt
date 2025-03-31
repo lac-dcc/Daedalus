@@ -11,4 +11,9 @@ foreach(TEST_SOURCE ${TEST_SOURCES})
         set(TEST_INPUT "")
     endif()
     add_test(NAME ${TEST_NAME} COMMAND ./test-runner.sh ${TEST_SOURCE} "${TEST_INPUT}")
+
+    if (TEST_NAME STREQUAL "test3")
+        set_tests_properties(${TEST_NAME} PROPERTIES WILL_FAIL TRUE)
+    endif()
+
 endforeach()

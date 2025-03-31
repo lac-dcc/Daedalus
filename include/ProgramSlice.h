@@ -45,12 +45,6 @@ public:
   SmallVector<Value *> getOrigFunctionArgs();
 
   /**
-   * @brief Retrieves the struct type representing thunks (lazified instances)
-   * of this program slice's delegate function.
-   */
-  StructType *getThunkStructType(bool memo = false);
-
-  /**
    * @brief Retrieves the mapping of original instructions to their
    * corresponding instructions in the sliced function.
    */
@@ -60,10 +54,6 @@ public:
    * @brief Outlines the given slice into a standalone Function.
    */
   Function *outline();
-
-  /// Returns the delegate function resulted from outlining the slice, using
-  /// memoization.
-  Function *memoizedOutline();
 
   /**
    * @brief A function to simplify basic blocks of a function using the same
@@ -77,8 +67,6 @@ public:
   // static FunctionMergeResult mergeFunctions(Function *F1, Function *F2);
 
 private:
-  void insertLoadForThunkParams(Function *F, bool memo);
-
   /**
    * @brief Prints the original and sliced functions for debugging purposes.
    */
@@ -209,10 +197,5 @@ private:
   /// maps Instructions in the original function to their cloned counterparts in
   /// the slice
   std::map<Instruction *, Instruction *> _Imap;
-
-  /// We store the slice's thunk types, because LLVM does not cache types based
-  /// on structure
-  StructType *_thunkStructType;
-  StructType *_memoizedThunkStructType;
 };
 } // namespace llvm
