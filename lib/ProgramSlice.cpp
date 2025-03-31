@@ -278,7 +278,14 @@ std::pair<Status, dataDependence> get_data_dependences_for(
 
     if (const PHINode *PN = dyn_cast<PHINode>(cur)) {
       for (const BasicBlock *BB : PN->blocks()) {
-        BBs.insert(BB);
+        for (const Value *V : PN->incoming_values()) {
+          if (const Instruction *Inst = dyn_cast<Instruction>(V)) {
+            if (Inst->getParent() == BB) {
+              BBs.insert(BB);
+              break;
+            }
+          }
+        }
       }
       for (const Value *gate : gates[PN->getParent()]) {
         if (gate && !visited.count(gate)) {
@@ -721,20 +728,6 @@ void ProgramSlice::populateBBsWithInsts(Function *F) {
       }
     }
   }
-  std::set<const BasicBlock *> emptyBlocksKeys;
-  for (auto [origBB, newBB] : _origToNewBBmap) {
-    if (newBB->empty()) {
-      // newBB->eraseFromParent();
-      // _newToOrigBBmap.erase(newBB);
-      // _BBsInSlice.erase(origBB);
-      // emptyBlocksKeys.insert(origBB);
-      dbgs() << "Basic Block mapped to empty newBB (" << newBB->getName()
-             << "): " << *origBB << "\n";
-    }
-  }
-  // for (auto origBB : emptyBlocksKeys) {
-  //   _origToNewBBmap.erase(origBB);
-  // }
 }
 
 /**
