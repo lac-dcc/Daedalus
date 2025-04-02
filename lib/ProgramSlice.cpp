@@ -278,14 +278,7 @@ std::pair<Status, dataDependence> get_data_dependences_for(
 
     if (const PHINode *PN = dyn_cast<PHINode>(cur)) {
       for (const BasicBlock *BB : PN->blocks()) {
-        for (const Value *V : PN->incoming_values()) {
-          if (const Instruction *Inst = dyn_cast<Instruction>(V)) {
-            if (Inst->getParent() == BB) {
-              BBs.insert(BB);
-              break;
-            }
-          }
-        }
+        BBs.insert(BB);
       }
       for (const Value *gate : gates[PN->getParent()]) {
         if (gate && !visited.count(gate)) {
@@ -537,7 +530,6 @@ void ProgramSlice::rerouteBranches(Function *F) {
 
   // Now iterate over every block in the slice...
   Instruction *terminator = nullptr;
-  std::set<BasicBlock *> emptyBlocks;
   for (BasicBlock &BB : *F) {
     terminator = BB.getTerminator();
     // If block still has no terminator, create an unconditional branch

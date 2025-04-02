@@ -306,7 +306,7 @@ std::set<Instruction *> instSetMeetCriterion(FunctionAnalysisManager &FAM,
       //   S.insert(&I);
       // }
       if (isa<BinaryOperator>(I)) {
-        Loop *L = LI.getLoopFor(I.getParent());
+        Loop *L = LI.getLoopFor(I.getParent()); // TODO: remove
         if (!L) S.insert(&I);
       }
     }
