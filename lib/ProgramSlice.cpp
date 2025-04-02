@@ -71,7 +71,7 @@ static const BasicBlock *getController(const BasicBlock *BB, DominatorTree &DT,
       dom_node = dom_node->getIDom();
     }
   }
-  return NULL;
+  return nullptr;
 }
 
 /**
@@ -117,37 +117,51 @@ static const Value *getGate(const BasicBlock *BB) {
  */
 static const std::unordered_map<const BasicBlock *, SmallVector<const Value *>>
 computeGates(Function &F) {
-  std::unordered_map<const BasicBlock *, SmallVector<const Value *>> gates;
+  // LLVM_DEBUG(dbgs() << "ProgramSlice.cpp:120: Function: " << F.getName()
+  //                   << "\n");
+
   DominatorTree DT(F);
-  PostDominatorTree PDT;
-  PDT.recalculate(F);
+  PostDominatorTree PDT(F);
+
+  std::unordered_map<const BasicBlock *, SmallVector<const Value *>> gates;
   for (const BasicBlock &BB : F) {
     SmallVector<const Value *> BB_gates;
     const unsigned num_preds = pred_size(&BB);
     if (num_preds > 1) {
-      // LLVM_DEBUG(dbgs() << BB.getName() << ":\n");
+      LLVM_DEBUG(dbgs() << BB.getName() << ":\n");
       for (const BasicBlock *pred : predecessors(&BB)) {
-        // LLVM_DEBUG(dbgs() << " - " << pred->getName() << " -> ");
+        LLVM_DEBUG(dbgs() << " - " << pred->getName() << " -> ");
         if (DT.dominates(pred, &BB) && !PDT.dominates(&BB, pred)) {
-          // LLVM_DEBUG(dbgs() << " DOM " << getGate(pred)->getName() << " ->
-          // ");
+          LLVM_DEBUG(dbgs() << " DOM " << getGate(pred)->getName() << " ->");
           BB_gates.push_back(getGate(pred));
         } else {
           const BasicBlock *ctrl_BB = getController(pred, DT, PDT);
           if (ctrl_BB) {
-            // LLVM_DEBUG(dbgs() << " R-CTRL " << "CTRL_BB: " <<
-            // ctrl_BB->getName()
-            // << " " << getGate(ctrl_BB)->getName());
+            LLVM_DEBUG(dbgs() << " R-CTRL " << "CTRL_BB: " << ctrl_BB->getName()
+                              << " " << getGate(ctrl_BB)->getName());
             BB_gates.push_back(getGate(ctrl_BB));
           }
         }
-        // LLVM_DEBUG(dbgs() << ";\n");
+        LLVM_DEBUG(dbgs() << ";\n");
       }
     }
     gates.emplace(std::make_pair(&BB, BB_gates));
   }
   return gates;
 }
+
+struct dataDependence {
+  std::set<const BasicBlock *> BBs;
+  std::set<const Value *> dependences;
+  std::vector<std::pair<Type *, StringRef>> typeAndName;
+  bool phiCrit;
+  std::set<Value *> phiOnArgs;
+};
+
+struct Status {
+  bool status;
+  std::string msg;
+};
 
 /**
  * @brief Computes the backwards data dependences for the given instruction.
@@ -161,28 +175,23 @@ computeGates(Function &F) {
  *
  * @param I The instruction for which to compute data dependences.
  * @param gates A map of basic blocks to their corresponding gating values.
- * @param PDT The post-dominator tree.
  * @return A tuple containing the set of basic blocks, the set of dependencies,
  * the vector of phi-function arguments, and a boolean flag indicating if the
  * criterion is a phi-node.
  */
-static std::tuple<std::set<const BasicBlock *>, std::set<const Value *>,
-                  std::vector<std::pair<Type *, StringRef>>, bool,
-                  std::set<Value *>>
-get_data_dependences_for(
+std::pair<Status, dataDependence> get_data_dependences_for(
     Instruction &I,
     std::unordered_map<const BasicBlock *, SmallVector<const Value *>> &gates,
-    PostDominatorTree &PDT, Function &F, FunctionAnalysisManager &FAM) {
+    Function &F, FunctionAnalysisManager &FAM) {
 
   std::set<const Value *> deps;
   std::set<const BasicBlock *> BBs;
   std::set<const Value *> visited;
   std::queue<const Value *> worklist;
   std::vector<std::pair<Type *, StringRef>> phiArguments;
-  std::set<Instruction *> toRemoveDeps;
   std::set<Value *> phiOnArgs;
+  Status status = {true, ""};
 
-  toRemoveDeps.insert(&I);
   worklist.push(&I);
   deps.insert(&I);
   visited.insert(&I);
@@ -194,48 +203,78 @@ get_data_dependences_for(
     visited.insert(cur);
     worklist.pop();
 
+    if (isa<InvokeInst>(cur) || isa<LandingPadInst>(cur)) {
+      status = {
+          false,
+          "Some dependency is on a try catch. Slices must be pure functions."};
+      break;
+    }
+
     if (const Instruction *dep = dyn_cast<Instruction>(cur)) {
+      assert(dep->getParent() && "Instruction has no parent basic block");
+      assert(dep->getType() && "Instruction has null type");
+
       BBs.insert(dep->getParent());
-
+      // TODO: Refact this, make a function check operands.
+      bool signal = true;
       for (const Use &U : dep->operands()) {
-        if (!isa<Instruction>(U) && !isa<Argument>(U)) continue;
+        if (!U.get()) {
+          status = {false, "Some dependency is null."};
+          signal = false;
+          break;
+        }
+        if (isa<GlobalVariable>(U.get())) {
+          status = {false, "Some dependency is on a Global Variable ."};
+          signal = false;
+          break;
+        }
+        assert(U.get() && "Found null operand in instruction");
 
+        if (!isa<Instruction>(U) && !isa<Argument>(U)) continue;
         if (visited.count(U)) {
           if (isa<PHINode>(U) &&
-              U == &I) { // Phi criterions that depends on itself
+              U == &I) { // Phi-node is criterion and depends on itself.
             deps.clear();
             Argument *arg = new Argument(U->getType(), U->getName());
             deps.insert(arg);
             deps.insert(&I);
-            toRemoveDeps.clear();
             while (!worklist.empty()) worklist.pop();
             phiCrit = true;
             break;
           }
           continue;
         }
-
-        if (const PHINode *u = dyn_cast<PHINode>(U)) {
-          LoopInfo &LI = FAM.getResult<LoopAnalysis>(F);
-          Loop *L = LI.getLoopFor(I.getParent());
-          if (L){
+        LoopInfo &Linfo = FAM.getResult<LoopAnalysis>(F);
+        Loop *L = Linfo.getLoopFor(I.getParent());
+        if (L) {
+          if (const PHINode *u = dyn_cast<PHINode>(U)) {
             BasicBlock *header = L->getHeader();
             if (!header)
               LLVM_DEBUG(errs()
                          << "Loop does not have a header on " << F.getName());
 
             if (u->getParent() == header) {
+              phiOnArgs.insert(cast<Value>(U));
+              visited.insert(U);
+              continue;
+            }
+            LLVM_DEBUG(dbgs() << "On loop but not header\n");
+          } else if (Instruction *J = dyn_cast<Instruction>(U)) {
+            if (!L->contains(J->getParent())) {
               phiOnArgs.insert(U);
               visited.insert(U);
               continue;
             }
-            dbgs() << "On loop but not header\n";
+            // print yes
           }
         }
-        // Cannot have side effects.
+
+        // If dep is defined outside the loop, then add it as argument
+
         visited.insert(U);
         worklist.push(U);
       }
+      if (!signal) break;
     }
     if (phiCrit) break;
 
@@ -250,8 +289,8 @@ get_data_dependences_for(
       }
     }
   }
-
-  return std::make_tuple(BBs, deps, phiArguments, phiCrit, phiOnArgs);
+  dataDependence ret = {BBs, deps, phiArguments, phiCrit, phiOnArgs};
+  return {status, ret};
 }
 
 /**
@@ -270,21 +309,29 @@ get_data_dependences_for(
  * @param PDT The post-dominator tree of the function.
  */
 ProgramSlice::ProgramSlice(Instruction &Initial, Function &F,
-                           PostDominatorTree &PDT, FunctionAnalysisManager &FAM)
+                           FunctionAnalysisManager &FAM)
     : _initial(&Initial), _parentFunction(&F) {
+
   assert(Initial.getParent()->getParent() == &F &&
          "Slicing instruction from different function!");
 
   std::unordered_map<const BasicBlock *, SmallVector<const Value *>> gates =
       computeGates(F);
-  auto [BBsInSlice, valuesInSlice, phiTypes, phiCrit, phiOnArgs] =
-      get_data_dependences_for(Initial, gates, PDT, F, FAM);
-  _phiCrit = phiCrit;
+  auto [check, data] = get_data_dependences_for(Initial, gates, F, FAM);
+
+  if (!check.status) {
+    _canOutline.first = check.status;
+    _canOutline.second = check.msg;
+    return;
+  }
+
+  // auto [BBsInSlice, valuesInSlice, phiTypes, phiCrit, phiOnArgs] =
+  _phiCrit = data.phiCrit;
 
   std::set<const Instruction *> instsInSlice;
   SmallVector<Value *> depArgs;
 
-  for (auto &val : valuesInSlice) {
+  for (auto &val : data.dependences) {
     if (Argument *A = dyn_cast<Argument>(const_cast<Value *>(val))) {
       depArgs.push_back(A);
     } else if (const Instruction *I = dyn_cast<Instruction>(val)) {
@@ -292,7 +339,7 @@ ProgramSlice::ProgramSlice(Instruction &Initial, Function &F,
     }
   }
 
-  for (auto &val : phiOnArgs) depArgs.push_back(val);
+  for (auto &val : data.phiOnArgs) depArgs.push_back(val);
 
   if (isa<ReturnInst>(_initial)) {
     Value *FreturnValue = dyn_cast<ReturnInst>(_initial)->getReturnValue();
@@ -303,8 +350,8 @@ ProgramSlice::ProgramSlice(Instruction &Initial, Function &F,
 
   _instsInSlice = instsInSlice;
   _depArgs = depArgs;
-  _phiDepArgs = phiTypes;
-  _BBsInSlice = BBsInSlice;
+  _phiDepArgs = data.typeAndName;
+  _BBsInSlice = data.BBs;
 
   // We need to pre-compute struct types, because if we build it everytime
   // it's needed, LLVM creates multiple types with the same structure but
@@ -356,7 +403,7 @@ StructType *ProgramSlice::computeStructType(bool memo) {
   }
 
   thunkStructType->setBody(thunkTypes);
-  thunkStructType->setName("_wyvern_thunk_type");
+  thunkStructType->setName("_daedalus_thunk_type");
 
   return thunkStructType;
 }
@@ -425,11 +472,11 @@ void ProgramSlice::printSlice() {
  * @param F Pointer to the sliced function to be printed.
  */
 void ProgramSlice::printFunctions(Function *F) {
-  dbgs() << "\n\n ==== Slicing instruction: [" << *_initial
-         << "] in function: " << _parentFunction->getName() << " with size "
-         << _parentFunction->size() << " ====\n"
-         << "\n======== SLICED FUNCTION ==========\n"
-         << *F;
+  LLVM_DEBUG(dbgs() << "\n\n ==== Slicing instruction: [" << *_initial
+                    << "] in function: " << _parentFunction->getName()
+                    << " with size " << _parentFunction->size() << " ====\n"
+                    << "\n======== SLICED FUNCTION ==========\n"
+                    << *F);
 }
 
 /**
@@ -533,8 +580,12 @@ void updatePHINodes(Function *F) {
         break;
       }
       ++I_it;
+      std::set<BasicBlock *> S;
       for (unsigned PI = 0, PE = PN->getNumIncomingValues(); PI != PE; ++PI) {
         BasicBlock *incBB = PN->getIncomingBlock(PI);
+        S.insert(incBB);
+      }
+      for (auto incBB : S) {
         if (incBB && !preds.count(incBB)) {
           PN->removeIncomingValue(incBB);
         }
@@ -579,7 +630,7 @@ void ProgramSlice::rerouteBranches(Function *F) {
   // Add an unreachable block to be the target of branches that should
   // be removed.
   BasicBlock *unreachableBlock =
-      BasicBlock::Create(F->getContext(), "_wyvern_unreachable", F);
+      BasicBlock::Create(F->getContext(), "_daedalus_unreachable", F);
   UnreachableInst *unreach =
       new UnreachableInst(F->getContext(), unreachableBlock);
 
@@ -858,9 +909,10 @@ void ProgramSlice::reorderBlocks(Function *F) {
   for (BasicBlock &BB : *F) {
     if (BB.hasNPredecessors(0)) {
       realEntry = &BB;
+      break;
     }
   }
-  realEntry->moveBefore(&F->getEntryBlock());
+  if (realEntry != nullptr) realEntry->moveBefore(&F->getEntryBlock());
 }
 
 /**
@@ -1007,14 +1059,21 @@ ReturnInst *ProgramSlice::addReturnValue(Function *F) {
  * @return The newly created delegate Function that encapsulates the slice.
  */
 Function *ProgramSlice::outline() {
+  assert(!verifyFunction(*_parentFunction,
+                         &errs())); // assert parent function is valid
+
   const int size = 3;
+  if (!_canOutline.first) {
+    LLVM_DEBUG(dbgs() << _canOutline.second << '\n');
+    return nullptr;
+  }
   if (_instsInSlice.size() < size) {
     LLVM_DEBUG(
         dbgs()
         << "Insufficient number of instructions to outline a new slice...\n");
     LLVM_DEBUG(dbgs() << "The slice must have at least " << size
                       << " instructions to be outlined...\n");
-    return NULL;
+    return nullptr;
   }
   StructType *thunkStructType = getThunkStructType(false);
   PointerType *thunkStructPtrType = thunkStructType->getPointerTo();
@@ -1049,7 +1108,7 @@ Function *ProgramSlice::outline() {
   std::uniform_int_distribution<int64_t> dist(1, 1000000000);
   uint64_t random_num = dist(mt);
   std::string functionName =
-      "_wyvern_slice_" + _parentFunction->getName().str() + "_" +
+      "_daedalus_slice_" + _parentFunction->getName().str() + "_" +
       _initial->getName().str() + "_" + std::to_string(random_num);
   Function *F =
       Function::Create(delegateFunctionType, Function::ExternalLinkage,
@@ -1073,11 +1132,50 @@ Function *ProgramSlice::outline() {
   populateFunctionWithBBs(F);
   populateBBsWithInsts(F);
   reorganizeUses(F);
+  dbgs() << *_initial << '\n';
+  if (_initial->getMetadata("ddbg")) {
+    dbgs() << "HERE\n" << *F << '\n';
+  }
   rerouteBranches(F);
   addReturnValue(F);
   reorderBlocks(F);
   replaceArgs(F, dt);
-  verifyFunction(*F);
+
+  LLVM_DEBUG(dbgs() << "Function being outlined:\n" << *F);
+  unsigned int numNoPreds = 0;
+  for (auto &block : *F) {
+    if (numNoPreds >= 2) {
+      LLVM_DEBUG(dbgs() << "Slice with two entry points found: "
+                        << block.getName() << "\n");
+      F->eraseFromParent();
+      return nullptr;
+    }
+    if (block.empty()) {
+      LLVM_DEBUG(dbgs() << "Empty basic block found: " << block.getName()
+                        << "\n");
+      F->eraseFromParent();
+      return nullptr;
+    }
+    if (block.hasNPredecessors(0)) numNoPreds++;
+  }
+  if (numNoPreds == 0) {
+    LLVM_DEBUG(dbgs() << "Slice without entry point...\n");
+    F->eraseFromParent();
+    return nullptr;
+  }
+
+  if (_initial->getMetadata("ddbg")) {
+    dbgs() << "HERE\n" << *F << '\n';
+  }
+
+  if (verifyFunction(*F, &errs())) {
+    errs() << "Outlined function is broken...\n";
+    F->eraseFromParent();
+    return nullptr;
+  }
+
+  dbgs() << *F << '\n';
+
   return F;
 }
 

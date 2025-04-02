@@ -12,7 +12,6 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Analysis/CFGPrinter.h"
 #include "llvm/Analysis/LoopInfo.h"
-#include "llvm/Analysis/PostDominators.h"
 #include "llvm/Analysis/TargetLibraryInfo.h"
 #include "llvm/IR/Attributes.h"
 #include "llvm/IR/Constants.h"
@@ -20,6 +19,7 @@
 #include "llvm/IR/InstrTypes.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/PassManager.h"
+#include "llvm/IR/Verifier.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/GraphWriter.h"
@@ -55,23 +55,44 @@ static cl::opt<bool>
             cl::init(false));
 
 /**
- * @brief Determines if an instruction type can be sliced.
+ * @brief Determines if an instruction type can be used as slice criterion.
  *
  * @details This function checks if the given instruction is one of several
  * types that should not be considered for slicing, such as branch instructions,
  * return instructions, alloca instructions, comparison instructions, load
- * instructions, and store instructions.
+ * instructions, and store instructions. If the instruction is a PHI
+ * node, it must not have users that are also PHI nodes within the same basic
+ * block.
  *
  * @param I The instruction to check.
  * @return True if the instruction type can be sliced, false otherwise.
  */
-bool canSliceInstrType(Instruction &I) {
+bool canBeSliceCriterion(Instruction &I) {
   if (isa<BranchInst>(I)) return false; // Branch Instruction have badref
   if (isa<ReturnInst>(I)) return false;
   if (isa<AllocaInst>(I)) return false; // No needed
   if (isa<ICmpInst>(I)) return false;
   if (isa<LoadInst>(I)) return false;
   if (isa<StoreInst>(I)) return false;
+
+  // PHINodes MUST be at the top of basic blocks. If our criterion
+  // is a PHINode, it will be replaced by a call site. Consequently,
+  // all PHINodes below it MUST be moved above our criterion. However,
+  // if at least one of these PHINodes is a user of our criterion, it
+  // will not dominate all its uses. In this case, we cannot replace it.
+  if (PHINode *phi = dyn_cast<PHINode>(&I)) {
+    for (User *use : phi->users()) {
+      if (Instruction *Iuse = dyn_cast<Instruction>(use))
+        if (isa<PHINode>(Iuse) && Iuse->getParent() == I.getParent()) {
+          LLVM_DEBUG(dbgs() << COLOR::RED
+                            << "Criterion is a phi-node which at least one of "
+                               "it's users are a Phi-Node and are in the same "
+                               "basic block!\n"
+                            << COLOR::CLEAN);
+          return false;
+        }
+    }
+  }
   return true;
 }
 
@@ -116,6 +137,21 @@ bool canRemove(Instruction *I, Instruction *ini,
   return true;
 }
 
+/**
+ * @brief Checks if a given instruction is self-contained within a set of
+ * instructions.
+ *
+ * This function iterates over a set of original instructions and determines if
+ * the given instruction `I` is self-contained. If an instruction `J` from the
+ * original set can be removed without affecting `I`, it is added to the
+ * `tempToRemove` set.
+ *
+ * @param origInst A set of original instructions to check against.
+ * @param I The instruction to check for self-containment.
+ * @param tempToRemove A set of instructions that can be removed without
+ * affecting `I`.
+ * @return Always returns true.
+ */
 bool isSelfContained(std::set<Instruction *> origInst, Instruction *I,
                      std::set<Instruction *> &tempToRemove) {
   for (Instruction *J : origInst) {
@@ -129,41 +165,18 @@ bool isSelfContained(std::set<Instruction *> origInst, Instruction *I,
 }
 
 /**
- * @brief Checks if a program slice can be created for an instruction.
+ * @brief Removes a function and its call instructions from the LLVM IR.
  *
- * @details This function determines if a given instruction can be part of a
- * program slice. Specifically, it ensures that if the instruction is a PHI
- * node, it must not have users that are also PHI nodes within the same basic
- * block.
+ * This function replaces all uses of a specified call instruction with a given
+ * criterion instruction, then erases the call instruction from its parent. It
+ * also removes the NoInline attribute from the function, if present, and
+ * replaces all uses of the function with an undefined value before erasing the
+ * function from its parent.
  *
- * @param I The instruction to check.
- * @return True if the instruction can be part of a program slice, false
- * otherwise.
+ * @param F The function to be removed.
+ * @param callInst The call instruction to be replaced and erased.
+ * @param criterion The instruction to replace the call instruction with.
  */
-bool canProgramSlice(Instruction *I) {
-  // PHINodes MUST be at the top of basic blocks. If our criterion
-  // is a PHINode, it will be replaced by a call site. Consequently,
-  // all PHINodes below it MUST be moved above our criterion. However,
-  // if at least one of these PHINodes is a user of our criterion, it
-  // will not dominate all its uses. In this case, we cannot replace it.
-  if (PHINode *phi = dyn_cast<PHINode>(I)) {
-    for (User *use : phi->users()) {
-      if (Instruction *Iuse = dyn_cast<Instruction>(use))
-        if (isa<PHINode>(Iuse) && Iuse->getParent() == I->getParent()) {
-          LLVM_DEBUG(dbgs() << COLOR::RED
-                            << "Criterion is a phi-node which at least one of "
-                               "it's users are a Phi-Node and are in the same "
-                               "basic block!\n"
-                            << COLOR::CLEAN);
-          return false;
-        }
-    }
-  }
-  return true;
-}
-
-/// Replace all calls of callInst with original instructions
-/// and remove new slice function
 void killSlice(Function *F, CallInst *callInst, Instruction *criterion) {
   callInst->replaceAllUsesWith(criterion);
   callInst->eraseFromParent();
@@ -185,6 +198,20 @@ void killSlice(Function *F, CallInst *callInst, Instruction *criterion) {
   F->eraseFromParent();
 }
 
+/**
+ * @brief Removes instructions from slices and simplifies functions.
+ *
+ * This function processes a collection of instruction slices, removing
+ * instructions that are not self-contained or belong to functions that
+ * should not be merged. It also simplifies functions by removing unnecessary
+ * instructions and updating function attributes.
+ *
+ * @param allSlices A vector of instruction slices to process.
+ * @param mergeTo A set of functions that are allowed to be merged.
+ * @param toSimplify A set of functions that need to be simplified.
+ * @return A pair of unsigned integers representing the count of slices that
+ *         were not merged and the count of slices that were not self-contained.
+ */
 std::pair<uint, uint> removeInstructions(std::vector<iSlice> &allSlices,
                                          const std::set<Function *> &mergeTo,
                                          std::set<Function *> &toSimplify) {
@@ -193,11 +220,15 @@ std::pair<uint, uint> removeInstructions(std::vector<iSlice> &allSlices,
 
   uint dontMerge = 0, notSelfContained = 0;
 
-  for (auto [I, callInst, F, args, origInst, wasRemoved] : allSlices) {
+  for (iSlice &slice : allSlices) {
+    Instruction *sliceCriterion = slice.I;
+    CallInst *callInst = slice.callInst;
+    Function *F = slice.F;
+    std::set<Instruction *> origInst = slice.constOriginalInst;
     if (F == NULL) continue;
     F = callInst->getCalledFunction();
     if (mergeTo.count(F) == 0) {
-      killSlice(F, callInst, I);
+      killSlice(F, callInst, sliceCriterion);
       ++dontMerge;
       continue;
     }
@@ -210,12 +241,12 @@ std::pair<uint, uint> removeInstructions(std::vector<iSlice> &allSlices,
     }
     realEntry->moveBefore(&F->getEntryBlock());
 
-    if (I->getParent() == nullptr) continue;
+    if (sliceCriterion->getParent() == nullptr) continue;
 
     std::set<Instruction *> tempToRemove;
-    if (!isSelfContained(origInst, I, tempToRemove)) {
+    if (!isSelfContained(origInst, sliceCriterion, tempToRemove)) {
       LLVM_DEBUG(dbgs() << "Not self contained!\n");
-      killSlice(F, callInst, I);
+      killSlice(F, callInst, sliceCriterion);
       ++notSelfContained;
       continue;
     } else {
@@ -223,13 +254,13 @@ std::pair<uint, uint> removeInstructions(std::vector<iSlice> &allSlices,
         toRemove.insert(inst);
         if (CallInst *cInst = dyn_cast<CallInst>(inst)) {
           Function *G = cInst->getCalledFunction();
-          if (G->hasFnAttribute(Attribute::NoInline))
+          if (G && G->hasFnAttribute(Attribute::NoInline))
             G->removeFnAttr(Attribute::NoInline);
         }
       }
     }
     toSimplify.insert(F);
-    toRemove.insert(I);
+    toRemove.insert(sliceCriterion);
   }
 
   for (auto &e : toRemove) {
@@ -240,21 +271,23 @@ std::pair<uint, uint> removeInstructions(std::vector<iSlice> &allSlices,
 }
 
 /**
- * @brief Checks if a given instruction meets the slicing criteria.
+ * @brief Collects and returns a set of instructions from a given function that
+ * meet certain criteria.
  *
- * @details For each BasicBlock in the given Function, it checks the terminator
- * instruction. If the terminator is a ReturnInst and has operands, it adds
- * these operands to the set if they are Instructions. Then, for each
- * Instruction within each BasicBlock, if the instruction is a StoreInst, it
- * collects its operands into the set if they are Instructions.
+ * This function iterates over all basic blocks in the provided function and
+ * collects instructions that meet specific criteria into a set. The current
+ * criteria include:
+ * - Instructions that are instances of BinaryOperator.
  *
- * @param F Pointer to a LLVM function
- * @return A std::set containing Instruction* which meet specific criteria:
- * 1. The instruction is an operand of a ReturnInst.
- * 2. The instruction is an operand of a StoreInst.
+ * @param F A pointer to the function from which instructions are to be
+ * collected.
+ * @return A set of pointers to instructions that meet the specified criteria.
  */
-std::set<Instruction *> instSetMeetCriterion(Function *F) {
+std::set<Instruction *> instSetMeetCriterion(FunctionAnalysisManager &FAM,
+                                             Function *F) {
   std::set<Instruction *> S;
+  LoopInfo &LI = FAM.getResult<LoopAnalysis>(*F);
+
   for (auto &BB : *F) {
     Instruction *term = BB.getTerminator();
     if (!term) {
@@ -268,23 +301,49 @@ std::set<Instruction *> instSetMeetCriterion(Function *F) {
 
     for (Instruction &I : BB) {
       // if (isa<PHINode>(I)) S.insert(&I);
-      llvm::StringRef instName = I.getName();
+      // llvm::StringRef instName = I.getName();
       // if (instName.find("lcssa") == instName.npos) {
       //   S.insert(&I);
       // }
-      if (isa<BinaryOperator>(I)) S.insert(&I);
+      if (isa<BinaryOperator>(I)) {
+        Loop *L = LI.getLoopFor(I.getParent());
+        if (!L) S.insert(&I);
+      }
     }
   }
 
   return S;
 }
 
+/**
+ * @brief Counts the number of instructions in a given function.
+ *
+ * This function iterates over all basic blocks in the provided function
+ * and sums up the number of instructions in each basic block.
+ *
+ * @param F Pointer to the function whose instructions are to be counted.
+ * @return The total number of instructions in the function.
+ */
 unsigned int numberOfInstructions(Function *F) {
   unsigned int instCount = 0;
   for (BasicBlock &BB : *F) instCount += BB.size();
   return instCount;
 }
 
+/**
+ * @brief Counts the number of functions that have been merged into a given
+ * function.
+ *
+ * This function iterates through a map of deleted functions to their
+ * corresponding new functions and counts how many times the given function
+ * appears as a target of merging.
+ *
+ * @param F The function to check for merged functions.
+ * @param delToNewFunc A map where the key is a deleted function and the value
+ * is the function it was merged into.
+ * @return The number of functions that have been merged into the given
+ * function, including the function itself.
+ */
 unsigned int
 numberOfMergedFunctions(Function *F,
                         std::map<Function *, Function *> &delToNewFunc) {
@@ -293,21 +352,34 @@ numberOfMergedFunctions(Function *F,
     if (pair.second == F) mergedFuncCount++;
   return mergedFuncCount;
 }
-  
+
+/**
+ * @brief Generates DOT files for a set of functions and stores them in a
+ * directory.
+ *
+ * This function creates a directory named after the module identifier with a
+ * suffix ".dump_dot". It then iterates over the provided set of functions, and
+ * for each function that has a name, it generates a DOT file representing the
+ * function's structure.
+ *
+ * @param M The module containing the functions.
+ * @param newFunctions A set of pointers to functions for which DOT files will
+ * be generated.
+ */
 void functionSlicesToDot(Module &M, const std::set<Function *> &newFunctions) {
 
   // Create directory
-  std::filesystem::path dotDir = 
-    std::filesystem::current_path() / (M.getModuleIdentifier() + ".dump_dot");
+  std::filesystem::path dotDir =
+      std::filesystem::current_path() / (M.getModuleIdentifier() + ".dump_dot");
 
   std::error_code errorCode;
-  
+
   std::filesystem::create_directory(dotDir, errorCode);
 
   if (errorCode) {
     errs() << "Failed to create directory '"
-           << std::filesystem::absolute(dotDir) << "' Reason: "
-           << errorCode.message() << "\n";
+           << std::filesystem::absolute(dotDir)
+           << "' Reason: " << errorCode.message() << "\n";
     return;
   }
 
@@ -320,8 +392,8 @@ void functionSlicesToDot(Module &M, const std::set<Function *> &newFunctions) {
       // If the file cannot be opened, report the error and skip processing.
       if (errorCode) {
         errs() << "Failed to create slice dot file '"
-               << std::filesystem::absolute(dotFilePath) << "' Reason: "
-               << errorCode.message() << "\n";
+               << std::filesystem::absolute(dotFilePath)
+               << "' Reason: " << errorCode.message() << "\n";
         continue;
       }
 
@@ -369,21 +441,27 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
   LLVM_DEBUG(dbgs() << "== OUTLINING INST PHASE ==\n");
   FunctionAnalysisManager &FAM =
       MAM.getResult<FunctionAnalysisManagerModuleProxy>(M).getManager();
-  for (Function *F : FtoMap) {
-    PostDominatorTree PDT;
-    PDT.recalculate(*F);
 
+  for (Function *F : FtoMap) {
+    uint ki = 0;
+    for (auto &BB : *F) {
+      BB.setName("BB_" + std::to_string(ki));
+    }
     // Criterion Set
-    std::set<Instruction *> S = instSetMeetCriterion(
-        F); // filter binary instructions for building a set of instructions
-            // that can be used as slicing criterion. this function enables us
-            // to change how we manage the slicing criterion.
+    std::set<Instruction *> S = instSetMeetCriterion(FAM, F);
+    // filter binary instructions for building a set of instructions
+    // that can be used as slicing criterion. this function enables us
+    // to change how we manage the slicing criterion.
 
     // Replace all uses of I with the correpondent call
     for (Instruction *I : S) {
-      if (!canSliceInstrType(*I)) continue;
-      if (!canProgramSlice(I)) continue;
-      ProgramSlice ps = ProgramSlice(*I, *F, PDT, FAM);
+      dbgs() << *I << '\n';
+      if (!canBeSliceCriterion(*I)) continue;
+
+      LLVM_DEBUG(dbgs() << "daedalus.cpp: Function: " << F->getName()
+                        << ",\n\tInstruction: " << *I << "\n");
+
+      ProgramSlice ps = ProgramSlice(*I, *F, FAM);
       Function *G = ps.outline();
 
       if (G == NULL) continue;
@@ -419,14 +497,14 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
 
   std::set<Function *> originalFunctions;
   std::set<Function *> outlinedFunctions;
-  for (auto [I, call, F, args, origInst, wasRemoved] : allSlices) {
-    Function *originalF = I->getParent()->getParent();
+  for (iSlice &slice : allSlices) {
+    Instruction *sliceCriterion = slice.I;
+    Function *F = slice.F;
+    Function *originalF = sliceCriterion->getParent()->getParent();
     originalFunctions.insert(originalF);
     outlinedFunctions.insert(F);
-    LLVM_DEBUG(
-      if (numberOfInstructions(F) > SizeOfLargestSliceBeforeMerging)
-        SizeOfLargestSliceBeforeMerging = numberOfInstructions(F);
-    );
+    LLVM_DEBUG(if (numberOfInstructions(F) > SizeOfLargestSliceBeforeMerging)
+                   SizeOfLargestSliceBeforeMerging = numberOfInstructions(F););
   }
 
   LLVM_DEBUG(dbgs() << "== MERGE SLICES FUNC PHASE ==\n");
@@ -441,14 +519,14 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
   else
     LLVM_DEBUG(dbgs() << "MergeFunc returned false...\n");
 
-  std::set<Function *>
-      mergeTo; // Set of instruction such that some other slice merges to
+  std::set<Function *> mergeTo; // If a function is on this set, there are some
+                                // other function that merges with it.
   for (auto [A, B] : delToNewFunc) {
     if (B == nullptr) continue;
-    LLVM_DEBUG(
-      if (numberOfInstructions(B) > SizeOfLargestSliceAfterMerging)
-        SizeOfLargestSliceAfterMerging = numberOfInstructions(B);
-    );
+    while (delToNewFunc.count(B)) B = delToNewFunc[B];
+    assert(!verifyFunction(*B, &errs()));
+    LLVM_DEBUG(if (numberOfInstructions(B) > SizeOfLargestSliceAfterMerging)
+                   SizeOfLargestSliceAfterMerging = numberOfInstructions(B););
     mergeTo.insert(B);
   }
 
@@ -490,14 +568,13 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
   }
 
   LLVM_DEBUG(dbgs() << "== PRINT PHASE ==\n");
-  for (Function &F : M.getFunctionList()) LLVM_DEBUG(dbgs() << F << '\n');
 
   LLVM_DEBUG(
       LLVM_DEBUG(dbgs() << "== REPORT GENERATION ==\n");
       LLVM_DEBUG(dbgs() << "Exporting slices' metadata to disk...\n");
       std::filesystem::path sourceFileName = M.getModuleIdentifier();
       std::filesystem::path exportedFileName =
-          sourceFileName.stem().string() + "_slices_report.log";
+          sourceFileName.string() + "_slices_report.log";
 
       TotalFunctionsOutlined = allSlices.size();
       TotalSlicesMerged = delToNewFunc.size();
@@ -518,8 +595,9 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
                                 std::to_string(SizeOfLargestSliceAfterMerging));
       ReportWriterObj.writeLine("mergedSlicesMetadata:");
 
-      std::set<Function *> checkedFunctions;
-      for (auto [deletedFunc, newFunc] : delToNewFunc) {
+      std::set<Function *> checkedFunctions; for (auto [deletedFunc, newFunc]
+                                                  : delToNewFunc) {
+        while (delToNewFunc.count(newFunc)) newFunc = delToNewFunc[newFunc];
         if (newFunc->hasName() && checkedFunctions.count(newFunc) == 0) {
           checkedFunctions.insert(newFunc);
           ReportWriterObj.writeLine("\t" + newFunc->getName().str() + ":");
@@ -536,6 +614,23 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
 
   if (dumpDot) {
     functionSlicesToDot(M, toSimplify);
+  }
+
+  LLVM_DEBUG(dbgs() << "== MODULE VERIFICATION PHASE ==\n");
+
+  if (verifyModule(M, &errs())) {
+    errs() << "Module verification failed!\n";
+    std::error_code EC;
+    std::string failedModuleFilename =
+        M.getModuleIdentifier() + "_failed_module.ll";
+    raw_fd_ostream OS(failedModuleFilename, EC, sys::fs::OF_None);
+    if (EC) {
+      errs() << "Error opening file for writing: " << EC.message() << "\n";
+    } else {
+      M.print(OS, nullptr);
+      errs() << "Module written to " << failedModuleFilename << "\n";
+    }
+    assert(false && "Module verification failed!");
   }
   return PreservedAnalyses::none();
 }

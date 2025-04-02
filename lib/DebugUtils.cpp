@@ -43,8 +43,8 @@ void generatePrintf(std::string_view fmt,
     args_.emplace_back(arg);
   }
 
-  builder.CreateCall(printfFunction, args_, "_wyvern_debug_print");
-  builder.CreateCall(fflushFunction, {nullPtr}, "_wyvern_debug_fflush");
+  builder.CreateCall(printfFunction, args_, "_daedalus_debug_print");
+  builder.CreateCall(fflushFunction, {nullPtr}, "_daedalus_debug_fflush");
 }
 
 } // namespace llvm
