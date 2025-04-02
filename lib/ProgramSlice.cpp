@@ -92,7 +92,7 @@ static const Value *getGate(const BasicBlock *BB) {
 
   const Instruction *terminator = BB->getTerminator();
   if (const BranchInst *BI = dyn_cast<BranchInst>(terminator)) {
-    assert(BI->isConditional() && "Inconditional terminator!");
+    assert(BI->isConditional() && "Unconditional terminator!");
     condition = BI;
   }
 
@@ -188,17 +188,18 @@ std::pair<Status, dataDependence> get_data_dependences_for(
   std::vector<std::pair<Type *, StringRef>> phiArguments;
   std::set<Value *> phiOnArgs;
   Status status = {true, ""};
+  bool phiCrit = false;
 
   worklist.push(&I);
   deps.insert(&I);
   visited.insert(&I);
-  bool phiCrit = false;
 
   while (!worklist.empty()) {
     const Value *cur = worklist.front();
+    worklist.pop();
+
     deps.insert(cur);
     visited.insert(cur);
-    worklist.pop();
 
     if (isa<InvokeInst>(cur) || isa<LandingPadInst>(cur)) {
       status = {
@@ -213,25 +214,26 @@ std::pair<Status, dataDependence> get_data_dependences_for(
 
       BBs.insert(dep->getParent());
 
-      // TODO: Refact this, make a function check operands.
-      bool signal = true;
+      bool continueProcessing = true;
       for (const Use &U : dep->operands()) {
-        if (!U.get()) {
-          status = {false, "Some dependency is null."};
-          signal = false;
-          break;
-        }
+        // if (!U.get()) {
+        //   status = {false, "Some dependency is null."};
+        //   continueProcessing = false;
+        //   break;
+        // }
+        assert(U.get() && "Found null operand in an instruction");
+
         if (isa<GlobalVariable>(U.get())) {
-          status = {false, "Some dependency is on a Global Variable ."};
-          signal = false;
+          status = {false, "Some dependency is on a Global Variable."};
+          continueProcessing = false;
           break;
         }
-        assert(U.get() && "Found null operand in instruction");
+        // assert(!isa<GlobalVariable>(U.get()) && "Found global variable operand in an instruction");
 
         if (!isa<Instruction>(U) && !isa<Argument>(U)) continue;
+
         if (visited.count(U)) {
-          if (isa<PHINode>(U) &&
-              U == &I) { // Phi-node is criterion and depends on itself.
+          if (isa<PHINode>(U) && U == &I) {
             deps.clear();
             Argument *arg = new Argument(U->getType(), U->getName());
             deps.insert(arg);
@@ -242,53 +244,55 @@ std::pair<Status, dataDependence> get_data_dependences_for(
           }
           continue;
         }
-        LoopInfo &Linfo = FAM.getResult<LoopAnalysis>(F);
-        Loop *L = Linfo.getLoopFor(I.getParent());
-        if (L) {
-          if (const PHINode *u = dyn_cast<PHINode>(U)) {
-            BasicBlock *header = L->getHeader();
-            if (!header)
+
+        LoopInfo &loopInfo = FAM.getResult<LoopAnalysis>(F);
+        Loop *loop = loopInfo.getLoopFor(I.getParent());
+
+        if (loop) {
+          if (const PHINode *phi = dyn_cast<PHINode>(U)) {
+            BasicBlock *header = loop->getHeader();
+            if (!header) {
               LLVM_DEBUG(errs()
                          << "Loop does not have a header in " << F.getName());
-
-            if (u->getParent() == header) {
-              phiOnArgs.insert(cast<Value>(U));
+            } else if (phi->getParent() == header) {
+              phiOnArgs.insert(const_cast<Value *>(U.get()));
               visited.insert(U);
               continue;
             }
             LLVM_DEBUG(dbgs() << "Inside loop, but not in header\n");
-          } else if (Instruction *J = dyn_cast<Instruction>(U)) {
-            if (!L->contains(J->getParent())) {
-              phiOnArgs.insert(U);
+          } else if (Instruction *inst = dyn_cast<Instruction>(U)) {
+            if (!loop->contains(inst->getParent())) {
+              phiOnArgs.insert(const_cast<Value *>(U.get()));
               visited.insert(U);
               continue;
             }
-            // print yes
           }
         }
-
-        // If dep is defined outside the loop, then add it as argument
 
         visited.insert(U);
         worklist.push(U);
       }
-      if (!signal) break;
+
+      if (!continueProcessing) break;
     }
+
     if (phiCrit) break;
 
-    if (const PHINode *PN = dyn_cast<PHINode>(cur)) {
-      for (const BasicBlock *BB : PN->blocks()) {
+    if (const PHINode *phi = dyn_cast<PHINode>(cur)) {
+      for (const BasicBlock *BB : phi->blocks()) {
         BBs.insert(BB);
       }
-      for (const Value *gate : gates[PN->getParent()]) {
+
+      for (const Value *gate : gates[phi->getParent()]) {
         if (gate && !visited.count(gate)) {
           worklist.push(gate);
         }
       }
     }
   }
-  dataDependence ret = {BBs, deps, phiArguments, phiCrit, phiOnArgs};
-  return {status, ret};
+
+  dataDependence result = {BBs, deps, phiArguments, phiCrit, phiOnArgs};
+  return {status, result};
 }
 
 /**

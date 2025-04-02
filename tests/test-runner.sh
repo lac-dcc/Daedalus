@@ -43,6 +43,8 @@ fi
 
 remove_old_file "$SLICESREPORTLOGFILE"
 remove_old_file "$TRANSFORMATIONLOGFILE"
+remove_old_file "$ORIGINAL_EXECUTABLE"
+remove_old_file "$FINAL_EXECUTABLE"
 
 clang $EXTRAPARAMS -Os -flto -fuse-ld=lld -Wl,--plugin-opt=-lto-embed-bitcode=post-merge-pre-opt "$SOURCEFILENAME" -o "$ORIGINAL_EXECUTABLE"
 llvm-objcopy --dump-section .llvmbc="$SOURCEFILENAMELL" "$ORIGINAL_EXECUTABLE"
