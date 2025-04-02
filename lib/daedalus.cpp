@@ -286,15 +286,11 @@ std::pair<uint, uint> removeInstructions(std::vector<iSlice> &allSlices,
 std::set<Instruction *> instSetMeetCriterion(FunctionAnalysisManager &FAM,
                                              Function *F) {
   std::set<Instruction *> S;
-  LoopInfo &LI = FAM.getResult<LoopAnalysis>(*F);
-
   for (auto &BB : *F) {
     Instruction *term = BB.getTerminator();
-    if (!term) {
-      LLVM_DEBUG(errs() << "Error: Found function with no terminators:\n");
-      LLVM_DEBUG(errs() << *F << '\n');
-      continue;
-    };
+    assert(term && "Error: A basic block in an original function is missing a "
+                   "terminator instruction...");
+
     // if (Instruction *retValue = dyn_cast<ReturnInst>(term))
     //   for (auto &it : retValue->operands())
     //     if (Instruction *Iit = dyn_cast<Instruction>(it)) S.insert(Iit);
@@ -305,10 +301,7 @@ std::set<Instruction *> instSetMeetCriterion(FunctionAnalysisManager &FAM,
       // if (instName.find("lcssa") == instName.npos) {
       //   S.insert(&I);
       // }
-      if (isa<BinaryOperator>(I)) {
-        Loop *L = LI.getLoopFor(I.getParent()); // TODO: remove
-        if (!L) S.insert(&I);
-      }
+      if (isa<BinaryOperator>(I)) S.insert(&I);
     }
   }
 
@@ -594,8 +587,8 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
                                 std::to_string(SizeOfLargestSliceAfterMerging));
       ReportWriterObj.writeLine("mergedSlicesMetadata:");
 
-      std::set<Function *> checkedFunctions; for (auto [deletedFunc, newFunc]
-                                                  : delToNewFunc) {
+      std::set<Function *> checkedFunctions;
+      for (auto [deletedFunc, newFunc] : delToNewFunc) {
         while (delToNewFunc.count(newFunc)) newFunc = delToNewFunc[newFunc];
         if (newFunc->hasName() && checkedFunctions.count(newFunc) == 0) {
           checkedFunctions.insert(newFunc);

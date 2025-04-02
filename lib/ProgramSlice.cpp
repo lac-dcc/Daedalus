@@ -471,22 +471,22 @@ void ProgramSlice::addDomBranches(DomTreeNode *cur, DomTreeNode *parent,
  */
 void updatePHINodes(Function *F) {
   for (BasicBlock &BB : *F) {
+    // Collect the predecessors of the current basic block
     std::set<BasicBlock *> preds(pred_begin(&BB), pred_end(&BB));
-    for (auto I_it = BB.begin(); I_it != BB.end();) {
-      PHINode *PN = dyn_cast<PHINode>(I_it);
-      if (!PN) {
-        break;
-      }
-      ++I_it;
-      std::set<BasicBlock *> S;
-      for (unsigned PI = 0, PE = PN->getNumIncomingValues(); PI != PE; ++PI) {
-        BasicBlock *incBB = PN->getIncomingBlock(PI);
-        S.insert(incBB);
-      }
-      for (auto incBB : S) {
-        if (incBB && !preds.count(incBB)) {
-          PN->removeIncomingValue(incBB);
+
+    // Iterate over all PHINodes in the basic block
+    for (PHINode &PN : BB.phis()) {
+      // Collect incoming blocks that are not valid predecessors
+      SmallVector<unsigned, 4> invalidIndices;
+      for (unsigned i = 0, e = PN.getNumIncomingValues(); i < e; ++i) {
+        if (!preds.count(PN.getIncomingBlock(i))) {
+          invalidIndices.push_back(i);
         }
+      }
+
+      // Remove invalid incoming blocks
+      for (unsigned i : llvm::reverse(invalidIndices)) {
+        PN.removeIncomingValue(i);
       }
     }
   }
@@ -1034,32 +1034,7 @@ Function *ProgramSlice::outline() {
   reorderBlocks(F);
   replaceArgs(F, dt);
 
-  LLVM_DEBUG(dbgs() << "Function being outlined:\n" << *F);
-  unsigned int numNoPreds = 0;
-  for (auto &block : *F) {
-    // if (numNoPreds >= 2) {
-    //   LLVM_DEBUG(dbgs() << "Slice with two entry points found: "
-    //                     << block.getName() << "\n");
-    //   F->eraseFromParent();
-    //   return nullptr;
-    // }
-    if (block.empty()) {
-      dbgs() << "Empty basic block found: " << block << "\n";
-      // F->eraseFromParent();
-      // return nullptr;
-    }
-    if (block.getTerminator() == nullptr) {
-      dbgs() << "Basic block with a null terminator found: " << block << "\n";
-      // F->eraseFromParent();
-      // return nullptr;
-    }
-    if (block.hasNPredecessors(0)) numNoPreds++;
-  }
-  // if (numNoPreds == 0) {
-  //   LLVM_DEBUG(dbgs() << "Slice without entry point...\n");
-  //   F->eraseFromParent();
-  //   return nullptr;
-  // }
+  dbgs() << "Outlined function:\n" << *F;
 
   assert(!verifyFunction(*F, &errs()));
 
