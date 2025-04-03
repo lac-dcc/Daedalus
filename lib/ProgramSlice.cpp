@@ -42,7 +42,7 @@
 
 #include <random>
 
-#define DEBUG_TYPE "ProgramSlicing"
+#define DEBUG_TYPE "ProgramSlice"
 
 using namespace llvm;
 
@@ -1034,7 +1034,7 @@ Function *ProgramSlice::outline() {
   reorderBlocks(F);
   replaceArgs(F, dt);
 
-  dbgs() << "Outlined function:\n" << *F;
+  LLVM_DEBUG(dbgs() << "Outlined function:\n" << *F);
 
   assert(!verifyFunction(*F, &errs()));
 
