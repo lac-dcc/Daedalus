@@ -91,6 +91,8 @@ static const Value *getGate(const BasicBlock *BB) {
   const Value *condition;
 
   const Instruction *terminator = BB->getTerminator();
+  // dbgs() << "TEMRINS\n";
+  // dbgs() << "\t" << *terminator << '\n';
   if (const BranchInst *BI = dyn_cast<BranchInst>(terminator)) {
     assert(BI->isConditional() && "Inconditional terminator!");
     condition = BI;
@@ -98,6 +100,9 @@ static const Value *getGate(const BasicBlock *BB) {
 
   else if (const SwitchInst *SI = dyn_cast<SwitchInst>(terminator)) {
     condition = SI;
+  }
+  else if (const InvokeInst *II = dyn_cast<InvokeInst>(terminator)){
+    condition = II;
   }
 
   return condition;
@@ -117,8 +122,8 @@ static const Value *getGate(const BasicBlock *BB) {
  */
 static const std::unordered_map<const BasicBlock *, SmallVector<const Value *>>
 computeGates(Function &F) {
-  // LLVM_DEBUG(dbgs() << "ProgramSlice.cpp:120: Function: " << F.getName()
-  //                   << "\n");
+  LLVM_DEBUG(dbgs() << "ProgramSlice.cpp:120: Function: " << F.getName()
+                    << "\n");
 
   DominatorTree DT(F);
   PostDominatorTree PDT(F);
@@ -132,7 +137,7 @@ computeGates(Function &F) {
       for (const BasicBlock *pred : predecessors(&BB)) {
         LLVM_DEBUG(dbgs() << " - " << pred->getName() << " -> ");
         if (DT.dominates(pred, &BB) && !PDT.dominates(&BB, pred)) {
-          LLVM_DEBUG(dbgs() << " DOM " << getGate(pred)->getName() << " ->");
+          // LLVM_DEBUG(dbgs() << " DOM " << getGate(pred)->getName() << " ->");
           BB_gates.push_back(getGate(pred));
         } else {
           const BasicBlock *ctrl_BB = getController(pred, DT, PDT);
@@ -209,6 +214,7 @@ std::pair<Status, dataDependence> get_data_dependences_for(
           "Some dependency is on a try catch. Slices must be pure functions."};
       break;
     }
+    bool signal = true;
 
     if (const Instruction *dep = dyn_cast<Instruction>(cur)) {
       assert(dep->getParent() && "Instruction has no parent basic block");
@@ -216,7 +222,6 @@ std::pair<Status, dataDependence> get_data_dependences_for(
 
       BBs.insert(dep->getParent());
       // TODO: Refact this, make a function check operands.
-      bool signal = true;
       for (const Use &U : dep->operands()) {
         if (!U.get()) {
           status = {false, "Some dependency is null."};
@@ -268,8 +273,6 @@ std::pair<Status, dataDependence> get_data_dependences_for(
           }
         }
 
-        // If dep is defined outside the loop, then add it as argument
-
         visited.insert(U);
         worklist.push(U);
       }
@@ -279,15 +282,32 @@ std::pair<Status, dataDependence> get_data_dependences_for(
 
     if (const PHINode *PN = dyn_cast<PHINode>(cur)) {
       for (const BasicBlock *BB : PN->blocks()) {
+        if (BB == I.getParent()) {
+          status = {false, "Some dependency is a phi with criterio BB as pred"};
+          signal = false;
+          break;
+        }
         BBs.insert(BB);
       }
+      bool invokeCheck = false;
+
       for (const Value *gate : gates[PN->getParent()]) {
+        if (isa<InvokeInst>(gate)) {
+          status = {false,
+                    "A phi dependes on an instruction inside a trycatch"};
+	  invokeCheck = true;
+	  break;
+        }
+	// dbgs() << *gate << '\n';
         if (gate && !visited.count(gate)) {
           worklist.push(gate);
         }
       }
+      if(invokeCheck) break;
     }
   }
+  // dbgs() << "STATUS: " <<  status.status << "\n";
+
   dataDependence ret = {BBs, deps, phiArguments, phiCrit, phiOnArgs};
   return {status, ret};
 }
@@ -295,12 +315,12 @@ std::pair<Status, dataDependence> get_data_dependences_for(
 /**
  * @brief Constructs a ProgramSlice object.
  *
- * @details This constructor initializes a ProgramSlice object by computing the
- * data and control dependencies of the given initial instruction within the
- * context of the specified function and post-dominator tree. It sets up the
- * necessary structures for representing the program slice, including the set of
- * instructions in the slice, dependency arguments, phi-function types, and
- * basic blocks in the slice. It also pre-computes struct types to avoid
+ * @details This constructor initializes a ProgramSlice object by computing
+ * the data and control dependencies of the given initial instruction within
+ * the context of the specified function and post-dominator tree. It sets up
+ * the necessary structures for representing the program slice, including the
+ * set of instructions in the slice, dependency arguments, phi-function types,
+ * and basic blocks in the slice. It also pre-computes struct types to avoid
  * redundant type creation and computes attractor blocks.
  *
  * @param Initial The initial instruction to be sliced.
@@ -813,11 +833,9 @@ void ProgramSlice::populateFunctionWithBBs(Function *F) {
  * @param F The Function where the slice instructions will be populated.
  */
 void ProgramSlice::populateBBsWithInsts(Function *F) {
-  dbgs() << "Insts on " << *_initial << '\n';
   for (BasicBlock &BB : *_parentFunction) {
     for (Instruction &origInst : BB) {
       if (_instsInSlice.count(&origInst)) {
-        dbgs() << '\t' << origInst << '\n';
         Instruction *newInst = origInst.clone();
         newInst->setName(origInst.getName());
         _Imap.insert(std::make_pair(&origInst, newInst));
@@ -1045,6 +1063,41 @@ ReturnInst *ProgramSlice::addReturnValue(Function *F) {
                             exit);
 }
 
+bool verifySlice(Function *F, Instruction *I) {
+  LLVM_DEBUG(dbgs() << "Function being outlined:\n" << *F);
+  unsigned int numNoPreds = 0;
+  for (auto &block : *F) {
+    if (numNoPreds >= 2) {
+      LLVM_DEBUG(dbgs() << "Slice with two entry points found: "
+                        << block.getName() << "\n");
+      F->eraseFromParent();
+      return false;
+    }
+    if (block.empty()) {
+      LLVM_DEBUG(dbgs() << "Empty basic block found: " << block.getName()
+                        << "\n");
+      F->eraseFromParent();
+      return false;
+    }
+    if (block.hasNPredecessors(0)) numNoPreds++;
+  }
+  if (numNoPreds == 0) {
+    LLVM_DEBUG(dbgs() << "Slice without entry point...\n");
+    F->eraseFromParent();
+    return false;
+  }
+
+  if (verifyFunction(*F, &errs())) {
+    dbgs() << "Criterion: " << *I << '\n';
+    dbgs() << *F << '\n';
+    errs() << "Outlined function is broken...\n";
+    F->eraseFromParent();
+    exit(0);
+    return false;
+  }
+  return true;
+}
+
 /**
  * @brief Outlines the given slice into a standalone Function.
  *
@@ -1065,7 +1118,7 @@ Function *ProgramSlice::outline() {
 
   const int size = 3;
   if (!_canOutline.first) {
-    LLVM_DEBUG(dbgs() << _canOutline.second << '\n');
+    dbgs() << _canOutline.second << '\n';
     return nullptr;
   }
   if (_instsInSlice.size() < size) {
@@ -1133,51 +1186,12 @@ Function *ProgramSlice::outline() {
   populateFunctionWithBBs(F);
   populateBBsWithInsts(F);
   reorganizeUses(F);
-  dbgs() << *_initial << '\n';
-  if (_initial->getMetadata("ddbg")) {
-    dbgs() << "HERE\n" << *F << '\n';
-  }
   rerouteBranches(F);
   addReturnValue(F);
   reorderBlocks(F);
   replaceArgs(F, dt);
 
-  LLVM_DEBUG(dbgs() << "Function being outlined:\n" << *F);
-  unsigned int numNoPreds = 0;
-  for (auto &block : *F) {
-    if (numNoPreds >= 2) {
-      LLVM_DEBUG(dbgs() << "Slice with two entry points found: "
-                        << block.getName() << "\n");
-      F->eraseFromParent();
-      return nullptr;
-    }
-    if (block.empty()) {
-      LLVM_DEBUG(dbgs() << "Empty basic block found: " << block.getName()
-                        << "\n");
-      F->eraseFromParent();
-      return nullptr;
-    }
-    if (block.hasNPredecessors(0)) numNoPreds++;
-  }
-  if (numNoPreds == 0) {
-    LLVM_DEBUG(dbgs() << "Slice without entry point...\n");
-    F->eraseFromParent();
-    return nullptr;
-  }
-
-  if (_initial->getMetadata("ddbg")) {
-    dbgs() << "HERE\n" << *F << '\n';
-  }
-
-  if (verifyFunction(*F, &errs())) {
-    errs() << "Outlined function is broken...\n";
-    F->eraseFromParent();
-    return nullptr;
-  }
-
-  dbgs() << *F << '\n';
-
-  return F;
+  return (verifySlice(F, _initial) ? F : nullptr);
 }
 
 /**

@@ -306,8 +306,7 @@ std::set<Instruction *> instSetMeetCriterion(FunctionAnalysisManager &FAM,
       //   S.insert(&I);
       // }
       if (isa<BinaryOperator>(I)) {
-        Loop *L = LI.getLoopFor(I.getParent());
-        if (!L) S.insert(&I);
+        S.insert(&I);
       }
     }
   }
@@ -455,7 +454,6 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
 
     // Replace all uses of I with the correpondent call
     for (Instruction *I : S) {
-      dbgs() << *I << '\n';
       if (!canBeSliceCriterion(*I)) continue;
 
       LLVM_DEBUG(dbgs() << "daedalus.cpp: Function: " << F->getName()
