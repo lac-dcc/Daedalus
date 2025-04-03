@@ -524,6 +524,7 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
       SmallVector<Value *> funcArgs = ps.getOrigFunctionArgs();
       CallInst *callInst =
           CallInst::Create(G, funcArgs, I->getName(), I->getParent());
+
       Instruction *moveTo = I;
       if (I && isa<PHINode>(I)) moveTo = I->getParent()->getFirstNonPHI();
       callInst->moveBefore(moveTo);

@@ -68,11 +68,6 @@ public:
 
 private:
   /**
-   * @brief Prints the original and sliced functions for debugging purposes.
-   */
-  void printFunctions(Function *F);
-
-  /**
    * @brief Reorders basic blocks in the new function F, ensuring
    * that the sliced function's entry block (the only one with no predecessors)
    * is first in the layout. This is necessary because LLVM assumes the first

@@ -80,8 +80,8 @@ static const BasicBlock *getController(const BasicBlock *BB, DominatorTree &DT,
  *
  * @details This function retrieves the condition that will gate the
  * phi-functions of another basic block. It examines the terminator instruction
- * of the given basic block (BB) and extracts the condition from a conditional
- * branch instruction or a switch instruction.
+ * of the given basic block (BB) and extracts the condition from a branching
+ * instruction.
  *
  * @param BB The basic block whose predicate is to be returned.
  * @return A pointer to the condition value, or nullptr if no valid condition is
@@ -216,11 +216,6 @@ std::pair<Status, dataDependence> get_data_dependences_for(
 
       bool continueProcessing = true;
       for (const Use &U : dep->operands()) {
-        // if (!U.get()) {
-        //   status = {false, "Some dependency is null."};
-        //   continueProcessing = false;
-        //   break;
-        // }
         assert(U.get() && "Found null operand in an instruction");
 
         if (isa<GlobalVariable>(U.get())) {
@@ -355,26 +350,6 @@ ProgramSlice::ProgramSlice(Instruction &Initial, Function &F,
   _BBsInSlice = data.BBs;
 
   computeAttractorBlocks();
-}
-
-/**
- * @brief Prints the original and sliced functions for debugging purposes.
- *
- * @details This function prints debugging information about the original
- * function from which the instruction is sliced, including the slicing
- * instruction itself, the function it belongs to, and the size of the
- * function. It also prints the sliced function provided as an argument `F`.
- * This helps in understanding the context and effect of slicing on the
- * function.
- *
- * @param F Pointer to the sliced function to be printed.
- */
-void ProgramSlice::printFunctions(Function *F) {
-  LLVM_DEBUG(dbgs() << "\n\n ==== Slicing instruction: [" << *_initial
-                    << "] in function: " << _parentFunction->getName()
-                    << " with size " << _parentFunction->size() << " ====\n"
-                    << "\n======== SLICED FUNCTION ==========\n"
-                    << *F);
 }
 
 /**
