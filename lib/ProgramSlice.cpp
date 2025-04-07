@@ -125,25 +125,27 @@ computeGates(Function &F) {
     SmallVector<const Value *> BB_gates;
     const unsigned num_preds = pred_size(&BB);
     if (num_preds > 1) {
-      LLVM_DEBUG(dbgs() << BB.getName() << ":\n");
+      // Uncomment the following line for debugging, only when needed in a non highly optimized build!
+      // LLVM_DEBUG(dbgs() << BB.getName() << ":\n");
       for (const BasicBlock *pred : predecessors(&BB)) {
-        LLVM_DEBUG(dbgs() << " - " << pred->getName() << " -> ");
+        // LLVM_DEBUG(dbgs() << " - " << pred->getName() << " -> ");
         if (DT.dominates(pred, &BB) && !PDT.dominates(&BB, pred)) {
-          LLVM_DEBUG(dbgs() << " DOM " << getGate(pred)->getName() << " ->");
+          // LLVM_DEBUG(dbgs() << " DOM " << getGate(pred)->getName() << " ->");
           BB_gates.push_back(getGate(pred));
         } else {
           const BasicBlock *ctrl_BB = getController(pred, DT, PDT);
           if (ctrl_BB) {
-            LLVM_DEBUG(dbgs() << " R-CTRL " << "CTRL_BB: " << ctrl_BB->getName()
-                              << " " << getGate(ctrl_BB)->getName());
+            // LLVM_DEBUG(dbgs() << " R-CTRL " << "CTRL_BB: " << ctrl_BB->getName()
+            //                   << " " << getGate(ctrl_BB)->getName());
             BB_gates.push_back(getGate(ctrl_BB));
           }
         }
-        LLVM_DEBUG(dbgs() << ";\n");
+        // LLVM_DEBUG(dbgs() << ";\n");
       }
     }
     gates.emplace(std::make_pair(&BB, BB_gates));
   }
+
   return gates;
 }
 
@@ -223,7 +225,8 @@ std::pair<Status, dataDependence> get_data_dependences_for(
           continueProcessing = false;
           break;
         }
-        // assert(!isa<GlobalVariable>(U.get()) && "Found global variable operand in an instruction");
+        // assert(!isa<GlobalVariable>(U.get()) && "Found global variable
+        // operand in an instruction");
 
         if (!isa<Instruction>(U) && !isa<Argument>(U)) continue;
 
