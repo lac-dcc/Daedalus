@@ -210,13 +210,13 @@ std::pair<Status, dataDependence> get_data_dependences_for(
       break;
     }
 
+    bool signal = true;
     if (const Instruction *dep = dyn_cast<Instruction>(cur)) {
       assert(dep->getParent() && "Instruction has no parent basic block");
       assert(dep->getType() && "Instruction has null type");
 
       BBs.insert(dep->getParent());
       // TODO: Refact this, make a function check operands.
-      bool signal = true;
       for (const Use &U : dep->operands()) {
         if (!U.get()) {
           status = {false, "Some dependency is null."};
@@ -280,9 +280,21 @@ std::pair<Status, dataDependence> get_data_dependences_for(
 
     if (const PHINode *PN = dyn_cast<PHINode>(cur)) {
       for (const BasicBlock *BB : PN->blocks()) {
+        if (BB == I.getParent()) {
+          status = {false, "Some dependency is a phi with criterio BB as pred"};
+          signal = false;
+          break;
+        }
         BBs.insert(BB);
       }
+      bool invokeCheck = false;
       for (const Value *gate : gates[PN->getParent()]) {
+        if (isa<InvokeInst>(gate)) {
+          status = {false,
+                    "A phi dependes on an instruction inside a trycatch"};
+          invokeCheck = true;
+          break;
+        }
         if (gate && !visited.count(gate)) {
           worklist.push(gate);
         }
@@ -1044,6 +1056,41 @@ ReturnInst *ProgramSlice::addReturnValue(Function *F) {
                             exit);
 }
 
+bool verifySlice(Function *F, Instruction *I) {
+   LLVM_DEBUG(dbgs() << "Function being outlined:\n" << *F);
+   unsigned int numNoPreds = 0;
+   for (auto &block : *F) {
+     if (numNoPreds >= 2) {
+       LLVM_DEBUG(dbgs() << "Slice with two entry points found: "
+                         << block.getName() << "\n");
+       F->eraseFromParent();
+       return false;
+     }
+     if (block.empty()) {
+       LLVM_DEBUG(dbgs() << "Empty basic block found: " << block.getName()
+                         << "\n");
+       F->eraseFromParent();
+       return false;
+     }
+     if (block.hasNPredecessors(0)) numNoPreds++;
+   }
+   if (numNoPreds == 0) {
+     LLVM_DEBUG(dbgs() << "Slice without entry point...\n");
+     F->eraseFromParent();
+     return false;
+   }
+ 
+   if (verifyFunction(*F, &errs())) {
+     dbgs() << "Criterion: " << *I << '\n';
+     dbgs() << *F << '\n';
+     errs() << "Outlined function is broken...\n";
+     F->eraseFromParent();
+     exit(0);
+     return false;
+   }
+   return true;
+ }
+
 /**
  * @brief Outlines the given slice into a standalone Function.
  *
@@ -1132,51 +1179,12 @@ Function *ProgramSlice::outline() {
   populateFunctionWithBBs(F);
   populateBBsWithInsts(F);
   reorganizeUses(F);
-  dbgs() << *_initial << '\n';
-  if (_initial->getMetadata("ddbg")) {
-    dbgs() << "HERE\n" << *F << '\n';
-  }
   rerouteBranches(F);
   addReturnValue(F);
   reorderBlocks(F);
   replaceArgs(F, dt);
 
-  LLVM_DEBUG(dbgs() << "Function being outlined:\n" << *F);
-  unsigned int numNoPreds = 0;
-  for (auto &block : *F) {
-    if (numNoPreds >= 2) {
-      LLVM_DEBUG(dbgs() << "Slice with two entry points found: "
-                        << block.getName() << "\n");
-      F->eraseFromParent();
-      return nullptr;
-    }
-    if (block.empty()) {
-      LLVM_DEBUG(dbgs() << "Empty basic block found: " << block.getName()
-                        << "\n");
-      F->eraseFromParent();
-      return nullptr;
-    }
-    if (block.hasNPredecessors(0)) numNoPreds++;
-  }
-  if (numNoPreds == 0) {
-    LLVM_DEBUG(dbgs() << "Slice without entry point...\n");
-    F->eraseFromParent();
-    return nullptr;
-  }
-
-  if (_initial->getMetadata("ddbg")) {
-    dbgs() << "HERE\n" << *F << '\n';
-  }
-
-  if (verifyFunction(*F, &errs())) {
-    errs() << "Outlined function is broken...\n";
-    F->eraseFromParent();
-    return nullptr;
-  }
-
-  dbgs() << *F << '\n';
-
-  return F;
+  return (verifySlice(F, _initial) ? F:nullptr);
 }
 
 /**
