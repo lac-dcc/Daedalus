@@ -125,8 +125,8 @@ computeGates(Function &F) {
     SmallVector<const Value *> BB_gates;
     const unsigned num_preds = pred_size(&BB);
     if (num_preds > 1) {
-      // Uncomment the following line for debugging, only when needed in a non highly optimized build!
-      // LLVM_DEBUG(dbgs() << BB.getName() << ":\n");
+      // Uncomment the following line for debugging, only when needed in a non
+      // highly optimized build! LLVM_DEBUG(dbgs() << BB.getName() << ":\n");
       for (const BasicBlock *pred : predecessors(&BB)) {
         // LLVM_DEBUG(dbgs() << " - " << pred->getName() << " -> ");
         if (DT.dominates(pred, &BB) && !PDT.dominates(&BB, pred)) {
@@ -135,7 +135,8 @@ computeGates(Function &F) {
         } else {
           const BasicBlock *ctrl_BB = getController(pred, DT, PDT);
           if (ctrl_BB) {
-            // LLVM_DEBUG(dbgs() << " R-CTRL " << "CTRL_BB: " << ctrl_BB->getName()
+            // LLVM_DEBUG(dbgs() << " R-CTRL " << "CTRL_BB: " <<
+            // ctrl_BB->getName()
             //                   << " " << getGate(ctrl_BB)->getName());
             BB_gates.push_back(getGate(ctrl_BB));
           }
@@ -371,8 +372,7 @@ ProgramSlice::ProgramSlice(Instruction &Initial, Function &F,
  * used to efficiently compute dominator information.
  */
 void ProgramSlice::computeAttractorBlocks() {
-  PostDominatorTree PDT;
-  PDT.recalculate(*_parentFunction);
+  PostDominatorTree PDT(*_parentFunction);
   std::map<const BasicBlock *, const BasicBlock *> attractors;
 
   for (const BasicBlock &BB : *_parentFunction) {
@@ -525,7 +525,9 @@ void ProgramSlice::rerouteBranches(Function *F) {
           if (!newTarget) {
             continue;
           }
+
           BranchInst::Create(newTarget, &BB);
+
           // If new successor has any PHINodes that merged a path from
           // a block that was dominated by this block, update its
           // incoming block to be this instead.
@@ -574,6 +576,7 @@ void ProgramSlice::rerouteBranches(Function *F) {
           }
 
           BI->setSuccessor(idx, newSucc);
+
           for (Instruction &I : *newSucc) {
             if (!isa<PHINode>(I)) {
               continue;
@@ -601,6 +604,7 @@ void ProgramSlice::rerouteBranches(Function *F) {
           }
 
           SI->setSuccessor(idx, newSucc);
+
           for (Instruction &I : *newSucc) {
             if (!isa<PHINode>(I)) {
               continue;
@@ -676,6 +680,23 @@ void ProgramSlice::populateFunctionWithBBs(Function *F) {
   for (const BasicBlock *BB : _BBsInSlice) {
     insertNewBB(BB, F);
   }
+  LLVM_DEBUG({
+    dbgs() << "Original to New Basic Block Map:\n";
+    for (const auto &pair : _origToNewBBmap) {
+      dbgs() << "Original Basic Block: " << pair.first->getName() << "\n";
+      dbgs() << "Content:\n";
+      for (const Instruction &inst : *pair.first) {
+        dbgs() << "  " << inst << "\n";
+      }
+      dbgs() << "New Basic Block Name: " << pair.second->getName() << "\n";
+    }
+
+    dbgs() << "Attractors:\n";
+    for (const auto &pair : _attractors) {
+      dbgs() << "Block: " << pair.first->getName()
+             << " -> Attractor: " << pair.second->getName() << "\n";
+    }
+  });
 }
 
 /**
@@ -907,8 +928,8 @@ ReturnInst *ProgramSlice::addReturnValue(Function *F) {
         return ReturnInst::Create(F->getParent()->getContext(), nullptr, exit);
     }
   }
-  // If PhiCrit was seted, just return the argument that correspondes to the\
-    // phi instruction criterion. (i.e take an argument and return it)
+  // If PhiCrit was seted, just return the argument that correspondes to the
+  // phi instruction criterion. (i.e take an argument and return it)
   if (_phiCrit) {
     for (int k = 0; k < F->arg_size(); ++k) {
       Value *myArg = F->getArg(k);
@@ -1007,14 +1028,48 @@ Function *ProgramSlice::outline() {
   populateFunctionWithBBs(F);
   populateBBsWithInsts(F);
   reorganizeUses(F);
+  LLVM_DEBUG(dbgs() << "Outlined function after reorganizeUses:\n" << *F);
   rerouteBranches(F);
+  LLVM_DEBUG(dbgs() << "Outlined function after rerouteBranches:\n" << *F);
   addReturnValue(F);
   reorderBlocks(F);
   replaceArgs(F, dt);
 
   LLVM_DEBUG(dbgs() << "Outlined function:\n" << *F);
+  
+  unsigned int numNoPreds = 0;
+  for (auto &block : *F) {
+    if (numNoPreds >= 2) {
+      LLVM_DEBUG(dbgs() << "Slice with two entry points found: "
+                        << block.getName() << "\n");
+      F->eraseFromParent();
+      return nullptr;
+    }
+    if (block.empty()) {
+      LLVM_DEBUG(dbgs() << "Empty basic block found: " << block.getName()
+                        << "\n");
+      F->eraseFromParent();
+      return nullptr;
+    }
+    if (block.hasNPredecessors(0)) numNoPreds++;
+  }
+  if (numNoPreds == 0) {
+    LLVM_DEBUG(dbgs() << "Slice without entry point...\n");
+    F->eraseFromParent();
+    return nullptr;
+  }
 
-  assert(!verifyFunction(*F, &errs()));
+  if (_initial->getMetadata("ddbg")) {
+    dbgs() << "HERE\n" << *F << '\n';
+  }
+
+  if (verifyFunction(*F, &errs())) {
+    errs() << "Outlined function is broken...\n";
+    F->eraseFromParent();
+    return nullptr;
+  }
+
+  // assert(!verifyFunction(*F, &errs()));
 
   return F;
 }

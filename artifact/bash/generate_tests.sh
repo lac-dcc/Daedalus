@@ -148,7 +148,7 @@ for i in "${TESTFILENAME[@]}"; do
     llvm-objcopy --dump-section .llvmbc="${LLFILENAME}" "${LLFILENAME}.bin"
     opt -S "${LLFILENAME}" -o "${LLFILENAME}"
     if [ -e "${LLFILENAME}" ]; then
-        opt -S -passes=mem2reg,lcssa "${LLFILENAME}" -o "${LLFILENAME}"
+        opt -S -passes=mem2reg,lcssa,break-crit-edges "${LLFILENAME}" -o "${LLFILENAME}"
         
         remove_old_file "${LLFILENAME}_slices_report.log"
         remove_old_file "${FILENAMEWEXT}.bin"

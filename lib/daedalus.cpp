@@ -658,21 +658,21 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
     functionSlicesToDot(M, toSimplify);
   }
 
-  // LLVM_DEBUG(dbgs() << "== MODULE VERIFICATION PHASE ==\n");
-  // if (verifyModule(M, &errs())) {
-  //   errs() << "Module verification failed!\n";
-  //   std::error_code EC;
-  //   std::string failedModuleFilename =
-  //       M.getModuleIdentifier() + "_failed_module.ll";
-  //   raw_fd_ostream OS(failedModuleFilename, EC, sys::fs::OF_None);
-  //   if (EC) {
-  //     errs() << "Error opening file for writing: " << EC.message() << "\n";
-  //   } else {
-  //     M.print(OS, nullptr);
-  //     errs() << "Module written to " << failedModuleFilename << "\n";
-  //   }
-  //   assert(false && "Module verification failed!");
-  // }
+  LLVM_DEBUG(dbgs() << "== MODULE VERIFICATION PHASE ==\n");
+  if (verifyModule(M, &errs())) {
+    errs() << "Module verification failed!\n";
+    std::error_code EC;
+    std::string failedModuleFilename =
+        M.getModuleIdentifier() + "_failed_module.ll";
+    raw_fd_ostream OS(failedModuleFilename, EC, sys::fs::OF_None);
+    if (EC) {
+      errs() << "Error opening file for writing: " << EC.message() << "\n";
+    } else {
+      M.print(OS, nullptr);
+      errs() << "Module written to " << failedModuleFilename << "\n";
+    }
+    assert(false && "Module verification failed!");
+  }
 
   return PreservedAnalyses::none();
 }
