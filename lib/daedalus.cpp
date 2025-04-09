@@ -97,191 +97,143 @@ bool canBeSliceCriterion(Instruction &I) {
 }
 
 /**
- * @brief Determines if an instruction can be safely removed without affecting a
- * target instruction.
+ * @brief Attempts to remove an instruction if it meets specific criteria.
  *
- * @param inst The instruction to evaluate for removal
- * @param targetInst The instruction that should be preserved
- * @param origInst Set of original instructions in the slice
- * @param visited Set to track visited instructions during analysis
- * @param canRemoveCache Map caching removal decisions for instructions
- * @return Whether the instruction can be safely removed
+ * @details This function attempts to remove an instruction from the given set
+ * of instructions if it can be safely removed. It recursively checks if all
+ * users of the instruction can be removed.
+ *
+ * @param I The instruction to attempt to remove.
+ * @param s The set of instructions to be considered.
+ * @param instMap A map tracking the state of each instruction.
+ * @param ini The initial instruction for context.
+ * @return True if the instruction was successfully removed, false otherwise.
  */
-bool canRemoveInstruction(Instruction *inst, Instruction *targetInst,
-                          const std::set<Instruction *> &origInst,
-                          std::set<Instruction *> &visited,
-                          std::map<Instruction *, bool> &canRemoveCache) {
-  // Check cache first for already processed instructions
-  if (canRemoveCache.find(inst) != canRemoveCache.end()) {
-    return canRemoveCache[inst];
+bool canRemove(Instruction *I, Instruction *ini,
+               std::set<Instruction *> &constOriginalInst,
+               std::set<Instruction *> &vis,
+               std::set<Instruction *> &toRemove) {
+  if (ini == I) return true;
+  if (toRemove.find(I) != toRemove.end()) return true;
+
+  if (constOriginalInst.find(I) == constOriginalInst.end()) return false;
+
+  if (vis.find(I) != vis.end()) return true;
+
+  if (isa<GlobalValue>(I)) {
+    return false;
+  };
+
+  if (I->isTerminator()) return false;
+
+  vis.insert(I);
+
+  for (auto U : I->users()) {
+    if (!U) continue;
+    if (Instruction *J = dyn_cast<Instruction>(U))
+      if (!canRemove(J, ini, constOriginalInst, vis, toRemove)) return false;
   }
-
-  // Base cases for quick decisions
-  if (inst == targetInst) return false;
-  if (inst->getParent() == nullptr) return true;
-  if (isa<GlobalValue>(inst) || inst->isTerminator()) return false;
-  if (origInst.find(inst) == origInst.end()) return false;
-
-  // Detect cycles in the dependency graph
-  if (visited.find(inst) != visited.end()) {
-    // Temporarily mark as removable to break cycles - final decision made later
-    canRemoveCache[inst] = true;
-    return true;
-  }
-
-  visited.insert(inst);
-
-  // An instruction can be removed if all its users can be removed
-  for (User *user : inst->users()) {
-    if (!user) continue;
-
-    if (Instruction *userInst = dyn_cast<Instruction>(user)) {
-      if (!canRemoveInstruction(userInst, targetInst, origInst, visited,
-                                canRemoveCache)) {
-        canRemoveCache[inst] = false;
-        return false;
-      }
-    }
-  }
-
-  canRemoveCache[inst] = true;
+  toRemove.insert(I);
   return true;
 }
 
 /**
- * @brief Analyzes which instructions can be safely removed without affecting
- * the target instruction.
+ * @brief Checks if a given instruction is self-contained within a set of
+ * instructions.
  *
- * @param origInst The set of original instructions to check
- * @param targetInst The target instruction to preserve
- * @param toRemove Set that will be populated with removable instructions
- * @return True if the analysis was successful
+ * This function iterates over a set of original instructions and determines if
+ * the given instruction `I` is self-contained. If an instruction `J` from the
+ * original set can be removed without affecting `I`, it is added to the
+ * `tempToRemove` set.
+ *
+ * @param origInst A set of original instructions to check against.
+ * @param I The instruction to check for self-containment.
+ * @param tempToRemove A set of instructions that can be removed without
+ * affecting `I`.
+ * @return Always returns true.
  */
-bool analyzeRemovableInstructions(const std::set<Instruction *> &origInst,
-                                  Instruction *targetInst,
-                                  std::set<Instruction *> &toRemove) {
-  std::map<Instruction *, bool> canRemoveCache;
-
-  // Process each instruction in the original set
-  for (Instruction *currInst : origInst) {
-    // Skip target instruction and instructions without parents
-    if (currInst == targetInst || currInst->getParent() == nullptr) {
-      continue;
-    }
-
-    std::set<Instruction *> visited;
-
-    // If instruction can be removed, add to removal set
-    if (canRemoveInstruction(currInst, targetInst, origInst, visited,
-                             canRemoveCache)) {
-      toRemove.insert(currInst);
+bool isSelfContained(std::set<Instruction *> origInst, Instruction *I,
+                     std::set<Instruction *> &tempToRemove) {
+  for (Instruction *J : origInst) {
+    if (J->getParent() == nullptr) continue;
+    std::set<Instruction *> vis;
+    if (I != J) {
+      if (canRemove(J, I, origInst, vis, tempToRemove)) tempToRemove.insert(J);
     }
   }
-
   return true;
-}
-
-/**
- * @brief Processes a single slice to determine if it can be simplified
- *
- * @param slice The instruction slice to process
- * @param mergeTo Set of functions allowed to be merged
- * @param toSimplify Set of functions to be simplified
- * @param toRemove Set of instructions to be removed
- * @return Pair indicating if slice was (unmergeable, nonSelfContained)
- */
-std::pair<bool, bool> processSlice(iSlice &slice,
-                                   const std::set<Function *> &mergeTo,
-                                   std::set<Function *> &toSimplify,
-                                   std::set<Instruction *> &toRemove) {
-  Instruction *sliceCriterion = slice.I;
-  CallInst *callInst = slice.callInst;
-  Function *F = slice.F;
-  std::set<Instruction *> origInst = slice.constOriginalInst;
-
-  if (F == nullptr) return {false, false};
-
-  // Get the actual function from the call instruction
-  F = callInst->getCalledFunction();
-
-  // Check if function is allowed to be merged
-  if (mergeTo.count(F) == 0) {
-    killSlice(F, callInst, sliceCriterion);
-    return {true, false};
-  }
-
-  // Move the entry block to the start of the function
-  BasicBlock *realEntry = nullptr;
-  for (BasicBlock &BB : *F) {
-    if (BB.hasNPredecessors(0)) {
-      realEntry = &BB;
-      break;
-    }
-  }
-
-  if (realEntry) {
-    realEntry->moveBefore(&F->getEntryBlock());
-  }
-
-  if (sliceCriterion->getParent() == nullptr) return {false, false};
-
-  // Analyze which instructions can be removed
-  std::set<Instruction *> tempToRemove;
-  if (!analyzeRemovableInstructions(origInst, sliceCriterion, tempToRemove)) {
-    LLVM_DEBUG(dbgs() << "Not self contained!\n");
-    killSlice(F, callInst, sliceCriterion);
-    return {false, true};
-  }
-
-  // Process removable instructions
-  for (auto *inst : tempToRemove) {
-    toRemove.insert(inst);
-
-    // Handle call instructions specially
-    if (CallInst *cInst = dyn_cast<CallInst>(inst)) {
-      Function *G = cInst->getCalledFunction();
-      if (G && G->hasFnAttribute(Attribute::NoInline)) {
-        G->removeFnAttr(Attribute::NoInline);
-      }
-    }
-  }
-
-  toSimplify.insert(F);
-  toRemove.insert(sliceCriterion);
-
-  return {false, false};
 }
 
 /**
  * @brief Removes instructions from slices and simplifies functions.
  *
- * @param allSlices Vector of instruction slices to process
- * @param mergeTo Set of functions allowed to be merged
- * @param toSimplify Set of functions that need to be simplified
- * @return Result containing counts of unmergeable and non-self-contained slices
+ * This function processes a collection of instruction slices, removing
+ * instructions that are not self-contained or belong to functions that
+ * should not be merged. It also simplifies functions by removing unnecessary
+ * instructions and updating function attributes.
+ *
+ * @param allSlices A vector of instruction slices to process.
+ * @param mergeTo A set of functions that are allowed to be merged.
+ * @param toSimplify A set of functions that need to be simplified.
+ * @return A pair of unsigned integers representing the count of slices that
+ *         were not merged and the count of slices that were not self-contained.
  */
-SliceProcessingResult removeInstructions(std::vector<iSlice> &allSlices,
+std::pair<uint, uint> removeInstructions(std::vector<iSlice> &allSlices,
                                          const std::set<Function *> &mergeTo,
                                          std::set<Function *> &toSimplify) {
   std::set<Instruction *> toRemove;
-  SliceProcessingResult result = {0, 0};
+  std::map<Instruction *, Function *> newCalls;
 
-  // Process each slice
+  uint dontMerge = 0, notSelfContained = 0;
+
   for (iSlice &slice : allSlices) {
-    auto [isUnmergeable, isNonSelfContained] =
-        processSlice(slice, mergeTo, toSimplify, toRemove);
+    Instruction *sliceCriterion = slice.I;
+    CallInst *callInst = slice.callInst;
+    Function *F = slice.F;
+    std::set<Instruction *> origInst = slice.constOriginalInst;
+    if (F == NULL) continue;
+    F = callInst->getCalledFunction();
+    if (mergeTo.count(F) == 0) {
+      killSlice(F, callInst, sliceCriterion);
+      ++dontMerge;
+      continue;
+    }
 
-    if (isUnmergeable) result.unmergeable++;
-    if (isNonSelfContained) result.nonSelfContained++;
+    BasicBlock *realEntry = nullptr;
+    for (BasicBlock &BB : *F) {
+      if (BB.hasNPredecessors(0)) {
+        realEntry = &BB;
+      }
+    }
+    realEntry->moveBefore(&F->getEntryBlock());
+
+    if (sliceCriterion->getParent() == nullptr) continue;
+
+    std::set<Instruction *> tempToRemove;
+    if (!isSelfContained(origInst, sliceCriterion, tempToRemove)) {
+      LLVM_DEBUG(dbgs() << "Not self contained!\n");
+      killSlice(F, callInst, sliceCriterion);
+      ++notSelfContained;
+      continue;
+    } else {
+      for (auto *inst : tempToRemove) {
+        toRemove.insert(inst);
+        if (CallInst *cInst = dyn_cast<CallInst>(inst)) {
+          Function *G = cInst->getCalledFunction();
+          if (G && G->hasFnAttribute(Attribute::NoInline))
+            G->removeFnAttr(Attribute::NoInline);
+        }
+      }
+    }
+    toSimplify.insert(F);
+    toRemove.insert(sliceCriterion);
   }
 
-  // Remove all collected instructions
-  for (auto &inst : toRemove) {
-    inst->replaceAllUsesWith(UndefValue::get(inst->getType()));
-    inst->eraseFromParent();
+  for (auto &e : toRemove) {
+    e->replaceAllUsesWith(UndefValue::get(e->getType()));
+    e->eraseFromParent();
   }
-
-  return result;
+  return {dontMerge, notSelfContained};
 }
 
 /**
@@ -514,8 +466,7 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
       for (auto &e : constOriginalInst) originInstructionSet.insert(e.first);
 
       std::set<Instruction *> tempToRemove;
-      if (!analyzeRemovableInstructions(originInstructionSet, I,
-                                        tempToRemove)) {
+      if (!isSelfContained(originInstructionSet, I, tempToRemove)) {
         LLVM_DEBUG(dbgs() << "Not self contained!\n");
         G->eraseFromParent();
         continue;
@@ -658,21 +609,7 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
     functionSlicesToDot(M, toSimplify);
   }
 
-  LLVM_DEBUG(dbgs() << "== MODULE VERIFICATION PHASE ==\n");
-  if (verifyModule(M, &errs())) {
-    errs() << "Module verification failed!\n";
-    std::error_code EC;
-    std::string failedModuleFilename =
-        M.getModuleIdentifier() + "_failed_module.ll";
-    raw_fd_ostream OS(failedModuleFilename, EC, sys::fs::OF_None);
-    if (EC) {
-      errs() << "Error opening file for writing: " << EC.message() << "\n";
-    } else {
-      M.print(OS, nullptr);
-      errs() << "Module written to " << failedModuleFilename << "\n";
-    }
-    assert(false && "Module verification failed!");
-  }
+  assert(!verifyModule(M, &errs())); // assert module is not broken
 
   return PreservedAnalyses::none();
 }

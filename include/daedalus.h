@@ -14,21 +14,11 @@
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/PassManager.h"
 #include "llvm/IR/Value.h"
-#include "llvm/IR/Function.h"
-#include "llvm/IR/PassManager.h"
 #include "llvm/Passes/PassBuilder.h"
 #include "llvm/Passes/PassPlugin.h"
 #include "llvm/Support/raw_ostream.h"
 #include <llvm/Analysis/AliasAnalysis.h>
 #include <llvm/Pass.h>
-
-/**
- * @brief Represents the result of processing slices
- */
-struct SliceProcessingResult {
-  uint unmergeable; // Count of slices not merged due to function constraints
-  uint nonSelfContained; // Count of slices not self-contained
-};
 
 /**
  * @brief Represents an outlined program slice
@@ -50,35 +40,25 @@ struct iSlice {
 bool canBeSliceCriterion(llvm::Instruction &I);
 
 /**
- * @brief Determines if an instruction can be safely removed without affecting a
- * target instruction.
+ * @brief Attempts to remove an instruction if it meets specific criteria.
  */
-bool canRemoveInstruction(llvm::Instruction *inst,
-                          llvm::Instruction *targetInst,
-                          const std::set<llvm::Instruction *> &origInst,
-                          std::set<llvm::Instruction *> &visited,
-                          std::map<llvm::Instruction *, bool> &canRemoveCache);
+bool canRemove(llvm::Instruction *I, llvm::Instruction *ini,
+               std::set<llvm::Instruction *> &constOriginalInst,
+               std::set<llvm::Instruction *> &vis,
+               std::set<llvm::Instruction *> &toRemove);
 
 /**
- * @brief Analyzes which instructions can be safely removed without
- * affecting the target instruction.
+ * @brief Checks if a given instruction is self-contained within a set of
+ * instructions.
  */
-bool analyzeRemovableInstructions(const std::set<llvm::Instruction *> &origInst,
-                                  llvm::Instruction *targetInst,
-                                  std::set<llvm::Instruction *> &toRemove);
-
-/**
- * @brief Processes a single slice to determine if it can be simplified
- */
-std::pair<bool, bool> processSlice(iSlice &slice,
-                                   const std::set<llvm::Function *> &mergeTo,
-                                   std::set<llvm::Function *> &toSimplify,
-                                   std::set<llvm::Instruction *> &toRemove);
+bool isSelfContained(std::set<llvm::Instruction *> origInst,
+                     llvm::Instruction *I,
+                     std::set<llvm::Instruction *> &tempToRemove);
 
 /**
  * @brief Removes instructions from slices and simplifies functions.
  */
-SliceProcessingResult
+std::pair<uint, uint>
 removeInstructions(std::vector<iSlice> &allSlices,
                    const std::set<llvm::Function *> &mergeTo,
                    std::set<llvm::Function *> &toSimplify);

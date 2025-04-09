@@ -680,23 +680,6 @@ void ProgramSlice::populateFunctionWithBBs(Function *F) {
   for (const BasicBlock *BB : _BBsInSlice) {
     insertNewBB(BB, F);
   }
-  LLVM_DEBUG({
-    dbgs() << "Original to New Basic Block Map:\n";
-    for (const auto &pair : _origToNewBBmap) {
-      dbgs() << "Original Basic Block: " << pair.first->getName() << "\n";
-      dbgs() << "Content:\n";
-      for (const Instruction &inst : *pair.first) {
-        dbgs() << "  " << inst << "\n";
-      }
-      dbgs() << "New Basic Block Name: " << pair.second->getName() << "\n";
-    }
-
-    dbgs() << "Attractors:\n";
-    for (const auto &pair : _attractors) {
-      dbgs() << "Block: " << pair.first->getName()
-             << " -> Attractor: " << pair.second->getName() << "\n";
-    }
-  });
 }
 
 /**
@@ -1028,9 +1011,7 @@ Function *ProgramSlice::outline() {
   populateFunctionWithBBs(F);
   populateBBsWithInsts(F);
   reorganizeUses(F);
-  LLVM_DEBUG(dbgs() << "Outlined function after reorganizeUses:\n" << *F);
   rerouteBranches(F);
-  LLVM_DEBUG(dbgs() << "Outlined function after rerouteBranches:\n" << *F);
   addReturnValue(F);
   reorderBlocks(F);
   replaceArgs(F, dt);
@@ -1057,10 +1038,6 @@ Function *ProgramSlice::outline() {
     LLVM_DEBUG(dbgs() << "Slice without entry point...\n");
     F->eraseFromParent();
     return nullptr;
-  }
-
-  if (_initial->getMetadata("ddbg")) {
-    dbgs() << "HERE\n" << *F << '\n';
   }
 
   if (verifyFunction(*F, &errs())) {
