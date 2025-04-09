@@ -8,6 +8,7 @@
 #include "../include/ProgramSlice.h"
 #include "../include/debugCommon.h"
 #include "../include/reports.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Analysis/CFGPrinter.h"
@@ -17,6 +18,7 @@
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/InstrTypes.h"
+#include "llvm/IR/Instruction.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/PassManager.h"
 #include "llvm/IR/Verifier.h"
@@ -160,6 +162,7 @@ bool isSelfContained(std::set<Instruction *> origInst, Instruction *I,
     if (I != J) {
       if (canRemove(J, I, origInst, vis, tempToRemove)) tempToRemove.insert(J);
     }
+    LOG_SET_INFO(isSelfContained, vis);
   }
   return true;
 }
@@ -261,7 +264,12 @@ std::pair<uint, uint> removeInstructions(std::vector<iSlice> &allSlices,
     }
     toSimplify.insert(F);
     toRemove.insert(sliceCriterion);
+
+    LOG_SET_INFO(removeInstructions, origInst);
+    LOG_SET_INFO(removeInstructions, tempToRemove);
   }
+
+  LOG_SET_INFO(removeInstructions, toRemove);
 
   for (auto &e : toRemove) {
     e->replaceAllUsesWith(UndefValue::get(e->getType()));
@@ -312,6 +320,7 @@ std::set<Instruction *> instSetMeetCriterion(FunctionAnalysisManager &FAM,
     }
   }
 
+  LOG_SET_INFO(instSetMeetCriterion, S);
   return S;
 }
 
@@ -453,9 +462,11 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
     // that can be used as slicing criterion. this function enables us
     // to change how we manage the slicing criterion.
 
+    LOG_SET_INFO(run, S);
+
     // Replace all uses of I with the correpondent call
     for (Instruction *I : S) {
-      dbgs() << *I << '\n';
+      LLVM_DEBUG(dbgs() << *I << '\n');
       if (!canBeSliceCriterion(*I)) continue;
 
       LLVM_DEBUG(dbgs() << "daedalus.cpp: Function: " << F->getName()
@@ -471,14 +482,19 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
           ps.getInstructionInSlice();
 
       std::set<Instruction *> originInstructionSet;
+      // SmallPtrSet<Instruction *, 8> originInstructionSet;
       for (auto &e : constOriginalInst) originInstructionSet.insert(e.first);
 
+      // SmallPtrSet<Instruction *, 8> tempToRemove;
       std::set<Instruction *> tempToRemove;
       if (!isSelfContained(originInstructionSet, I, tempToRemove)) {
         LLVM_DEBUG(dbgs() << "Not self contained!\n");
         G->eraseFromParent();
         continue;
       }
+
+      LOG_SET_INFO(run, originInstructionSet);
+      LOG_SET_INFO(run, tempToRemove);
 
       SmallVector<Value *> funcArgs = ps.getOrigFunctionArgs();
       CallInst *callInst =
@@ -488,12 +504,15 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
       callInst->moveBefore(moveTo);
       I->replaceAllUsesWith(callInst);
 
+      LOG_SET_INFO(run, originInstructionSet);
       iSlice slice = {I, callInst, G, funcArgs, originInstructionSet, false};
       allSlices.push_back(slice);
 
       LLVM_DEBUG(dbgs() << COLOR::GREEN << "outlined!" << COLOR::CLEAN << '\n');
     }
   }
+
+  LOG_SET_INFO(run, FtoMap);
 
   std::set<Function *> originalFunctions;
   std::set<Function *> outlinedFunctions;
@@ -506,6 +525,9 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
     LLVM_DEBUG(if (numberOfInstructions(F) > SizeOfLargestSliceBeforeMerging)
                    SizeOfLargestSliceBeforeMerging = numberOfInstructions(F););
   }
+
+  LOG_SET_INFO(run, originalFunctions);
+  LOG_SET_INFO(run, outlinedFunctions);
 
   LLVM_DEBUG(dbgs() << "== MERGE SLICES FUNC PHASE ==\n");
 
@@ -529,6 +551,8 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
                    SizeOfLargestSliceAfterMerging = numberOfInstructions(B););
     mergeTo.insert(B);
   }
+
+  LOG_SET_INFO(run, mergeTo);
 
   // func-merging impl.
   // std::set<Function *> combinedFunctions;
@@ -567,6 +591,8 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
     llvm::ProgramSlice::simplifyCfg(originalF, FAM);
   }
 
+  LOG_SET_INFO(run, toSimplify);
+
   LLVM_DEBUG(dbgs() << "== PRINT PHASE ==\n");
 
   LLVM_DEBUG(
@@ -595,9 +621,10 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
                                 std::to_string(SizeOfLargestSliceAfterMerging));
       ReportWriterObj.writeLine("mergedSlicesMetadata:");
 
-      std::set<Function *> checkedFunctions; for (auto [deletedFunc, newFunc]
-                                                  : delToNewFunc) {
-        while (delToNewFunc.count(newFunc)) newFunc = delToNewFunc[newFunc];
+      std::set<Function *> checkedFunctions; 
+      for (auto [deletedFunc, newFunc] : delToNewFunc) {
+        while (delToNewFunc.count(newFunc)) 
+          newFunc = delToNewFunc[newFunc];
         if (newFunc->hasName() && checkedFunctions.count(newFunc) == 0) {
           checkedFunctions.insert(newFunc);
           ReportWriterObj.writeLine("\t" + newFunc->getName().str() + ":");

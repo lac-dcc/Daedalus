@@ -5,6 +5,7 @@
  *  @date   2024-07-08
  ***********************************************/
 #include "ProgramSlice.h"
+#include "debugCommon.h"
 // #include "DebugUtils.h"
 
 #include <map>
@@ -156,6 +157,11 @@ struct dataDependence {
   std::vector<std::pair<Type *, StringRef>> typeAndName;
   bool phiCrit;
   std::set<Value *> phiOnArgs;
+  ~dataDependence() {
+    LOG_SET_INFO(dataDependence, BBs);
+    LOG_SET_INFO(dataDependence, dependences);
+    LOG_SET_INFO(dataDependence, phiOnArgs);
+  }
 };
 
 struct Status {
@@ -289,6 +295,7 @@ std::pair<Status, dataDependence> get_data_dependences_for(
       }
     }
   }
+  LOG_SET_INFO(get_data_dependences_for, visited);
   dataDependence ret = {BBs, deps, phiArguments, phiCrit, phiOnArgs};
   return {status, ret};
 }
@@ -590,7 +597,9 @@ void updatePHINodes(Function *F) {
           PN->removeIncomingValue(incBB);
         }
       }
+      LOG_SET_INFO(updatePHINodes, S);
     }
+    LOG_SET_INFO(updatePHINodes, preds);
   }
 }
 
@@ -620,6 +629,7 @@ void ProgramSlice::rerouteBranches(Function *F) {
   // Visit blocks recursively in order of dominance. If BB1 and BB2 are in
   // slice, BB1 IDom BB2, and BB1 has no terminator, create branch BB1->BB2
   addDomBranches(init, parent, visited);
+  LOG_SET_INFO(rerouteBranches, visited);
 
   // Save list of PHI nodes to update. Old blocks should be replaced by
   // new blocks as predecessors in merging values. We store PHIs to update
@@ -1132,7 +1142,7 @@ Function *ProgramSlice::outline() {
   populateFunctionWithBBs(F);
   populateBBsWithInsts(F);
   reorganizeUses(F);
-  dbgs() << *_initial << '\n';
+  LLVM_DEBUG(dbgs() << *_initial << '\n');
   if (_initial->getMetadata("ddbg")) {
     dbgs() << "HERE\n" << *F << '\n';
   }
@@ -1174,7 +1184,7 @@ Function *ProgramSlice::outline() {
     return nullptr;
   }
 
-  dbgs() << *F << '\n';
+  LLVM_DEBUG(dbgs() << *F << '\n');
 
   return F;
 }

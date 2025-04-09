@@ -6,6 +6,9 @@
 #include <string>
 
 #define dbg(msg) LLVM_DEBUG(dbgs() << msg << '\n')
+#define LOG_SET_INFO(parent_fn, set_var) \
+    dbgs()  << #parent_fn << ":" << #set_var \
+            << " -- size:" << set_var.size() << "\n";
 
 namespace COLOR {
 const std::string BLACK = "\033[30m";
