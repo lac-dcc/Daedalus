@@ -438,8 +438,9 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
   for (Function *F : FtoMap) {
     uint ki = 0;
     for (auto &BB : *F) {
-      BB.setName("BB_" + std::to_string(ki));
+      BB.setName((BB.hasName()) ? BB.getName() : "BB_" + std::to_string(ki++));
     }
+
     // Criterion Set
     std::set<Instruction *> S = instSetMeetCriterion(FAM, F);
     // filter binary instructions for building a set of instructions
@@ -465,12 +466,13 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
       std::set<Instruction *> originInstructionSet;
       for (auto &e : constOriginalInst) originInstructionSet.insert(e.first);
 
-      std::set<Instruction *> tempToRemove;
-      if (!isSelfContained(originInstructionSet, I, tempToRemove)) {
-        LLVM_DEBUG(dbgs() << "Not self contained!\n");
-        G->eraseFromParent();
-        continue;
-      }
+      // TODO: remove this if we don't find a good use for it
+      // std::set<Instruction *> tempToRemove;
+      // if (!isSelfContained(originInstructionSet, I, tempToRemove)) {
+      //   LLVM_DEBUG(dbgs() << "Not self contained!\n");
+      //   G->eraseFromParent();
+      //   continue;
+      // }
 
       SmallVector<Value *> funcArgs = ps.getOrigFunctionArgs();
       CallInst *callInst =

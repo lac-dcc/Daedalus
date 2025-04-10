@@ -126,17 +126,21 @@ computeGates(Function &F) {
     const unsigned num_preds = pred_size(&BB);
     if (num_preds > 1) {
       // Uncomment the following line for debugging, only when needed in a non
-      // highly optimized build! LLVM_DEBUG(dbgs() << BB.getName() << ":\n");
+      // highly optimized build!
+      
+      // LLVM_DEBUG(dbgs() << BB.getName() << ":\n");
+      
       for (const BasicBlock *pred : predecessors(&BB)) {
         // LLVM_DEBUG(dbgs() << " - " << pred->getName() << " -> ");
+        
         if (DT.dominates(pred, &BB) && !PDT.dominates(&BB, pred)) {
           // LLVM_DEBUG(dbgs() << " DOM " << getGate(pred)->getName() << " ->");
+          
           BB_gates.push_back(getGate(pred));
         } else {
           const BasicBlock *ctrl_BB = getController(pred, DT, PDT);
           if (ctrl_BB) {
-            // LLVM_DEBUG(dbgs() << " R-CTRL " << "CTRL_BB: " <<
-            // ctrl_BB->getName()
+            // LLVM_DEBUG(dbgs() << " R-CTRL " << "CTRL_BB: " << ctrl_BB->getName()
             //                   << " " << getGate(ctrl_BB)->getName());
             BB_gates.push_back(getGate(ctrl_BB));
           }
@@ -380,6 +384,8 @@ void ProgramSlice::computeAttractorBlocks() {
       continue;
     }
 
+    LLVM_DEBUG(dbgs() << BB.getName().str() << ":\n");
+    
     if (_BBsInSlice.count(&BB) > 0) {
       attractors[&BB] = &BB;
       continue;
@@ -388,6 +394,9 @@ void ProgramSlice::computeAttractorBlocks() {
     DomTreeNode *OrigBB = PDT.getNode(&BB);
     DomTreeNode *Cand = OrigBB->getIDom();
     while (Cand != nullptr) {
+      if (Cand->getBlock())
+        LLVM_DEBUG(dbgs() << "\t" << Cand->getBlock()->getName().str() << "\n");
+      
       if (_BBsInSlice.count(Cand->getBlock()) > 0) {
         break;
       }
@@ -447,7 +456,7 @@ void ProgramSlice::addDomBranches(DomTreeNode *cur, DomTreeNode *parent,
  *
  * @param F The function whose PHINodes need to be updated.
  */
- void updatePHINodes(Function *F) {
+void updatePHINodes(Function *F) {
   for (BasicBlock &BB : *F) {
     std::set<BasicBlock *> preds(pred_begin(&BB), pred_end(&BB));
     for (auto I_it = BB.begin(); I_it != BB.end();) {
@@ -1011,7 +1020,42 @@ Function *ProgramSlice::outline() {
   populateFunctionWithBBs(F);
   populateBBsWithInsts(F);
   reorganizeUses(F);
+
+  LLVM_DEBUG(dbgs() << "Outlined function BEFORE rerouteBranches:\n" << *F);
   rerouteBranches(F);
+
+  LLVM_DEBUG({
+    dbgs() << "\n\n";
+    // for (const auto &pair : _origToNewBBmap) {
+    //   dbgs() << "Original Basic Block: " << pair.first->getName() << "\n";
+    //   dbgs() << "New Basic Block Name: " << pair.second->getName() << "\n";
+    // }
+
+    dbgs() << "\tAttractors:\n";
+    for (const auto &pair : _attractors) {
+      std::string name = (pair.second) ? pair.second->getName().str() : "null";
+      dbgs() << "\t\tBlock: " << pair.first->getName()
+             << " -> Attractor: " << name << "\n";
+    }
+    
+    dbgs() << "\tPredecessors of original function:\n";
+    for (const BasicBlock &BB : *_parentFunction) {
+      dbgs() << "\t\tBlock: " << BB.getName() << " -> Predecessors: ";
+      for (const BasicBlock *pred : predecessors(&BB)) {
+      dbgs() << pred->getName() << " ";
+      }
+      dbgs() << "\n";
+    }
+    dbgs() << "\tPredecessors of new function:\n";
+    for (const BasicBlock &BB : *F) {
+      dbgs() << "\t\tBlock: " << BB.getName() << " -> Predecessors: ";
+      for (const BasicBlock *pred : predecessors(&BB)) {
+      dbgs() << pred->getName() << " ";
+      }
+      dbgs() << "\n";
+    }
+  });
+
   addReturnValue(F);
   reorderBlocks(F);
   replaceArgs(F, dt);
