@@ -16,8 +16,8 @@ jobs:
       # Update and install dependencies
       - name: Install dependencies
         run: |
-          apt update && apt upgrade -y
-          apt install -y git build-essential cmake ninja-build
+          sudo apt update && sudo apt upgrade -y
+          sudo apt install -y git build-essential cmake ninja-build
 
       # Clone and build LLVM 17
       - name: Clone and build LLVM 17
