@@ -11,8 +11,9 @@ on:
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
-
     steps:
+      - uses: actions/checkout@v4
+    
       # Update and install dependencies
       - name: Install dependencies
         run: |
@@ -21,6 +22,7 @@ jobs:
 
       # Cache LLVM 17 build
       - name: Cache LLVM 17 build
+        id: cache-llvm-17-build
         uses: actions/cache@v4
         with:
           path: llvm-project/build
@@ -29,11 +31,10 @@ jobs:
             llvm-17-build-${{ runner.os }}-
 
       # Clone and build LLVM 17 (if not cached)
+      - if: ${{ steps.cache-llvm-17-build.outputs.cache-hit != 'true' }}
       - name: Clone and build LLVM 17
         run: |
-          if [ ! -d llvm-project ]; then
-            git clone --depth 100 -b merge-functions-pass https://github.com/Casperento/llvm-project.git
-          fi
+          git clone --depth 100 -b merge-functions-pass https://github.com/Casperento/llvm-project.git
           mkdir -p llvm-project/build
           cmake -G Ninja \
             -DLLVM_ENABLE_PROJECTS='clang;compiler-rt;lld' \
