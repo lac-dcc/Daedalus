@@ -127,20 +127,21 @@ computeGates(Function &F) {
     if (num_preds > 1) {
       // Uncomment the following line for debugging, only when needed in a non
       // highly optimized build!
-      
+
       // LLVM_DEBUG(dbgs() << BB.getName() << ":\n");
-      
+
       for (const BasicBlock *pred : predecessors(&BB)) {
         // LLVM_DEBUG(dbgs() << " - " << pred->getName() << " -> ");
-        
+
         if (DT.dominates(pred, &BB) && !PDT.dominates(&BB, pred)) {
           // LLVM_DEBUG(dbgs() << " DOM " << getGate(pred)->getName() << " ->");
-          
+
           BB_gates.push_back(getGate(pred));
         } else {
           const BasicBlock *ctrl_BB = getController(pred, DT, PDT);
           if (ctrl_BB) {
-            // LLVM_DEBUG(dbgs() << " R-CTRL " << "CTRL_BB: " << ctrl_BB->getName()
+            // LLVM_DEBUG(dbgs() << " R-CTRL " << "CTRL_BB: " <<
+            // ctrl_BB->getName()
             //                   << " " << getGate(ctrl_BB)->getName());
             BB_gates.push_back(getGate(ctrl_BB));
           }
@@ -207,13 +208,6 @@ std::pair<Status, dataDependence> get_data_dependences_for(
 
     deps.insert(cur);
     visited.insert(cur);
-
-    if (isa<InvokeInst>(cur) || isa<LandingPadInst>(cur)) {
-      status = {
-          false,
-          "Some dependency is on a try catch. Slices must be pure functions."};
-      break;
-    }
 
     if (const Instruction *dep = dyn_cast<Instruction>(cur)) {
       assert(dep->getParent() && "Instruction has no parent basic block");
@@ -314,7 +308,8 @@ std::pair<Status, dataDependence> get_data_dependences_for(
  * @param PDT The post-dominator tree of the function.
  */
 ProgramSlice::ProgramSlice(Instruction &Initial, Function &F,
-                           FunctionAnalysisManager &FAM)
+                           FunctionAnalysisManager &FAM,
+                           std::set<BasicBlock *> &tryCatchBlocks)
     : _initial(&Initial), _parentFunction(&F) {
 
   assert(Initial.getParent()->getParent() == &F &&
@@ -323,6 +318,14 @@ ProgramSlice::ProgramSlice(Instruction &Initial, Function &F,
   std::unordered_map<const BasicBlock *, SmallVector<const Value *>> gates =
       computeGates(F);
   auto [check, data] = get_data_dependences_for(Initial, gates, F, FAM);
+
+  for (auto &BB : data.BBs) {
+    if (tryCatchBlocks.count(const_cast<BasicBlock *>(BB))) {
+      _canOutline.first = false;
+      _canOutline.second = "Slice contains try-catch blocks.";
+      break;
+    }
+  }
 
   if (!check.status) {
     _canOutline.first = check.status;
@@ -384,8 +387,8 @@ void ProgramSlice::computeAttractorBlocks() {
       continue;
     }
 
-    LLVM_DEBUG(dbgs() << BB.getName().str() << ":\n");
-    
+    // LLVM_DEBUG(dbgs() << BB.getName().str() << ":\n");
+
     if (_BBsInSlice.count(&BB) > 0) {
       attractors[&BB] = &BB;
       continue;
@@ -394,9 +397,10 @@ void ProgramSlice::computeAttractorBlocks() {
     DomTreeNode *OrigBB = PDT.getNode(&BB);
     DomTreeNode *Cand = OrigBB->getIDom();
     while (Cand != nullptr) {
-      if (Cand->getBlock())
-        LLVM_DEBUG(dbgs() << "\t" << Cand->getBlock()->getName().str() << "\n");
-      
+      // if (Cand->getBlock())
+      //   LLVM_DEBUG(dbgs() << "\t" << Cand->getBlock()->getName().str() <<
+      //   "\n");
+
       if (_BBsInSlice.count(Cand->getBlock()) > 0) {
         break;
       }
@@ -1037,12 +1041,12 @@ Function *ProgramSlice::outline() {
       dbgs() << "\t\tBlock: " << pair.first->getName()
              << " -> Attractor: " << name << "\n";
     }
-    
+
     dbgs() << "\tPredecessors of original function:\n";
     for (const BasicBlock &BB : *_parentFunction) {
       dbgs() << "\t\tBlock: " << BB.getName() << " -> Predecessors: ";
       for (const BasicBlock *pred : predecessors(&BB)) {
-      dbgs() << pred->getName() << " ";
+        dbgs() << pred->getName() << " ";
       }
       dbgs() << "\n";
     }
@@ -1050,7 +1054,7 @@ Function *ProgramSlice::outline() {
     for (const BasicBlock &BB : *F) {
       dbgs() << "\t\tBlock: " << BB.getName() << " -> Predecessors: ";
       for (const BasicBlock *pred : predecessors(&BB)) {
-      dbgs() << pred->getName() << " ";
+        dbgs() << pred->getName() << " ";
       }
       dbgs() << "\n";
     }

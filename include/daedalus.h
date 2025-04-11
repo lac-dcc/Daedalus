@@ -19,6 +19,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include <llvm/Analysis/AliasAnalysis.h>
 #include <llvm/Pass.h>
+#include <llvm/Analysis/PostDominators.h>
 
 /**
  * @brief Represents an outlined program slice
@@ -93,6 +94,12 @@ unsigned int numberOfMergedFunctions(
  */
 void functionSlicesToDot(llvm::Module &M,
                          const std::set<llvm::Function *> &newFunctions);
+
+/**
+ * @brief Analyzes the control flow graph of a function to identify
+ * try-catch logic.
+ */
+std::set<llvm::BasicBlock *> searchForTryCatchLogic(llvm::Function &F);
 
 namespace Daedalus {
 

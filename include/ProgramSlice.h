@@ -25,7 +25,8 @@ public:
   /**
    * @brief Constructs a ProgramSlice object.
    */
-  ProgramSlice(Instruction &I, Function &F, FunctionAnalysisManager &FAM);
+  ProgramSlice(Instruction &I, Function &F, FunctionAnalysisManager &FAM,
+               std::set<BasicBlock *> &tryCatchBlocks);
 
   /**
    * @brief Checks if outlining the slice is feasible.

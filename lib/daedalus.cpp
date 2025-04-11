@@ -12,8 +12,10 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Analysis/CFGPrinter.h"
 #include "llvm/Analysis/LoopInfo.h"
+#include "llvm/Analysis/PostDominators.h"
 #include "llvm/Analysis/TargetLibraryInfo.h"
 #include "llvm/IR/Attributes.h"
+#include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/InstrTypes.h"
@@ -301,7 +303,9 @@ std::set<Instruction *> instSetMeetCriterion(FunctionAnalysisManager &FAM,
       // if (instName.find("lcssa") == instName.npos) {
       //   S.insert(&I);
       // }
-      if (isa<BinaryOperator>(I)) S.insert(&I);
+      if (isa<BinaryOperator>(I)) {
+        S.insert(&I);
+      }
     }
   }
 
@@ -400,6 +404,45 @@ void functionSlicesToDot(Module &M, const std::set<Function *> &newFunctions) {
   }
 }
 
+/**
+ * @brief Identifies and collects basic blocks in a function that are involved in 
+ * try-catch logic, including blocks dominated by invoke instructions and 
+ * blocks post-dominated by exception destinations.
+ *
+ * This function analyzes the control flow of a given function to detect basic 
+ * blocks that are part of try-catch constructs. It uses dominator and 
+ * post-dominator trees to determine the relationships between blocks.
+ *
+ * @param F The function to analyze for try-catch logic.
+ * @return A set of pointers to basic blocks that are part of try-catch logic.
+ */
+std::set<BasicBlock *> searchForTryCatchLogic(Function &F) {
+  DominatorTree DT(F);
+  PostDominatorTree PDT(F);
+  std::set<BasicBlock *> tryCatchBlocks;
+  for (auto &BB : F) {
+    for (auto &I : BB) {
+      if (auto *Invoke = dyn_cast<InvokeInst>(&I)) {
+        BasicBlock *normalDest = Invoke->getNormalDest();
+        BasicBlock *exceptionDest = Invoke->getUnwindDest();
+        SmallVector<BasicBlock *, 8> Descendants;
+        DT.getDescendants(&BB, Descendants);
+        for (BasicBlock *DomBlock : Descendants) {
+          if (DT.dominates(&BB, DomBlock)) {
+            tryCatchBlocks.insert(DomBlock);
+          }
+        }
+        for (BasicBlock &CatchBB : F) {
+          if (PDT.dominates(&CatchBB, exceptionDest)) {
+            tryCatchBlocks.insert(&CatchBB);
+          }
+        }
+      }
+    }
+  }
+  return tryCatchBlocks;
+}
+
 namespace Daedalus {
 
 /**
@@ -447,6 +490,9 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
     // that can be used as slicing criterion. this function enables us
     // to change how we manage the slicing criterion.
 
+    // Search for try-catch logic inside the current function
+    std::set<BasicBlock *> tryCatchBlocks = searchForTryCatchLogic(*F);
+
     // Replace all uses of I with the correpondent call
     for (Instruction *I : S) {
       if (!canBeSliceCriterion(*I)) continue;
@@ -454,7 +500,7 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
       LLVM_DEBUG(dbgs() << "daedalus.cpp: Function: " << F->getName()
                         << ",\n\tInstruction: " << *I << "\n");
 
-      ProgramSlice ps = ProgramSlice(*I, *F, FAM);
+      ProgramSlice ps = ProgramSlice(*I, *F, FAM, tryCatchBlocks);
       Function *G = ps.outline();
 
       if (G == NULL) continue;
