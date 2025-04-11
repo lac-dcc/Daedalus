@@ -1,0 +1,43 @@
+name: Build and Test Workflow
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Update and install dependencies
+      - name: Install dependencies
+        run: |
+          apt update && apt upgrade -y
+          apt install -y git build-essential cmake ninja-build
+
+      # Clone and build LLVM 17
+      - name: Clone and build LLVM 17
+        run: |
+          git clone --depth 100 -b merge-functions-pass https://github.com/Casperento/llvm-project.git
+          mkdir -p llvm-project/build
+          cmake -G Ninja \
+            -DLLVM_ENABLE_PROJECTS='clang;compiler-rt;lld' \
+            -DCMAKE_BUILD_TYPE="Release" \
+            -DLLVM_TARGETS_TO_BUILD=X86 \
+            -DLLVM_ENABLE_ASSERTIONS=On \
+            -S llvm-project/llvm -B llvm-project/build
+          cmake --build llvm-project/build
+          echo "export PATH=$(realpath llvm-project)/build/bin:$PATH" >> $GITHUB_ENV
+
+      # Clone and build Daedalus
+      - name: Clone and build Daedalus
+        run: |
+          git clone -b main https://github.com/lac-dcc/Daedalus.git
+          mkdir -p Daedalus/build
+          cmake -G Ninja -DLLVM_DIR=$GITHUB_WORKSPACE/llvm-project -S Daedalus -B Daedalus/build
+          cmake --build Daedalus/build
+          ctest --test-dir Daedalus/build
