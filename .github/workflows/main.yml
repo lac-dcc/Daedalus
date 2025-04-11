@@ -48,8 +48,8 @@ jobs:
       - name: Clone and build Daedalus
         run: |
           mkdir -p build
-          cmake -G Ninja -DLLVM_DIR=$(realpath llvm-project) -S Daedalus -B Daedalus/build
-          cmake --build Daedalus/build
+          cmake -G Ninja -DLLVM_DIR=$(realpath llvm-project) -S . -B build
+          cmake --build build
 
       - name: Run tests with ctest
         run: |
