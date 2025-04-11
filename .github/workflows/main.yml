@@ -32,7 +32,7 @@ jobs:
 
       # Clone and build LLVM 17 (if not cached)
       - if: ${{ steps.cache-llvm-17-build.outputs.cache-hit != 'true' }}
-      - name: Clone and build LLVM 17
+        name: Clone and build LLVM 17
         run: |
           git clone --depth 100 -b merge-functions-pass https://github.com/Casperento/llvm-project.git
           mkdir -p llvm-project/build
