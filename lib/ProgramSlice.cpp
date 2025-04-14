@@ -387,8 +387,6 @@ void ProgramSlice::computeAttractorBlocks() {
       continue;
     }
 
-    // LLVM_DEBUG(dbgs() << BB.getName().str() << ":\n");
-
     if (_BBsInSlice.count(&BB) > 0) {
       attractors[&BB] = &BB;
       continue;
@@ -397,10 +395,6 @@ void ProgramSlice::computeAttractorBlocks() {
     DomTreeNode *OrigBB = PDT.getNode(&BB);
     DomTreeNode *Cand = OrigBB->getIDom();
     while (Cand != nullptr) {
-      // if (Cand->getBlock())
-      //   LLVM_DEBUG(dbgs() << "\t" << Cand->getBlock()->getName().str() <<
-      //   "\n");
-
       if (_BBsInSlice.count(Cand->getBlock()) > 0) {
         break;
       }
@@ -637,6 +631,32 @@ void ProgramSlice::rerouteBranches(Function *F) {
   }
 
   updatePHINodes(F);
+
+  LLVM_DEBUG({
+    dbgs() << "\n\tAttractors:\n";
+    for (const auto &pair : _attractors) {
+      std::string name = (pair.second) ? pair.second->getName().str() : "null";
+      dbgs() << "\t\tBlock: " << pair.first->getName()
+             << " -> Attractor: " << name << "\n";
+    }
+
+    dbgs() << "\tPredecessors of original function:\n";
+    for (const BasicBlock &BB : *_parentFunction) {
+      dbgs() << "\t\tBlock: " << BB.getName() << " -> Predecessors: ";
+      for (const BasicBlock *pred : predecessors(&BB)) {
+        dbgs() << pred->getName() << " ";
+      }
+      dbgs() << "\n";
+    }
+    dbgs() << "\tPredecessors of new function:\n";
+    for (const BasicBlock &BB : *F) {
+      dbgs() << "\t\tBlock: " << BB.getName() << " -> Predecessors: ";
+      for (const BasicBlock *pred : predecessors(&BB)) {
+        dbgs() << pred->getName() << " ";
+      }
+      dbgs() << "\n";
+    }
+  });
 }
 
 /**
@@ -953,8 +973,7 @@ ReturnInst *ProgramSlice::addReturnValue(Function *F) {
  * @return The newly created delegate Function that encapsulates the slice.
  */
 Function *ProgramSlice::outline() {
-  assert(!verifyFunction(*_parentFunction,
-                         &errs())); // assert parent function is valid
+  assert(!verifyFunction(*_parentFunction, &errs()));
 
   const int size = 3;
   if (!_canOutline.first) {
@@ -1024,50 +1043,13 @@ Function *ProgramSlice::outline() {
   populateFunctionWithBBs(F);
   populateBBsWithInsts(F);
   reorganizeUses(F);
-
-  LLVM_DEBUG(dbgs() << "Outlined function BEFORE rerouteBranches:\n" << *F);
   rerouteBranches(F);
-
-  LLVM_DEBUG({
-    dbgs() << "\n\n";
-    // for (const auto &pair : _origToNewBBmap) {
-    //   dbgs() << "Original Basic Block: " << pair.first->getName() << "\n";
-    //   dbgs() << "New Basic Block Name: " << pair.second->getName() << "\n";
-    // }
-
-    dbgs() << "\tAttractors:\n";
-    for (const auto &pair : _attractors) {
-      std::string name = (pair.second) ? pair.second->getName().str() : "null";
-      dbgs() << "\t\tBlock: " << pair.first->getName()
-             << " -> Attractor: " << name << "\n";
-    }
-
-    dbgs() << "\tPredecessors of original function:\n";
-    for (const BasicBlock &BB : *_parentFunction) {
-      dbgs() << "\t\tBlock: " << BB.getName() << " -> Predecessors: ";
-      for (const BasicBlock *pred : predecessors(&BB)) {
-        dbgs() << pred->getName() << " ";
-      }
-      dbgs() << "\n";
-    }
-    dbgs() << "\tPredecessors of new function:\n";
-    for (const BasicBlock &BB : *F) {
-      dbgs() << "\t\tBlock: " << BB.getName() << " -> Predecessors: ";
-      for (const BasicBlock *pred : predecessors(&BB)) {
-        dbgs() << pred->getName() << " ";
-      }
-      dbgs() << "\n";
-    }
-  });
-
   addReturnValue(F);
   reorderBlocks(F);
   replaceArgs(F, dt);
 
   LLVM_DEBUG(dbgs() << "Outlined function:\n" << *F);
-
-  assert(
-      !verifyFunction(*F, &errs())); // assert outlined function is not broken
+  assert(!verifyFunction(*F, &errs()));
 
   return F;
 }
