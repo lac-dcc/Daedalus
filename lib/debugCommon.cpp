@@ -3,7 +3,7 @@
 
 using namespace llvm;
 
-#define DEBUG_TYPE "daedalus"
+#define DEBUG_TYPE "debugCommon"
 
 template <typename T>
 void debugContainerOfInstructions(T &instContainer, std::string msg) {
