@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-    
+  
       # Update and install dependencies
       - name: Install dependencies
         run: |
@@ -25,7 +25,7 @@ jobs:
         id: cache-llvm-17-build
         uses: actions/cache@v4
         with:
-          path: llvm-project/build
+          path: ${{ github.workspace }}/llvm-project/build
           key: llvm-17-build-${{ runner.os }}-${{ hashFiles('llvm-project/llvm/CMakeLists.txt') }}
           restore-keys: |
             llvm-17-build-${{ runner.os }}-
@@ -34,23 +34,23 @@ jobs:
       - if: ${{ steps.cache-llvm-17-build.outputs.cache-hit != 'true' }}
         name: Clone and build LLVM 17
         run: |
-          git clone --depth 100 -b merge-functions-pass https://github.com/Casperento/llvm-project.git
-          mkdir -p llvm-project/build
+          git clone --depth 100 -b merge-functions-pass https://github.com/Casperento/llvm-project.git ${{ github.workspace }}/llvm-project
+          mkdir -p ${{ github.workspace }}/llvm-project/build
           cmake -G Ninja \
             -DLLVM_ENABLE_PROJECTS='clang;compiler-rt;lld' \
             -DCMAKE_BUILD_TYPE="Release" \
             -DLLVM_TARGETS_TO_BUILD=X86 \
             -DLLVM_ENABLE_ASSERTIONS=On \
-            -S llvm-project/llvm -B llvm-project/build
-          cmake --build llvm-project/build
-          echo "export PATH=$(realpath llvm-project)/build/bin:$PATH" >> $GITHUB_ENV
+            -S ${{ github.workspace }}/llvm-project/llvm -B ${{ github.workspace }}/llvm-project/build
+          cmake --build ${{ github.workspace }}/llvm-project/build
+          echo "export PATH=${{ github.workspace }}/llvm-project/build/bin:$PATH" >> $GITHUB_ENV
 
       - name: Clone and build Daedalus
         run: |
-          mkdir -p build
-          cmake -G Ninja -DLLVM_DIR=$(realpath llvm-project) -S . -B build
-          cmake --build build
+          mkdir -p ${{ github.workspace }}/build
+          cmake -G Ninja -DLLVM_DIR=${{ github.workspace }}/llvm-project -S ${{ github.workspace }} -B ${{ github.workspace }}/build
+          cmake --build ${{ github.workspace }}/build
 
       - name: Run tests with ctest
         run: |
-          ctest --test-dir build
+          ctest --test-dir ${{ github.workspace }}/build
