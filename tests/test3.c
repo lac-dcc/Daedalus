@@ -5,7 +5,7 @@ int main(int argc, char **argv) {
     int sum = 0;
     for (int i = 0; i < argc; i++) {
         sum = char_count;
-        for (char *p = argv[i]; *p != '\0'; p++) {
+        for (char *p = argv[1]; *p != '\0'; p++) {
             char_count++;
         }
         int diff = char_count - sum; // slice criterion
