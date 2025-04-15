@@ -71,4 +71,4 @@ jobs:
 
       # Run tests
       - name: Run tests with ctest
-        run: ctest --test-dir build
+        run: ctest --verbose --test-dir build
