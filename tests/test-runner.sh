@@ -56,10 +56,11 @@ echo "opt -S -passes=mem2reg,lcssa,break-crit-edges \"$SOURCEFILENAMELL\" -o \"$
 opt -S -passes=mem2reg,lcssa,break-crit-edges "$SOURCEFILENAMELL" -o "$SOURCEFILENAMELL"
 
 echo "opt -stats -debug-only=daedalus,ProgramSlice -passes=daedalus -load-pass-plugin=\"$SHAREDOBJECTFILE\" -dump-dot -S \"$SOURCEFILENAMELL\" -o \"$SOURCEFILENAMEDLL\" &>> \"$TRANSFORMATIONLOGFILE\""
-opt -stats -debug-only=daedalus,ProgramSlice -passes=daedalus -load-pass-plugin="$SHAREDOBJECTFILE" -dump-dot -S "$SOURCEFILENAMELL" -o "$SOURCEFILENAMEDLL" &>> "$TRANSFORMATIONLOGFILE"
-
-echo "tail --lines 50 \"$TRANSFORMATIONLOGFILE\""
-tail --lines 50 "$TRANSFORMATIONLOGFILE"
+if ! opt -stats -debug-only=daedalus,ProgramSlice -passes=daedalus -load-pass-plugin="$SHAREDOBJECTFILE" -dump-dot -S "$SOURCEFILENAMELL" -o "$SOURCEFILENAMEDLL" &>> "$TRANSFORMATIONLOGFILE"; then
+    echo "opt exited with error code $?"
+    echo "Dumping last 50 lines of the transformation log file:"
+    tail --lines 50 "$TRANSFORMATIONLOGFILE"
+fi
 
 echo "clang $EXTRAPARAMS -Os \"$SOURCEFILENAMEDLL\" -o \"$FINAL_EXECUTABLE\""
 clang $EXTRAPARAMS -Os "$SOURCEFILENAMEDLL" -o "$FINAL_EXECUTABLE"
