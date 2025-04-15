@@ -58,6 +58,9 @@ opt -S -passes=mem2reg,lcssa,break-crit-edges "$SOURCEFILENAMELL" -o "$SOURCEFIL
 echo "opt -stats -debug-only=daedalus,ProgramSlice -passes=daedalus -load-pass-plugin=\"$SHAREDOBJECTFILE\" -dump-dot -S \"$SOURCEFILENAMELL\" -o \"$SOURCEFILENAMEDLL\" &>> \"$TRANSFORMATIONLOGFILE\""
 opt -stats -debug-only=daedalus,ProgramSlice -passes=daedalus -load-pass-plugin="$SHAREDOBJECTFILE" -dump-dot -S "$SOURCEFILENAMELL" -o "$SOURCEFILENAMEDLL" &>> "$TRANSFORMATIONLOGFILE"
 
+echo "tail --lines 50 \"$TRANSFORMATIONLOGFILE\""
+tail --lines 50 "$TRANSFORMATIONLOGFILE"
+
 echo "clang $EXTRAPARAMS -Os \"$SOURCEFILENAMEDLL\" -o \"$FINAL_EXECUTABLE\""
 clang $EXTRAPARAMS -Os "$SOURCEFILENAMEDLL" -o "$FINAL_EXECUTABLE"
 
