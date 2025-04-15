@@ -27,7 +27,7 @@ RUN cmake -G Ninja \
           -DLLVM_TARGETS_TO_BUILD=X86 \
           -DLLVM_ENABLE_ASSERTIONS=On \
           -S llvm -B build
-RUN cmake --build build -- -j 16
+RUN cmake --build build -- -j 10
 ENV PATH="/src/llvm-project/build/bin:$PATH"
 
 # Clone and Build Daedalus
@@ -40,7 +40,7 @@ RUN cmake --build build
 
 # Clone and Build LLVM 17 - Test Suite 
 WORKDIR /src
-RUN git clone --depth 100 -b daedalus https://github.com/Casperento/llvm-test-suite.git
+RUN git clone --depth 100 -b daedalus-crit https://github.com/Casperento/llvm-test-suite.git
 WORKDIR llvm-test-suite
 RUN mkdir -p build
 RUN mkdir -p /lit-results
@@ -58,11 +58,11 @@ RUN cmake -G "Ninja" \
 	"-DTEST_SUITE_SUBDIRS=SingleSource;MultiSource" \
 	-C "cmake/caches/Os.cmake" \
 	-S . -B build
-RUN cmake --build build -- -j 16 || exit 0
-RUN llvm-lit --show-excluded \
+RUN cmake --build build -- -j 10 || exit 0
+RUN llvm-lit \
 	--filter-out "GCC-C-execute.*" \
 	--timeout 120 \
-	-j 16 -s -o /lit-results/baseline.json build || exit 0
+	-j 10 -s -o /lit-results/baseline.json build || exit 0
 
 RUN rm -rf build/*
 
@@ -79,10 +79,10 @@ RUN cmake -G "Ninja" \
 	"-DTEST_SUITE_SUBDIRS=SingleSource;MultiSource" \
 	-C "cmake/caches/Os.cmake" \
 	-S . -B build
-RUN cmake --build build -- -k 0 -j 16 || exit 0
-RUN llvm-lit --show-excluded \
+RUN cmake --build build -- -k 0 -j 10 || exit 0
+RUN llvm-lit \
 	--filter-out "GCC-C-execute.*" \
 	--timeout 120 \
-	-j 16 -s -o /lit-results/daedalus.json build || exit 0
+	-j 10 -s -o /lit-results/daedalus.json build || exit 0
 
 RUN python3 utils/compare.py --full --diff -m instcount -m size..text /lit-results/baseline.json /lit-results/daedalus.json > /lit-results/comparison_results.txt
