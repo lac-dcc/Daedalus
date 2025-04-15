@@ -13,8 +13,10 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Analysis/CFGPrinter.h"
 #include "llvm/Analysis/LoopInfo.h"
+#include "llvm/Analysis/PostDominators.h"
 #include "llvm/Analysis/TargetLibraryInfo.h"
 #include "llvm/IR/Attributes.h"
+#include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/InstrTypes.h"
@@ -41,7 +43,7 @@
 
 using namespace llvm;
 
-#define DEBUG_TYPE "Daedalus"
+#define DEBUG_TYPE "daedalus"
 
 STATISTIC(TotalFunctionsOutlined, "Total number of functions outlined");
 STATISTIC(TotalSlicesMerged, "Total number of slices that got merged");
@@ -168,40 +170,6 @@ bool isSelfContained(std::set<Instruction *> origInst, Instruction *I,
 }
 
 /**
- * @brief Removes a function and its call instructions from the LLVM IR.
- *
- * This function replaces all uses of a specified call instruction with a given
- * criterion instruction, then erases the call instruction from its parent. It
- * also removes the NoInline attribute from the function, if present, and
- * replaces all uses of the function with an undefined value before erasing the
- * function from its parent.
- *
- * @param F The function to be removed.
- * @param callInst The call instruction to be replaced and erased.
- * @param criterion The instruction to replace the call instruction with.
- */
-void killSlice(Function *F, CallInst *callInst, Instruction *criterion) {
-  callInst->replaceAllUsesWith(criterion);
-  callInst->eraseFromParent();
-
-  if (!F->getParent()) return;
-  // AttrBuilder builder(F->getContext());
-  // builder.removeAttribute(Attribute::NoInline);
-  F->removeFnAttr(Attribute::NoInline);
-  std::set<User *> fUses;
-  for (User *U : F->users()) fUses.insert(U);
-  for (User *U : fUses) {
-    if (CallInst *X = dyn_cast<CallInst>(U)) {
-      X->replaceAllUsesWith(UndefValue::get(X->getType()));
-      X->eraseFromParent();
-    } else {
-      LLVM_DEBUG(dbgs() << "Warning: Use of function is not a CallInst!\n");
-    }
-  }
-  F->eraseFromParent();
-}
-
-/**
  * @brief Removes instructions from slices and simplifies functions.
  *
  * This function processes a collection of instruction slices, removing
@@ -279,6 +247,40 @@ std::pair<uint, uint> removeInstructions(std::vector<iSlice> &allSlices,
 }
 
 /**
+ * @brief Removes a function and its call instructions from the LLVM IR.
+ *
+ * This function replaces all uses of a specified call instruction with a given
+ * criterion instruction, then erases the call instruction from its parent. It
+ * also removes the NoInline attribute from the function, if present, and
+ * replaces all uses of the function with an undefined value before erasing the
+ * function from its parent.
+ *
+ * @param F The function to be removed.
+ * @param callInst The call instruction to be replaced and erased.
+ * @param criterion The instruction to replace the call instruction with.
+ */
+void killSlice(Function *F, CallInst *callInst, Instruction *criterion) {
+  callInst->replaceAllUsesWith(criterion);
+  callInst->eraseFromParent();
+
+  if (!F->getParent()) return;
+  // AttrBuilder builder(F->getContext());
+  // builder.removeAttribute(Attribute::NoInline);
+  F->removeFnAttr(Attribute::NoInline);
+  std::set<User *> fUses;
+  for (User *U : F->users()) fUses.insert(U);
+  for (User *U : fUses) {
+    if (CallInst *X = dyn_cast<CallInst>(U)) {
+      X->replaceAllUsesWith(UndefValue::get(X->getType()));
+      X->eraseFromParent();
+    } else {
+      LLVM_DEBUG(dbgs() << "Warning: Use of function is not a CallInst!\n");
+    }
+  }
+  F->eraseFromParent();
+}
+
+/**
  * @brief Collects and returns a set of instructions from a given function that
  * meet certain criteria.
  *
@@ -294,15 +296,11 @@ std::pair<uint, uint> removeInstructions(std::vector<iSlice> &allSlices,
 std::set<Instruction *> instSetMeetCriterion(FunctionAnalysisManager &FAM,
                                              Function *F) {
   std::set<Instruction *> S;
-  LoopInfo &LI = FAM.getResult<LoopAnalysis>(*F);
-
   for (auto &BB : *F) {
     Instruction *term = BB.getTerminator();
-    if (!term) {
-      LLVM_DEBUG(errs() << "Error: Found function with no terminators:\n");
-      LLVM_DEBUG(errs() << *F << '\n');
-      continue;
-    };
+    assert(term && "Error: A basic block in an original function is missing a "
+                   "terminator instruction...");
+
     // if (Instruction *retValue = dyn_cast<ReturnInst>(term))
     //   for (auto &it : retValue->operands())
     //     if (Instruction *Iit = dyn_cast<Instruction>(it)) S.insert(Iit);
@@ -314,8 +312,7 @@ std::set<Instruction *> instSetMeetCriterion(FunctionAnalysisManager &FAM,
       //   S.insert(&I);
       // }
       if (isa<BinaryOperator>(I)) {
-        Loop *L = LI.getLoopFor(I.getParent());
-        if (!L) S.insert(&I);
+        S.insert(&I);
       }
     }
   }
@@ -416,6 +413,45 @@ void functionSlicesToDot(Module &M, const std::set<Function *> &newFunctions) {
   }
 }
 
+/**
+ * @brief Identifies and collects basic blocks in a function that are involved in 
+ * try-catch logic, including blocks dominated by invoke instructions and 
+ * blocks post-dominated by exception destinations.
+ *
+ * This function analyzes the control flow of a given function to detect basic 
+ * blocks that are part of try-catch constructs. It uses dominator and 
+ * post-dominator trees to determine the relationships between blocks.
+ *
+ * @param F The function to analyze for try-catch logic.
+ * @return A set of pointers to basic blocks that are part of try-catch logic.
+ */
+std::set<BasicBlock *> searchForTryCatchLogic(Function &F) {
+  DominatorTree DT(F);
+  PostDominatorTree PDT(F);
+  std::set<BasicBlock *> tryCatchBlocks;
+  for (auto &BB : F) {
+    for (auto &I : BB) {
+      if (auto *Invoke = dyn_cast<InvokeInst>(&I)) {
+        BasicBlock *normalDest = Invoke->getNormalDest();
+        BasicBlock *exceptionDest = Invoke->getUnwindDest();
+        SmallVector<BasicBlock *, 8> Descendants;
+        DT.getDescendants(&BB, Descendants);
+        for (BasicBlock *DomBlock : Descendants) {
+          if (DT.dominates(&BB, DomBlock)) {
+            tryCatchBlocks.insert(DomBlock);
+          }
+        }
+        for (BasicBlock &CatchBB : F) {
+          if (PDT.dominates(&CatchBB, exceptionDest)) {
+            tryCatchBlocks.insert(&CatchBB);
+          }
+        }
+      }
+    }
+  }
+  return tryCatchBlocks;
+}
+
 namespace Daedalus {
 
 /**
@@ -454,8 +490,9 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
   for (Function *F : FtoMap) {
     uint ki = 0;
     for (auto &BB : *F) {
-      BB.setName("BB_" + std::to_string(ki));
+      BB.setName((BB.hasName()) ? BB.getName() : "BB_" + std::to_string(ki++));
     }
+
     // Criterion Set
     std::set<Instruction *> S = instSetMeetCriterion(FAM, F);
     // filter binary instructions for building a set of instructions
@@ -466,13 +503,17 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
 
     // Replace all uses of I with the correpondent call
     for (Instruction *I : S) {
-      LLVM_DEBUG(dbgs() << *I << '\n');
+    // Search for try-catch logic inside the current function
+    std::set<BasicBlock *> tryCatchBlocks = searchForTryCatchLogic(*F);
+
+    // Replace all uses of I with the correpondent call
+    for (Instruction *I : S) {
       if (!canBeSliceCriterion(*I)) continue;
 
       LLVM_DEBUG(dbgs() << "daedalus.cpp: Function: " << F->getName()
                         << ",\n\tInstruction: " << *I << "\n");
 
-      ProgramSlice ps = ProgramSlice(*I, *F, FAM);
+      ProgramSlice ps = ProgramSlice(*I, *F, FAM, tryCatchBlocks);
       Function *G = ps.outline();
 
       if (G == NULL) continue;
@@ -485,20 +526,21 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
       // SmallPtrSet<Instruction *, 8> originInstructionSet;
       for (auto &e : constOriginalInst) originInstructionSet.insert(e.first);
 
-      // SmallPtrSet<Instruction *, 8> tempToRemove;
-      std::set<Instruction *> tempToRemove;
-      if (!isSelfContained(originInstructionSet, I, tempToRemove)) {
-        LLVM_DEBUG(dbgs() << "Not self contained!\n");
-        G->eraseFromParent();
-        continue;
-      }
+      // TODO: remove this if we don't find a good use for it
+      // std::set<Instruction *> tempToRemove;
+      // if (!isSelfContained(originInstructionSet, I, tempToRemove)) {
+      //   LLVM_DEBUG(dbgs() << "Not self contained!\n");
+      //   G->eraseFromParent();
+      //   continue;
+      // }
 
       LOG_SET_INFO(run, originInstructionSet);
-      LOG_SET_INFO(run, tempToRemove);
+      // LOG_SET_INFO(run, tempToRemove);
 
       SmallVector<Value *> funcArgs = ps.getOrigFunctionArgs();
       CallInst *callInst =
           CallInst::Create(G, funcArgs, I->getName(), I->getParent());
+
       Instruction *moveTo = I;
       if (I && isa<PHINode>(I)) moveTo = I->getParent()->getFirstNonPHI();
       callInst->moveBefore(moveTo);
@@ -510,6 +552,7 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
 
       LLVM_DEBUG(dbgs() << COLOR::GREEN << "outlined!" << COLOR::CLEAN << '\n');
     }
+  }
   }
 
   LOG_SET_INFO(run, FtoMap);
@@ -596,7 +639,7 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
   LLVM_DEBUG(dbgs() << "== PRINT PHASE ==\n");
 
   LLVM_DEBUG(
-      LLVM_DEBUG(dbgs() << "== REPORT GENERATION ==\n");
+      LLVM_DEBUG(dbgs() << "== REPORT GENERATION PHASE ==\n");
       LLVM_DEBUG(dbgs() << "Exporting slices' metadata to disk...\n");
       std::filesystem::path sourceFileName = M.getModuleIdentifier();
       std::filesystem::path exportedFileName =
@@ -621,10 +664,9 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
                                 std::to_string(SizeOfLargestSliceAfterMerging));
       ReportWriterObj.writeLine("mergedSlicesMetadata:");
 
-      std::set<Function *> checkedFunctions; 
+      std::set<Function *> checkedFunctions;
       for (auto [deletedFunc, newFunc] : delToNewFunc) {
-        while (delToNewFunc.count(newFunc)) 
-          newFunc = delToNewFunc[newFunc];
+        while (delToNewFunc.count(newFunc)) newFunc = delToNewFunc[newFunc];
         if (newFunc->hasName() && checkedFunctions.count(newFunc) == 0) {
           checkedFunctions.insert(newFunc);
           ReportWriterObj.writeLine("\t" + newFunc->getName().str() + ":");
@@ -643,22 +685,8 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
     functionSlicesToDot(M, toSimplify);
   }
 
-  LLVM_DEBUG(dbgs() << "== MODULE VERIFICATION PHASE ==\n");
+  assert(!verifyModule(M, &errs())); // assert module is not broken
 
-  if (verifyModule(M, &errs())) {
-    errs() << "Module verification failed!\n";
-    std::error_code EC;
-    std::string failedModuleFilename =
-        M.getModuleIdentifier() + "_failed_module.ll";
-    raw_fd_ostream OS(failedModuleFilename, EC, sys::fs::OF_None);
-    if (EC) {
-      errs() << "Error opening file for writing: " << EC.message() << "\n";
-    } else {
-      M.print(OS, nullptr);
-      errs() << "Module written to " << failedModuleFilename << "\n";
-    }
-    assert(false && "Module verification failed!");
-  }
   return PreservedAnalyses::none();
 }
 } // namespace Daedalus

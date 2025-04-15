@@ -20,7 +20,8 @@ remove_old_file() {
 
 SOURCEFILENAME="$1"
 ARGUMENTS="$2"
-BUILDPATH=$(realpath "$(dirname "$SOURCEFILENAME")/../build")
+SOURCEFOLDER=$(dirname "$SOURCEFILENAME")
+BUILDPATH=$(realpath "$SOURCEFOLDER/../build")
 BUILDTESTSPATH="$BUILDPATH/tests"
 SHAREDOBJECTFILE="$BUILDPATH/lib/libdaedalus.so"
 SOURCEFILEBASENAMEWEXT=$(basename "$SOURCEFILENAME" | sed 's/\.[^.]*$//')
@@ -31,14 +32,25 @@ TRANSFORMATIONLOGFILE="$BUILDTESTSPATH/${SOURCEFILEBASENAMEWEXT}_transformation.
 ORIGINAL_EXECUTABLE="$BUILDTESTSPATH/$SOURCEFILEBASENAMEWEXT.bin"
 FINAL_EXECUTABLE="$BUILDTESTSPATH/$SOURCEFILEBASENAMEWEXT.d.bin"
 
+CARGS_FILE="$SOURCEFOLDER/$SOURCEFILEBASENAMEWEXT.cargs"
+if [ -f "$CARGS_FILE" ]; then
+    EXTRAPARAMS=$(<"$CARGS_FILE")
+    echo -e "\nRead extra parameters from ${CARGS_FILE}: $EXTRAPARAMS"
+else
+    EXTRAPARAMS=""
+    echo -e "\nNo extra parameters provided and ${CARGS_FILE} not found. Proceeding without extra parameters."
+fi
+
 remove_old_file "$SLICESREPORTLOGFILE"
 remove_old_file "$TRANSFORMATIONLOGFILE"
+remove_old_file "$ORIGINAL_EXECUTABLE"
+remove_old_file "$FINAL_EXECUTABLE"
 
-clang -Os -flto -fuse-ld=lld -Wl,--plugin-opt=-lto-embed-bitcode=post-merge-pre-opt "$SOURCEFILENAME" -o "$ORIGINAL_EXECUTABLE"
+clang $EXTRAPARAMS -Os -flto -fuse-ld=lld -Wl,--plugin-opt=-lto-embed-bitcode=post-merge-pre-opt "$SOURCEFILENAME" -o "$ORIGINAL_EXECUTABLE"
 llvm-objcopy --dump-section .llvmbc="$SOURCEFILENAMELL" "$ORIGINAL_EXECUTABLE"
-opt -S -passes=mem2reg,lcssa "$SOURCEFILENAMELL" -o "$SOURCEFILENAMELL"
-opt -stats -debug-only=Daedalus -passes=daedalus -load-pass-plugin="$SHAREDOBJECTFILE" -S "$SOURCEFILENAMELL" -o "$SOURCEFILENAMEDLL" &>> "$TRANSFORMATIONLOGFILE"
-clang -Os "$SOURCEFILENAMEDLL" -o "$FINAL_EXECUTABLE"
+opt -S -passes=mem2reg,lcssa,break-crit-edges "$SOURCEFILENAMELL" -o "$SOURCEFILENAMELL"
+opt -stats -debug-only=daedalus,ProgramSlice -passes=daedalus -load-pass-plugin="$SHAREDOBJECTFILE" -dump-dot -S "$SOURCEFILENAMELL" -o "$SOURCEFILENAMEDLL" &>> "$TRANSFORMATIONLOGFILE"
+clang $EXTRAPARAMS -Os "$SOURCEFILENAMEDLL" -o "$FINAL_EXECUTABLE"
 
 if [ -e "$FINAL_EXECUTABLE" ]; then
     "$FINAL_EXECUTABLE" "$ARGUMENTS" > "${SOURCEFILEBASENAMEWEXT}.output"
