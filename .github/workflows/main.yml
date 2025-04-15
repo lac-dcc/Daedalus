@@ -48,6 +48,14 @@ jobs:
             -B llvm-project/build
           cmake --build llvm-project/build
 
+      # Force build save
+      - name: Save LLVM build
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: llvm-project/build
+          key: llvm-17-build-${{ runner.os }}-${{ hashFiles('llvm-project/llvm/CMakeLists.txt') }}
+
       # Add LLVM to PATH
       - name: Add LLVM to PATH
         run: echo "${{ github.workspace }}/llvm-project/build/bin" >> $GITHUB_PATH
