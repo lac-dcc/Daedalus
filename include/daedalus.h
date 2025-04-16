@@ -28,7 +28,7 @@ struct iSlice {
   llvm::Instruction *I;     // Criterion
   llvm::CallInst *callInst; // CallInst to F
   llvm::Function *F;        // Slice
-  llvm::ArrayRef<llvm::Value *> args; // Arguments to pass on new function call
+  llvm::SmallVector<llvm::Value *> args; // Arguments to pass on new function call
   std::set<llvm::Instruction *>
       constOriginalInst; // set of instruction in original function
   bool wasRemoved;

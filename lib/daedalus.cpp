@@ -520,50 +520,14 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
       //   continue;
       // }
 
-      // SmallVector<Value *> funcArgs = ps.getOrigFunctionArgs();
-      // CallInst *callInst =
-      //     CallInst::Create(G, funcArgs, I->getName(), I->getParent());
-      // Instruction *moveTo = I;
-      // if (I && isa<PHINode>(I)) moveTo = I->getParent()->getFirstNonPHI();
-      // callInst->moveBefore(moveTo);
-      // I->replaceAllUsesWith(callInst);
+      SmallVector<Value *> funcArgs = ps.getOrigFunctionArgs();
+      CallInst *callInst =
+          CallInst::Create(G, funcArgs, I->getName(), I->getParent());
+      Instruction *moveTo = I;
+      if (I && isa<PHINode>(I)) moveTo = I->getParent()->getFirstNonPHI();
+      callInst->moveBefore(moveTo);
+      I->replaceAllUsesWith(callInst);
 
-      LLVM_DEBUG(dbgs() << "Outlined function: " << *G << "\n");
-
-      IRBuilder<> builder(I->getContext());
-      builder.SetInsertPoint(I);
-
-      SmallVector<Value *> funcArgs;
-      for (Value *input : ps.getOutlinedFunctionInputs()) {
-        funcArgs.push_back(input);
-      }
-      for (Value *output : ps.getOutlinedFunctionOutputs()) {
-        funcArgs.push_back(output);
-      }
-      
-      for (auto *arg : funcArgs) {
-        LLVM_DEBUG(dbgs() << "Function argument: " << *arg << "\n");
-      }
-
-      CallInst *callInst = builder.CreateCall(G, funcArgs);
-
-      if (!I->use_empty()) {
-        if (I->getType() == callInst->getType()) {
-          I->replaceAllUsesWith(callInst);
-          I->eraseFromParent();
-        } else {
-          LLVM_DEBUG(dbgs()
-                     << "Type mismatch: Cannot replace uses of instruction\n\t"
-                     << *I << " (type: " << *I->getType()
-                     << ")\nwith call instruction\n\t" << *callInst
-                     << " (type: " << *callInst->getType() << ")\n");
-        }
-      } else {
-        LLVM_DEBUG(
-            dbgs() << "Cannot remove instruction\n\t" << *I
-                   << "\nbecause it has no uses but is still present.\n");
-      }
-      
       iSlice slice = {I, callInst, G, funcArgs, originInstructionSet, false};
       allSlices.push_back(slice);
 

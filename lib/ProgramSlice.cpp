@@ -16,7 +16,6 @@
 
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/AliasSetTracker.h"
-#include "llvm/Analysis/AssumptionCache.h"
 #include "llvm/Analysis/CaptureTracking.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/MemoryLocation.h"
@@ -40,8 +39,6 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/Utils/Local.h"
-
-#include "llvm/Transforms/Utils/CodeExtractor.h"
 
 #include <random>
 
@@ -992,12 +989,12 @@ ReturnInst *ProgramSlice::addReturnValue(Function *F) {
  * @return The newly created delegate Function that encapsulates the slice.
  */
 Function *ProgramSlice::outline() {
-  // assert(!verifyFunction(*_parentFunction, &errs()));
+  assert(!verifyFunction(*_parentFunction, &errs()));
 
-  // if (!_canOutline.first) {
-  //   LLVM_DEBUG(dbgs() << _canOutline.second << '\n');
-  //   return nullptr;
-  // }
+  if (!_canOutline.first) {
+    LLVM_DEBUG(dbgs() << _canOutline.second << '\n');
+    return nullptr;
+  }
 
   const int size = 3;
   if (_instsInSlice.size() < size) {
@@ -1011,24 +1008,23 @@ Function *ProgramSlice::outline() {
 
   // Get function's return type. If the function is an add of integers,
   // then the function must return an integer.
-  // Type *FreturnType;
-  // if (isa<ReturnInst>(_initial)) {
-  // FreturnType = dyn_cast<ReturnInst>(_initial)->getReturnValue()->getType();
-  // } else
-  // FreturnType = _initial->getType();
+  Type *FreturnType;
+  if (isa<ReturnInst>(_initial)) {
+    FreturnType = dyn_cast<ReturnInst>(_initial)->getReturnValue()->getType();
+  } else
+    FreturnType = _initial->getType();
 
   // Get function's arguments
-  // SmallVector<Type *> v;
-  // SmallVector<StringRef> g;
-  // DenseMap<Value *, uint> dt;
-  // uint _i = 0;
-  // for (auto arg : _depArgs) {
-  // v.push_back(arg->getType());
-  // g.push_back(arg->getName());
-  // dt[arg] = _i++;
-  // }
-  // FunctionType *delegateFunctionType = FunctionType::get(FreturnType, v,
-  // false);
+  SmallVector<Type *> v;
+  SmallVector<StringRef> g;
+  DenseMap<Value *, uint> dt;
+  uint _i = 0;
+  for (auto arg : _depArgs) {
+    v.push_back(arg->getType());
+    g.push_back(arg->getName());
+    dt[arg] = _i++;
+  }
+  FunctionType *delegateFunctionType = FunctionType::get(FreturnType, v, false);
 
   // generate a random number to use as suffix for delegate function, to
   // avoid naming conflicts NOTE: we cannot use a simple counter that gets
@@ -1043,85 +1039,37 @@ Function *ProgramSlice::outline() {
       "_daedalus_slice_" + _parentFunction->getName().str() + "_" +
       _initial->getName().str() + "_" + std::to_string(random_num);
 
-  // Function *F =
-  //     Function::Create(delegateFunctionType, Function::ExternalLinkage,
-  //                      functionName, _parentFunction->getParent());
+  Function *F =
+      Function::Create(delegateFunctionType, Function::ExternalLinkage,
+                       functionName, _parentFunction->getParent());
 
-  // // Let LLVM know that the delegate function is pure, so it can further
-  // // optimize calls to it
+  // Let LLVM know that the delegate function is pure, so it can further
+  // optimize calls to it
 
-  // AttrBuilder builder(_parentFunction->getContext());
-  // builder.addAttribute(Attribute::NoUnwind);
-  // builder.addAttribute(Attribute::NoInline);
-  // builder.addAttribute(Attribute::OptimizeForSize);
-  // builder.addAttribute(Attribute::WillReturn);
-  // builder.addAttribute("Daedalus", "1");
-  // F->addFnAttrs(builder);
-  // F->setLinkage(GlobalValue::LinkageTypes::InternalLinkage);
+  AttrBuilder builder(_parentFunction->getContext());
+  builder.addAttribute(Attribute::NoUnwind);
+  builder.addAttribute(Attribute::NoInline);
+  builder.addAttribute(Attribute::OptimizeForSize);
+  builder.addAttribute(Attribute::WillReturn);
+  builder.addAttribute("Daedalus", "1");
+  F->addFnAttrs(builder);
+  F->setLinkage(GlobalValue::LinkageTypes::InternalLinkage);
 
-  // int i = 0;
-  // for (Argument &arg : F->args())
-  //   arg.setName(g[i++]);
+  int i = 0;
+  for (Argument &arg : F->args()) arg.setName(g[i++]);
 
-  // populateFunctionWithBBs(F);
-  // populateBBsWithInsts(F);
-  // reorganizeUses(F);
-  // rerouteBranches(F);
-  // addReturnValue(F);
-  // reorderBlocks(F);
-  // replaceArgs(F, dt);
+  populateFunctionWithBBs(F);
+  populateBBsWithInsts(F);
+  reorganizeUses(F);
+  rerouteBranches(F);
+  addReturnValue(F);
+  reorderBlocks(F);
+  replaceArgs(F, dt);
 
-  // // LLVM_DEBUG(dbgs() << "Function being outlined:\n" << *F);
-  // // Delete unreachable blocks from the function
-  // // bool changed = removeUnreachableBlocks(*F);
+  LLVM_DEBUG(dbgs() << "Outlined function:\n" << *F);
+  assert(!verifyFunction(*F, &errs()));
 
-  // LLVM_DEBUG(dbgs() << "Outlined function:\n" << *F);
-  // assert(!verifyFunction(*F, &errs()));
-
-  // return F;
-
-  DominatorTree DT(*_parentFunction);
-  AssumptionCache AC(*_parentFunction);
-  Function *Outlined = nullptr;
-
-  if (!_BBsInSlice.empty()) {
-    std::vector<BasicBlock *> CandidateBBs;
-    for (const BasicBlock *BB : _BBsInSlice) {
-      CandidateBBs.push_back(const_cast<BasicBlock *>(BB));
-    }
-
-    // Sort CandidateBBs based on the DominatorTree (DT)
-    std::sort(CandidateBBs.begin(), CandidateBBs.end(),
-              [&DT](BasicBlock *A, BasicBlock *B) {
-                return DT.properlyDominates(A, B);
-              });
-
-    CodeExtractor CE(CandidateBBs, &DT, false, nullptr, nullptr, &AC);
-
-    if (CE.isEligible()) {
-      CodeExtractorAnalysisCache CEAC(*_parentFunction);
-      Outlined = CE.extractCodeRegion(CEAC, _outlinedInputs, _outlinedOutputs);
-      Outlined->setName(functionName);
-
-      AttrBuilder attrBuilder(_parentFunction->getContext());
-      attrBuilder.addAttribute(Attribute::NoUnwind);
-      attrBuilder.addAttribute(Attribute::NoInline);
-      attrBuilder.addAttribute(Attribute::OptimizeForSize);
-      attrBuilder.addAttribute(Attribute::WillReturn);
-      attrBuilder.addAttribute("Daedalus", "1");
-      Outlined->addFnAttrs(attrBuilder);
-      Outlined->setLinkage(GlobalValue::LinkageTypes::InternalLinkage);
-    } else {
-      LLVM_DEBUG(dbgs() << "Selected basic blocks do not form an eligible "
-                           "function for extraction.\n");
-    }
-  } else {
-    LLVM_DEBUG(
-        dbgs()
-        << "No basic blocks were selected for the given slice criterion.\n");
-  }
-
-  return Outlined;
+  return F;
 }
 
 /**
