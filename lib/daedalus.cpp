@@ -193,7 +193,7 @@ std::pair<uint, uint> removeInstructions(std::vector<iSlice> &allSlices,
     CallInst *callInst = slice.callInst;
     Function *F = slice.F;
     std::set<Instruction *> origInst = slice.constOriginalInst;
-    if (F == NULL) continue;
+    if (F == nullptr) continue;
     F = callInst->getCalledFunction();
     if (mergeTo.count(F) == 0) {
       killSlice(F, callInst, sliceCriterion);
@@ -503,7 +503,7 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
       ProgramSlice ps = ProgramSlice(*I, *F, FAM, tryCatchBlocks);
       Function *G = ps.outline();
 
-      if (G == NULL) continue;
+      if (G == nullptr) continue;
 
       // Get the original instruction to check if it can be removed
       std::map<Instruction *, Instruction *> constOriginalInst =

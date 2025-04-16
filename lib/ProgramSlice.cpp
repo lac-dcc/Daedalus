@@ -57,7 +57,7 @@ using namespace llvm;
  * @param BB The basic block for which to find the controlling block.
  * @param DT The dominator tree.
  * @param PDT The post-dominator tree.
- * @return A pointer to the controlling basic block, or NULL if no such block is
+ * @return A pointer to the controlling basic block, or nullptr if no such block is
  * found.
  */
 static const BasicBlock *getController(const BasicBlock *BB, DominatorTree &DT,
@@ -586,9 +586,9 @@ void ProgramSlice::rerouteBranches(Function *F) {
           if (suc->getParent() == F) {
             continue;
           }
+
           const BasicBlock *attractor = _attractors[suc];
           BasicBlock *newSucc = _origToNewBBmap[attractor];
-
           if (!newSucc) {
             suc->replaceUsesWithIf(unreachableBlock, [F](Use &U) {
               auto *UserI = dyn_cast<Instruction>(U.getUser());
@@ -597,9 +597,7 @@ void ProgramSlice::rerouteBranches(Function *F) {
             BI->setSuccessor(idx, unreachableBlock);
             continue;
           }
-
           BI->setSuccessor(idx, newSucc);
-
           for (Instruction &I : *newSucc) {
             if (!isa<PHINode>(I)) {
               continue;
@@ -614,9 +612,9 @@ void ProgramSlice::rerouteBranches(Function *F) {
           if (suc->getParent() == F) {
             continue;
           }
+
           const BasicBlock *attractor = _attractors[suc];
           BasicBlock *newSucc = _origToNewBBmap[attractor];
-
           if (!newSucc) {
             suc->replaceUsesWithIf(unreachableBlock, [F](Use &U) {
               auto *UserI = dyn_cast<Instruction>(U.getUser());
@@ -625,9 +623,7 @@ void ProgramSlice::rerouteBranches(Function *F) {
             SI->setSuccessor(idx, unreachableBlock);
             continue;
           }
-
           SI->setSuccessor(idx, newSucc);
-
           for (Instruction &I : *newSucc) {
             if (!isa<PHINode>(I)) {
               continue;
@@ -990,6 +986,7 @@ ReturnInst *ProgramSlice::addReturnValue(Function *F) {
  */
 Function *ProgramSlice::outline() {
   assert(!verifyFunction(*_parentFunction, &errs()));
+  // LLVM_DEBUG(dbgs() << "Parent function:\n" << *_parentFunction);
 
   if (!_canOutline.first) {
     LLVM_DEBUG(dbgs() << _canOutline.second << '\n');
@@ -1065,6 +1062,10 @@ Function *ProgramSlice::outline() {
   addReturnValue(F);
   reorderBlocks(F);
   replaceArgs(F, dt);
+
+  // LLVM_DEBUG(dbgs() << "Function being outlined:\n" << *F);
+  // Delete unreachable blocks from the function
+  // bool changed = removeUnreachableBlocks(*F);
 
   LLVM_DEBUG(dbgs() << "Outlined function:\n" << *F);
   assert(!verifyFunction(*F, &errs()));
