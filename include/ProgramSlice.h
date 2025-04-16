@@ -15,6 +15,7 @@
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/PassManager.h"
 #include "llvm/Support/Error.h"
+#include "llvm/ADT/SetVector.h"
 
 // #include "llvm/Transforms/IPO/FunctionMerging.h"
 
@@ -44,6 +45,14 @@ public:
    * Values.
    */
   SmallVector<Value *> getOrigFunctionArgs();
+
+  inline SetVector<Value *> getOutlinedFunctionInputs() {
+    return _outlinedInputs;
+  }
+
+  inline SetVector<Value *> getOutlinedFunctionOutputs() {
+    return _outlinedOutputs;
+  }
 
   /**
    * @brief Retrieves the mapping of original instructions to their
@@ -150,6 +159,10 @@ private:
 
   void size();
   StructType *computeStructType(bool memo);
+
+  
+  SetVector<Value *> _outlinedInputs;
+  SetVector<Value *> _outlinedOutputs;
 
   /// pointer to the Instruction used as slice criterion
   Instruction *_initial;
