@@ -360,6 +360,14 @@ ProgramSlice::ProgramSlice(Instruction &Initial, Function &F,
   _phiDepArgs = data.typeAndName;
   _BBsInSlice = data.BBs;
 
+  // add all basic blocks in the function to the slice, but keep them with
+  // only a branch instruction
+  for (auto &BB : F) {
+    if (!_BBsInSlice.count(&BB)) {
+      _BBsInSlice.insert(&BB);
+    }
+  }
+
   computeAttractorBlocks();
 }
 
@@ -1047,6 +1055,10 @@ Function *ProgramSlice::outline() {
   addReturnValue(F);
   reorderBlocks(F);
   replaceArgs(F, dt);
+
+  // LLVM_DEBUG(dbgs() << "Function being outlined:\n" << *F);
+  // Delete unreachable blocks from the function
+  bool changed = removeUnreachableBlocks(*F);
 
   LLVM_DEBUG(dbgs() << "Outlined function:\n" << *F);
   assert(!verifyFunction(*F, &errs()));
