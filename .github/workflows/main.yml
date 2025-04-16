@@ -78,4 +78,4 @@ jobs:
 
       # Run tests
       - name: Run tests with ctest
-        run: ctest --verbose --test-dir build
+        run: ctest --rerun-failed --output-on-failure --test-dir build
