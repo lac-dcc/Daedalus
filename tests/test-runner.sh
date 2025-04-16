@@ -46,10 +46,23 @@ remove_old_file "$TRANSFORMATIONLOGFILE"
 remove_old_file "$ORIGINAL_EXECUTABLE"
 remove_old_file "$FINAL_EXECUTABLE"
 
+echo "clang $EXTRAPARAMS -Os -flto -fuse-ld=lld -Wl,--plugin-opt=-lto-embed-bitcode=post-merge-pre-opt \"$SOURCEFILENAME\" -o \"$ORIGINAL_EXECUTABLE\""
 clang $EXTRAPARAMS -Os -flto -fuse-ld=lld -Wl,--plugin-opt=-lto-embed-bitcode=post-merge-pre-opt "$SOURCEFILENAME" -o "$ORIGINAL_EXECUTABLE"
+
+echo "llvm-objcopy --dump-section .llvmbc=\"$SOURCEFILENAMELL\" \"$ORIGINAL_EXECUTABLE\""
 llvm-objcopy --dump-section .llvmbc="$SOURCEFILENAMELL" "$ORIGINAL_EXECUTABLE"
+
+echo "opt -S -passes=mem2reg,lcssa,break-crit-edges \"$SOURCEFILENAMELL\" -o \"$SOURCEFILENAMELL\""
 opt -S -passes=mem2reg,lcssa,break-crit-edges "$SOURCEFILENAMELL" -o "$SOURCEFILENAMELL"
-opt -stats -debug-only=daedalus,ProgramSlice -passes=daedalus -load-pass-plugin="$SHAREDOBJECTFILE" -dump-dot -S "$SOURCEFILENAMELL" -o "$SOURCEFILENAMEDLL" &>> "$TRANSFORMATIONLOGFILE"
+
+echo "opt -stats -debug-only=daedalus,ProgramSlice -passes=daedalus -load-pass-plugin=\"$SHAREDOBJECTFILE\" -dump-dot -S \"$SOURCEFILENAMELL\" -o \"$SOURCEFILENAMEDLL\" &>> \"$TRANSFORMATIONLOGFILE\""
+if ! opt -stats -debug-only=daedalus,ProgramSlice -passes=daedalus -load-pass-plugin="$SHAREDOBJECTFILE" -dump-dot -S "$SOURCEFILENAMELL" -o "$SOURCEFILENAMEDLL" &>> "$TRANSFORMATIONLOGFILE"; then
+    echo "opt exited with error code $?"
+    echo "Dumping last 50 lines of the transformation log file:"
+    tail --lines 50 "$TRANSFORMATIONLOGFILE"
+fi
+
+echo "clang $EXTRAPARAMS -Os \"$SOURCEFILENAMEDLL\" -o \"$FINAL_EXECUTABLE\""
 clang $EXTRAPARAMS -Os "$SOURCEFILENAMEDLL" -o "$FINAL_EXECUTABLE"
 
 if [ -e "$FINAL_EXECUTABLE" ]; then
