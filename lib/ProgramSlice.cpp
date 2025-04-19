@@ -15,7 +15,6 @@
 #include <unordered_map>
 #include <utility>
 
-#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/AliasSetTracker.h"
 #include "llvm/Analysis/CaptureTracking.h"
@@ -159,7 +158,7 @@ computeGates(Function &F) {
 
 struct dataDependence {
   SmallPtrSet<const BasicBlock *, 2> BBs;
-  std::set<const Value *> dependences;
+  SmallPtrSet<const Value *, 6> dependences;
   std::vector<std::pair<Type *, StringRef>> typeAndName;
   bool phiCrit;
   std::set<Value *> phiOnArgs;
@@ -196,7 +195,7 @@ std::pair<Status, dataDependence> get_data_dependences_for(
     std::unordered_map<const BasicBlock *, SmallVector<const Value *>> &gates,
     Function &F, FunctionAnalysisManager &FAM) {
 
-  std::set<const Value *> deps;
+  SmallPtrSet<const Value *, 6> deps;
   SmallPtrSet<const BasicBlock *, 2> BBs;
   SmallPtrSet<const Value *, 6> visited;
   std::queue<const Value *> worklist;
@@ -326,7 +325,7 @@ ProgramSlice::ProgramSlice(Instruction &Initial, Function &F,
       computeGates(F);
   auto [check, data] = get_data_dependences_for(Initial, gates, F, FAM);
 
-  for (auto &BB : data.BBs) {
+  for (const auto &BB : data.BBs) {
     if (tryCatchBlocks.count(const_cast<BasicBlock *>(BB))) {
       _canOutline.first = false;
       _canOutline.second = "Slice contains try-catch blocks.";
@@ -345,7 +344,7 @@ ProgramSlice::ProgramSlice(Instruction &Initial, Function &F,
   std::set<const Instruction *> instsInSlice;
   SmallVector<Value *> depArgs;
 
-  for (auto &val : data.dependences) {
+  for (const auto &val : data.dependences) {
     if (Argument *A = dyn_cast<Argument>(const_cast<Value *>(val))) {
       depArgs.push_back(A);
     } else if (const Instruction *I = dyn_cast<Instruction>(val)) {

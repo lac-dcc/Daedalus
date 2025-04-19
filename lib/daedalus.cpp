@@ -8,7 +8,6 @@
 #include "../include/ProgramSlice.h"
 #include "../include/debugCommon.h"
 #include "../include/reports.h"
-#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Analysis/CFGPrinter.h"
@@ -28,7 +27,6 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/GraphWriter.h"
 #include "llvm/Support/NativeFormatting.h"
-#include "llvm/Support/Timer.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/IPO/MergeFunctions.h"
 #include <filesystem>
@@ -53,7 +51,6 @@ STATISTIC(SizeOfLargestSliceBeforeMerging,
           "Size of the largest slice function before merging step");
 STATISTIC(SizeOfLargestSliceAfterMerging,
           "Size of the largest slice function after merging step");
-
 static cl::opt<bool>
     dumpDot("dump-dot",
             cl::desc("Export function slice CFGs as DOT graph files in a "
@@ -166,7 +163,6 @@ bool isSelfContained(SmallPtrSetImpl<Instruction *> &origInst, Instruction *I,
     if (I != J) {
       if (canRemove(J, I, origInst, vis, tempToRemove)) tempToRemove.insert(J);
     }
-    LOG_SET_INFO(isSelfContained, vis);
   }
   return true;
 }
@@ -234,12 +230,7 @@ std::pair<uint, uint> removeInstructions(std::vector<iSlice> &allSlices,
     }
     toSimplify.insert(F);
     toRemove.insert(sliceCriterion);
-
-    LOG_SET_INFO(removeInstructions, origInst);
-    LOG_SET_INFO(removeInstructions, tempToRemove);
   }
-
-  LOG_SET_INFO(removeInstructions, toRemove);
 
   for (auto &e : toRemove) {
     e->replaceAllUsesWith(UndefValue::get(e->getType()));
@@ -295,9 +286,9 @@ void killSlice(Function *F, CallInst *callInst, Instruction *criterion) {
  * collected.
  * @return A set of pointers to instructions that meet the specified criteria.
  */
-SmallPtrSet<Instruction *, 3> instSetMeetCriterion(FunctionAnalysisManager &FAM,
+std::set<Instruction *> instSetMeetCriterion(FunctionAnalysisManager &FAM,
                                              Function *F) {
-  SmallPtrSet<Instruction *, 3> S;
+  std::set<Instruction *> S;
   for (auto &BB : *F) {
     Instruction *term = BB.getTerminator();
     assert(term && "Error: A basic block in an original function is missing a "
@@ -319,7 +310,6 @@ SmallPtrSet<Instruction *, 3> instSetMeetCriterion(FunctionAnalysisManager &FAM,
     }
   }
 
-  LOG_SET_INFO(instSetMeetCriterion, S);
   return S;
 }
 
@@ -470,7 +460,6 @@ namespace Daedalus {
  */
 PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
 
-  TimeTraceScope T("DaedalusPass", "DaedalusPassPhase");
   std::set<Function *> FtoMap;
   std::vector<iSlice> allSlices;
 
@@ -497,15 +486,11 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
     }
 
     // Criterion Set
-    SmallPtrSet<Instruction *, 3> S = instSetMeetCriterion(FAM, F);
+    std::set<Instruction *> S = instSetMeetCriterion(FAM, F);
     // filter binary instructions for building a set of instructions
     // that can be used as slicing criterion. this function enables us
     // to change how we manage the slicing criterion.
 
-    LOG_SET_INFO(run, S);
-
-    // Replace all uses of I with the correpondent call
-    for (Instruction *I : S) {
     // Search for try-catch logic inside the current function
     std::set<BasicBlock *> tryCatchBlocks = searchForTryCatchLogic(*F);
 
@@ -525,7 +510,6 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
       std::map<Instruction *, Instruction *> constOriginalInst =
           ps.getInstructionInSlice();
 
-      // std::set<Instruction *> originInstructionSet;
       SmallPtrSet<Instruction *, 6> originInstructionSet;
       for (auto &e : constOriginalInst) originInstructionSet.insert(e.first);
 
@@ -537,9 +521,6 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
       //   continue;
       // }
 
-      LOG_SET_INFO(run, originInstructionSet);
-      // LOG_SET_INFO(run, tempToRemove);
-
       SmallVector<Value *> funcArgs = ps.getOrigFunctionArgs();
       CallInst *callInst =
           CallInst::Create(G, funcArgs, I->getName(), I->getParent());
@@ -549,16 +530,12 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
       callInst->moveBefore(moveTo);
       I->replaceAllUsesWith(callInst);
 
-      LOG_SET_INFO(run, originInstructionSet);
       iSlice slice = {I, callInst, G, funcArgs, originInstructionSet, false};
       allSlices.push_back(slice);
 
       LLVM_DEBUG(dbgs() << COLOR::GREEN << "outlined!" << COLOR::CLEAN << '\n');
     }
   }
-  }
-
-  LOG_SET_INFO(run, FtoMap);
 
   std::set<Function *> originalFunctions;
   std::set<Function *> outlinedFunctions;
@@ -571,9 +548,6 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
     LLVM_DEBUG(if (numberOfInstructions(F) > SizeOfLargestSliceBeforeMerging)
                    SizeOfLargestSliceBeforeMerging = numberOfInstructions(F););
   }
-
-  LOG_SET_INFO(run, originalFunctions);
-  LOG_SET_INFO(run, outlinedFunctions);
 
   LLVM_DEBUG(dbgs() << "== MERGE SLICES FUNC PHASE ==\n");
 
@@ -597,8 +571,6 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
                    SizeOfLargestSliceAfterMerging = numberOfInstructions(B););
     mergeTo.insert(B);
   }
-
-  LOG_SET_INFO(run, mergeTo);
 
   // func-merging impl.
   // std::set<Function *> combinedFunctions;
@@ -636,8 +608,6 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
   for (auto originalF : originalFunctions) {
     llvm::ProgramSlice::simplifyCfg(originalF, FAM);
   }
-
-  LOG_SET_INFO(run, toSimplify);
 
   LLVM_DEBUG(dbgs() << "== PRINT PHASE ==\n");
 
