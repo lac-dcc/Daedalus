@@ -6,6 +6,7 @@
  ***********************************************/
 #ifndef PFHEADER
 #define PFHEADER
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Analysis/TargetLibraryInfo.h"
 #include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/Function.h"
@@ -30,7 +31,7 @@ struct iSlice {
   llvm::Function *F;        // Slice
   llvm::SmallVector<llvm::Value *>
       args; // Arguments to pass on new function call
-  std::set<llvm::Instruction *>
+  llvm::SmallPtrSet<llvm::Instruction *, 6>
       constOriginalInst; // set of instruction in original function
   bool wasRemoved;
 };

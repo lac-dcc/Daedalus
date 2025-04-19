@@ -15,6 +15,7 @@
 #include <unordered_map>
 #include <utility>
 
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/AliasSetTracker.h"
 #include "llvm/Analysis/CaptureTracking.h"
@@ -157,7 +158,7 @@ computeGates(Function &F) {
 }
 
 struct dataDependence {
-  std::set<const BasicBlock *> BBs;
+  SmallPtrSet<const BasicBlock *, 2> BBs;
   std::set<const Value *> dependences;
   std::vector<std::pair<Type *, StringRef>> typeAndName;
   bool phiCrit;
@@ -196,8 +197,8 @@ std::pair<Status, dataDependence> get_data_dependences_for(
     Function &F, FunctionAnalysisManager &FAM) {
 
   std::set<const Value *> deps;
-  std::set<const BasicBlock *> BBs;
-  std::set<const Value *> visited;
+  SmallPtrSet<const BasicBlock *, 2> BBs;
+  SmallPtrSet<const Value *, 6> visited;
   std::queue<const Value *> worklist;
   std::vector<std::pair<Type *, StringRef>> phiArguments;
   std::set<Value *> phiOnArgs;
@@ -469,7 +470,7 @@ void updatePHINodes(Function *F) {
         break;
       }
       ++I_it;
-      std::set<BasicBlock *> S;
+      SmallPtrSet<BasicBlock *, 2> S;
       for (unsigned PI = 0, PE = PN->getNumIncomingValues(); PI != PE; ++PI) {
         BasicBlock *incBB = PN->getIncomingBlock(PI);
         S.insert(incBB);
