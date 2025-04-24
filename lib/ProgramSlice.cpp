@@ -341,7 +341,7 @@ ProgramSlice::ProgramSlice(Instruction &Initial, Function &F,
 
   _phiCrit = data.phiCrit;
 
-  std::set<const Instruction *> instsInSlice;
+  SmallPtrSet<const Instruction *, 6> instsInSlice;
   SmallVector<Value *> depArgs;
 
   for (const auto &val : data.dependences) {
@@ -361,6 +361,7 @@ ProgramSlice::ProgramSlice(Instruction &Initial, Function &F,
     _instRetValue = dyn_cast<Instruction>(_initial);
   }
 
+  LOG_SET_INFO(ProgramSlice::ProgramSlice, instsInSlice)
   _instsInSlice = instsInSlice;
   _depArgs = depArgs;
   _phiDepArgs = data.typeAndName;

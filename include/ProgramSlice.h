@@ -166,7 +166,7 @@ private:
 
   /// set of instructions that must be in the slice, accordingto dependence
   /// analysis
-  std::set<const Instruction *> _instsInSlice;
+  SmallPtrSet<const Instruction *, 6> _instsInSlice;
 
   /// set of BasicBLocks that must be in the slice, according to dependence
   /// analysis
