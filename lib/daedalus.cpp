@@ -51,6 +51,8 @@ STATISTIC(SizeOfLargestSliceBeforeMerging,
           "Size of the largest slice function before merging step");
 STATISTIC(SizeOfLargestSliceAfterMerging,
           "Size of the largest slice function after merging step");
+
+STATISTIC(timeSpent, "Time spent in the daedalus pass in ms");
 static cl::opt<bool>
     dumpDot("dump-dot",
             cl::desc("Export function slice CFGs as DOT graph files in a "
@@ -441,6 +443,7 @@ std::set<BasicBlock *> searchForTryCatchLogic(Function &F) {
       }
     }
   }
+  LOG_SET_INFO(searchForTryCatchLogic, tryCatchBlocks);
   return tryCatchBlocks;
 }
 
@@ -459,6 +462,8 @@ namespace Daedalus {
  * @return The preserved analyses after running the pass.
  */
 PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
+
+  auto passStart = std::chrono::high_resolution_clock::now();
 
   std::set<Function *> FtoMap;
   std::vector<iSlice> allSlices;
@@ -659,6 +664,10 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
   }
 
   assert(!verifyModule(M, &errs())); // assert module is not broken
+
+  auto passDuration = std::chrono::duration_cast<std::chrono::microseconds>(
+            std::chrono::high_resolution_clock::now() - passStart);
+  timeSpent += passDuration.count();
 
   return PreservedAnalyses::none();
 }
