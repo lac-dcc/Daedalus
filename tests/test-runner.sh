@@ -5,6 +5,9 @@ if [ $# -ne 2 ]; then
   exit 1
 fi
 
+command -v clang >/dev/null 2>&1 || { echo >&2 "clang is required but it's not installed. Aborting..."; exit 1; }
+command -v llvm-objcopy >/dev/null 2>&1 || { echo >&2 "llvm-objcopy is required but it's not installed. Aborting..."; exit 1; }
+command -v opt >/dev/null 2>&1 || { echo >&2 "opt is required but it's not installed. Aborting..."; exit 1; }
 
 remove_old_file() {
     local FILENAME
@@ -37,14 +40,6 @@ else
     EXTRAPARAMS=""
     echo -e "\nNo extra parameters provided and ${CARGS_FILE} not found. Proceeding without extra parameters."
 fi
-FORK_PATH="$(dirname "$BUILDPATH")/llvm-project-fork/build/bin"
-CLANG="$FORK_PATH/clang"
-LLVM_OBJCOPY="$FORK_PATH/llvm-objcopy"
-OPT="$FORK_PATH/opt"
-
-command -v $CLANG >/dev/null 2>&1 || { echo >&2 "clang is required but it's not installed. Aborting..."; exit 1; }
-command -v  $LLVM_OBJCOPY >/dev/null 2>&1 || { echo >&2 "llvm-objcopy is required but it's not installed. Aborting..."; exit 1; }
-command -v $OPT >/dev/null 2>&1 || { echo >&2 "opt is required but it's not installed. Aborting..."; exit 1; }
 
 remove_old_file "$SLICESREPORTLOGFILE"
 remove_old_file "$TRANSFORMATIONLOGFILE"
