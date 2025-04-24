@@ -45,17 +45,17 @@ bool canBeSliceCriterion(llvm::Instruction &I);
  * @brief Attempts to remove an instruction if it meets specific criteria.
  */
 bool canRemove(llvm::Instruction *I, llvm::Instruction *ini,
-               std::set<llvm::Instruction *> &constOriginalInst,
-               std::set<llvm::Instruction *> &vis,
-               std::set<llvm::Instruction *> &toRemove);
+               llvm::SmallPtrSetImpl<llvm::Instruction *> &constOriginalInst,
+               llvm::SmallPtrSetImpl<llvm::Instruction *> &vis,
+               llvm::SmallPtrSetImpl<llvm::Instruction *> &toRemove);
 
 /**
  * @brief Checks if a given instruction is self-contained within a set of
  * instructions.
  */
-bool isSelfContained(std::set<llvm::Instruction *> origInst,
+bool isSelfContained(llvm::SmallPtrSetImpl<llvm::Instruction *> origInst,
                      llvm::Instruction *I,
-                     std::set<llvm::Instruction *> &tempToRemove);
+                     llvm::SmallPtrSetImpl<llvm::Instruction *> &tempToRemove);
 
 /**
  * @brief Removes instructions from slices and simplifies functions.
