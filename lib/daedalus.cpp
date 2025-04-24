@@ -443,7 +443,6 @@ std::set<BasicBlock *> searchForTryCatchLogic(Function &F) {
       }
     }
   }
-  LOG_SET_INFO(searchForTryCatchLogic, tryCatchBlocks);
   return tryCatchBlocks;
 }
 

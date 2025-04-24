@@ -7,14 +7,6 @@
 
 #define dbg(msg) LLVM_DEBUG(dbgs() << msg << '\n')
 
-#if 1
-#define LOG_SET_INFO(parent_fn, set_var)  
-#else
-#define LOG_SET_INFO(parent_fn, set_var) \
-    dbgs()  << #parent_fn << ":" << #set_var \
-            << " -- size:" << set_var.size() << "\n";
-#endif
-
 namespace COLOR {
 const std::string BLACK = "\033[30m";
 const std::string RED = "\033[31m";

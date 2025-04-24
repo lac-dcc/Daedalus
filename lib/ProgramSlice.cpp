@@ -162,11 +162,6 @@ struct dataDependence {
   std::vector<std::pair<Type *, StringRef>> typeAndName;
   bool phiCrit;
   std::set<Value *> phiOnArgs;
-  ~dataDependence() {
-    LOG_SET_INFO(dataDependence, BBs);
-    LOG_SET_INFO(dataDependence, dependences);
-    LOG_SET_INFO(dataDependence, phiOnArgs);
-  }
 };
 
 struct Status {
@@ -293,7 +288,6 @@ std::pair<Status, dataDependence> get_data_dependences_for(
       }
     }
   }
-  LOG_SET_INFO(get_data_dependences_for, visited);
   dataDependence result = {BBs, deps, phiArguments, phiCrit, phiOnArgs};
   return {status, result};
 }
@@ -361,7 +355,6 @@ ProgramSlice::ProgramSlice(Instruction &Initial, Function &F,
     _instRetValue = dyn_cast<Instruction>(_initial);
   }
 
-  LOG_SET_INFO(ProgramSlice::ProgramSlice, instsInSlice)
   _instsInSlice = instsInSlice;
   _depArgs = depArgs;
   _phiDepArgs = data.typeAndName;
@@ -480,9 +473,7 @@ void updatePHINodes(Function *F) {
           PN->removeIncomingValue(incBB);
         }
       }
-      LOG_SET_INFO(updatePHINodes, S);
     }
-    LOG_SET_INFO(updatePHINodes, preds);
   }
 }
 
@@ -512,7 +503,6 @@ void ProgramSlice::rerouteBranches(Function *F) {
   // Visit blocks recursively in order of dominance. If BB1 and BB2 are in
   // slice, BB1 IDom BB2, and BB1 has no terminator, create branch BB1->BB2
   addDomBranches(init, parent, visited);
-  LOG_SET_INFO(rerouteBranches, visited);
 
   // Save list of PHI nodes to update. Old blocks should be replaced by
   // new blocks as predecessors in merging values. We store PHIs to update
