@@ -53,7 +53,7 @@ bool canRemove(llvm::Instruction *I, llvm::Instruction *ini,
  * @brief Checks if a given instruction is self-contained within a set of
  * instructions.
  */
-bool isSelfContained(llvm::SmallPtrSetImpl<llvm::Instruction *> origInst,
+bool isSelfContained(llvm::SmallPtrSetImpl<llvm::Instruction *> &origInst,
                      llvm::Instruction *I,
                      llvm::SmallPtrSetImpl<llvm::Instruction *> &tempToRemove);
 
