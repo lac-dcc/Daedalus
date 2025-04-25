@@ -6,6 +6,7 @@
  ***********************************************/
 #ifndef PFHEADER
 #define PFHEADER
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Analysis/TargetLibraryInfo.h"
 #include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/Function.h"
@@ -30,7 +31,7 @@ struct iSlice {
   llvm::Function *F;        // Slice
   llvm::SmallVector<llvm::Value *>
       args; // Arguments to pass on new function call
-  std::set<llvm::Instruction *>
+  llvm::SmallPtrSet<llvm::Instruction *, 6>
       constOriginalInst; // set of instruction in original function
   bool wasRemoved;
 };
@@ -44,17 +45,17 @@ bool canBeSliceCriterion(llvm::Instruction &I);
  * @brief Attempts to remove an instruction if it meets specific criteria.
  */
 bool canRemove(llvm::Instruction *I, llvm::Instruction *ini,
-               std::set<llvm::Instruction *> &constOriginalInst,
-               std::set<llvm::Instruction *> &vis,
-               std::set<llvm::Instruction *> &toRemove);
+               llvm::SmallPtrSetImpl<llvm::Instruction *> &constOriginalInst,
+               llvm::SmallPtrSetImpl<llvm::Instruction *> &vis,
+               llvm::SmallPtrSetImpl<llvm::Instruction *> &toRemove);
 
 /**
  * @brief Checks if a given instruction is self-contained within a set of
  * instructions.
  */
-bool isSelfContained(std::set<llvm::Instruction *> origInst,
+bool isSelfContained(llvm::SmallPtrSetImpl<llvm::Instruction *> &origInst,
                      llvm::Instruction *I,
-                     std::set<llvm::Instruction *> &tempToRemove);
+                     llvm::SmallPtrSetImpl<llvm::Instruction *> &tempToRemove);
 
 /**
  * @brief Removes instructions from slices and simplifies functions.

@@ -19,6 +19,7 @@
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/InstrTypes.h"
+#include "llvm/IR/Instruction.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/PassManager.h"
 #include "llvm/IR/Verifier.h"
@@ -112,9 +113,9 @@ bool canBeSliceCriterion(Instruction &I) {
  * @return True if the instruction was successfully removed, false otherwise.
  */
 bool canRemove(Instruction *I, Instruction *ini,
-               std::set<Instruction *> &constOriginalInst,
-               std::set<Instruction *> &vis,
-               std::set<Instruction *> &toRemove) {
+               SmallPtrSetImpl<Instruction *> &constOriginalInst,
+               SmallPtrSetImpl<Instruction *> &vis,
+               SmallPtrSetImpl<Instruction *> &toRemove) {
   if (ini == I) return true;
   if (toRemove.find(I) != toRemove.end()) return true;
 
@@ -154,11 +155,11 @@ bool canRemove(Instruction *I, Instruction *ini,
  * affecting `I`.
  * @return Always returns true.
  */
-bool isSelfContained(std::set<Instruction *> origInst, Instruction *I,
-                     std::set<Instruction *> &tempToRemove) {
+bool isSelfContained(SmallPtrSetImpl<Instruction *> &origInst, Instruction *I,
+                     SmallPtrSetImpl<Instruction *> &tempToRemove) {
   for (Instruction *J : origInst) {
     if (J->getParent() == nullptr) continue;
-    std::set<Instruction *> vis;
+    SmallPtrSet<Instruction *, 1> vis;
     if (I != J) {
       if (canRemove(J, I, origInst, vis, tempToRemove)) tempToRemove.insert(J);
     }
@@ -192,7 +193,7 @@ std::pair<uint, uint> removeInstructions(std::vector<iSlice> &allSlices,
     Instruction *sliceCriterion = slice.I;
     CallInst *callInst = slice.callInst;
     Function *F = slice.F;
-    std::set<Instruction *> origInst = slice.constOriginalInst;
+    SmallPtrSet<Instruction *, 6> origInst = slice.constOriginalInst;
     if (F == NULL) continue;
     F = callInst->getCalledFunction();
     if (mergeTo.count(F) == 0) {
@@ -211,7 +212,7 @@ std::pair<uint, uint> removeInstructions(std::vector<iSlice> &allSlices,
 
     if (sliceCriterion->getParent() == nullptr) continue;
 
-    std::set<Instruction *> tempToRemove;
+    SmallPtrSet<Instruction *, 4> tempToRemove;
     if (!isSelfContained(origInst, sliceCriterion, tempToRemove)) {
       LLVM_DEBUG(dbgs() << "Not self contained!\n");
       killSlice(F, callInst, sliceCriterion);
@@ -509,7 +510,7 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
       std::map<Instruction *, Instruction *> constOriginalInst =
           ps.getInstructionInSlice();
 
-      std::set<Instruction *> originInstructionSet;
+      SmallPtrSet<Instruction *, 6> originInstructionSet;
       for (auto &e : constOriginalInst) originInstructionSet.insert(e.first);
 
       // TODO: remove this if we don't find a good use for it

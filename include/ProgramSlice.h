@@ -7,6 +7,7 @@
 #include <map>
 #include <set>
 
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 
 #include "llvm/Analysis/PostDominators.h"
@@ -165,11 +166,11 @@ private:
 
   /// set of instructions that must be in the slice, accordingto dependence
   /// analysis
-  std::set<const Instruction *> _instsInSlice;
+  SmallPtrSet<const Instruction *, 6> _instsInSlice;
 
   /// set of BasicBLocks that must be in the slice, according to dependence
   /// analysis
-  std::set<const BasicBlock *> _BBsInSlice;
+  SmallPtrSet<const BasicBlock *, 2> _BBsInSlice;
 
   /// function call being lazified
 

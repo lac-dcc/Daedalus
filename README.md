@@ -57,7 +57,7 @@ $ opt -passes=daedalus -load-pass-plugin=path/to/lib/libdaedalus.so -S {path_to_
 ```bash
 $ opt -load-pass-plugin=path/to/lib/libdaedalus.so -passes=daedalus -dump-dot {path_to_ll_file}
 ```
-Here's the result of the running above command assuming its ran on a source file named `test.ll` and the Daedalus path add a new function slice named **slice_foo**:
+Here's the result of the running above command assuming its ran on a source file named `test.ll` and the Daedalus pass add a new function slice named **slice_foo**:
 
 -  `$(pwd)/test.ll.dump_dot/`: A new directory
 - `$(pwd)/test.ll.dump_dot/slice_foo.dot`: **slice_foo** CFG in DOT format

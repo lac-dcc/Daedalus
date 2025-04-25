@@ -5,6 +5,7 @@
  *  @date   2024-07-08
  ***********************************************/
 #include "ProgramSlice.h"
+#include "debugCommon.h"
 // #include "DebugUtils.h"
 
 #include <map>
@@ -156,8 +157,8 @@ computeGates(Function &F) {
 }
 
 struct dataDependence {
-  std::set<const BasicBlock *> BBs;
-  std::set<const Value *> dependences;
+  SmallPtrSet<const BasicBlock *, 2> BBs;
+  SmallPtrSet<const Value *, 6> dependences;
   std::vector<std::pair<Type *, StringRef>> typeAndName;
   bool phiCrit;
   std::set<Value *> phiOnArgs;
@@ -189,9 +190,9 @@ std::pair<Status, dataDependence> get_data_dependences_for(
     std::unordered_map<const BasicBlock *, SmallVector<const Value *>> &gates,
     Function &F, FunctionAnalysisManager &FAM) {
 
-  std::set<const Value *> deps;
-  std::set<const BasicBlock *> BBs;
-  std::set<const Value *> visited;
+  SmallPtrSet<const Value *, 6> deps;
+  SmallPtrSet<const BasicBlock *, 2> BBs;
+  SmallPtrSet<const Value *, 6> visited;
   std::queue<const Value *> worklist;
   std::vector<std::pair<Type *, StringRef>> phiArguments;
   std::set<Value *> phiOnArgs;
@@ -287,7 +288,6 @@ std::pair<Status, dataDependence> get_data_dependences_for(
       }
     }
   }
-
   dataDependence result = {BBs, deps, phiArguments, phiCrit, phiOnArgs};
   return {status, result};
 }
@@ -319,7 +319,7 @@ ProgramSlice::ProgramSlice(Instruction &Initial, Function &F,
       computeGates(F);
   auto [check, data] = get_data_dependences_for(Initial, gates, F, FAM);
 
-  for (auto &BB : data.BBs) {
+  for (const auto &BB : data.BBs) {
     if (tryCatchBlocks.count(const_cast<BasicBlock *>(BB))) {
       _canOutline.first = false;
       _canOutline.second = "Slice contains try-catch blocks.";
@@ -335,10 +335,10 @@ ProgramSlice::ProgramSlice(Instruction &Initial, Function &F,
 
   _phiCrit = data.phiCrit;
 
-  std::set<const Instruction *> instsInSlice;
+  SmallPtrSet<const Instruction *, 6> instsInSlice;
   SmallVector<Value *> depArgs;
 
-  for (auto &val : data.dependences) {
+  for (const auto &val : data.dependences) {
     if (Argument *A = dyn_cast<Argument>(const_cast<Value *>(val))) {
       depArgs.push_back(A);
     } else if (const Instruction *I = dyn_cast<Instruction>(val)) {
@@ -463,7 +463,7 @@ void updatePHINodes(Function *F) {
         break;
       }
       ++I_it;
-      std::set<BasicBlock *> S;
+      SmallPtrSet<BasicBlock *, 2> S;
       for (unsigned PI = 0, PE = PN->getNumIncomingValues(); PI != PE; ++PI) {
         BasicBlock *incBB = PN->getIncomingBlock(PI);
         S.insert(incBB);
