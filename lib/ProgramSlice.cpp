@@ -985,8 +985,8 @@ ReturnInst *ProgramSlice::addReturnValue(Function *F) {
  * @return The newly created delegate Function that encapsulates the slice.
  */
 Function *ProgramSlice::outline() {
+  LLVM_DEBUG(dbgs() << "Parent function:\n" << *_parentFunction);
   assert(!verifyFunction(*_parentFunction, &errs()));
-  // LLVM_DEBUG(dbgs() << "Parent function:\n" << *_parentFunction);
 
   if (!_canOutline.first) {
     LLVM_DEBUG(dbgs() << _canOutline.second << '\n');
