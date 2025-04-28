@@ -57,8 +57,8 @@ using namespace llvm;
  * @param BB The basic block for which to find the controlling block.
  * @param DT The dominator tree.
  * @param PDT The post-dominator tree.
- * @return A pointer to the controlling basic block, or nullptr if no such block is
- * found.
+ * @return A pointer to the controlling basic block, or nullptr if no such block
+ * is found.
  */
 static const BasicBlock *getController(const BasicBlock *BB, DominatorTree &DT,
                                        PostDominatorTree &PDT) {
@@ -124,31 +124,29 @@ computeGates(Function &F) {
   for (const BasicBlock &BB : F) {
     SmallVector<const Value *> BB_gates;
     const unsigned num_preds = pred_size(&BB);
-    if (num_preds >= 1) {
-      // Uncomment the following line for debugging, only when needed in a non
-      // highly optimized build!
 
-      // LLVM_DEBUG(dbgs() << BB.getName() << ":\n");
+    // Uncomment the following line for debugging, only when needed in a non
+    // highly optimized build!
+    // LLVM_DEBUG(dbgs() << BB.getName() << ":\n");
 
-      for (const BasicBlock *pred : predecessors(&BB)) {
-        // LLVM_DEBUG(dbgs() << " - " << pred->getName() << " : ");
+    for (const BasicBlock *pred : predecessors(&BB)) {
+      // LLVM_DEBUG(dbgs() << " - " << pred->getName() << " : ");
 
-        if (DT.dominates(pred, &BB) && !PDT.dominates(&BB, pred)) {
-          // LLVM_DEBUG(dbgs() << " DOM " << getGate(pred)->getName() << " ->");
+      if (DT.dominates(pred, &BB) && !PDT.dominates(&BB, pred)) {
+        // LLVM_DEBUG(dbgs() << " DOM " << getGate(pred)->getName() << " ->");
 
-          BB_gates.push_back(getGate(pred));
-        } else {
-          const BasicBlock *ctrl_BB = getController(pred, DT, PDT);
-          if (ctrl_BB) {
-            // LLVM_DEBUG(dbgs() << "EDGE CONTROLLED BY " <<
-            // ctrl_BB->getName()
-                              // << " " << getGate(ctrl_BB)->getName());
-            BB_gates.push_back(getGate(ctrl_BB));
-          }
+        BB_gates.push_back(getGate(pred));
+      } else {
+        const BasicBlock *ctrl_BB = getController(pred, DT, PDT);
+        if (ctrl_BB) {
+          // LLVM_DEBUG(dbgs() << "EDGE CONTROLLED BY " << ctrl_BB->getName()
+                            // << " " << getGate(ctrl_BB)->getName());
+          BB_gates.push_back(getGate(ctrl_BB));
         }
-        // LLVM_DEBUG(dbgs() << ";\n");
       }
+      // LLVM_DEBUG(dbgs() << ";\n");
     }
+
     gates.emplace(std::make_pair(&BB, BB_gates));
   }
 
@@ -275,6 +273,7 @@ std::pair<Status, dataDependence> get_data_dependences_for(
           if (const Instruction *inst = dyn_cast<Instruction>(gate)) {
             BBs.insert(inst->getParent());
           }
+          worklist.push(gate);
         }
       }
 
