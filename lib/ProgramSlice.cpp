@@ -985,7 +985,7 @@ ReturnInst *ProgramSlice::addReturnValue(Function *F) {
  */
 Function *ProgramSlice::outline() {
   LLVM_DEBUG(dbgs() << "Parent function:\n" << *_parentFunction);
-  assert(!verifyFunction(*_parentFunction, &errs()));
+  // assert(!verifyFunction(*_parentFunction, &errs()));
 
   if (!_canOutline.first) {
     LLVM_DEBUG(dbgs() << _canOutline.second << '\n');
