@@ -111,32 +111,60 @@ bool canBeSliceCriterion(Instruction &I) {
  * @param ini The initial instruction for context.
  * @return True if the instruction was successfully removed, false otherwise.
  */
-bool canRemove(Instruction *I, Instruction *ini,
-               std::set<Instruction *> &constOriginalInst,
-               std::set<Instruction *> &vis,
-               std::set<Instruction *> &toRemove) {
-  if (ini == I) return true;
-  if (toRemove.find(I) != toRemove.end()) return true;
+uint listInstructionsToRemove(Instruction *start, Instruction *sliceCriterion,
+                              const std::set<Instruction *> &constOriginalInst,
+                              std::set<Instruction *> &toRemove) {
+  // First, collect all relevant instructions reachable from 'start'.
+  std::vector<Instruction *> reachable;
+  std::stack<Instruction *> worklist;
+  std::set<Instruction *> vis;
+  worklist.push(start);
 
-  if (constOriginalInst.find(I) == constOriginalInst.end()) return false;
+  while (!worklist.empty()) {
+    Instruction *cur = worklist.top();
+    worklist.pop();
+    if (vis.count(cur)) continue;
+    vis.insert(cur);
 
-  if (vis.find(I) != vis.end()) return true;
+    LLVM_DEBUG(dbgs() << "\t\tVisiting: " << *cur << "\n");
 
-  if (isa<GlobalValue>(I)) {
-    return false;
-  };
+    // Skip if it's the slice criterion
+    if (cur == sliceCriterion) continue;
+    // Must be in original set
+    if (!constOriginalInst.count(cur)) continue;
+    // Cannot remove globals, terminators
+    if (isa<GlobalValue>(cur) || cur->isTerminator()) continue;
 
-  if (I->isTerminator()) return false;
+    reachable.push_back(cur);
 
-  vis.insert(I);
-
-  for (auto U : I->users()) {
-    if (!U) continue;
-    if (Instruction *J = dyn_cast<Instruction>(U))
-      if (!canRemove(J, ini, constOriginalInst, vis, toRemove)) return false;
+    // Enqueue users
+    for (auto U : cur->users()) {
+      if (auto *J = dyn_cast<Instruction>(U)) {
+        worklist.push(J);
+      }
+    }
   }
-  toRemove.insert(I);
-  return true;
+
+  // Process in reverse order: an instruction is removable if all its users
+  // are either removable or the sliceCriterion.
+  for (auto it = reachable.rbegin(); it != reachable.rend(); ++it) {
+    Instruction *cur = *it;
+    bool canRem = true;
+    for (auto U : cur->users()) {
+      if (auto *J = dyn_cast<Instruction>(U)) {
+        if (J == sliceCriterion) continue;
+        if (!toRemove.count(J)) {
+          canRem = false;
+          break;
+        }
+      }
+    }
+    if (canRem) {
+      toRemove.insert(cur);
+    }
+  }
+
+  return toRemove.size();
 }
 
 /**
@@ -154,13 +182,19 @@ bool canRemove(Instruction *I, Instruction *ini,
  * affecting `I`.
  * @return Always returns true.
  */
-bool isSelfContained(std::set<Instruction *> origInst, Instruction *I,
+bool isSelfContained(std::set<Instruction *> origInst,
+                     Instruction *sliceCriterion,
                      std::set<Instruction *> &tempToRemove) {
   for (Instruction *J : origInst) {
     if (J->getParent() == nullptr) continue;
-    std::set<Instruction *> vis;
-    if (I != J) {
-      if (canRemove(J, I, origInst, vis, tempToRemove)) tempToRemove.insert(J);
+    if (sliceCriterion != J) {
+      if (uint totalToRemove = listInstructionsToRemove(
+              J, sliceCriterion, origInst, tempToRemove)) {
+        LLVM_DEBUG(dbgs() << "\t" << totalToRemove
+                          << " instruction(s) will be removed...\n");
+      } else {
+        LLVM_DEBUG(dbgs() << "\tNo instructions will be removed...\n");
+      }
     }
   }
   return true;
@@ -193,10 +227,17 @@ std::pair<uint, uint> removeInstructions(std::vector<iSlice> &allSlices,
     CallInst *callInst = slice.callInst;
     Function *F = slice.F;
     std::set<Instruction *> origInst = slice.constOriginalInst;
+
     if (F == nullptr) continue;
+
+    LLVM_DEBUG(dbgs() << "Processing slice: " << F->getName() << "\n");
+
     F = callInst->getCalledFunction();
     if (mergeTo.count(F) == 0) {
-      killSlice(F, callInst, sliceCriterion);
+      LLVM_DEBUG(dbgs() << "Function '" << F->getName()
+                        << "' was not merged. Hence, it will be discarded..."
+                        << "\n");
+      removeCallInstruction(F, callInst, sliceCriterion);
       ++dontMerge;
       continue;
     }
@@ -214,11 +255,12 @@ std::pair<uint, uint> removeInstructions(std::vector<iSlice> &allSlices,
     std::set<Instruction *> tempToRemove;
     if (!isSelfContained(origInst, sliceCriterion, tempToRemove)) {
       LLVM_DEBUG(dbgs() << "Not self contained!\n");
-      killSlice(F, callInst, sliceCriterion);
+      removeCallInstruction(F, callInst, sliceCriterion);
       ++notSelfContained;
       continue;
     } else {
       for (auto *inst : tempToRemove) {
+        if (toRemove.find(inst) != toRemove.end()) continue;
         toRemove.insert(inst);
         if (CallInst *cInst = dyn_cast<CallInst>(inst)) {
           Function *G = cInst->getCalledFunction();
@@ -232,6 +274,7 @@ std::pair<uint, uint> removeInstructions(std::vector<iSlice> &allSlices,
   }
 
   for (auto &e : toRemove) {
+    LLVM_DEBUG(dbgs() << "Removing instruction:" << *e << "\n");
     e->replaceAllUsesWith(UndefValue::get(e->getType()));
     e->eraseFromParent();
   }
@@ -251,7 +294,8 @@ std::pair<uint, uint> removeInstructions(std::vector<iSlice> &allSlices,
  * @param callInst The call instruction to be replaced and erased.
  * @param criterion The instruction to replace the call instruction with.
  */
-void killSlice(Function *F, CallInst *callInst, Instruction *criterion) {
+void removeCallInstruction(Function *F, CallInst *callInst,
+                           Instruction *criterion) {
   callInst->replaceAllUsesWith(criterion);
   callInst->eraseFromParent();
 
@@ -259,10 +303,9 @@ void killSlice(Function *F, CallInst *callInst, Instruction *criterion) {
   // AttrBuilder builder(F->getContext());
   // builder.removeAttribute(Attribute::NoInline);
   F->removeFnAttr(Attribute::NoInline);
-  std::set<User *> fUses;
-  for (User *U : F->users()) fUses.insert(U);
-  for (User *U : fUses) {
-    if (CallInst *X = dyn_cast<CallInst>(U)) {
+  for (auto it = F->user_begin(); it != F->user_end();) {
+    if (CallInst *X = dyn_cast<CallInst>(*it)) {
+      ++it;
       X->replaceAllUsesWith(UndefValue::get(X->getType()));
       X->eraseFromParent();
     } else {
@@ -405,12 +448,12 @@ void functionSlicesToDot(Module &M, const std::set<Function *> &newFunctions) {
 }
 
 /**
- * @brief Identifies and collects basic blocks in a function that are involved in 
- * try-catch logic, including blocks dominated by invoke instructions and 
+ * @brief Identifies and collects basic blocks in a function that are involved
+ * in try-catch logic, including blocks dominated by invoke instructions and
  * blocks post-dominated by exception destinations.
  *
- * This function analyzes the control flow of a given function to detect basic 
- * blocks that are part of try-catch constructs. It uses dominator and 
+ * This function analyzes the control flow of a given function to detect basic
+ * blocks that are part of try-catch constructs. It uses dominator and
  * post-dominator trees to determine the relationships between blocks.
  *
  * @param F The function to analyze for try-catch logic.
@@ -532,6 +575,10 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
       allSlices.push_back(slice);
 
       LLVM_DEBUG(dbgs() << COLOR::GREEN << "outlined!" << COLOR::CLEAN << '\n');
+
+
+      LLVM_DEBUG(dbgs() << "Parent function AFTER outline:\n" << *ps.getParentFunction()
+                        << "\n");
     }
   }
 
@@ -607,7 +654,7 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
     llvm::ProgramSlice::simplifyCfg(originalF, FAM);
   }
 
-  LLVM_DEBUG(dbgs() << "== PRINT PHASE ==\n");
+  LLVM_DEBUG(dbgs() << "== PRINT PHASE ==\n"; M.print(llvm::outs(), nullptr););
 
   LLVM_DEBUG(
       LLVM_DEBUG(dbgs() << "== REPORT GENERATION PHASE ==\n");

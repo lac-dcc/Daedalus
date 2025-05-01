@@ -67,6 +67,11 @@ public:
    */
   // static FunctionMergeResult mergeFunctions(Function *F1, Function *F2);
 
+  /*
+   * @brief Retrieves the current slice's parent function.
+   */
+  Function * getParentFunction();
+
 private:
   /**
    * @brief Reorders basic blocks in the new function F, ensuring

@@ -985,7 +985,6 @@ ReturnInst *ProgramSlice::addReturnValue(Function *F) {
  */
 Function *ProgramSlice::outline() {
   LLVM_DEBUG(dbgs() << "Parent function:\n" << *_parentFunction);
-  // assert(!verifyFunction(*_parentFunction, &errs()));
 
   if (!_canOutline.first) {
     LLVM_DEBUG(dbgs() << _canOutline.second << '\n');
@@ -1081,4 +1080,17 @@ Function *ProgramSlice::outline() {
  */
 std::map<Instruction *, Instruction *> ProgramSlice::getInstructionInSlice() {
   return _Imap;
+}
+
+/**
+ * @brief Retrieves the parent function of the program slice.
+ *
+ * @details This function returns a pointer to the parent function
+ * associated with the program slice. The parent function is the original
+ * function from which the slice was derived.
+ *
+ * @return A pointer to the parent Function of the program slice.
+ */
+Function * ProgramSlice::getParentFunction() {
+  return _parentFunction;
 }
