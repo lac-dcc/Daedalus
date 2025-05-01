@@ -99,17 +99,23 @@ bool canBeSliceCriterion(Instruction &I) {
 }
 
 /**
- * @brief Attempts to remove an instruction if it meets specific criteria.
+ * @brief Identifies and lists instructions to be removed from a program slice.
  *
- * @details This function attempts to remove an instruction from the given set
- * of instructions if it can be safely removed. It recursively checks if all
- * users of the instruction can be removed.
+ * This function determines which instructions can be safely removed from a 
+ * program slice, starting from a given instruction and considering a slice 
+ * criterion. It ensures that only instructions that are not global values, 
+ * terminators, or the slice criterion itself are considered removable. 
+ * Additionally, an instruction is deemed removable only if all its users 
+ * are either removable or the slice criterion.
  *
- * @param I The instruction to attempt to remove.
- * @param s The set of instructions to be considered.
- * @param instMap A map tracking the state of each instruction.
- * @param ini The initial instruction for context.
- * @return True if the instruction was successfully removed, false otherwise.
+ * @param start The starting instruction from which to begin the analysis.
+ * @param sliceCriterion The instruction that serves as the slice criterion 
+ *                       and should not be removed.
+ * @param constOriginalInst A set of original instructions that are considered 
+ *                          valid for removal.
+ * @param toRemove A set to store the instructions identified as removable.
+ * 
+ * @return The number of instructions added to the `toRemove` set.
  */
 uint listInstructionsToRemove(Instruction *start, Instruction *sliceCriterion,
                               const std::set<Instruction *> &constOriginalInst,
@@ -172,14 +178,16 @@ uint listInstructionsToRemove(Instruction *start, Instruction *sliceCriterion,
  * instructions.
  *
  * This function iterates over a set of original instructions and determines if
- * the given instruction `I` is self-contained. If an instruction `J` from the
- * original set can be removed without affecting `I`, it is added to the
- * `tempToRemove` set.
+ * the given instruction `sliceCriterion` is self-contained. An instruction is
+ * considered self-contained if it can be safely removed without breaking the
+ * dependencies of other instructions in the set. If an instruction `J` from
+ * the original set can be removed without affecting `sliceCriterion`, it is
+ * added to the `tempToRemove` set.
  *
  * @param origInst A set of original instructions to check against.
- * @param I The instruction to check for self-containment.
+ * @param sliceCriterion The instruction to check for self-containment.
  * @param tempToRemove A set of instructions that can be removed without
- * affecting `I`.
+ * affecting `sliceCriterion`.
  * @return Always returns true.
  */
 bool isSelfContained(std::set<Instruction *> origInst,

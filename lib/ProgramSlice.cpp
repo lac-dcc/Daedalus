@@ -140,7 +140,7 @@ computeGates(Function &F) {
         const BasicBlock *ctrl_BB = getController(pred, DT, PDT);
         if (ctrl_BB) {
           // LLVM_DEBUG(dbgs() << "EDGE CONTROLLED BY " << ctrl_BB->getName()
-                            // << " " << getGate(ctrl_BB)->getName());
+          // << " " << getGate(ctrl_BB)->getName());
           BB_gates.push_back(getGate(ctrl_BB));
         }
       }
@@ -254,7 +254,7 @@ std::pair<Status, dataDependence> get_data_dependences_for(
               visited.insert(U);
               continue;
             }
-            LLVM_DEBUG(dbgs() << "Inside loop, but not in header\n");
+            LLVM_DEBUG(dbgs() << "Inside loop, but not in header...\n");
           } else if (Instruction *inst = dyn_cast<Instruction>(U)) {
             if (!loop->contains(inst->getParent())) {
               phiOnArgs.insert(const_cast<Value *>(U.get()));
@@ -271,7 +271,8 @@ std::pair<Status, dataDependence> get_data_dependences_for(
       for (const Value *gate : gates[dep->getParent()]) {
         if (gate && !visited.count(gate)) {
           if (const Instruction *inst = dyn_cast<Instruction>(gate)) {
-            if (inst->getParent() == dep->getParent()) continue;
+            if (inst->getParent() == dep->getParent())
+              continue; // don't include BB when handling a self-loop
             BBs.insert(inst->getParent());
           }
           worklist.push(gate);
@@ -1094,6 +1095,4 @@ std::map<Instruction *, Instruction *> ProgramSlice::getInstructionInSlice() {
  *
  * @return A pointer to the parent Function of the program slice.
  */
-Function * ProgramSlice::getParentFunction() {
-  return _parentFunction;
-}
+Function *ProgramSlice::getParentFunction() { return _parentFunction; }
