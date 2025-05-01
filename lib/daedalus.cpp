@@ -541,7 +541,8 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
       if (!canBeSliceCriterion(*I)) continue;
 
       LLVM_DEBUG(dbgs() << "daedalus.cpp: Function: " << F->getName()
-                        << ",\n\tInstruction: " << *I << "\n");
+                        << ",\n\tInstruction (Basic Block: "
+                        << I->getParent()->getName() << "):\n\t\t" << *I << "\n");
 
       ProgramSlice ps = ProgramSlice(*I, *F, FAM, tryCatchBlocks);
       Function *G = ps.outline();
@@ -576,9 +577,8 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
 
       LLVM_DEBUG(dbgs() << COLOR::GREEN << "outlined!" << COLOR::CLEAN << '\n');
 
-
-      LLVM_DEBUG(dbgs() << "Parent function AFTER outline:\n" << *ps.getParentFunction()
-                        << "\n");
+      LLVM_DEBUG(dbgs() << "Parent function AFTER outline:\n"
+                        << *ps.getParentFunction() << "\n");
     }
   }
 

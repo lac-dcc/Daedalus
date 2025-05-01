@@ -271,9 +271,11 @@ std::pair<Status, dataDependence> get_data_dependences_for(
       for (const Value *gate : gates[dep->getParent()]) {
         if (gate && !visited.count(gate)) {
           if (const Instruction *inst = dyn_cast<Instruction>(gate)) {
+            if (inst->getParent() == dep->getParent()) continue;
             BBs.insert(inst->getParent());
           }
           worklist.push(gate);
+          visited.insert(gate);
         }
       }
 
@@ -290,6 +292,7 @@ std::pair<Status, dataDependence> get_data_dependences_for(
       for (const Value *gate : gates[phi->getParent()]) {
         if (gate && !visited.count(gate)) {
           worklist.push(gate);
+          visited.insert(gate);
         }
       }
     }
