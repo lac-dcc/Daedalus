@@ -196,6 +196,9 @@ std::pair<Status, dataDependence> get_data_dependences_for(
   Status status = {true, ""};
   bool phiCrit = false;
 
+  LoopInfo &loopInfo = FAM.getResult<LoopAnalysis>(F);
+  Loop *loop = loopInfo.getLoopFor(I.getParent());
+
   worklist.push(&I);
   deps.insert(&I);
   visited.insert(&I);
@@ -215,15 +218,18 @@ std::pair<Status, dataDependence> get_data_dependences_for(
 
       bool continueProcessing = true;
       for (const Use &U : dep->operands()) {
-        assert(U.get() && "Found null operand in an instruction");
+        // assert(U.get() && "Found null operand in an instruction");
+        if (!U.get()) {
+          status = {false, "Some dependency is null."};
+          continueProcessing = false;
+          break;
+        }
 
         if (isa<GlobalVariable>(U.get())) {
           status = {false, "Some dependency is on a Global Variable."};
           continueProcessing = false;
           break;
         }
-        // assert(!isa<GlobalVariable>(U.get()) && "Found global variable
-        // operand in an instruction");
 
         if (!isa<Instruction>(U) && !isa<Argument>(U)) continue;
 
@@ -240,10 +246,7 @@ std::pair<Status, dataDependence> get_data_dependences_for(
           continue;
         }
 
-        LoopInfo &loopInfo = FAM.getResult<LoopAnalysis>(F);
-        Loop *loop = loopInfo.getLoopFor(I.getParent());
-
-        if (loop) {
+        if (loop && !loop->isInvalid()) {
           if (const PHINode *phi = dyn_cast<PHINode>(U)) {
             BasicBlock *header = loop->getHeader();
             if (!header) {
@@ -273,6 +276,10 @@ std::pair<Status, dataDependence> get_data_dependences_for(
           if (const Instruction *inst = dyn_cast<Instruction>(gate)) {
             if (inst->getParent() == dep->getParent())
               continue; // don't include BB when handling a self-loop
+            if (loop && !loop->isInvalid() &&
+                loop->contains(inst->getParent()) &&
+                loop->isLoopExiting(inst->getParent()))
+              continue; // don't include BB when handling a loop exiting block
             BBs.insert(inst->getParent());
           }
           worklist.push(gate);
@@ -306,12 +313,12 @@ std::pair<Status, dataDependence> get_data_dependences_for(
 /**
  * @brief Constructs a ProgramSlice object.
  *
- * @details This constructor initializes a ProgramSlice object by computing the
- * data and control dependencies of the given initial instruction within the
- * context of the specified function and post-dominator tree. It sets up the
- * necessary structures for representing the program slice, including the set of
- * instructions in the slice, dependency arguments, phi-function types, and
- * basic blocks in the slice. It also pre-computes struct types to avoid
+ * @details This constructor initializes a ProgramSlice object by computing
+ * the data and control dependencies of the given initial instruction within
+ * the context of the specified function and post-dominator tree. It sets up
+ * the necessary structures for representing the program slice, including the
+ * set of instructions in the slice, dependency arguments, phi-function types,
+ * and basic blocks in the slice. It also pre-computes struct types to avoid
  * redundant type creation and computes attractor blocks.
  *
  * @param Initial The initial instruction to be sliced.
@@ -945,6 +952,20 @@ ReturnInst *ProgramSlice::addReturnValue(Function *F) {
   BasicBlock *exit = _Imap[_initial]->getParent();
 
   if (exit->getTerminator()) {
+    // The current terminator is an unconditional branch to a basic block with
+    // invalid PHINode incoming values. They get removed from the current slice
+    // because they are not in the slice.
+    if (auto *branchInst = dyn_cast<BranchInst>(exit->getTerminator())) {
+      if (!branchInst->isConditional()) {
+        for (auto *succ : successors(exit)) {
+          for (Instruction &inst : *succ) {
+            if (auto *phiNode = dyn_cast<PHINode>(&inst)) {
+              phiNode->removeIncomingValue(exit, /*DeletePHIIfEmpty=*/false);
+            }
+          }
+        }
+      }
+    }
     exit->getTerminator()->eraseFromParent();
   }
   if (isa<ReturnInst>(_initial)) {
