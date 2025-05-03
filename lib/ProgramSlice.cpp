@@ -211,8 +211,8 @@ std::pair<Status, dataDependence> get_data_dependences_for(
     visited.insert(cur);
 
     if (const Instruction *dep = dyn_cast<Instruction>(cur)) {
-      assert(dep->getParent() && "Instruction has no parent basic block");
-      assert(dep->getType() && "Instruction has null type");
+      assert(dep->getParent() && "Instruction has no parent basic block.");
+      assert(dep->getType() && "Instruction has null type.");
 
       BBs.insert(dep->getParent());
 
@@ -1023,6 +1023,12 @@ Function *ProgramSlice::outline() {
         << "Insufficient number of instructions to outline a new slice...\n");
     LLVM_DEBUG(dbgs() << "The slice must have at least " << size
                       << " instructions to be outlined...\n");
+    LLVM_DEBUG({
+      dbgs() << "Instructions in _instsInSlice:\n";
+      for (const auto *inst : _instsInSlice) {
+        dbgs() << *inst << "\n";
+      }
+    });
     return nullptr;
   }
 

@@ -75,7 +75,8 @@ void removeCallInstruction(llvm::Function *, llvm::CallInst *,
  * @brief Collects and returns a set of instructions from a given function that
  * meet certain criteria.
  */
-std::set<llvm::Instruction *> instSetMeetCriterion(llvm::Function *F);
+std::set<llvm::Instruction *>
+instSetMeetCriterion(llvm::FunctionAnalysisManager &FAM, llvm::Function *F);
 
 /**
  * @brief Counts the number of instructions in a given function.

@@ -101,20 +101,20 @@ bool canBeSliceCriterion(Instruction &I) {
 /**
  * @brief Identifies and lists instructions to be removed from a program slice.
  *
- * This function determines which instructions can be safely removed from a 
- * program slice, starting from a given instruction and considering a slice 
- * criterion. It ensures that only instructions that are not global values, 
- * terminators, or the slice criterion itself are considered removable. 
- * Additionally, an instruction is deemed removable only if all its users 
+ * This function determines which instructions can be safely removed from a
+ * program slice, starting from a given instruction and considering a slice
+ * criterion. It ensures that only instructions that are not global values,
+ * terminators, or the slice criterion itself are considered removable.
+ * Additionally, an instruction is deemed removable only if all its users
  * are either removable or the slice criterion.
  *
  * @param start The starting instruction from which to begin the analysis.
- * @param sliceCriterion The instruction that serves as the slice criterion 
+ * @param sliceCriterion The instruction that serves as the slice criterion
  *                       and should not be removed.
- * @param constOriginalInst A set of original instructions that are considered 
+ * @param constOriginalInst A set of original instructions that are considered
  *                          valid for removal.
  * @param toRemove A set to store the instructions identified as removable.
- * 
+ *
  * @return The number of instructions added to the `toRemove` set.
  */
 uint listInstructionsToRemove(Instruction *start, Instruction *sliceCriterion,
@@ -550,7 +550,8 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
 
       LLVM_DEBUG(dbgs() << "daedalus.cpp: Function: " << F->getName()
                         << ",\n\tInstruction (Basic Block: "
-                        << I->getParent()->getName() << "):\n\t\t" << *I << "\n");
+                        << I->getParent()->getName() << "):\n\t\t" << *I
+                        << "\n");
 
       ProgramSlice ps = ProgramSlice(*I, *F, FAM, tryCatchBlocks);
       Function *G = ps.outline();
