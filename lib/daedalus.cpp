@@ -554,6 +554,7 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
                         << "\n");
 
       ProgramSlice ps = ProgramSlice(*I, *F, FAM, tryCatchBlocks);
+      LLVM_DEBUG(dbgs() << "Parent function before calling ProgramSlice::outline():\n" << *ps.getParentFunction());
       Function *G = ps.outline();
 
       if (G == nullptr) continue;

@@ -88,16 +88,16 @@ static const BasicBlock *getController(const BasicBlock *BB, DominatorTree &DT,
  * found.
  */
 static const Value *getGate(const BasicBlock *BB) {
-  const Value *condition;
+  const Value *condition = nullptr; // Initialize condition to nullptr
 
   const Instruction *terminator = BB->getTerminator();
   if (const BranchInst *BI = dyn_cast<BranchInst>(terminator)) {
     assert(BI->isConditional() && "Unconditional terminator!");
-    condition = BI;
+    condition = BI->getCondition(); // Correctly retrieve the condition
   }
 
   else if (const SwitchInst *SI = dyn_cast<SwitchInst>(terminator)) {
-    condition = SI;
+    condition = SI->getCondition(); // Correctly retrieve the condition
   }
 
   return condition;
@@ -337,15 +337,6 @@ ProgramSlice::ProgramSlice(Instruction &Initial, Function &F,
 
   std::unordered_map<const BasicBlock *, SmallVector<const Value *>> gates =
       computeGates(F);
-  LLVM_DEBUG({
-    dbgs() << "\nGates:\n";
-    for (const auto &pair : gates) {
-      dbgs() << "\tBasic Block: " << pair.first->getName() << "\n";
-      for (const Value *gate : pair.second) {
-        dbgs() << "\t\tGate: " << *gate << "\n";
-      }
-    }
-  });
   auto [check, data] = get_data_dependences_for(Initial, gates, F, FAM);
 
   for (auto &BB : data.BBs) {
@@ -1019,8 +1010,6 @@ ReturnInst *ProgramSlice::addReturnValue(Function *F) {
  * @return The newly created delegate Function that encapsulates the slice.
  */
 Function *ProgramSlice::outline() {
-  LLVM_DEBUG(dbgs() << "Parent function:\n" << *_parentFunction);
-
   if (!_canOutline.first) {
     LLVM_DEBUG(dbgs() << _canOutline.second << '\n');
     return nullptr;
