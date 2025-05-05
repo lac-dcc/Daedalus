@@ -57,8 +57,8 @@ using namespace llvm;
  * @param BB The basic block for which to find the controlling block.
  * @param DT The dominator tree.
  * @param PDT The post-dominator tree.
- * @return A pointer to the controlling basic block, or NULL if no such block is
- * found.
+ * @return A pointer to the controlling basic block, or nullptr if no such block
+ * is found.
  */
 static const BasicBlock *getController(const BasicBlock *BB, DominatorTree &DT,
                                        PostDominatorTree &PDT) {
@@ -124,31 +124,29 @@ computeGates(Function &F) {
   for (const BasicBlock &BB : F) {
     SmallVector<const Value *> BB_gates;
     const unsigned num_preds = pred_size(&BB);
-    if (num_preds > 1) {
-      // Uncomment the following line for debugging, only when needed in a non
-      // highly optimized build!
 
-      // LLVM_DEBUG(dbgs() << BB.getName() << ":\n");
+    // Uncomment the following line for debugging, only when needed in a non
+    // highly optimized build!
+    // LLVM_DEBUG(dbgs() << BB.getName() << ":\n");
 
-      for (const BasicBlock *pred : predecessors(&BB)) {
-        // LLVM_DEBUG(dbgs() << " - " << pred->getName() << " -> ");
+    for (const BasicBlock *pred : predecessors(&BB)) {
+      // LLVM_DEBUG(dbgs() << " - " << pred->getName() << " : ");
 
-        if (DT.dominates(pred, &BB) && !PDT.dominates(&BB, pred)) {
-          // LLVM_DEBUG(dbgs() << " DOM " << getGate(pred)->getName() << " ->");
+      if (DT.dominates(pred, &BB) && !PDT.dominates(&BB, pred)) {
+        // LLVM_DEBUG(dbgs() << " DOM " << getGate(pred)->getName() << " ->");
 
-          BB_gates.push_back(getGate(pred));
-        } else {
-          const BasicBlock *ctrl_BB = getController(pred, DT, PDT);
-          if (ctrl_BB) {
-            // LLVM_DEBUG(dbgs() << " R-CTRL " << "CTRL_BB: " <<
-            // ctrl_BB->getName()
-            //                   << " " << getGate(ctrl_BB)->getName());
-            BB_gates.push_back(getGate(ctrl_BB));
-          }
+        BB_gates.push_back(getGate(pred));
+      } else {
+        const BasicBlock *ctrl_BB = getController(pred, DT, PDT);
+        if (ctrl_BB) {
+          // LLVM_DEBUG(dbgs() << "EDGE CONTROLLED BY " << ctrl_BB->getName()
+          // << " " << getGate(ctrl_BB)->getName());
+          BB_gates.push_back(getGate(ctrl_BB));
         }
-        // LLVM_DEBUG(dbgs() << ";\n");
       }
+      // LLVM_DEBUG(dbgs() << ";\n");
     }
+
     gates.emplace(std::make_pair(&BB, BB_gates));
   }
 
@@ -198,6 +196,9 @@ std::pair<Status, dataDependence> get_data_dependences_for(
   Status status = {true, ""};
   bool phiCrit = false;
 
+  LoopInfo &loopInfo = FAM.getResult<LoopAnalysis>(F);
+  Loop *loop = loopInfo.getLoopFor(I.getParent());
+
   worklist.push(&I);
   deps.insert(&I);
   visited.insert(&I);
@@ -210,22 +211,25 @@ std::pair<Status, dataDependence> get_data_dependences_for(
     visited.insert(cur);
 
     if (const Instruction *dep = dyn_cast<Instruction>(cur)) {
-      assert(dep->getParent() && "Instruction has no parent basic block");
-      assert(dep->getType() && "Instruction has null type");
+      assert(dep->getParent() && "Instruction has no parent basic block.");
+      assert(dep->getType() && "Instruction has null type.");
 
       BBs.insert(dep->getParent());
 
       bool continueProcessing = true;
       for (const Use &U : dep->operands()) {
-        assert(U.get() && "Found null operand in an instruction");
+        // assert(U.get() && "Found null operand in an instruction");
+        if (!U.get()) {
+          status = {false, "Some dependency is null."};
+          continueProcessing = false;
+          break;
+        }
 
         if (isa<GlobalVariable>(U.get())) {
           status = {false, "Some dependency is on a Global Variable."};
           continueProcessing = false;
           break;
         }
-        // assert(!isa<GlobalVariable>(U.get()) && "Found global variable
-        // operand in an instruction");
 
         if (!isa<Instruction>(U) && !isa<Argument>(U)) continue;
 
@@ -242,10 +246,7 @@ std::pair<Status, dataDependence> get_data_dependences_for(
           continue;
         }
 
-        LoopInfo &loopInfo = FAM.getResult<LoopAnalysis>(F);
-        Loop *loop = loopInfo.getLoopFor(I.getParent());
-
-        if (loop) {
+        if (loop && !loop->isInvalid()) {
           if (const PHINode *phi = dyn_cast<PHINode>(U)) {
             BasicBlock *header = loop->getHeader();
             if (!header) {
@@ -256,8 +257,10 @@ std::pair<Status, dataDependence> get_data_dependences_for(
               visited.insert(U);
               continue;
             }
-            LLVM_DEBUG(dbgs() << "Inside loop, but not in header\n");
+            LLVM_DEBUG(dbgs() << "Inside loop, but not in header...\n");
           } else if (Instruction *inst = dyn_cast<Instruction>(U)) {
+            // if a dependency is not inside the loop, pass it as an argument to
+            // the current slice function
             if (!loop->contains(inst->getParent())) {
               phiOnArgs.insert(const_cast<Value *>(U.get()));
               visited.insert(U);
@@ -268,6 +271,22 @@ std::pair<Status, dataDependence> get_data_dependences_for(
 
         visited.insert(U);
         worklist.push(U);
+      }
+
+      for (const Value *gate : gates[dep->getParent()]) {
+        if (gate && !visited.count(gate)) {
+          if (const Instruction *inst = dyn_cast<Instruction>(gate)) {
+            if (inst->getParent() == dep->getParent())
+              break; // don't include BBs when handling a self-loop
+            if (loop && !loop->isInvalid() &&
+                loop->contains(inst->getParent()) &&
+                loop->isLoopExiting(inst->getParent()))
+              break; // don't include BBs when handling a loop exiting block
+            BBs.insert(inst->getParent());
+            worklist.push(gate);
+            visited.insert(gate);
+          }
+        }
       }
 
       if (!continueProcessing) break;
@@ -283,6 +302,7 @@ std::pair<Status, dataDependence> get_data_dependences_for(
       for (const Value *gate : gates[phi->getParent()]) {
         if (gate && !visited.count(gate)) {
           worklist.push(gate);
+          visited.insert(gate);
         }
       }
     }
@@ -295,12 +315,12 @@ std::pair<Status, dataDependence> get_data_dependences_for(
 /**
  * @brief Constructs a ProgramSlice object.
  *
- * @details This constructor initializes a ProgramSlice object by computing the
- * data and control dependencies of the given initial instruction within the
- * context of the specified function and post-dominator tree. It sets up the
- * necessary structures for representing the program slice, including the set of
- * instructions in the slice, dependency arguments, phi-function types, and
- * basic blocks in the slice. It also pre-computes struct types to avoid
+ * @details This constructor initializes a ProgramSlice object by computing
+ * the data and control dependencies of the given initial instruction within
+ * the context of the specified function and post-dominator tree. It sets up
+ * the necessary structures for representing the program slice, including the
+ * set of instructions in the slice, dependency arguments, phi-function types,
+ * and basic blocks in the slice. It also pre-computes struct types to avoid
  * redundant type creation and computes attractor blocks.
  *
  * @param Initial The initial instruction to be sliced.
@@ -317,6 +337,15 @@ ProgramSlice::ProgramSlice(Instruction &Initial, Function &F,
 
   std::unordered_map<const BasicBlock *, SmallVector<const Value *>> gates =
       computeGates(F);
+  LLVM_DEBUG({
+    dbgs() << "\nGates:\n";
+    for (const auto &pair : gates) {
+      dbgs() << "\tBasic Block: " << pair.first->getName() << "\n";
+      for (const Value *gate : pair.second) {
+        dbgs() << "\t\tGate: " << *gate << "\n";
+      }
+    }
+  });
   auto [check, data] = get_data_dependences_for(Initial, gates, F, FAM);
 
   for (auto &BB : data.BBs) {
@@ -364,19 +393,27 @@ ProgramSlice::ProgramSlice(Instruction &Initial, Function &F,
 }
 
 /**
- * @brief Computes the attractor blocks (first dominator) for each basic
- * block in the original function.
+ * @brief Computes the attractor blocks for the program slice.
  *
- * @details This function calculates and stores the attractor blocks for
- * each basic block in the original function `_parentFunction`. An attractor
- * block is the immediate dominator (first dominator) of a basic block that
- * controls the flow into the basic block. The computed map of basic blocks
- * to their attractors is used to reroute control flow in the outlined
- * delegate function.
+ * This function calculates a mapping of basic blocks to their respective
+ * attractor blocks within the program slice. An attractor block is defined
+ * as the nearest post-dominator block in the slice for a given basic block.
  *
- * @note The function assumes that `_BBsInSlice` contains the set of basic
- * blocks that are part of the program slice. Post-dominator tree (`PDT`) is
- * used to efficiently compute dominator information.
+ * The function iterates over all basic blocks in the parent function and
+ * determines their attractor blocks based on the post-dominator tree (PDT).
+ * If a basic block is already part of the slice, it is its own attractor.
+ * Otherwise, the function traverses the immediate dominators in the PDT
+ * until it finds a block that belongs to the slice.
+ *
+ * @note The computed attractor blocks are stored in the `_attractors` member.
+ *
+ * @pre `_parentFunction` must be initialized and represent the function
+ *      containing the basic blocks.
+ * @pre `_BBsInSlice` must be populated with the set of basic blocks
+ *      that are part of the slice.
+ *
+ * @post `_attractors` will contain a mapping of basic blocks to their
+ *       attractor blocks.
  */
 void ProgramSlice::computeAttractorBlocks() {
   PostDominatorTree PDT(*_parentFunction);
@@ -570,9 +607,9 @@ void ProgramSlice::rerouteBranches(Function *F) {
           if (suc->getParent() == F) {
             continue;
           }
+
           const BasicBlock *attractor = _attractors[suc];
           BasicBlock *newSucc = _origToNewBBmap[attractor];
-
           if (!newSucc) {
             suc->replaceUsesWithIf(unreachableBlock, [F](Use &U) {
               auto *UserI = dyn_cast<Instruction>(U.getUser());
@@ -581,9 +618,7 @@ void ProgramSlice::rerouteBranches(Function *F) {
             BI->setSuccessor(idx, unreachableBlock);
             continue;
           }
-
           BI->setSuccessor(idx, newSucc);
-
           for (Instruction &I : *newSucc) {
             if (!isa<PHINode>(I)) {
               continue;
@@ -598,9 +633,9 @@ void ProgramSlice::rerouteBranches(Function *F) {
           if (suc->getParent() == F) {
             continue;
           }
+
           const BasicBlock *attractor = _attractors[suc];
           BasicBlock *newSucc = _origToNewBBmap[attractor];
-
           if (!newSucc) {
             suc->replaceUsesWithIf(unreachableBlock, [F](Use &U) {
               auto *UserI = dyn_cast<Instruction>(U.getUser());
@@ -609,9 +644,7 @@ void ProgramSlice::rerouteBranches(Function *F) {
             SI->setSuccessor(idx, unreachableBlock);
             continue;
           }
-
           SI->setSuccessor(idx, newSucc);
-
           for (Instruction &I : *newSucc) {
             if (!isa<PHINode>(I)) {
               continue;
@@ -639,7 +672,6 @@ void ProgramSlice::rerouteBranches(Function *F) {
       dbgs() << "\t\tBlock: " << pair.first->getName()
              << " -> Attractor: " << name << "\n";
     }
-
     dbgs() << "\tPredecessors of original function:\n";
     for (const BasicBlock &BB : *_parentFunction) {
       dbgs() << "\t\tBlock: " << BB.getName() << " -> Predecessors: ";
@@ -930,6 +962,20 @@ ReturnInst *ProgramSlice::addReturnValue(Function *F) {
   BasicBlock *exit = _Imap[_initial]->getParent();
 
   if (exit->getTerminator()) {
+    // The current terminator is an unconditional branch to a basic block with
+    // invalid PHINode incoming values. They get removed from the current slice
+    // because they are not in the slice.
+    if (auto *branchInst = dyn_cast<BranchInst>(exit->getTerminator())) {
+      if (!branchInst->isConditional()) {
+        for (auto *succ : successors(exit)) {
+          for (Instruction &inst : *succ) {
+            if (auto *phiNode = dyn_cast<PHINode>(&inst)) {
+              phiNode->removeIncomingValue(exit, /*DeletePHIIfEmpty=*/false);
+            }
+          }
+        }
+      }
+    }
     exit->getTerminator()->eraseFromParent();
   }
   if (isa<ReturnInst>(_initial)) {
@@ -973,13 +1019,14 @@ ReturnInst *ProgramSlice::addReturnValue(Function *F) {
  * @return The newly created delegate Function that encapsulates the slice.
  */
 Function *ProgramSlice::outline() {
-  assert(!verifyFunction(*_parentFunction, &errs()));
+  LLVM_DEBUG(dbgs() << "Parent function:\n" << *_parentFunction);
 
-  const int size = 3;
   if (!_canOutline.first) {
     LLVM_DEBUG(dbgs() << _canOutline.second << '\n');
     return nullptr;
   }
+
+  const int size = 3;
   if (_instsInSlice.size() < size) {
     LLVM_DEBUG(
         dbgs()
@@ -988,6 +1035,15 @@ Function *ProgramSlice::outline() {
                       << " instructions to be outlined...\n");
     return nullptr;
   }
+
+  LLVM_DEBUG({
+    dbgs() << "\n";
+    dbgs() << "Instructions in _instsInSlice:\n";
+    for (const auto *inst : _instsInSlice) {
+      dbgs() << *inst << "\n";
+    }
+    dbgs() << "\n";
+  });
 
   // Get function's return type. If the function is an add of integers,
   // then the function must return an integer.
@@ -1021,6 +1077,7 @@ Function *ProgramSlice::outline() {
   std::string functionName =
       "_daedalus_slice_" + _parentFunction->getName().str() + "_" +
       _initial->getName().str() + "_" + std::to_string(random_num);
+
   Function *F =
       Function::Create(delegateFunctionType, Function::ExternalLinkage,
                        functionName, _parentFunction->getParent());
@@ -1068,3 +1125,14 @@ Function *ProgramSlice::outline() {
 std::map<Instruction *, Instruction *> ProgramSlice::getInstructionInSlice() {
   return _Imap;
 }
+
+/**
+ * @brief Retrieves the parent function of the program slice.
+ *
+ * @details This function returns a pointer to the parent function
+ * associated with the program slice. The parent function is the original
+ * function from which the slice was derived.
+ *
+ * @return A pointer to the parent Function of the program slice.
+ */
+Function *ProgramSlice::getParentFunction() { return _parentFunction; }

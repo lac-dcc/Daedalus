@@ -18,8 +18,8 @@
 #include "llvm/Passes/PassPlugin.h"
 #include "llvm/Support/raw_ostream.h"
 #include <llvm/Analysis/AliasAnalysis.h>
-#include <llvm/Pass.h>
 #include <llvm/Analysis/PostDominators.h>
+#include <llvm/Pass.h>
 
 /**
  * @brief Represents an outlined program slice
@@ -27,11 +27,11 @@
 struct iSlice {
   llvm::Instruction *I;     // Criterion
   llvm::CallInst *callInst; // CallInst to F
-  llvm::Function *F;        // Slice
+  llvm::Function *F;        // Slice function
   llvm::SmallVector<llvm::Value *>
       args; // Arguments to pass on new function call
   std::set<llvm::Instruction *>
-      constOriginalInst; // set of instruction in original function
+      constOriginalInst; // Set of instructions from the original function
   bool wasRemoved;
 };
 
@@ -43,17 +43,18 @@ bool canBeSliceCriterion(llvm::Instruction &I);
 /**
  * @brief Attempts to remove an instruction if it meets specific criteria.
  */
-bool canRemove(llvm::Instruction *I, llvm::Instruction *ini,
-               std::set<llvm::Instruction *> &constOriginalInst,
-               std::set<llvm::Instruction *> &vis,
-               std::set<llvm::Instruction *> &toRemove);
+uint listInstructionsToRemove(
+    llvm::Instruction *start, llvm::Instruction *sliceCriterion,
+    const std::set<llvm::Instruction *> &constOriginalInst,
+    std::set<llvm::Instruction *> &vis,
+    std::set<llvm::Instruction *> &toRemove);
 
 /**
  * @brief Checks if a given instruction is self-contained within a set of
  * instructions.
  */
 bool isSelfContained(std::set<llvm::Instruction *> origInst,
-                     llvm::Instruction *I,
+                     llvm::Instruction *sliceCriterion,
                      std::set<llvm::Instruction *> &tempToRemove);
 
 /**
@@ -67,13 +68,15 @@ removeInstructions(std::vector<iSlice> &allSlices,
 /**
  * @brief Removes a function and its call instructions from the LLVM IR.
  */
-void killSlice(llvm::Function *, llvm::CallInst *, llvm::Instruction *);
+void removeCallInstruction(llvm::Function *, llvm::CallInst *,
+                           llvm::Instruction *);
 
 /**
  * @brief Collects and returns a set of instructions from a given function that
  * meet certain criteria.
  */
-std::set<llvm::Instruction *> instSetMeetCriterion(llvm::Function *F);
+std::set<llvm::Instruction *>
+instSetMeetCriterion(llvm::FunctionAnalysisManager &FAM, llvm::Function *F);
 
 /**
  * @brief Counts the number of instructions in a given function.
