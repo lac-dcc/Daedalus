@@ -259,6 +259,8 @@ std::pair<Status, dataDependence> get_data_dependences_for(
             }
             LLVM_DEBUG(dbgs() << "Inside loop, but not in header...\n");
           } else if (Instruction *inst = dyn_cast<Instruction>(U)) {
+            // if a dependency is not inside the loop, pass it as an argument to
+            // the current slice function
             if (!loop->contains(inst->getParent())) {
               phiOnArgs.insert(const_cast<Value *>(U.get()));
               visited.insert(U);
@@ -275,15 +277,15 @@ std::pair<Status, dataDependence> get_data_dependences_for(
         if (gate && !visited.count(gate)) {
           if (const Instruction *inst = dyn_cast<Instruction>(gate)) {
             if (inst->getParent() == dep->getParent())
-              continue; // don't include BB when handling a self-loop
+              break; // don't include BBs when handling a self-loop
             if (loop && !loop->isInvalid() &&
                 loop->contains(inst->getParent()) &&
                 loop->isLoopExiting(inst->getParent()))
-              continue; // don't include BB when handling a loop exiting block
+              break; // don't include BBs when handling a loop exiting block
             BBs.insert(inst->getParent());
+            worklist.push(gate);
+            visited.insert(gate);
           }
-          worklist.push(gate);
-          visited.insert(gate);
         }
       }
 
@@ -335,6 +337,15 @@ ProgramSlice::ProgramSlice(Instruction &Initial, Function &F,
 
   std::unordered_map<const BasicBlock *, SmallVector<const Value *>> gates =
       computeGates(F);
+  LLVM_DEBUG({
+    dbgs() << "\nGates:\n";
+    for (const auto &pair : gates) {
+      dbgs() << "\tBasic Block: " << pair.first->getName() << "\n";
+      for (const Value *gate : pair.second) {
+        dbgs() << "\t\tGate: " << *gate << "\n";
+      }
+    }
+  });
   auto [check, data] = get_data_dependences_for(Initial, gates, F, FAM);
 
   for (auto &BB : data.BBs) {
@@ -661,7 +672,6 @@ void ProgramSlice::rerouteBranches(Function *F) {
       dbgs() << "\t\tBlock: " << pair.first->getName()
              << " -> Attractor: " << name << "\n";
     }
-
     dbgs() << "\tPredecessors of original function:\n";
     for (const BasicBlock &BB : *_parentFunction) {
       dbgs() << "\t\tBlock: " << BB.getName() << " -> Predecessors: ";
@@ -1023,14 +1033,17 @@ Function *ProgramSlice::outline() {
         << "Insufficient number of instructions to outline a new slice...\n");
     LLVM_DEBUG(dbgs() << "The slice must have at least " << size
                       << " instructions to be outlined...\n");
-    LLVM_DEBUG({
-      dbgs() << "Instructions in _instsInSlice:\n";
-      for (const auto *inst : _instsInSlice) {
-        dbgs() << *inst << "\n";
-      }
-    });
     return nullptr;
   }
+
+  LLVM_DEBUG({
+    dbgs() << "\n";
+    dbgs() << "Instructions in _instsInSlice:\n";
+    for (const auto *inst : _instsInSlice) {
+      dbgs() << *inst << "\n";
+    }
+    dbgs() << "\n";
+  });
 
   // Get function's return type. If the function is an add of integers,
   // then the function must return an integer.
