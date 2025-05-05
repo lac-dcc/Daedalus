@@ -1,0 +1,180 @@
+; CHECK: ; Function Attrs: noinline nounwind optsize willreturn
+; CHECK-NEXT: define internal i64 @_daedalus_slice_main__[[ID:[0-9]+]](i32 %0, ptr %1) #6 {
+; CHECK-NEXT: sliceclone_BB_0:
+; CHECK-NEXT:   %2 = icmp sgt i32 %0, 1
+; CHECK-NEXT:   br i1 %2, label %sliceclone_BB_1, label %sliceclone_BB_12
+; CHECK-EMPTY:
+; CHECK-NEXT: sliceclone_BB_1:                                  ; preds = %sliceclone_BB_11, %sliceclone_BB_0
+; CHECK-NEXT:   %3 = phi i32 [ %14, %sliceclone_BB_11 ], [ 1, %sliceclone_BB_0 ]
+; CHECK-NEXT:   %4 = phi i32 [ %13, %sliceclone_BB_11 ], [ 196, %sliceclone_BB_0 ]
+; CHECK-NEXT:   %5 = sext i32 %3 to i64
+; CHECK-NEXT:   %6 = getelementptr inbounds ptr, ptr %1, i64 %5
+; CHECK-NEXT:   %7 = load ptr, ptr %6, align 8, !tbaa !7
+; CHECK-NEXT:   %8 = load i8, ptr %7, align 1, !tbaa !11
+; CHECK-NEXT:   %9 = icmp eq i8 %8, 45
+; CHECK-NEXT:   br i1 %9, label %sliceclone_BB_2, label %_daedalus_unreachable
+; CHECK-EMPTY:
+; CHECK-NEXT: sliceclone_BB_12:                                 ; preds = %sliceclone_BB_11, %sliceclone_BB_0
+; CHECK-NEXT:   %10 = phi i32 [ 196, %sliceclone_BB_0 ], [ %13, %sliceclone_BB_11 ]
+; CHECK-NEXT:   %11 = sext i32 %10 to i64
+; CHECK-NEXT:   %12 = shl nsw i64 %11, 3
+; CHECK-NEXT:   ret i64 %12
+; CHECK-EMPTY:
+; CHECK-NEXT: sliceclone_BB_11:                                 ; preds = %sliceclone_BB_9, %sliceclone_BB_8, %sliceclone_BB_7, %sliceclone_BB_6, %sliceclone_BB_5, %sliceclone_BB_4, %sliceclone_BB_4
+; CHECK-NEXT:   %13 = phi i32 [ %4, %sliceclone_BB_9 ], [ %30, %sliceclone_BB_8 ], [ %4, %sliceclone_BB_7 ], [ %4, %sliceclone_BB_6 ], [ %4, %sliceclone_BB_5 ], [ %4, %sliceclone_BB_4 ], [ %4, %sliceclone_BB_4 ]
+; CHECK-NEXT:   %14 = phi i32 [ %31, %sliceclone_BB_9 ], [ %26, %sliceclone_BB_8 ], [ %25, %sliceclone_BB_7 ], [ %24, %sliceclone_BB_6 ], [ %23, %sliceclone_BB_5 ], [ %21, %sliceclone_BB_4 ], [ %21, %sliceclone_BB_4 ]
+; CHECK-NEXT:   %15 = icmp slt i32 %14, %0
+; CHECK-NEXT:   br i1 %15, label %sliceclone_BB_1, label %sliceclone_BB_12, !llvm.loop !14
+; CHECK-EMPTY:
+; CHECK-NEXT: sliceclone_BB_2:                                  ; preds = %sliceclone_BB_1
+; CHECK-NEXT:   %16 = getelementptr inbounds i8, ptr %7, i64 2
+; CHECK-NEXT:   %17 = load i8, ptr %16, align 1, !tbaa !11
+; CHECK-NEXT:   %18 = icmp eq i8 %17, 0
+; CHECK-NEXT:   br i1 %18, label %sliceclone_BB_4, label %_daedalus_unreachable
+; CHECK-EMPTY:
+; CHECK-NEXT: sliceclone_BB_4:                                  ; preds = %sliceclone_BB_2
+; CHECK-NEXT:   %19 = getelementptr inbounds i8, ptr %7, i64 1
+; CHECK-NEXT:   %20 = load i8, ptr %19, align 1, !tbaa !11
+; CHECK-NEXT:   %21 = add nsw i32 %3, 1
+; CHECK-NEXT:   %22 = sext i8 %20 to i32
+; CHECK-NEXT:   switch i32 %22, label %_daedalus_unreachable [
+; CHECK-NEXT:     i32 100, label %sliceclone_BB_11
+; CHECK-NEXT:     i32 103, label %sliceclone_BB_5
+; CHECK-NEXT:     i32 105, label %sliceclone_BB_6
+; CHECK-NEXT:     i32 108, label %sliceclone_BB_7
+; CHECK-NEXT:     i32 110, label %sliceclone_BB_8
+; CHECK-NEXT:     i32 115, label %sliceclone_BB_9
+; CHECK-NEXT:     i32 116, label %sliceclone_BB_11
+; CHECK-NEXT:   ]
+; CHECK-EMPTY:
+; CHECK-NEXT: sliceclone_BB_5:                                  ; preds = %sliceclone_BB_4
+; CHECK-NEXT:   %23 = add nsw i32 %3, 2
+; CHECK-NEXT:   br label %sliceclone_BB_11
+; CHECK-EMPTY:
+; CHECK-NEXT: sliceclone_BB_6:                                  ; preds = %sliceclone_BB_4
+; CHECK-NEXT:   %24 = add nsw i32 %3, 2
+; CHECK-NEXT:   br label %sliceclone_BB_11
+; CHECK-EMPTY:
+; CHECK-NEXT: sliceclone_BB_7:                                  ; preds = %sliceclone_BB_4
+; CHECK-NEXT:   %25 = add nsw i32 %3, 2
+; CHECK-NEXT:   br label %sliceclone_BB_11
+; CHECK-EMPTY:
+; CHECK-NEXT: sliceclone_BB_8:                                  ; preds = %sliceclone_BB_4
+; CHECK-NEXT:   %26 = add nsw i32 %3, 2
+; CHECK-NEXT:   %27 = sext i32 %21 to i64
+; CHECK-NEXT:   %28 = getelementptr inbounds ptr, ptr %1, i64 %27
+; CHECK-NEXT:   %29 = load ptr, ptr %28, align 8, !tbaa !7
+; CHECK-NEXT:   %30 = tail call i32 @atoi(ptr nocapture noundef %29) #7
+; CHECK-NEXT:   br label %sliceclone_BB_11
+; CHECK-EMPTY:
+; CHECK-NEXT: sliceclone_BB_9:                                  ; preds = %sliceclone_BB_4
+; CHECK-NEXT:   %31 = add nsw i32 %3, 2
+; CHECK-NEXT:   br label %sliceclone_BB_11
+; CHECK-EMPTY:
+; CHECK-NEXT: _daedalus_unreachable:                            ; preds = %sliceclone_BB_4, %sliceclone_BB_1, %sliceclone_BB_2
+; CHECK-NEXT:   unreachable
+; CHECK-NEXT: }
+; CHECK: ; Function Attrs: noinline nounwind optsize willreturn
+; CHECK-NEXT: define internal i64 @_daedalus_slice_main__[[ID:[0-9]+]](i32 %0, ptr %1) #6 {
+; CHECK-NEXT: sliceclone_BB_0:
+; CHECK-NEXT:   %2 = icmp sgt i32 %0, 1
+; CHECK-NEXT:   br i1 %2, label %sliceclone_BB_1, label %sliceclone_BB_12
+; CHECK-EMPTY:
+; CHECK-NEXT: sliceclone_BB_1:                                  ; preds = %sliceclone_BB_11, %sliceclone_BB_0
+; CHECK-NEXT:   %3 = phi i32 [ %12, %sliceclone_BB_11 ], [ 1, %sliceclone_BB_0 ]
+; CHECK-NEXT:   %4 = phi i32 [ %11, %sliceclone_BB_11 ], [ 196, %sliceclone_BB_0 ]
+; CHECK-NEXT:   %5 = sext i32 %3 to i64
+; CHECK-NEXT:   %6 = getelementptr inbounds ptr, ptr %1, i64 %5
+; CHECK-NEXT:   %7 = load ptr, ptr %6, align 8, !tbaa !7
+; CHECK-NEXT:   %8 = load i8, ptr %7, align 1, !tbaa !11
+; CHECK-NEXT:   %9 = icmp eq i8 %8, 45
+; CHECK-NEXT:   br i1 %9, label %sliceclone_BB_2, label %_daedalus_unreachable
+; CHECK-EMPTY:
+; CHECK-NEXT: sliceclone_BB_12:                                 ; preds = %sliceclone_BB_11, %sliceclone_BB_0
+; CHECK-NEXT:   %10 = phi i32 [ 196, %sliceclone_BB_0 ], [ %11, %sliceclone_BB_11 ]
+; CHECK-NEXT:   br label %sliceclone_BB_13
+; CHECK-EMPTY:
+; CHECK-NEXT: sliceclone_BB_11:                                 ; preds = %sliceclone_BB_9, %sliceclone_BB_8, %sliceclone_BB_7, %sliceclone_BB_6, %sliceclone_BB_5, %sliceclone_BB_4, %sliceclone_BB_4
+; CHECK-NEXT:   %11 = phi i32 [ %4, %sliceclone_BB_9 ], [ %28, %sliceclone_BB_8 ], [ %4, %sliceclone_BB_7 ], [ %4, %sliceclone_BB_6 ], [ %4, %sliceclone_BB_5 ], [ %4, %sliceclone_BB_4 ], [ %4, %sliceclone_BB_4 ]
+; CHECK-NEXT:   %12 = phi i32 [ %29, %sliceclone_BB_9 ], [ %24, %sliceclone_BB_8 ], [ %23, %sliceclone_BB_7 ], [ %22, %sliceclone_BB_6 ], [ %21, %sliceclone_BB_5 ], [ %19, %sliceclone_BB_4 ], [ %19, %sliceclone_BB_4 ]
+; CHECK-NEXT:   %13 = icmp slt i32 %12, %0
+; CHECK-NEXT:   br i1 %13, label %sliceclone_BB_1, label %sliceclone_BB_12, !llvm.loop !14
+; CHECK-EMPTY:
+; CHECK-NEXT: sliceclone_BB_2:                                  ; preds = %sliceclone_BB_1
+; CHECK-NEXT:   %14 = getelementptr inbounds i8, ptr %7, i64 2
+; CHECK-NEXT:   %15 = load i8, ptr %14, align 1, !tbaa !11
+; CHECK-NEXT:   %16 = icmp eq i8 %15, 0
+; CHECK-NEXT:   br i1 %16, label %sliceclone_BB_4, label %_daedalus_unreachable
+; CHECK-EMPTY:
+; CHECK-NEXT: sliceclone_BB_4:                                  ; preds = %sliceclone_BB_2
+; CHECK-NEXT:   %17 = getelementptr inbounds i8, ptr %7, i64 1
+; CHECK-NEXT:   %18 = load i8, ptr %17, align 1, !tbaa !11
+; CHECK-NEXT:   %19 = add nsw i32 %3, 1
+; CHECK-NEXT:   %20 = sext i8 %18 to i32
+; CHECK-NEXT:   switch i32 %20, label %_daedalus_unreachable [
+; CHECK-NEXT:     i32 100, label %sliceclone_BB_11
+; CHECK-NEXT:     i32 103, label %sliceclone_BB_5
+; CHECK-NEXT:     i32 105, label %sliceclone_BB_6
+; CHECK-NEXT:     i32 108, label %sliceclone_BB_7
+; CHECK-NEXT:     i32 110, label %sliceclone_BB_8
+; CHECK-NEXT:     i32 115, label %sliceclone_BB_9
+; CHECK-NEXT:     i32 116, label %sliceclone_BB_11
+; CHECK-NEXT:   ]
+; CHECK-EMPTY:
+; CHECK-NEXT: sliceclone_BB_5:                                  ; preds = %sliceclone_BB_4
+; CHECK-NEXT:   %21 = add nsw i32 %3, 2
+; CHECK-NEXT:   br label %sliceclone_BB_11
+; CHECK-EMPTY:
+; CHECK-NEXT: sliceclone_BB_6:                                  ; preds = %sliceclone_BB_4
+; CHECK-NEXT:   %22 = add nsw i32 %3, 2
+; CHECK-NEXT:   br label %sliceclone_BB_11
+; CHECK-EMPTY:
+; CHECK-NEXT: sliceclone_BB_7:                                  ; preds = %sliceclone_BB_4
+; CHECK-NEXT:   %23 = add nsw i32 %3, 2
+; CHECK-NEXT:   br label %sliceclone_BB_11
+; CHECK-EMPTY:
+; CHECK-NEXT: sliceclone_BB_8:                                  ; preds = %sliceclone_BB_4
+; CHECK-NEXT:   %24 = add nsw i32 %3, 2
+; CHECK-NEXT:   %25 = sext i32 %19 to i64
+; CHECK-NEXT:   %26 = getelementptr inbounds ptr, ptr %1, i64 %25
+; CHECK-NEXT:   %27 = load ptr, ptr %26, align 8, !tbaa !7
+; CHECK-NEXT:   %28 = tail call i32 @atoi(ptr nocapture noundef %27) #7
+; CHECK-NEXT:   br label %sliceclone_BB_11
+; CHECK-EMPTY:
+; CHECK-NEXT: sliceclone_BB_9:                                  ; preds = %sliceclone_BB_4
+; CHECK-NEXT:   %29 = add nsw i32 %3, 2
+; CHECK-NEXT:   br label %sliceclone_BB_11
+; CHECK-EMPTY:
+; CHECK-NEXT: sliceclone_BB_13:                                 ; preds = %sliceclone_BB_12
+; CHECK-NEXT:   %30 = zext i32 %10 to i64
+; CHECK-NEXT:   %31 = shl nuw nsw i64 %30, 3
+; CHECK-NEXT:   ret i64 %31
+; CHECK-EMPTY:
+; CHECK-NEXT: _daedalus_unreachable:                            ; preds = %sliceclone_BB_4, %sliceclone_BB_1, %sliceclone_BB_2
+; CHECK-NEXT:   unreachable
+; CHECK-NEXT: }
+; CHECK: ; Function Attrs: noinline nounwind optsize willreturn
+; CHECK-NEXT: define internal i32 @_daedalus_slice_main__[[ID:[0-9]+]](i32 %0, ptr %1) #6 {
+; CHECK-NEXT: sliceclone_BB_26:
+; CHECK-NEXT:   %2 = getelementptr inbounds %struct.element, ptr %1, i64 0, i32 1
+; CHECK-NEXT:   %3 = load i32, ptr %2, align 8, !tbaa !18
+; CHECK-NEXT:   %4 = add nsw i32 %3, %0
+; CHECK-NEXT:   ret i32 %4
+; CHECK-NEXT: }
+; CHECK: ; Function Attrs: noinline nounwind optsize willreturn
+; CHECK-NEXT: define internal i32 @_daedalus_slice_main__[[ID:[0-9]+]](ptr %0) #6 {
+; CHECK-NEXT: sliceclone_BB_26:
+; CHECK-NEXT:   %1 = getelementptr inbounds %struct.element, ptr %0, i64 0, i32 1
+; CHECK-NEXT:   %2 = load i32, ptr %1, align 8, !tbaa !18
+; CHECK-NEXT:   %3 = add nsw i32 %2, 1
+; CHECK-NEXT:   ret i32 %3
+; CHECK-NEXT: }
+; CHECK: ; Function Attrs: noinline nounwind optsize willreturn
+; CHECK-NEXT: define internal float @_daedalus_slice_main__[[ID:[0-9]+]](float %0, float %1) #6 {
+; CHECK-NEXT: sliceclone_BB_28:
+; CHECK-NEXT:   %2 = fadd float %0, %1
+; CHECK-NEXT:   %3 = fptosi float %2 to i32
+; CHECK-NEXT:   %4 = sitofp i32 %3 to float
+; CHECK-NEXT:   %5 = fsub float %2, %4
+; CHECK-NEXT:   ret float %5
+; CHECK-NEXT: }

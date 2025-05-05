@@ -1,0 +1,43 @@
+; CHECK: ; Function Attrs: noinline nounwind optsize willreturn
+; CHECK-NEXT: define internal float @_daedalus_slice_check__[[ID:[0-9]+]]() #8 {
+; CHECK-NEXT: sliceclone_BB_0:
+; CHECK-NEXT:   br label %sliceclone_BB_1
+; CHECK-EMPTY:
+; CHECK-NEXT: sliceclone_BB_1:                                  ; preds = %sliceclone_BB_{{1|0}}, %sliceclone_BB_{{1|0}}
+; CHECK-NEXT:   %0 = phi i64 [ 0, %sliceclone_BB_0 ], [ %1, %sliceclone_BB_1 ]
+; CHECK-NEXT:   %1 = add nuw nsw i64 %0, 1
+; CHECK-NEXT:   %2 = icmp eq i64 %1, 32000
+; CHECK-NEXT:   br i1 %2, label %sliceclone_BB_2, label %sliceclone_BB_1
+; CHECK-EMPTY:
+; CHECK-NEXT: sliceclone_BB_2:                                  ; preds = %sliceclone_BB_3, %sliceclone_BB_1
+; CHECK-NEXT:   %3 = phi i64 [ %6, %sliceclone_BB_3 ], [ 0, %sliceclone_BB_1 ]
+; CHECK-NEXT:   %4 = phi float [ %5, %sliceclone_BB_3 ], [ 0.000000e+00, %sliceclone_BB_1 ]
+; CHECK-NEXT:   br label %sliceclone_BB_4
+; CHECK-EMPTY:
+; CHECK-NEXT: sliceclone_BB_3:                                  ; preds = %sliceclone_BB_4
+; CHECK-NEXT:   %5 = phi float [ undef, %sliceclone_BB_4 ]
+; CHECK-NEXT:   %6 = add nuw nsw i64 %3, 1
+; CHECK-NEXT:   %7 = icmp eq i64 %6, 256
+; CHECK-NEXT:   br i1 %7, label %sliceclone_BB_6, label %sliceclone_BB_2
+; CHECK-EMPTY:
+; CHECK-NEXT: sliceclone_BB_4:                                  ; preds = %sliceclone_BB_4, %sliceclone_BB_2
+; CHECK-NEXT:   %8 = phi i64 [ 0, %sliceclone_BB_2 ], [ %10, %sliceclone_BB_4 ]
+; CHECK-NEXT:   %9 = phi float [ %4, %sliceclone_BB_2 ], [ undef, %sliceclone_BB_4 ]
+; CHECK-NEXT:   %10 = add nuw nsw i64 %8, 1
+; CHECK-NEXT:   %11 = icmp eq i64 %10, 256
+; CHECK-NEXT:   br i1 %11, label %sliceclone_BB_3, label %sliceclone_BB_4
+; CHECK-EMPTY:
+; CHECK-NEXT: sliceclone_BB_6:                                  ; preds = %sliceclone_BB_6, %sliceclone_BB_3
+; CHECK-NEXT:   %12 = phi float [ %12, %sliceclone_BB_6 ], [ %5, %sliceclone_BB_3 ]
+; CHECK-NEXT:   %13 = phi float [ %13, %sliceclone_BB_6 ], [ %5, %sliceclone_BB_3 ]
+; CHECK-NEXT:   %14 = phi i64 [ %15, %sliceclone_BB_6 ], [ 0, %sliceclone_BB_3 ]
+; CHECK-NEXT:   %15 = add nuw nsw i64 %14, 1
+; CHECK-NEXT:   %16 = icmp eq i64 %15, 65536
+; CHECK-NEXT:   br i1 %16, label %sliceclone_BB_{{19|20}}, label %sliceclone_BB_6
+; CHECK-EMPTY:
+; CHECK-NEXT: sliceclone_BB_{{19|20}}:                                 ; preds = %sliceclone_BB_6
+; CHECK-NEXT:   %17 = phi float [ %12, %sliceclone_BB_6 ]
+; CHECK-NEXT:   %18 = phi float [ %13, %sliceclone_BB_6 ]
+; CHECK-NEXT:   %19 = fadd float %17, %18
+; CHECK-NEXT:   ret float %19
+; CHECK-NEXT: }

@@ -16,29 +16,34 @@
 #include "llvm/IR/Value.h"
 #include "llvm/Passes/PassBuilder.h"
 #include "llvm/Passes/PassPlugin.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/raw_ostream.h"
 #include <llvm/Analysis/AliasAnalysis.h>
 #include <llvm/Analysis/PostDominators.h>
 #include <llvm/Pass.h>
 
+extern llvm::cl::opt<uint> maxFuncParams;
+extern llvm::cl::opt<uint> maxFuncSize;
+extern llvm::cl::opt<uint> maxFuncUsers;
+
 /**
  * @brief Represents an outlined program slice
  */
-struct iSlice {
+struct SliceStruct {
   llvm::Instruction *I;     // Criterion
   llvm::CallInst *callInst; // CallInst to F
   llvm::Function *F;        // Slice function
   llvm::SmallVector<llvm::Value *>
-      args; // Arguments to pass on new function call
+      functionArguments; // Arguments to pass on new function call
   std::set<llvm::Instruction *>
-      constOriginalInst; // Set of instructions from the original function
+      originalInstructionsSet; // Set of instructions from the original function
   bool wasRemoved;
 };
 
 /**
  * @brief Determines if an instruction type can be used as slice criterion.
  */
-bool canBeSliceCriterion(llvm::Instruction &I);
+bool canBeSliceCriterion(const llvm::Instruction &I);
 
 /**
  * @brief Attempts to remove an instruction if it meets specific criteria.
@@ -50,20 +55,11 @@ uint listInstructionsToRemove(
     std::set<llvm::Instruction *> &toRemove);
 
 /**
- * @brief Checks if a given instruction is self-contained within a set of
- * instructions.
- */
-bool isSelfContained(std::set<llvm::Instruction *> origInst,
-                     llvm::Instruction *sliceCriterion,
-                     std::set<llvm::Instruction *> &tempToRemove);
-
-/**
  * @brief Removes instructions from slices and simplifies functions.
  */
-std::pair<uint, uint>
-removeInstructions(std::vector<iSlice> &allSlices,
-                   const std::set<llvm::Function *> &mergeTo,
-                   std::set<llvm::Function *> &toSimplify);
+uint removeInstructions(const std::vector<SliceStruct> &allSlices,
+                        const std::set<llvm::Function *> &mergeTo,
+                        std::set<llvm::Function *> &toSimplify);
 
 /**
  * @brief Removes a function and its call instructions from the LLVM IR.
@@ -75,8 +71,7 @@ void removeCallInstruction(llvm::Function *, llvm::CallInst *,
  * @brief Collects and returns a set of instructions from a given function that
  * meet certain criteria.
  */
-std::set<llvm::Instruction *>
-instSetMeetCriterion(llvm::FunctionAnalysisManager &FAM, llvm::Function *F);
+llvm::SmallVector<llvm::Instruction *> instSetMeetCriterion(llvm::Function *F);
 
 /**
  * @brief Counts the number of instructions in a given function.
@@ -88,21 +83,21 @@ unsigned int numberOfInstructions(llvm::Function *F);
  * function.
  */
 unsigned int numberOfMergedFunctions(
-    llvm::Function *F,
+    const llvm::Function *F,
     std::map<llvm::Function *, llvm::Function *> &delToNewFunc);
 
 /**
  * @brief Generates DOT files for a set of functions and stores them in a
  * directory.
  */
-void functionSlicesToDot(llvm::Module &M,
+void functionSlicesToDot(const llvm::Module &M,
                          const std::set<llvm::Function *> &newFunctions);
 
 /**
  * @brief Analyzes the control flow graph of a function to identify
  * try-catch logic.
  */
-std::set<llvm::BasicBlock *> searchForTryCatchLogic(llvm::Function &F);
+std::set<const llvm::BasicBlock *> searchForTryCatchLogic(llvm::Function &F);
 
 namespace Daedalus {
 
@@ -110,8 +105,8 @@ struct DaedalusPass : public llvm::PassInfoMixin<DaedalusPass> {
   /**
    * @brief Runs the Daedalus LLVM pass on a given module.
    */
-  llvm::PreservedAnalyses run(llvm::Module &M,
-                              llvm::ModuleAnalysisManager &MAM);
+  static llvm::PreservedAnalyses run(llvm::Module &M,
+                                     llvm::ModuleAnalysisManager &MAM);
 };
 }; // namespace Daedalus
 

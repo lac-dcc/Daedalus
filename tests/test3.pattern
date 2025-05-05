@@ -1,0 +1,22 @@
+; CHECK: ; Function Attrs: noinline nounwind optsize willreturn
+; CHECK-NEXT: define internal i32 @_daedalus_slice_main__[[ID:[0-9]+]](i32 %0, ptr %1) #2 {
+; CHECK-NEXT: sliceclone_BB_3:
+; CHECK-NEXT:   %2 = load ptr, ptr %1, align 8, !tbaa !7
+; CHECK-NEXT:   %3 = load i8, ptr %2, align 1, !tbaa !11
+; CHECK-NEXT:   %4 = icmp eq i8 %3, 0
+; CHECK-NEXT:   br i1 %4, label %sliceclone_BB_4, label %sliceclone_BB_5
+; CHECK-EMPTY:
+; CHECK-NEXT: sliceclone_BB_4:                                  ; preds = %sliceclone_BB_5, %sliceclone_BB_3
+; CHECK-NEXT:   %5 = phi i32 [ %0, %sliceclone_BB_3 ], [ %9, %sliceclone_BB_5 ]
+; CHECK-NEXT:   %6 = sub nsw i32 %5, %0
+; CHECK-NEXT:   ret i32 %6
+; CHECK-EMPTY:
+; CHECK-NEXT: sliceclone_BB_5:                                  ; preds = %sliceclone_BB_5, %sliceclone_BB_3
+; CHECK-NEXT:   %7 = phi ptr [ %10, %sliceclone_BB_5 ], [ %2, %sliceclone_BB_3 ]
+; CHECK-NEXT:   %8 = phi i32 [ %9, %sliceclone_BB_5 ], [ %0, %sliceclone_BB_3 ]
+; CHECK-NEXT:   %9 = add nsw i32 %8, 1
+; CHECK-NEXT:   %10 = getelementptr inbounds i8, ptr %7, i64 1
+; CHECK-NEXT:   %11 = load i8, ptr %10, align 1, !tbaa !11
+; CHECK-NEXT:   %12 = icmp eq i8 %11, 0
+; CHECK-NEXT:   br i1 %12, label %sliceclone_BB_4, label %sliceclone_BB_5, !llvm.loop !14
+; CHECK-NEXT: }

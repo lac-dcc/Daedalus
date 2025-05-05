@@ -20,3 +20,4 @@ tests/*.log
 artifact/bash/generated_tests/*.ll
 artifact/bash/generated_tests/*.bin
 artifact/bash/generated_tests/*.log
+.idea/
