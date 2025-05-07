@@ -198,6 +198,8 @@ std::pair<Status, dataDependence> get_data_dependences_for(
 
   LoopInfo &loopInfo = FAM.getResult<LoopAnalysis>(F);
   Loop *loop = loopInfo.getLoopFor(I.getParent());
+  bool isSelfLoop = loop && loop->contains(I.getParent()) &&
+                    loop->isLoopExiting(I.getParent());
 
   worklist.push(&I);
   deps.insert(&I);
@@ -246,22 +248,36 @@ std::pair<Status, dataDependence> get_data_dependences_for(
           continue;
         }
 
+        LLVM_DEBUG(dbgs() << "\t\tDependency (U) being analyzed: " << *U
+                          << "\n");
+
         if (loop && !loop->isInvalid()) {
           if (const PHINode *phi = dyn_cast<PHINode>(U)) {
             BasicBlock *header = loop->getHeader();
             if (!header) {
-              LLVM_DEBUG(errs()
-                         << "Loop does not have a header in " << F.getName());
+              LLVM_DEBUG(errs() << "\t\t\tLoop does not have a header in "
+                                << F.getName());
             } else if (phi->getParent() == header) {
+              LLVM_DEBUG(dbgs()
+                         << "\t\t\tU is a PHINode inside a loop header...\n");
               phiOnArgs.insert(const_cast<Value *>(U.get()));
               visited.insert(U);
               continue;
             }
-            LLVM_DEBUG(dbgs() << "Inside loop, but not in header...\n");
+            LLVM_DEBUG(dbgs() << "\t\t\tU is a PHINode inside a loop, but not "
+                                 "in its header...\n");
+            if (isSelfLoop) {
+              LLVM_DEBUG(dbgs()
+                         << "\t\t\tU is a PHINode outside a self-loop...\n");
+              phiOnArgs.insert(const_cast<Value *>(U.get()));
+              visited.insert(U);
+              continue;
+            }
           } else if (Instruction *inst = dyn_cast<Instruction>(U)) {
             // if a dependency is not inside the loop, pass it as an argument to
             // the current slice function
             if (!loop->contains(inst->getParent())) {
+              LLVM_DEBUG(dbgs() << "\t\t\tU is outside the loop..." << "\n");
               phiOnArgs.insert(const_cast<Value *>(U.get()));
               visited.insert(U);
               continue;
@@ -360,13 +376,20 @@ ProgramSlice::ProgramSlice(Instruction &Initial, Function &F,
 
   for (auto &val : data.dependences) {
     if (Argument *A = dyn_cast<Argument>(const_cast<Value *>(val))) {
+      LLVM_DEBUG(
+          dbgs() << "\tValue from data.dependences being inserted in depArgs: "
+                 << *val << "\n");
       depArgs.push_back(A);
     } else if (const Instruction *I = dyn_cast<Instruction>(val)) {
       instsInSlice.insert(I);
     }
   }
 
-  for (auto &val : data.phiOnArgs) depArgs.push_back(val);
+  for (auto &val : data.phiOnArgs) {
+    LLVM_DEBUG(dbgs() << "\tValue from phiOnArgs being inserted in depArgs: "
+                      << *val << "\n");
+    depArgs.push_back(val);
+  };
 
   if (isa<ReturnInst>(_initial)) {
     Value *FreturnValue = dyn_cast<ReturnInst>(_initial)->getReturnValue();
@@ -1015,6 +1038,15 @@ Function *ProgramSlice::outline() {
     return nullptr;
   }
 
+  LLVM_DEBUG({
+    dbgs() << "\n";
+    dbgs() << "Instructions in _instsInSlice:\n";
+    for (const auto *inst : _instsInSlice) {
+      dbgs() << *inst << "\n";
+    }
+    dbgs() << "\n";
+  });
+
   const int size = 3;
   if (_instsInSlice.size() < size) {
     LLVM_DEBUG(
@@ -1024,15 +1056,6 @@ Function *ProgramSlice::outline() {
                       << " instructions to be outlined...\n");
     return nullptr;
   }
-
-  LLVM_DEBUG({
-    dbgs() << "\n";
-    dbgs() << "Instructions in _instsInSlice:\n";
-    for (const auto *inst : _instsInSlice) {
-      dbgs() << *inst << "\n";
-    }
-    dbgs() << "\n";
-  });
 
   // Get function's return type. If the function is an add of integers,
   // then the function must return an integer.
