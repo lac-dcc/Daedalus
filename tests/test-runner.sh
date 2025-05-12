@@ -72,6 +72,8 @@ if [ -e "$ORIGINAL_EXECUTABLE" ]; then
     "$ORIGINAL_EXECUTABLE" "$ARGUMENTS" > "${SOURCEFILEBASENAMEWEXT}.reference_output"
 fi
 
+# TODO: Check if the total slices merged are the expected number for each test case
+
 if cmp -s "${SOURCEFILEBASENAMEWEXT}.output" "${SOURCEFILEBASENAMEWEXT}.reference_output"; then
     exit 0
 else

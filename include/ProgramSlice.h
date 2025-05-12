@@ -120,16 +120,6 @@ private:
   void populateFunctionWithBBs(Function *F);
 
   /**
-   * @brief Adds terminating branches to BasicBlocks in function F,
-   * for BBs whose branches were not included in the slice but
-   * which are necessary to replicate the control flow of the
-   * original function.
-   */
-  void addMissingTerminators(Function *F);
-
-  void addMemoizationCode(Function *F, ReturnInst *new_ret);
-
-  /**
    * @brief Inserts a new BasicBlock in Function F corresponding to the
    * originalBB from the original function being sliced.
    */
