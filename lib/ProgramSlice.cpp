@@ -94,9 +94,7 @@ static const Value *getGate(const BasicBlock *BB) {
   if (const BranchInst *BI = dyn_cast<BranchInst>(terminator)) {
     assert(BI->isConditional() && "Unconditional terminator!");
     condition = BI->getCondition(); // Correctly retrieve the condition
-  }
-
-  else if (const SwitchInst *SI = dyn_cast<SwitchInst>(terminator)) {
+  } else if (const SwitchInst *SI = dyn_cast<SwitchInst>(terminator)) {
     condition = SI->getCondition(); // Correctly retrieve the condition
   }
 
@@ -242,14 +240,28 @@ std::pair<Status, dataDependence> get_data_dependences_for(
             if (inst->getParent() == dep->getParent())
               break; // don't include BBs when handling a self-loop
 
-            if (loop && !loop->isInvalid() &&
-                loop->contains(inst->getParent()) &&
-                loop->isLoopExiting(inst->getParent()))
-              break; // don't include BBs when handling a loop exiting block
+            if (loop && !loop->isInvalid()) {
+              // if (loop->contains(inst->getParent()) &&
+              //     loop->isLoopExiting(inst->getParent())) {
+              //   LLVM_DEBUG(dbgs() << "Inst gate inside loop but also inside
+              //   an "
+              //                        "exiting block...\n\t"
+              //                     << *inst << "\n");
+              //   break; // don't include BBs when handling a loop exiting
+              //   block
+              // }
+              if (!loop->contains(inst->getParent())) {
+                break; // don't include BBs when handling a block outside the
+              }
+              if (isCritEdgeSelfLoop) {
+                break;
+              }
+            }
 
             LLVM_DEBUG(dbgs()
                        << "\t\tControl Dependency (inst gate) being analyzed: "
-                       << *inst << "\n");
+                       << *inst << "\n\t\t\tGate of instruction: " << *dep
+                       << " ...\n");
 
             if (BBs.find(inst->getParent()) == BBs.end()) {
               LLVM_DEBUG(dbgs() << "\t\tBasic block being inserted in BBs "
@@ -313,7 +325,8 @@ std::pair<Status, dataDependence> get_data_dependences_for(
                                  "in its header...\n");
             if (isCritEdgeSelfLoop) {
               LLVM_DEBUG(dbgs()
-                         << "\t\t\tU is a PHINode outside a self-loop...\n");
+                         << "\t\t\tU is a PHINode in a self loop formed by a "
+                            "critical edge...\n");
               phiOnArgs.insert(operand);
               visited.insert(operand);
               continue;
@@ -352,9 +365,10 @@ std::pair<Status, dataDependence> get_data_dependences_for(
 
       for (const Value *gate : gates[phi->getParent()]) {
         if (gate && !visited.count(gate)) {
-          LLVM_DEBUG(dbgs()
-                     << "\t\tGate instruction being inserted in the worklist: "
-                     << *gate << "\n");
+          LLVM_DEBUG(
+              dbgs()
+              << "\t\tGate instruction being inserted in the worklist (2): "
+              << *gate << "\n");
           worklist.push(gate);
           visited.insert(gate);
         }
@@ -518,15 +532,73 @@ void ProgramSlice::addDomBranches(DomTreeNode *cur, DomTreeNode *parent,
   }
 
   for (DomTreeNode *child : *cur) {
+    LLVM_DEBUG(dbgs() << "Cur block: " << cur->getBlock()->getName()
+                      << "\n\tChild: " << child->getBlock()->getName() << "\n");
     if (!visited.count(child)) {
       visited.insert(child);
       addDomBranches(child, parent, visited);
     }
+
     if (_BBsInSlice.count(child->getBlock()) && parent) {
       BasicBlock *parentBB = _origToNewBBmap[parent->getBlock()];
       BasicBlock *childBB = _origToNewBBmap[child->getBlock()];
       if (parentBB->getTerminator() == nullptr) {
-        BranchInst *newBranch = BranchInst::Create(childBB, parentBB);
+        LLVM_DEBUG(dbgs() << "Parent block without terminator: " << *parentBB
+                          << "\n");
+
+        // If the original block's terminator is a conditional branch, recreate
+        // it in the new function, otherwise create an unconditional branch
+        // (also when a succ is not present in the current new function)
+        if (const BranchInst *origBranch =
+                dyn_cast<BranchInst>(parent->getBlock()->getTerminator())) {
+          if (origBranch->isConditional()) {
+            Value *condition = origBranch->getCondition();
+            Value *newCondition = nullptr;
+            if (isa<Instruction>(condition)) {
+              newCondition = _Imap[cast<Instruction>(condition)];
+            }
+            BasicBlock *trueBlock =
+                _origToNewBBmap[origBranch->getSuccessor(0)];
+            BasicBlock *falseBlock =
+                _origToNewBBmap[origBranch->getSuccessor(1)];
+
+            if (!trueBlock) {
+              trueBlock =
+                  _origToNewBBmap[_attractors[origBranch->getSuccessor(0)]];
+            } else if (!falseBlock) {
+              falseBlock =
+                  _origToNewBBmap[_attractors[origBranch->getSuccessor(1)]];
+            }
+
+            if (newCondition && trueBlock && falseBlock) {
+              LLVM_DEBUG(dbgs() << "Original branch: " << *origBranch
+                                << "\nCondition instruction: " << *condition
+                                << "\nNew Condition: " << *newCondition
+                                << "\nTrueBlock: " << *trueBlock
+                                << "\nfalseBlock: " << *falseBlock << "\n");
+              BranchInst::Create(trueBlock, falseBlock, newCondition, parentBB);
+            } else {
+              LLVM_DEBUG(dbgs() << "Original branch: " << *origBranch
+                                << "\nNew Target: " << *childBB << "\n");
+              BranchInst *newBranch = BranchInst::Create(childBB, parentBB);
+            }
+          } else {
+            LLVM_DEBUG(dbgs() << "Unconditional branch created between parent: "
+                              << parentBB->getName() << "\nand child (1): "
+                              << childBB->getName() << "\n");
+            BranchInst *newBranch = BranchInst::Create(childBB, parentBB);
+          }
+        } else {
+          LLVM_DEBUG(dbgs() << "Unconditional branch created between parent: "
+                            << parentBB->getName() << "\nand child (2): "
+                            << childBB->getName() << "\n");
+          BranchInst *newBranch = BranchInst::Create(childBB, parentBB);
+        }
+      } else {
+        LLVM_DEBUG(
+            dbgs() << "Parent block has a terminator...\n\tParent block: "
+                   << parentBB->getName()
+                   << "\n\tTerminator: " << *parentBB->getTerminator() << "\n");
       }
     }
   }
@@ -613,7 +685,6 @@ void ProgramSlice::rerouteBranches(Function *F) {
     // If block still has no terminator, create an unconditional branch
     // routing it to its attractor.
     if (terminator == nullptr) {
-      LLVM_DEBUG(dbgs() << "Basic block without terminator: " << BB.getName() << "\n");
       const BasicBlock *parentBB = _newToOrigBBmap[&BB];
       if (const BranchInst *origBranch =
               dyn_cast<BranchInst>(parentBB->getTerminator())) {
@@ -653,8 +724,6 @@ void ProgramSlice::rerouteBranches(Function *F) {
         }
       }
     } else {
-      LLVM_DEBUG(dbgs() << "Basic block with terminator: " << BB.getName() << "\n");
-      LLVM_DEBUG(dbgs() << "\t\tTerminator: " << *terminator << "\n");
       // Otherwise, the block's original branch was part of the slice...
       if (BranchInst *BI = dyn_cast<BranchInst>(terminator)) {
         for (unsigned int idx = 0; idx < BI->getNumSuccessors(); ++idx) {
@@ -1137,16 +1206,10 @@ Function *ProgramSlice::outline() {
   // Assert that there is only one basic block with no predecessors, and it is
   // the entry block.
   int numEntryBlocks = 0;
-  for (BasicBlock &BB : *F) {
-    if (BB.hasNPredecessors(0)) {
-      ++numEntryBlocks;
-      assert(&BB == &F->getEntryBlock() &&
-             "The only block with no predecessors must be the entry block.");
-    }
-  }
-  assert(numEntryBlocks == 1 && ("There must be exactly one entry block. Got " +
-                                 std::to_string(numEntryBlocks) + " instead.")
-                                    .c_str());
+  for (BasicBlock &BB : *F)
+    if (BB.hasNPredecessors(0)) ++numEntryBlocks;
+  assert(numEntryBlocks == 1 &&
+         "The only block with no predecessors must be the entry block.");
 
   assert(!verifyFunction(*F, &errs()));
 
