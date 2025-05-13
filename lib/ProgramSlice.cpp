@@ -228,8 +228,9 @@ std::pair<Status, dataDependence> get_data_dependences_for(
       assert(dep->getType() && "Instruction has null type.");
 
       if (BBs.find(dep->getParent()) == BBs.end()) {
-        LLVM_DEBUG(dbgs() << "\t\tBasic block being inserted in BBs: "
-                          << *dep->getParent() << "\n");
+        LLVM_DEBUG(dbgs() << "\t\t[Data Dependency] Current instruction's "
+                             "basic block being inserted in BBs: "
+                          << dep->getParent()->getName() << "\n");
         BBs.insert(dep->getParent());
       }
 
@@ -238,41 +239,29 @@ std::pair<Status, dataDependence> get_data_dependences_for(
         if (gate && !visited.count(gate)) {
           if (const Instruction *inst = dyn_cast<Instruction>(gate)) {
             if (inst->getParent() == dep->getParent())
-              break; // don't include BBs when handling a self-loop
+              break; // don't include BB when handling a self-loop
 
             if (loop && !loop->isInvalid()) {
-              // if (loop->contains(inst->getParent()) &&
-              //     loop->isLoopExiting(inst->getParent())) {
-              //   LLVM_DEBUG(dbgs() << "Inst gate inside loop but also inside
-              //   an "
-              //                        "exiting block...\n\t"
-              //                     << *inst << "\n");
-              //   break; // don't include BBs when handling a loop exiting
-              //   block
-              // }
               if (!loop->contains(inst->getParent())) {
-                break; // don't include BBs when handling a block outside the
+                break; // don't include BB when handling a block outside the current loop
               }
               if (isCritEdgeSelfLoop) {
-                break;
+                break; // don't include BB when handling a gate inside the current self loop formed by a crit-edge
               }
             }
 
-            LLVM_DEBUG(dbgs()
-                       << "\t\tControl Dependency (inst gate) being analyzed: "
-                       << *inst << "\n\t\t\tGate of instruction: " << *dep
-                       << " ...\n");
-
-            if (BBs.find(inst->getParent()) == BBs.end()) {
-              LLVM_DEBUG(dbgs() << "\t\tBasic block being inserted in BBs "
-                                   "(from control dep.): "
-                                << *inst->getParent() << "\n");
-              BBs.insert(inst->getParent());
-            }
             LLVM_DEBUG(
                 dbgs()
-                << "\t\tGate instruction being inserted in the worklist: "
-                << *inst << "\n");
+                << "\t\t[Control Dependency] Instruction being analyzed: "
+                << *dep << "\n\t\t\t--> Gated by instruction: " << *inst
+                << "\n");
+
+            if (BBs.find(inst->getParent()) == BBs.end()) {
+              LLVM_DEBUG(dbgs() << "\t\t[Control Dependency] Gate's basic "
+                                   "block being inserted in BBs: "
+                                << inst->getParent()->getName() << "\n");
+              BBs.insert(inst->getParent());
+            }
             worklist.push(inst);
             visited.insert(inst);
           }
@@ -306,27 +295,31 @@ std::pair<Status, dataDependence> get_data_dependences_for(
           continue;
         }
 
-        LLVM_DEBUG(dbgs() << "\t\tData Dependency (U) being analyzed: "
-                          << *operand << "\n");
+        LLVM_DEBUG(
+            dbgs() << "\t\t[Data Dependency] Instruction being analyzed: "
+                   << *operand << "\n");
 
         if (loop && !loop->isInvalid()) {
           if (const PHINode *phi = dyn_cast<PHINode>(operand)) {
             if (!loopHeader) {
-              LLVM_DEBUG(errs() << "\t\t\tLoop does not have a header in "
+              LLVM_DEBUG(errs() << "\t\t\t--> Loop does not have a header in "
                                 << F.getName());
             } else if (phi->getParent() == loopHeader) {
-              LLVM_DEBUG(dbgs()
-                         << "\t\t\tU is a PHINode inside a loop header...\n");
+              LLVM_DEBUG(
+                  dbgs()
+                  << "\t\t\t--> U is a PHINode inside a loop header...\n");
               phiOnArgs.insert(operand);
               visited.insert(operand);
               continue;
             }
-            LLVM_DEBUG(dbgs() << "\t\t\tU is a PHINode inside a loop, but not "
-                                 "in its header...\n");
+            LLVM_DEBUG(dbgs()
+                       << "\t\t\t--> U is a PHINode inside a loop, but not "
+                          "in its header...\n");
             if (isCritEdgeSelfLoop) {
-              LLVM_DEBUG(dbgs()
-                         << "\t\t\tU is a PHINode in a self loop formed by a "
-                            "critical edge...\n");
+              LLVM_DEBUG(
+                  dbgs()
+                  << "\t\t\t--> U is a PHINode in a self loop formed by a "
+                     "critical edge...\n");
               phiOnArgs.insert(operand);
               visited.insert(operand);
               continue;
@@ -355,20 +348,18 @@ std::pair<Status, dataDependence> get_data_dependences_for(
     if (const PHINode *phi = dyn_cast<PHINode>(cur)) {
       for (const BasicBlock *BB : phi->blocks()) {
         if (BBs.find(BB) == BBs.end()) {
-          LLVM_DEBUG(
-              dbgs()
-              << "\t\tBasic block being inserted in BBs (from phi node): "
-              << *BB << "\n");
+          LLVM_DEBUG(dbgs() << "\t\t[Control Dependency] PHINode\'s basic "
+                               "block being inserted in BBs: "
+                            << BB->getName() << "\n");
           BBs.insert(BB);
         }
       }
 
       for (const Value *gate : gates[phi->getParent()]) {
         if (gate && !visited.count(gate)) {
-          LLVM_DEBUG(
-              dbgs()
-              << "\t\tGate instruction being inserted in the worklist (2): "
-              << *gate << "\n");
+          LLVM_DEBUG(dbgs() << "\t\t[Control Dependency] PHINode\'s gate "
+                               "instruction being inserted in the worklist: "
+                            << *gate << "\n");
           worklist.push(gate);
           visited.insert(gate);
         }
@@ -532,8 +523,6 @@ void ProgramSlice::addDomBranches(DomTreeNode *cur, DomTreeNode *parent,
   }
 
   for (DomTreeNode *child : *cur) {
-    LLVM_DEBUG(dbgs() << "Cur block: " << cur->getBlock()->getName()
-                      << "\n\tChild: " << child->getBlock()->getName() << "\n");
     if (!visited.count(child)) {
       visited.insert(child);
       addDomBranches(child, parent, visited);
@@ -789,30 +778,30 @@ void ProgramSlice::rerouteBranches(Function *F) {
 
   updatePHINodes(F);
 
-  LLVM_DEBUG({
-    dbgs() << "\n\tAttractors:\n";
-    for (const auto &pair : _attractors) {
-      std::string name = (pair.second) ? pair.second->getName().str() : "null";
-      dbgs() << "\t\tBlock: " << pair.first->getName()
-             << " -> Attractor: " << name << "\n";
-    }
-    dbgs() << "\tPredecessors of original function:\n";
-    for (const BasicBlock &BB : *_parentFunction) {
-      dbgs() << "\t\tBlock: " << BB.getName() << " -> Predecessors: ";
-      for (const BasicBlock *pred : predecessors(&BB)) {
-        dbgs() << pred->getName() << " ";
-      }
-      dbgs() << "\n";
-    }
-    dbgs() << "\tPredecessors of new function:\n";
-    for (const BasicBlock &BB : *F) {
-      dbgs() << "\t\tBlock: " << BB.getName() << " -> Predecessors: ";
-      for (const BasicBlock *pred : predecessors(&BB)) {
-        dbgs() << pred->getName() << " ";
-      }
-      dbgs() << "\n";
-    }
-  });
+  // LLVM_DEBUG({
+  //   dbgs() << "\n\tAttractors:\n";
+  //   for (const auto &pair : _attractors) {
+  //     std::string name = (pair.second) ? pair.second->getName().str() :
+  //     "null"; dbgs() << "\t\tBlock: " << pair.first->getName()
+  //            << " -> Attractor: " << name << "\n";
+  //   }
+  //   dbgs() << "\tPredecessors of original function:\n";
+  //   for (const BasicBlock &BB : *_parentFunction) {
+  //     dbgs() << "\t\tBlock: " << BB.getName() << " -> Predecessors: ";
+  //     for (const BasicBlock *pred : predecessors(&BB)) {
+  //       dbgs() << pred->getName() << " ";
+  //     }
+  //     dbgs() << "\n";
+  //   }
+  //   dbgs() << "\tPredecessors of new function:\n";
+  //   for (const BasicBlock &BB : *F) {
+  //     dbgs() << "\t\tBlock: " << BB.getName() << " -> Predecessors: ";
+  //     for (const BasicBlock *pred : predecessors(&BB)) {
+  //       dbgs() << pred->getName() << " ";
+  //     }
+  //     dbgs() << "\n";
+  //   }
+  // });
 }
 
 /**

@@ -586,9 +586,6 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
       allSlices.push_back(slice);
 
       LLVM_DEBUG(dbgs() << COLOR::GREEN << "outlined!" << COLOR::CLEAN << '\n');
-
-      LLVM_DEBUG(dbgs() << "Parent function AFTER outline:\n"
-                        << *ps.getParentFunction() << "\n");
     }
   }
 
