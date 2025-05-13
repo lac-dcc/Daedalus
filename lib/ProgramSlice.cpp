@@ -235,38 +235,38 @@ std::pair<Status, dataDependence> get_data_dependences_for(
       }
 
       // Handle control dependencies as data dependencies
-      for (const Value *gate : gates[dep->getParent()]) {
-        if (gate && !visited.count(gate)) {
-          if (const Instruction *inst = dyn_cast<Instruction>(gate)) {
-            if (inst->getParent() == dep->getParent())
-              break; // don't include BB when handling a self-loop
+      // for (const Value *gate : gates[dep->getParent()]) {
+      //   if (gate && !visited.count(gate)) {
+      //     if (const Instruction *inst = dyn_cast<Instruction>(gate)) {
+      //       if (inst->getParent() == dep->getParent())
+      //         break; // don't include BB when handling a self-loop
 
-            if (loop && !loop->isInvalid()) {
-              if (!loop->contains(inst->getParent())) {
-                break; // don't include BB when handling a block outside the current loop
-              }
-              if (isCritEdgeSelfLoop) {
-                break; // don't include BB when handling a gate inside the current self loop formed by a crit-edge
-              }
-            }
+      //       if (loop && !loop->isInvalid()) {
+      //         if (!loop->contains(inst->getParent())) {
+      //           break; // don't include BB when handling a block outside the current loop
+      //         }
+      //         if (isCritEdgeSelfLoop) {
+      //           break; // don't include BB when handling a gate inside the current self loop formed by a crit-edge
+      //         }
+      //       }
 
-            LLVM_DEBUG(
-                dbgs()
-                << "\t\t[Control Dependency] Instruction being analyzed: "
-                << *dep << "\n\t\t\t--> Gated by instruction: " << *inst
-                << "\n");
+      //       LLVM_DEBUG(
+      //           dbgs()
+      //           << "\t\t[Control Dependency] Instruction being analyzed: "
+      //           << *dep << "\n\t\t\t--> Gated by instruction: " << *inst
+      //           << "\n");
 
-            if (BBs.find(inst->getParent()) == BBs.end()) {
-              LLVM_DEBUG(dbgs() << "\t\t[Control Dependency] Gate's basic "
-                                   "block being inserted in BBs: "
-                                << inst->getParent()->getName() << "\n");
-              BBs.insert(inst->getParent());
-            }
-            worklist.push(inst);
-            visited.insert(inst);
-          }
-        }
-      }
+      //       if (BBs.find(inst->getParent()) == BBs.end()) {
+      //         LLVM_DEBUG(dbgs() << "\t\t[Control Dependency] Gate's basic "
+      //                              "block being inserted in BBs: "
+      //                           << inst->getParent()->getName() << "\n");
+      //         BBs.insert(inst->getParent());
+      //       }
+      //       worklist.push(inst);
+      //       visited.insert(inst);
+      //     }
+      //   }
+      // }
 
       // Handle data dependencies
       bool continueProcessing = true;
@@ -532,62 +532,63 @@ void ProgramSlice::addDomBranches(DomTreeNode *cur, DomTreeNode *parent,
       BasicBlock *parentBB = _origToNewBBmap[parent->getBlock()];
       BasicBlock *childBB = _origToNewBBmap[child->getBlock()];
       if (parentBB->getTerminator() == nullptr) {
-        LLVM_DEBUG(dbgs() << "Parent block without terminator: " << *parentBB
-                          << "\n");
+      //   LLVM_DEBUG(dbgs() << "Parent block without terminator: " << *parentBB
+      //                     << "\n");
 
-        // If the original block's terminator is a conditional branch, recreate
-        // it in the new function, otherwise create an unconditional branch
-        // (also when a succ is not present in the current new function)
-        if (const BranchInst *origBranch =
-                dyn_cast<BranchInst>(parent->getBlock()->getTerminator())) {
-          if (origBranch->isConditional()) {
-            Value *condition = origBranch->getCondition();
-            Value *newCondition = nullptr;
-            if (isa<Instruction>(condition)) {
-              newCondition = _Imap[cast<Instruction>(condition)];
-            }
-            BasicBlock *trueBlock =
-                _origToNewBBmap[origBranch->getSuccessor(0)];
-            BasicBlock *falseBlock =
-                _origToNewBBmap[origBranch->getSuccessor(1)];
+      //   // If the original block's terminator is a conditional branch, recreate
+      //   // it in the new function, otherwise create an unconditional branch
+      //   // (also when a succ is not present in the current new function)
+      //   if (const BranchInst *origBranch =
+      //           dyn_cast<BranchInst>(parent->getBlock()->getTerminator())) {
+      //     if (origBranch->isConditional()) {
+      //       Value *condition = origBranch->getCondition();
+      //       Value *newCondition = nullptr;
+      //       if (isa<Instruction>(condition)) {
+      //         newCondition = _Imap[cast<Instruction>(condition)];
+      //       }
+      //       BasicBlock *trueBlock =
+      //           _origToNewBBmap[origBranch->getSuccessor(0)];
+      //       BasicBlock *falseBlock =
+      //           _origToNewBBmap[origBranch->getSuccessor(1)];
 
-            if (!trueBlock) {
-              trueBlock =
-                  _origToNewBBmap[_attractors[origBranch->getSuccessor(0)]];
-            } else if (!falseBlock) {
-              falseBlock =
-                  _origToNewBBmap[_attractors[origBranch->getSuccessor(1)]];
-            }
+      //       if (!trueBlock) {
+      //         trueBlock =
+      //             _origToNewBBmap[_attractors[origBranch->getSuccessor(0)]];
+      //       } else if (!falseBlock) {
+      //         falseBlock =
+      //             _origToNewBBmap[_attractors[origBranch->getSuccessor(1)]];
+      //       }
 
-            if (newCondition && trueBlock && falseBlock) {
-              LLVM_DEBUG(dbgs() << "Original branch: " << *origBranch
-                                << "\nCondition instruction: " << *condition
-                                << "\nNew Condition: " << *newCondition
-                                << "\nTrueBlock: " << *trueBlock
-                                << "\nfalseBlock: " << *falseBlock << "\n");
-              BranchInst::Create(trueBlock, falseBlock, newCondition, parentBB);
-            } else {
-              LLVM_DEBUG(dbgs() << "Original branch: " << *origBranch
-                                << "\nNew Target: " << *childBB << "\n");
-              BranchInst *newBranch = BranchInst::Create(childBB, parentBB);
-            }
-          } else {
-            LLVM_DEBUG(dbgs() << "Unconditional branch created between parent: "
-                              << parentBB->getName() << "\nand child (1): "
-                              << childBB->getName() << "\n");
-            BranchInst *newBranch = BranchInst::Create(childBB, parentBB);
-          }
-        } else {
-          LLVM_DEBUG(dbgs() << "Unconditional branch created between parent: "
-                            << parentBB->getName() << "\nand child (2): "
-                            << childBB->getName() << "\n");
-          BranchInst *newBranch = BranchInst::Create(childBB, parentBB);
-        }
-      } else {
-        LLVM_DEBUG(
-            dbgs() << "Parent block has a terminator...\n\tParent block: "
-                   << parentBB->getName()
-                   << "\n\tTerminator: " << *parentBB->getTerminator() << "\n");
+      //       if (newCondition && trueBlock && falseBlock) {
+      //         LLVM_DEBUG(dbgs() << "Original branch: " << *origBranch
+      //                           << "\nCondition instruction: " << *condition
+      //                           << "\nNew Condition: " << *newCondition
+      //                           << "\nTrueBlock: " << *trueBlock
+      //                           << "\nfalseBlock: " << *falseBlock << "\n");
+      //         BranchInst::Create(trueBlock, falseBlock, newCondition, parentBB);
+      //       } else {
+      //         LLVM_DEBUG(dbgs() << "Original branch: " << *origBranch
+      //                           << "\nNew Target: " << *childBB << "\n");
+      //         BranchInst *newBranch = BranchInst::Create(childBB, parentBB);
+      //       }
+      //     } else {
+      //       LLVM_DEBUG(dbgs() << "Unconditional branch created between parent: "
+      //                         << parentBB->getName() << "\nand child (1): "
+      //                         << childBB->getName() << "\n");
+      //       BranchInst *newBranch = BranchInst::Create(childBB, parentBB);
+      //     }
+      //   } else {
+      //     LLVM_DEBUG(dbgs() << "Unconditional branch created between parent: "
+      //                       << parentBB->getName() << "\nand child (2): "
+      //                       << childBB->getName() << "\n");
+      //     BranchInst *newBranch = BranchInst::Create(childBB, parentBB);
+      //   }
+      // } else {
+      //   LLVM_DEBUG(
+      //       dbgs() << "Parent block has a terminator...\n\tParent block: "
+      //              << parentBB->getName()
+      //              << "\n\tTerminator: " << *parentBB->getTerminator() << "\n");
+        BranchInst *newBranch = BranchInst::Create(childBB, parentBB);
       }
     }
   }
