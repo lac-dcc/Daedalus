@@ -52,8 +52,10 @@ clang $EXTRAPARAMS -Os -flto -fuse-ld=lld -Wl,--plugin-opt=-lto-embed-bitcode=po
 echo "llvm-objcopy --dump-section .llvmbc=\"$SOURCEFILENAMELL\" \"$ORIGINAL_EXECUTABLE\""
 llvm-objcopy --dump-section .llvmbc="$SOURCEFILENAMELL" "$ORIGINAL_EXECUTABLE"
 
-echo "opt -S -passes=mem2reg,lcssa,break-crit-edges \"$SOURCEFILENAMELL\" -o \"$SOURCEFILENAMELL\""
-opt -S -passes=mem2reg,lcssa,break-crit-edges "$SOURCEFILENAMELL" -o "$SOURCEFILENAMELL"
+# echo "opt -S -passes=mem2reg,lcssa,break-crit-edges \"$SOURCEFILENAMELL\" -o \"$SOURCEFILENAMELL\""
+echo "opt -S -passes=mem2reg,lcssa \"$SOURCEFILENAMELL\" -o \"$SOURCEFILENAMELL\""
+# opt -S -passes=mem2reg,lcssa,break-crit-edges "$SOURCEFILENAMELL" -o "$SOURCEFILENAMELL"
+opt -S -passes=mem2reg,lcssa "$SOURCEFILENAMELL" -o "$SOURCEFILENAMELL"
 
 echo "opt -stats -debug-only=daedalus,ProgramSlice -passes=daedalus -load-pass-plugin=\"$SHAREDOBJECTFILE\" -dump-dot -S \"$SOURCEFILENAMELL\" -o \"$SOURCEFILENAMEDLL\" &>> \"$TRANSFORMATIONLOGFILE\""
 if ! opt -stats -debug-only=daedalus,ProgramSlice -passes=daedalus -load-pass-plugin="$SHAREDOBJECTFILE" -dump-dot -S "$SOURCEFILENAMELL" -o "$SOURCEFILENAMEDLL" &>> "$TRANSFORMATIONLOGFILE"; then
