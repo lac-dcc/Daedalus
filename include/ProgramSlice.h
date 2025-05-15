@@ -70,7 +70,7 @@ public:
   /*
    * @brief Retrieves the current slice's parent function.
    */
-  Function * getParentFunction();
+  Function *getParentFunction();
 
 private:
   /**

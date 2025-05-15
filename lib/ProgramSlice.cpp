@@ -10,6 +10,7 @@
 #include <map>
 #include <queue>
 #include <set>
+#include <stack>
 #include <tuple>
 #include <unordered_map>
 #include <utility>
@@ -574,18 +575,34 @@ void ProgramSlice::computeAttractorBlocks() {
  * instructions in the sliced function.
  */
 void reconstructBranches(
-    DomTreeNode *parent, BasicBlock *parentBB, DomTreeNode *child,
-    BasicBlock *childBB,
+    DomTreeNode *parent, DomTreeNode *child,
     std::map<const BasicBlock *, BasicBlock *> &_origToNewBBmap,
     std::map<const BasicBlock *, const BasicBlock *> &_attractors,
     std::map<Instruction *, Instruction *> &_Imap) {
-  if (parentBB->getTerminator() != nullptr) {
+
+  if (!parent || !child) {
+    LLVM_DEBUG(dbgs() << "\nParent or child is null...\n");
+    return;
+  }
+
+  BasicBlock *parentNewBB = _origToNewBBmap[parent->getBlock()];
+  BasicBlock *childNewBB = _origToNewBBmap[child->getBlock()];
+
+  if (!parentNewBB) {
+    LLVM_DEBUG(dbgs() << "\nParent block is null...\n");
+    return;
+  }
+
+  if (parentNewBB->getTerminator() != nullptr) {
+    LLVM_DEBUG(dbgs() << "\nParent block WITH terminator: " << *parentNewBB
+                      << "\n");
     return; // Skip if parent already has a terminator
   }
 
-  LLVM_DEBUG(dbgs() << "Parent block without terminator: " << *parentBB
+  LLVM_DEBUG(dbgs() << "\nParent block without terminator: " << *parentNewBB
                     << "\n");
-
+  LLVM_DEBUG(dbgs() << "Reconstructing branches from " << parentNewBB->getName()
+                    << " to " << childNewBB->getName() << "\n");
   const Instruction *origTerminator = parent->getBlock()->getTerminator();
 
   if (const BranchInst *origBranch = dyn_cast<BranchInst>(origTerminator)) {
@@ -607,12 +624,29 @@ void reconstructBranches(
               : _origToNewBBmap[_attractors[origBranch->getSuccessor(1)]];
 
       if (newCondition && trueBlock && falseBlock && trueBlock != falseBlock) {
-        BranchInst::Create(trueBlock, falseBlock, newCondition, parentBB);
+        LLVM_DEBUG(dbgs() << "Original Condition: " << *condition << "\n"
+                          << "NewCondition: " << *newCondition << "\n"
+                          << "TrueBlock name: " << trueBlock->getName() << "\n"
+                          << "FalseBlock name: " << falseBlock->getName()
+                          << "\n");
+        BranchInst::Create(trueBlock, falseBlock, newCondition, parentNewBB);
       } else {
-        BranchInst::Create(childBB, parentBB);
+        if (!newCondition) {
+          LLVM_DEBUG(dbgs() << "NewCondition is null...\n");
+        }
+        if (!trueBlock) {
+          LLVM_DEBUG(dbgs() << "TrueBlock is null...\n");
+        }
+        if (!falseBlock) {
+          LLVM_DEBUG(dbgs() << "FalseBlock is null...\n");
+        }
+        if (trueBlock && trueBlock == falseBlock) {
+          LLVM_DEBUG(dbgs() << "TrueBlock and FalseBlock are equal...\n");
+        }
+        BranchInst::Create(childNewBB, parentNewBB);
       }
     } else {
-      BranchInst::Create(childBB, parentBB);
+      BranchInst::Create(childNewBB, parentNewBB);
     }
   } else if (const SwitchInst *origSwitch =
                  dyn_cast<SwitchInst>(origTerminator)) {
@@ -624,7 +658,7 @@ void reconstructBranches(
 
     if (newCondition) {
       SwitchInst *newSwitch = SwitchInst::Create(
-          newCondition, childBB, origSwitch->getNumCases(), parentBB);
+          newCondition, childNewBB, origSwitch->getNumCases(), parentNewBB);
 
       for (auto &casePair : origSwitch->cases()) {
         BasicBlock *caseBlock = _origToNewBBmap[casePair.getCaseSuccessor()];
@@ -639,7 +673,7 @@ void reconstructBranches(
         }
       }
     } else {
-      BranchInst::Create(childBB, parentBB);
+      BranchInst::Create(childNewBB, parentNewBB);
     }
   }
 }
@@ -661,22 +695,45 @@ void reconstructBranches(
  */
 void ProgramSlice::addDomBranches(DomTreeNode *cur, DomTreeNode *parent,
                                   std::set<DomTreeNode *> &visited) {
-  if (_BBsInSlice.count(cur->getBlock())) {
-    parent = cur;
-  }
+  // Stack for iterative traversal
+  std::stack<std::pair<DomTreeNode *, DomTreeNode *>> stack;
+  stack.push({cur, parent});
 
-  for (DomTreeNode *child : *cur) {
-    if (!visited.count(child)) {
-      visited.insert(child);
-      addDomBranches(child, parent, visited);
+  while (!stack.empty()) {
+    auto [current, parentNode] = stack.top();
+    stack.pop();
+
+    if (!parentNode || !current) continue;
+    LLVM_DEBUG(dbgs() << "\nParent: " << parentNode->getBlock()->getName()
+                      << "\nCurrent: " << current->getBlock()->getName()
+                      << "\n");
+
+    // Update parent if the current block is part of the slice
+    if (_BBsInSlice.count(current->getBlock())) {
+      parentNode = current;
     }
 
-    if (_BBsInSlice.count(child->getBlock()) && parent) {
-      BasicBlock *parentBB = _origToNewBBmap[parent->getBlock()];
-      BasicBlock *childBB = _origToNewBBmap[child->getBlock()];
-      reconstructBranches(parent, parentBB, child, childBB, _origToNewBBmap,
-                          _attractors, _Imap);
-      // BranchInst *newBranch = BranchInst::Create(childBB, parentBB);
+    // Iterate over child nodes
+    for (DomTreeNode *child : *current) {
+      // Skip already visited nodes
+      if (!visited.insert(child).second) {
+        continue;
+      }
+
+      LLVM_DEBUG(dbgs() << "\nParent: " << parentNode->getBlock()->getName()
+                        << "\nChild: " << child->getBlock()->getName()
+                        << "\nCurrent: " << current->getBlock()->getName()
+                        << "\n");
+
+      // Push child and updated parent to the stack
+      stack.push({child, parentNode});
+
+      // If the child block is part of the slice and there is a valid parent
+      if (_BBsInSlice.count(child->getBlock()) && parentNode) {
+        // Reconstruct branches between parent and child
+        reconstructBranches(parentNode, child, _origToNewBBmap, _attractors,
+                            _Imap);
+      }
     }
   }
 }
@@ -803,7 +860,7 @@ void ProgramSlice::rerouteBranches(Function *F) {
         }
       }
     } else {
-      LLVM_DEBUG(dbgs() << "Parent BB WITH terminator: " << BB.getName()
+      LLVM_DEBUG(dbgs() << "Parent BB WITH terminator (2): " << BB.getName()
                         << "\n");
       // Otherwise, the block's original branch was part of the slice...
       if (BranchInst *BI = dyn_cast<BranchInst>(terminator)) {
@@ -893,6 +950,7 @@ void ProgramSlice::rerouteBranches(Function *F) {
       }
       dbgs() << "\n";
     }
+    dbgs() << "\n";
   });
 }
 
