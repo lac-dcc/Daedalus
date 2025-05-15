@@ -175,117 +175,153 @@ bool checkIfCritEdgeSelfLoop(bool loopValid, const Instruction *Instruction) {
   return loopValid;
 }
 
+/**
+ * @brief Computes the data dependencies for a given instruction within a
+ * function and loop context.
+ *
+ * This function analyzes the data dependencies of a specific instruction by
+ * traversing its operands and identifying the basic blocks and values that
+ * contribute to its computation. It also handles special cases such as PHI
+ * nodes and global variables, and considers the loop structure when determining
+ * dependencies.
+ *
+ * @param I The instruction for which data dependencies are being computed.
+ * @param gates A map of basic blocks to their associated gate values.
+ * @param F The function containing the instruction.
+ * @param loop The loop context in which the instruction resides (can be null if
+ * not in a loop).
+ * @param loopHeader The header of the loop (if applicable).
+ * @param isSelfLoop A flag indicating whether the loop is a self-loop.
+ *
+ * @return A pair consisting of:
+ *         - Status: Indicates whether the computation was successful and
+ * provides an error message if not.
+ *         - dataDependence: A structure containing:
+ *             - The set of basic blocks involved in the dependencies.
+ *             - The set of values contributing to the dependencies.
+ *             - A vector of PHI node arguments (type and name).
+ *             - A flag indicating whether a critical PHI node was encountered.
+ *             - A set of values related to PHI nodes on loop arguments.
+ */
 std::pair<Status, dataDependence> computeDataDependencies(
     Instruction &I,
     std::unordered_map<const BasicBlock *, SmallVector<const Value *>> &gates,
     Function &F, Loop *loop, BasicBlock *loopHeader, bool isSelfLoop) {
-  std::set<const Value *> deps;
+
+  // Initialize data structures
+  std::set<const Value *> deps = {&I};
   std::set<const BasicBlock *> BBs;
-  std::set<const Value *> visited;
+  std::set<const Value *> visited = {&I};
   std::queue<const Value *> worklist;
+  worklist.push(&I);
+
   std::vector<std::pair<Type *, StringRef>> phiArguments;
   std::set<const Value *> phiOnArgs;
   Status status = {true, ""};
   bool phiCrit = false;
 
-  worklist.push(&I);
-  deps.insert(&I);
-  visited.insert(&I);
+  // Helper to process operands
+  auto processOperand = [&](const Value *operand) {
+    if (isa<GlobalVariable>(operand)) {
+      status = {false, "Some dependency is on a Global Variable."};
+      return false;
+    }
 
+    if (!isa<Instruction>(operand) && !isa<Argument>(operand)) return true;
+
+    LLVM_DEBUG(dbgs() << "\t\t[Data Dependency] Instruction being processed: "
+                      << *operand << "\n");
+
+    if (visited.count(operand)) {
+      if (isa<PHINode>(operand) && operand == &I) {
+        deps = {operand, &I};
+        while (!worklist.empty()) worklist.pop();
+        phiCrit = true;
+      }
+      return true;
+    }
+
+    if (loop && !loop->isInvalid()) {
+      if (const PHINode *phi = dyn_cast<PHINode>(operand)) {
+        if (phi->getParent() == loopHeader || isSelfLoop) {
+          LLVM_DEBUG(dbgs() << "\t\t\t--> U is a PHINode inside a loop header "
+                               "or self loop...\n");
+          phiOnArgs.insert(operand);
+          visited.insert(operand);
+          return true;
+        }
+      } else if (const Instruction *inst = dyn_cast<Instruction>(operand)) {
+        // if a dependency is not inside the loop, pass it as an argument to
+        // the current slice function
+        if (!loop->contains(inst->getParent())) {
+          phiOnArgs.insert(operand);
+          visited.insert(operand);
+          return true;
+        }
+      }
+    }
+
+    visited.insert(operand);
+    worklist.push(operand);
+    return true;
+  };
+
+  // Process worklist
   while (!worklist.empty()) {
     const Value *cur = worklist.front();
     worklist.pop();
 
     deps.insert(cur);
-    visited.insert(cur);
 
     if (const Instruction *dep = dyn_cast<Instruction>(cur)) {
-      assert(dep->getParent() && "Instruction has no parent basic block.");
-      assert(dep->getType() && "Instruction has null type.");
+      LLVM_DEBUG(dbgs() << "\t\t[Data Dependency] Current instruction's "
+                           "basic block being inserted in BBs: "
+                        << dep->getParent()->getName() << "\n");
+      BBs.insert(dep->getParent());
 
-      if (!BBs.count(dep->getParent())) {
-        LLVM_DEBUG(dbgs() << "\t\t[Data Dependency] Current instruction's "
-                             "basic block being inserted in BBs: "
-                          << dep->getParent()->getName() << "\n");
-        BBs.insert(dep->getParent());
-      }
-
-      // Handle data dependencies
-      bool continueProcessing = true;
       for (const Use &U : dep->operands()) {
-        const Value *operand = U.get();
-
-        assert(operand && "Found null operand in an instruction...");
-
-        if (isa<GlobalVariable>(operand)) {
-          status = {false, "Some dependency is on a Global Variable."};
-          continueProcessing = false;
-          break;
-        }
-
-        if (!isa<Instruction>(operand) && !isa<Argument>(operand)) continue;
-
-        if (visited.count(operand)) {
-          if (isa<PHINode>(operand) && operand == &I) {
-            deps.clear();
-            deps.insert(operand);
-            deps.insert(&I);
-            while (!worklist.empty()) worklist.pop();
-            phiCrit = true;
-            break;
-          }
-          continue;
-        }
-
-        LLVM_DEBUG(
-            dbgs() << "\t\t[Data Dependency] Instruction being analyzed: "
-                   << *operand << "\n");
-
-        if (loop && !loop->isInvalid()) {
-          if (const PHINode *phi = dyn_cast<PHINode>(operand)) {
-            if (!loopHeader) {
-              LLVM_DEBUG(errs() << "\t\t\t--> Loop does not have a header in "
-                                << F.getName());
-            } else if (phi->getParent() == loopHeader) {
-              LLVM_DEBUG(
-                  dbgs()
-                  << "\t\t\t--> U is a PHINode inside a loop header...\n");
-              phiOnArgs.insert(operand);
-              visited.insert(operand);
-              continue;
-            }
-            LLVM_DEBUG(dbgs()
-                       << "\t\t\t--> U is a PHINode inside a loop, but not "
-                          "in its header...\n");
-            if (isSelfLoop) {
-              LLVM_DEBUG(dbgs() << "\t\t\t--> U is a PHINode in a self loop\n");
-              phiOnArgs.insert(operand);
-              visited.insert(operand);
-              continue;
-            }
-          } else if (const Instruction *inst = dyn_cast<Instruction>(operand)) {
-            // if a dependency is not inside the loop, pass it as an argument to
-            // the current slice function
-            if (!loop->contains(inst->getParent())) {
-              LLVM_DEBUG(dbgs() << "\t\t\tU is outside the loop..." << "\n");
-              phiOnArgs.insert(operand);
-              visited.insert(operand);
-              continue;
-            }
-          }
-        }
-
-        visited.insert(operand);
-        worklist.push(operand);
+        if (!processOperand(U.get())) break;
       }
-      if (!continueProcessing) break;
     }
 
     if (phiCrit) break;
   }
 
-  dataDependence result = {BBs, deps, phiArguments, phiCrit, phiOnArgs};
-  return {status, result};
+  return {status, {BBs, deps, phiArguments, phiCrit, phiOnArgs}};
+}
+
+/**
+ * @brief Removes invalid basic blocks from the set of basic blocks.
+ *
+ * @details This function iterates through the set of basic blocks and removes
+ * any block that does not contain instructions present in the dependencies set.
+ *
+ * @param BBs The set of basic blocks to be filtered.
+ * @param deps The set of dependencies to check against.
+ */
+void removeInvalidBBs(std::set<const BasicBlock *> &BBs,
+                      const std::set<const Value *> &deps) {
+  LLVM_DEBUG(dbgs() << "\nBasicBlock in BBs:\n");
+  for (auto it = BBs.begin(); it != BBs.end();) {
+    const BasicBlock *BB = *it;
+    if (!BB->empty()) {
+      bool hasInstructionInDeps = false;
+      for (const Instruction &inst : *BB) {
+        if (deps.count(&inst)) {
+          hasInstructionInDeps = true;
+          break;
+        }
+      }
+      if (!hasInstructionInDeps) {
+        LLVM_DEBUG(dbgs() << "\t- " << BB->getName() << "\n");
+        it = BBs.erase(it);
+        continue;
+      }
+    }
+    LLVM_DEBUG(dbgs() << "\t+ " << BB->getName() << "\n");
+    ++it;
+  }
+  LLVM_DEBUG(dbgs() << "\n");
 }
 
 /**
@@ -314,136 +350,82 @@ std::pair<Status, dataDependence> get_data_dependences_for(
   BasicBlock *loopHeader = (loop) ? loop->getHeader() : nullptr;
   bool isSelfLoop = checkIfCritEdgeSelfLoop(loop && !loop->isInvalid(), &I);
 
-  std::pair<Status, dataDependence> results =
+  auto [status, resultsData] =
       computeDataDependencies(I, gates, F, loop, loopHeader, isSelfLoop);
-
-  Status &status = results.first;
-  dataDependence &resultsData = results.second;
-
   if (!status.status) return {status, resultsData};
 
-  std::set<const BasicBlock *> &BBs = resultsData.BBs;
-  std::set<const Value *> &deps = resultsData.dependences;
-  std::vector<std::pair<Type *, StringRef>> &phiArgs = resultsData.typeAndName;
-  bool &phiCrit = resultsData.phiCrit;
-  std::set<const Value *> &phiOnArgs = resultsData.phiOnArgs;
+  auto &BBs = resultsData.BBs;
+  auto &deps = resultsData.dependences;
+  auto &phiOnArgs = resultsData.phiOnArgs;
 
-  // Handle control dependencies from phi nodes as data dependencies
-  for (const Value *cur : deps) {
-    LLVM_DEBUG(dbgs() << "\t\t\tcur from deps: " << *cur << "\n");
+  std::set<const Value *> visitedDeps;
+
+  auto processControlDependencies = [&](const Value *cur, auto processGates) {
     if (const PHINode *phi = dyn_cast<PHINode>(cur)) {
       for (const BasicBlock *BB : phi->blocks()) {
+        LLVM_DEBUG(dbgs() << "\t\t[Control Dependency] PHINode\'s basic "
+                             "block being inserted in BBs: "
+                          << BB->getName() << "\n");
+        BBs.insert(BB);
+      }
+      processGates(phi->getParent(), cur);
+    } else if (const ICmpInst *cmpInst = dyn_cast<ICmpInst>(cur)) {
+      const BasicBlock *parentBB = cmpInst->getParent();
+      const Instruction *parentTerminator = parentBB->getTerminator();
 
-        if (!BBs.count(BB)) {
-          LLVM_DEBUG(dbgs() << "\t\t[Control Dependency] PHINode\'s basic "
+      // Only process gates of the current compare instruction if it is really
+      // used in the terminator of the current BB
+      if (parentTerminator &&
+          llvm::any_of(parentTerminator->operands(),
+                       [&](const Value *op) { return op == cmpInst; })) {
+        for (const BasicBlock *BB : successors(parentBB)) {
+          LLVM_DEBUG(dbgs() << "\t\t[Control Dependency] ICmpInst\'s basic "
                                "block being inserted in BBs: "
                             << BB->getName() << "\n");
           BBs.insert(BB);
+          processGates(BB, cur);
         }
-      }
-
-      for (auto it = gates[phi->getParent()].begin();
-           it != gates[phi->getParent()].end();) {
-        const Value *gate = *it;
-        if (gate) {
-          LLVM_DEBUG(dbgs() << "\t\t[Control Dependency] PHINode\'s gate "
-                               "instruction being inserted in the deps list: "
-                            << *gate << "\n\t\t\t--> Gated instruction: "
-                            << *cur << "\n");
-          if (const Instruction *gateInstruction =
-                  dyn_cast<Instruction>(gate)) {
-            deps.insert(gateInstruction);
-            auto results = computeDataDependencies(
-                *const_cast<Instruction *>(gateInstruction), gates, F, loop,
-                loopHeader, isSelfLoop);
-            deps.insert(results.second.dependences.begin(),
-                        results.second.dependences.end());
-            BBs.insert(results.second.BBs.begin(), results.second.BBs.end());
-            phiOnArgs.insert(results.second.phiOnArgs.begin(),
-                             results.second.phiOnArgs.end());
-          }
-        }
-        ++it;
       }
     }
-  }
+  };
+
+  auto processGates = [&](const BasicBlock *BB, const Value *cur) {
+    for (const Value *gate : gates[BB]) {
+      if (const Instruction *gateInstruction = dyn_cast<Instruction>(gate)) {
+        if (visitedDeps.count(gateInstruction)) continue;
+
+        LLVM_DEBUG(dbgs() << "\t\t[Control Dependency] Gate "
+                             "instruction being inserted in the deps list: "
+                          << *gate << "\n\t\t\t--> Gated instruction: " << *cur
+                          << "\n");
+        deps.insert(gateInstruction);
+        visitedDeps.insert(gateInstruction);
+
+        auto [_, gateResults] =
+            computeDataDependencies(*const_cast<Instruction *>(gateInstruction),
+                                    gates, F, loop, loopHeader, isSelfLoop);
+        deps.insert(gateResults.dependences.begin(),
+                    gateResults.dependences.end());
+        BBs.insert(gateResults.BBs.begin(), gateResults.BBs.end());
+        phiOnArgs.insert(gateResults.phiOnArgs.begin(),
+                         gateResults.phiOnArgs.end());
+      }
+    }
+  };
+
+  // first traversal to get gates for all phinodes
   for (const Value *cur : deps) {
-    LLVM_DEBUG(dbgs() << "\t\t\tcur from deps (2): " << *cur << "\n");
-    if (const ICmpInst *cmpInst = dyn_cast<ICmpInst>(cur)) {
-      const BasicBlock *parentBB = cmpInst->getParent();
-      const Instruction *terminator = parentBB->getTerminator();
-
-      // Check if cmpInst is used in the terminator
-      bool isUsedInTerminator = false;
-      if (terminator) {
-        for (unsigned i = 0; i < terminator->getNumOperands(); ++i) {
-          if (terminator->getOperand(i) == cmpInst) {
-            isUsedInTerminator = true;
-            break;
-          }
-        }
-      }
-
-      if (isUsedInTerminator) {
-        for (const BasicBlock *BB : successors(cmpInst->getParent())) {
-          if (!BBs.count(BB)) {
-            LLVM_DEBUG(dbgs() << "\t\t[Control Dependency] IcmpInst\'s basic "
-                                 "block being inserted in BBs: "
-                              << BB->getName() << "\n");
-            BBs.insert(BB);
-          }
-          for (auto it = gates[BB].begin(); it != gates[BB].end();) {
-            const Value *gate = *it;
-            if (gate) {
-              LLVM_DEBUG(dbgs()
-                         << "\t\t[Control Dependency] IcmpInst\'s gate "
-                            "instruction being inserted in the deps list: "
-                         << *gate << "\n\t\t\t--> Gated instruction: " << *cur
-                         << "\n");
-              if (const Instruction *gateInstruction =
-                      dyn_cast<Instruction>(gate)) {
-                deps.insert(gateInstruction);
-                auto results = computeDataDependencies(
-                    *const_cast<Instruction *>(gateInstruction), gates, F, loop,
-                    loopHeader, isSelfLoop);
-                deps.insert(results.second.dependences.begin(),
-                            results.second.dependences.end());
-                BBs.insert(results.second.BBs.begin(),
-                           results.second.BBs.end());
-                phiOnArgs.insert(results.second.phiOnArgs.begin(),
-                                 results.second.phiOnArgs.end());
-              }
-            }
-            ++it;
-          }
-        }
-      }
-    }
+    processControlDependencies(cur, processGates);
   }
 
-  for (auto it = BBs.begin(); it != BBs.end();) {
-    const BasicBlock *BB = *it;
-    if (!BB->empty()) {
-      bool hasInstructionInDeps = false;
-      for (const Instruction &inst : *BB) {
-        if (deps.count(&inst)) {
-          hasInstructionInDeps = true;
-          break;
-        }
-      }
-      if (!hasInstructionInDeps) {
-        LLVM_DEBUG(dbgs() << "BasicBlock with no valid instructions: "
-                          << BB->getName() << "\n");
-        it = BBs.erase(it);
-        continue;
-      }
-    }
-    LLVM_DEBUG(dbgs() << "BasicBlock in BBs: " << BB->getName() << "\n");
-    ++it;
+  // second traversal to get gates for all icmp instructions
+  for (const Value *cur : deps) {
+    processControlDependencies(cur, processGates);
   }
 
-  dataDependence result = {BBs, deps, phiArgs, phiCrit, phiOnArgs};
-  return {status, result};
+  removeInvalidBBs(BBs, deps);
+
+  return {status, resultsData};
 }
 
 /**
@@ -577,6 +559,92 @@ void ProgramSlice::computeAttractorBlocks() {
 }
 
 /**
+ * @brief Reconstructs branches between parent and child nodes.
+ *
+ * @details This function handles the reconstruction of branches between parent
+ * and child nodes in the dominator tree. It ensures that the correct terminator
+ * instructions are added to the parent block, based on the original branch
+ * instructions.
+ *
+ * @param parent The parent node in the dominator tree.
+ * @param child The child node in the dominator tree.
+ * @param _origToNewBBmap Mapping of original basic blocks to new basic blocks.
+ * @param _attractors Mapping of basic blocks to their attractor blocks.
+ * @param _Imap Mapping of original instructions to their corresponding
+ * instructions in the sliced function.
+ */
+void reconstructBranches(
+    DomTreeNode *parent, BasicBlock *parentBB, DomTreeNode *child,
+    BasicBlock *childBB,
+    std::map<const BasicBlock *, BasicBlock *> &_origToNewBBmap,
+    std::map<const BasicBlock *, const BasicBlock *> &_attractors,
+    std::map<Instruction *, Instruction *> &_Imap) {
+  if (parentBB->getTerminator() != nullptr) {
+    return; // Skip if parent already has a terminator
+  }
+
+  LLVM_DEBUG(dbgs() << "Parent block without terminator: " << *parentBB
+                    << "\n");
+
+  const Instruction *origTerminator = parent->getBlock()->getTerminator();
+
+  if (const BranchInst *origBranch = dyn_cast<BranchInst>(origTerminator)) {
+    if (origBranch->isConditional()) {
+      Value *condition = origBranch->getCondition();
+      Value *newCondition = isa<Instruction>(condition)
+                                ? _Imap[cast<Instruction>(condition)]
+                                : nullptr;
+
+      BasicBlock *trueBlock = _origToNewBBmap[origBranch->getSuccessor(0)];
+      BasicBlock *falseBlock = _origToNewBBmap[origBranch->getSuccessor(1)];
+
+      trueBlock =
+          trueBlock ? trueBlock
+                    : _origToNewBBmap[_attractors[origBranch->getSuccessor(0)]];
+      falseBlock =
+          falseBlock
+              ? falseBlock
+              : _origToNewBBmap[_attractors[origBranch->getSuccessor(1)]];
+
+      if (newCondition && trueBlock && falseBlock && trueBlock != falseBlock) {
+        BranchInst::Create(trueBlock, falseBlock, newCondition, parentBB);
+      } else {
+        BranchInst::Create(childBB, parentBB);
+      }
+    } else {
+      BranchInst::Create(childBB, parentBB);
+    }
+  } else if (const SwitchInst *origSwitch =
+                 dyn_cast<SwitchInst>(origTerminator)) {
+    // Handle SwitchInst terminator
+    Value *condition = origSwitch->getCondition();
+    Value *newCondition = isa<Instruction>(condition)
+                              ? _Imap[cast<Instruction>(condition)]
+                              : nullptr;
+
+    if (newCondition) {
+      SwitchInst *newSwitch = SwitchInst::Create(
+          newCondition, childBB, origSwitch->getNumCases(), parentBB);
+
+      for (auto &casePair : origSwitch->cases()) {
+        BasicBlock *caseBlock = _origToNewBBmap[casePair.getCaseSuccessor()];
+        caseBlock =
+            caseBlock
+                ? caseBlock
+                : _origToNewBBmap[_attractors[casePair.getCaseSuccessor()]];
+
+        if (caseBlock) {
+          newSwitch->addCase(const_cast<ConstantInt *>(casePair.getCaseValue()),
+                             caseBlock);
+        }
+      }
+    } else {
+      BranchInst::Create(childBB, parentBB);
+    }
+  }
+}
+
+/**
  * @brief Adds branches from immediate dominators which existed in the
  * original function to the slice.
  *
@@ -606,57 +674,8 @@ void ProgramSlice::addDomBranches(DomTreeNode *cur, DomTreeNode *parent,
     if (_BBsInSlice.count(child->getBlock()) && parent) {
       BasicBlock *parentBB = _origToNewBBmap[parent->getBlock()];
       BasicBlock *childBB = _origToNewBBmap[child->getBlock()];
-      if (parentBB->getTerminator() == nullptr) {
-        LLVM_DEBUG(dbgs() << "Parent block without terminator: " << *parentBB
-                          << "\n");
-
-        // If the original block's terminator is a conditional branch,
-        // recreate it in the new function, otherwise create an unconditional
-        // branch (also when a succ is not present in the current new
-        // function)
-        if (const BranchInst *origBranch =
-                dyn_cast<BranchInst>(parent->getBlock()->getTerminator())) {
-          if (origBranch->isConditional()) {
-            Value *condition = origBranch->getCondition();
-            Value *newCondition = nullptr;
-            if (isa<Instruction>(condition)) {
-              newCondition = _Imap[cast<Instruction>(condition)];
-            }
-            BasicBlock *trueBlock =
-                _origToNewBBmap[origBranch->getSuccessor(0)];
-            BasicBlock *falseBlock =
-                _origToNewBBmap[origBranch->getSuccessor(1)];
-
-            if (!trueBlock) {
-              trueBlock =
-                  _origToNewBBmap[_attractors[origBranch->getSuccessor(0)]];
-            }
-            if (!falseBlock) {
-              falseBlock =
-                  _origToNewBBmap[_attractors[origBranch->getSuccessor(1)]];
-            }
-
-            if (newCondition && trueBlock && falseBlock &&
-                trueBlock != falseBlock) {
-              LLVM_DEBUG(dbgs() << "Original branch: " << *origBranch
-                                << "\nCondition instruction: " << *condition
-                                << "\nNew Condition: " << *newCondition
-                                << "\nTrueBlock: " << *trueBlock
-                                << "\nfalseBlock: " << *falseBlock << "\n");
-              BranchInst::Create(trueBlock, falseBlock, newCondition, parentBB);
-            } else {
-              LLVM_DEBUG(dbgs() << "Original branch: " << *origBranch
-                                << "\nNew Target: " << *childBB << "\n");
-              BranchInst *newBranch = BranchInst::Create(childBB, parentBB);
-            }
-          } else {
-            LLVM_DEBUG(dbgs() << "Unconditional branch created between parent: "
-                              << parentBB->getName() << " and child (1):\n"
-                              << childBB->getName() << "\n");
-            BranchInst *newBranch = BranchInst::Create(childBB, parentBB);
-          }
-        }
-      }
+      reconstructBranches(parent, parentBB, child, childBB, _origToNewBBmap,
+                          _attractors, _Imap);
       // BranchInst *newBranch = BranchInst::Create(childBB, parentBB);
     }
   }
