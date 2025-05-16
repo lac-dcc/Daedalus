@@ -392,24 +392,26 @@ std::pair<Status, dataDependence> get_data_dependences_for(
 
   auto processGates = [&](const BasicBlock *BB, const Value *cur) {
     for (const Value *gate : gates[BB]) {
-      if (const Instruction *gateInstruction = dyn_cast<Instruction>(gate)) {
-        if (visitedDeps.count(gateInstruction)) continue;
+      if (gate) {
+        if (const Instruction *gateInstruction = dyn_cast<Instruction>(gate)) {
+          if (visitedDeps.count(gateInstruction)) continue;
 
-        LLVM_DEBUG(dbgs() << "\t\t[Control Dependency] Gate "
-                             "instruction being inserted in the deps list: "
-                          << *gate << "\n\t\t\t--> Gated instruction: " << *cur
-                          << "\n");
-        deps.insert(gateInstruction);
-        visitedDeps.insert(gateInstruction);
+          LLVM_DEBUG(dbgs() << "\t\t[Control Dependency] Gate "
+                               "instruction being inserted in the deps list: "
+                            << *gate << "\n\t\t\t--> Gated instruction: "
+                            << *cur << "\n");
+          deps.insert(gateInstruction);
+          visitedDeps.insert(gateInstruction);
 
-        auto [_, gateResults] =
-            computeDataDependencies(*const_cast<Instruction *>(gateInstruction),
-                                    gates, F, loop, loopHeader, isSelfLoop);
-        deps.insert(gateResults.dependences.begin(),
-                    gateResults.dependences.end());
-        BBs.insert(gateResults.BBs.begin(), gateResults.BBs.end());
-        phiOnArgs.insert(gateResults.phiOnArgs.begin(),
-                         gateResults.phiOnArgs.end());
+          auto [_, gateResults] = computeDataDependencies(
+              *const_cast<Instruction *>(gateInstruction), gates, F, loop,
+              loopHeader, isSelfLoop);
+          deps.insert(gateResults.dependences.begin(),
+                      gateResults.dependences.end());
+          BBs.insert(gateResults.BBs.begin(), gateResults.BBs.end());
+          phiOnArgs.insert(gateResults.phiOnArgs.begin(),
+                           gateResults.phiOnArgs.end());
+        }
       }
     }
   };
@@ -589,8 +591,20 @@ void reconstructBranches(
   BasicBlock *childNewBB = _origToNewBBmap[child->getBlock()];
 
   if (!parentNewBB) {
-    LLVM_DEBUG(dbgs() << "\nParent block is null...\n");
+    LLVM_DEBUG(dbgs() << "\nNew parent block is null...\n");
     return;
+  }
+
+  BasicBlock *childFirstAttractedBy = child->getBlock();
+  if (!childNewBB) {
+    LLVM_DEBUG(
+        dbgs()
+        << "\nNew child block is null. Setting it to its attractor...\n");
+    childNewBB = _origToNewBBmap[_attractors[child->getBlock()]];
+    if (!childNewBB) {
+      LLVM_DEBUG(dbgs() << "\nChild attractor is null...\n");
+      return;
+    }
   }
 
   if (parentNewBB->getTerminator() != nullptr) {
@@ -602,7 +616,9 @@ void reconstructBranches(
   LLVM_DEBUG(dbgs() << "\nParent block without terminator: " << *parentNewBB
                     << "\n");
   LLVM_DEBUG(dbgs() << "Reconstructing branches from " << parentNewBB->getName()
-                    << " to " << childNewBB->getName() << "\n");
+                    << " to "
+                    << ((childNewBB) ? childNewBB->getName().str() : "null")
+                    << "\n");
   const Instruction *origTerminator = parent->getBlock()->getTerminator();
 
   if (const BranchInst *origBranch = dyn_cast<BranchInst>(origTerminator)) {
@@ -630,6 +646,17 @@ void reconstructBranches(
                           << "FalseBlock name: " << falseBlock->getName()
                           << "\n");
         BranchInst::Create(trueBlock, falseBlock, newCondition, parentNewBB);
+        if (childNewBB) {
+          DominatorTree DT(*parentNewBB->getParent());
+          for (Instruction &I : *childNewBB) {
+            if (!isa<PHINode>(I)) continue;
+            PHINode *phi = cast<PHINode>(&I);
+            for (BasicBlock *newTargetPHIBB : phi->blocks()) {
+              if (newTargetPHIBB == childFirstAttractedBy)
+                phi->replaceIncomingBlockWith(newTargetPHIBB, parentNewBB);
+            }
+          }
+        }
       } else {
         if (!newCondition) {
           LLVM_DEBUG(dbgs() << "NewCondition is null...\n");
@@ -643,7 +670,11 @@ void reconstructBranches(
         if (trueBlock && trueBlock == falseBlock) {
           LLVM_DEBUG(dbgs() << "TrueBlock and FalseBlock are equal...\n");
         }
-        BranchInst::Create(childNewBB, parentNewBB);
+        if (childNewBB) {
+          BranchInst::Create(childNewBB, parentNewBB);
+        } else {
+          LLVM_DEBUG(dbgs() << "ChildNewBB is null...\n");
+        }
       }
     } else {
       BranchInst::Create(childNewBB, parentNewBB);
@@ -729,7 +760,7 @@ void ProgramSlice::addDomBranches(DomTreeNode *cur, DomTreeNode *parent,
       stack.push({child, parentNode});
 
       // If the child block is part of the slice and there is a valid parent
-      if (_BBsInSlice.count(child->getBlock()) && parentNode) {
+      if (parentNode /*&& _BBsInSlice.count(child->getBlock())*/) {
         // Reconstruct branches between parent and child
         reconstructBranches(parentNode, child, _origToNewBBmap, _attractors,
                             _Imap);
@@ -795,7 +826,7 @@ void ProgramSlice::rerouteBranches(Function *F) {
     parent = init;
   }
 
-  // Visit blocks recursively in order of dominance. If BB1 and BB2 are in
+  // Visit blocks in order of dominance. If BB1 and BB2 are in
   // slice, BB1 IDom BB2, and BB1 has no terminator, create branch BB1->BB2
   addDomBranches(init, parent, visited);
 
@@ -812,13 +843,10 @@ void ProgramSlice::rerouteBranches(Function *F) {
   UnreachableInst *unreach =
       new UnreachableInst(F->getContext(), unreachableBlock);
 
-  // Now iterate over every block in the slice...
-  Instruction *terminator = nullptr;
+  // Iterate over all blocks in the function
   for (BasicBlock &BB : *F) {
-    terminator = BB.getTerminator();
-    // If block still has no terminator, create an unconditional branch
-    // routing it to its attractor.
-    if (terminator == nullptr) {
+    Instruction *terminator = BB.getTerminator();
+    if (!terminator) {
       LLVM_DEBUG(dbgs() << "Parent BB without terminator (2): " << BB.getName()
                         << "\n");
       const BasicBlock *parentBB = _newToOrigBBmap[&BB];
@@ -826,33 +854,31 @@ void ProgramSlice::rerouteBranches(Function *F) {
               dyn_cast<BranchInst>(parentBB->getTerminator())) {
         for (const BasicBlock *suc : origBranch->successors()) {
           BasicBlock *newTarget = _origToNewBBmap[_attractors[suc]];
-          if (!newTarget) {
-            continue;
-          }
-
+          LLVM_DEBUG(dbgs()
+                     << "Successor of parent BB without terminator (2): "
+                     << BB.getName() << "\nSuccessor: " << suc->getName()
+                     << "\nAttractor: "
+                     << (_attractors[suc] ? _attractors[suc]->getName().str()
+                                          : "null")
+                     << "\n");
+          if (!newTarget) continue;
           BranchInst::Create(newTarget, &BB);
 
           // If new successor has any PHINodes that merged a path from
           // a block that was dominated by this block, update its
           // incoming block to be this instead.
           for (Instruction &I : *newTarget) {
-            if (!isa<PHINode>(I)) {
-              continue;
-            }
+            if (!isa<PHINode>(I)) continue;
             PHINode *phi = cast<PHINode>(&I);
             for (BasicBlock *newTargetPHIBB : phi->blocks()) {
               if (newTargetPHIBB->getParent() != F) {
                 DomTreeNode *OrigBB = DT.getNode(newTargetPHIBB);
                 DomTreeNode *Cand = OrigBB->getIDom();
-                while (Cand != nullptr) {
-                  if (Cand->getBlock() == parentBB) {
-                    break;
-                  }
+                while (Cand) {
+                  if (Cand->getBlock() == parentBB) break;
                   Cand = Cand->getIDom();
                 }
-                if (Cand) {
-                  phi->replaceIncomingBlockWith(newTargetPHIBB, &BB);
-                }
+                if (Cand) phi->replaceIncomingBlockWith(newTargetPHIBB, &BB);
               }
             }
           }
@@ -862,14 +888,10 @@ void ProgramSlice::rerouteBranches(Function *F) {
     } else {
       LLVM_DEBUG(dbgs() << "Parent BB WITH terminator (2): " << BB.getName()
                         << "\n");
-      // Otherwise, the block's original branch was part of the slice...
       if (BranchInst *BI = dyn_cast<BranchInst>(terminator)) {
         for (unsigned int idx = 0; idx < BI->getNumSuccessors(); ++idx) {
           BasicBlock *suc = BI->getSuccessor(idx);
-          if (suc->getParent() == F) {
-            continue;
-          }
-
+          if (suc->getParent() == F) continue;
           const BasicBlock *attractor = _attractors[suc];
           BasicBlock *newSucc = _origToNewBBmap[attractor];
           if (!newSucc) {
@@ -882,9 +904,7 @@ void ProgramSlice::rerouteBranches(Function *F) {
           }
           BI->setSuccessor(idx, newSucc);
           for (Instruction &I : *newSucc) {
-            if (!isa<PHINode>(I)) {
-              continue;
-            }
+            if (!isa<PHINode>(I)) continue;
             PHINode *phi = cast<PHINode>(&I);
             phi->replaceIncomingBlockWith(suc, &BB);
           }
@@ -892,10 +912,7 @@ void ProgramSlice::rerouteBranches(Function *F) {
       } else if (SwitchInst *SI = dyn_cast<SwitchInst>(terminator)) {
         for (unsigned int idx = 0; idx < SI->getNumSuccessors(); ++idx) {
           BasicBlock *suc = SI->getSuccessor(idx);
-          if (suc->getParent() == F) {
-            continue;
-          }
-
+          if (suc->getParent() == F) continue;
           const BasicBlock *attractor = _attractors[suc];
           BasicBlock *newSucc = _origToNewBBmap[attractor];
           if (!newSucc) {
@@ -908,9 +925,7 @@ void ProgramSlice::rerouteBranches(Function *F) {
           }
           SI->setSuccessor(idx, newSucc);
           for (Instruction &I : *newSucc) {
-            if (!isa<PHINode>(I)) {
-              continue;
-            }
+            if (!isa<PHINode>(I)) continue;
             PHINode *phi = cast<PHINode>(&I);
             phi->replaceIncomingBlockWith(suc, &BB);
           }
