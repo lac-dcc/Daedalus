@@ -12,7 +12,6 @@
 #include <set>
 #include <stack>
 #include <tuple>
-#include <unordered_map>
 #include <utility>
 
 #include "llvm/ADT/SmallVector.h"
@@ -49,104 +48,6 @@
 
 using namespace llvm;
 
-/**
- * @brief Returns the block whose predicate should control the phi-functions in
- * the given basic block.
- *
- * @details This function determines the controlling block for the phi-functions
- * in the specified basic block (BB). It traverses the dominator tree (DT) to
- * find a block that does not dominate BB in the post-dominator tree (PDT).
- *
- * @param BB The basic block for which to find the controlling block.
- * @param DT The dominator tree.
- * @param PDT The post-dominator tree.
- * @return A pointer to the controlling basic block, or nullptr if no such block
- * is found.
- */
-static const BasicBlock *getController(const BasicBlock *BB, DominatorTree &DT,
-                                       PostDominatorTree &PDT) {
-  const DomTreeNode *dom_node = DT.getNode(BB);
-  while (dom_node) {
-    const BasicBlock *dom_BB = dom_node->getBlock();
-    if (!PDT.dominates(BB, dom_BB)) {
-      return dom_BB;
-    } else {
-      dom_node = dom_node->getIDom();
-    }
-  }
-  return nullptr;
-}
-
-/**
- * @brief Returns the predicate of the given basic block, which will be used to
- * gate another basic block's phi-functions.
- *
- * @details This function retrieves the condition that will gate the
- * phi-functions of another basic block. It examines the terminator instruction
- * of the given basic block (BB) and extracts the condition from a branching
- * instruction.
- *
- * @param BB The basic block whose predicate is to be returned.
- * @return A pointer to the condition value, or nullptr if no valid condition is
- * found.
- */
-static const Value *getGate(const BasicBlock *BB) {
-  const Value *condition = nullptr;
-  const Instruction *terminator = BB->getTerminator();
-  if (const BranchInst *BI = dyn_cast<BranchInst>(terminator)) {
-    assert(BI->isConditional() && "Unconditional terminator!");
-    condition = BI->getCondition();
-  } else if (const SwitchInst *SI = dyn_cast<SwitchInst>(terminator)) {
-    condition = SI->getCondition();
-  }
-  return condition;
-}
-
-/**
- * @brief Computes the gates for all basic blocks in the slice.
- *
- * @details This function calculates the gating conditions for each basic block
- * in a function. It constructs a map where each basic block is associated with
- * a vector of gating conditions. The gating conditions are derived from the
- * dominator and post-dominator trees of the function.
- *
- * @param F The function for which to compute the gates.
- * @return An unordered map where each basic block is mapped to a vector of its
- * gating conditions.
- */
-static const std::unordered_map<const BasicBlock *, SmallVector<const Value *>>
-computeGates(Function &F) {
-  DominatorTree DT(F);
-  PostDominatorTree PDT(F);
-
-  std::unordered_map<const BasicBlock *, SmallVector<const Value *>> gates;
-  for (const BasicBlock &BB : F) {
-    SmallVector<const Value *> BB_gates;
-    const unsigned num_preds = pred_size(&BB);
-
-    // LLVM_DEBUG(dbgs() << BB.getName() << ":\n");
-    for (const BasicBlock *pred : predecessors(&BB)) {
-      // LLVM_DEBUG(dbgs() << " - " << pred->getName() << " : ");
-      if (DT.dominates(pred, &BB) && !PDT.dominates(&BB, pred)) {
-        // LLVM_DEBUG(dbgs() << " DOM " << getGate(pred)->getName() << " ->");
-        BB_gates.push_back(getGate(pred));
-      } else {
-        const BasicBlock *ctrl_BB = getController(pred, DT, PDT);
-        if (ctrl_BB) {
-          // LLVM_DEBUG(dbgs() << "EDGE CONTROLLED BY " << ctrl_BB->getName()
-          // << " " << getGate(ctrl_BB)->getName());
-          BB_gates.push_back(getGate(ctrl_BB));
-        }
-      }
-      // LLVM_DEBUG(dbgs() << ";\n");
-    }
-
-    gates.emplace(std::make_pair(&BB, BB_gates));
-  }
-
-  return gates;
-}
-
 struct dataDependence {
   std::set<const BasicBlock *> BBs;
   std::set<const Value *> dependences;
@@ -160,6 +61,19 @@ struct Status {
   std::string msg;
 };
 
+
+/**
+ * @brief Checks if there is a critical edge self-loop in the control flow graph.
+ *
+ * This function iterates over the successors of the parent basic block of the given instruction.
+ * It checks if any successor is a basic block that loops back to the parent (i.e., its unique
+ * successor is the parent block) and contains only a single instruction (size == 1).
+ * If such a block is found, the function updates the loopValid flag accordingly.
+ *
+ * @param loopValid Initial validity state of the loop.
+ * @param Instruction Pointer to the instruction whose parent block's successors are examined.
+ * @return Returns the updated validity state of the loop after checking for a critical edge self-loop.
+ */
 bool checkIfCritEdgeSelfLoop(bool loopValid, const Instruction *Instruction) {
   for (const BasicBlock *BB : successors(Instruction->getParent())) {
     if (BB->getUniqueSuccessor() == Instruction->getParent() &&
@@ -172,32 +86,24 @@ bool checkIfCritEdgeSelfLoop(bool loopValid, const Instruction *Instruction) {
 }
 
 /**
- * @brief Computes the data dependencies for a given instruction within a
- * function and loop context.
+ * @brief Computes the data dependencies for a given instruction within a function and loop context.
  *
- * This function analyzes the data dependencies of a specific instruction by
- * traversing its operands and identifying the basic blocks and values that
- * contribute to its computation. It also handles special cases such as PHI
- * nodes and global variables, and considers the loop structure when determining
- * dependencies.
+ * This function traverses the operands of the specified instruction to determine all values and basic blocks
+ * on which the instruction depends, taking into account loop boundaries and PHI nodes. It uses a worklist
+ * algorithm to recursively explore dependencies, while avoiding global variables and tracking visited nodes
+ * to prevent cycles. Special handling is provided for PHI nodes in loop headers and for dependencies outside
+ * the current loop, which are collected as arguments to the slice.
  *
- * @param I The instruction for which data dependencies are being computed.
- * @param gates A map of basic blocks to their associated gate values.
- * @param F The function containing the instruction.
- * @param loop The loop context in which the instruction resides (can be null if
- * not in a loop).
- * @param loopHeader The header of the loop (if applicable).
- * @param isSelfLoop A flag indicating whether the loop is a self-loop.
- *
- * @return A pair consisting of:
- *         - Status: Indicates whether the computation was successful and
- * provides an error message if not.
- *         - dataDependence: A structure containing:
- *             - The set of basic blocks involved in the dependencies.
- *             - The set of values contributing to the dependencies.
- *             - A vector of PHI node arguments (type and name).
- *             - A flag indicating whether a critical PHI node was encountered.
- *             - A set of values related to PHI nodes on loop arguments.
+ * @param I             The instruction for which to compute data dependencies.
+ * @param F             The function containing the instruction.
+ * @param loop          The loop containing the instruction, or nullptr if not in a loop.
+ * @param loopHeader    The header block of the loop, or nullptr if not in a loop.
+ * @param isSelfLoop    Indicates if the instruction is in a critical edge self-loop.
+ * @param visitedDeps   Set of values already visited to avoid redundant processing.
+ * @param visitedBBs    Set of basic blocks already visited to avoid redundant processing.
+ * @return              A pair consisting of a Status object (indicating success or failure and a message)
+ *                      and a dataDependence struct containing the sets of dependent values, basic blocks,
+ *                      PHI node arguments, and related metadata.
  */
 std::pair<Status, dataDependence>
 computeDataDependencies(const Instruction &I, Function &F, Loop *loop,
@@ -294,40 +200,6 @@ computeDataDependencies(const Instruction &I, Function &F, Loop *loop,
 }
 
 /**
- * @brief Removes invalid basic blocks from the set of basic blocks.
- *
- * @details This function iterates through the set of basic blocks and removes
- * any block that does not contain instructions present in the dependencies set.
- *
- * @param BBs The set of basic blocks to be filtered.
- * @param deps The set of dependencies to check against.
- */
-void removeInvalidBBs(std::set<const BasicBlock *> &BBs,
-                      const std::set<const Value *> &deps) {
-  LLVM_DEBUG(dbgs() << "\nBasicBlock in BBs:\n");
-  for (auto it = BBs.begin(); it != BBs.end();) {
-    const BasicBlock *BB = *it;
-    if (!BB->empty()) {
-      bool hasInstructionInDeps = false;
-      for (const Instruction &inst : *BB) {
-        if (deps.count(&inst)) {
-          hasInstructionInDeps = true;
-          break;
-        }
-      }
-      if (!hasInstructionInDeps) {
-        LLVM_DEBUG(dbgs() << "\t- " << BB->getName() << "\n");
-        it = BBs.erase(it);
-        continue;
-      }
-    }
-    LLVM_DEBUG(dbgs() << "\t+ " << BB->getName() << "\n");
-    ++it;
-  }
-  LLVM_DEBUG(dbgs() << "\n");
-}
-
-/**
  * @brief Helper function to map predicates from a stack to the map for a given instruction.
  *
  * @param inst The instruction to which predicates are mapped.
@@ -352,6 +224,21 @@ static void mapPredicates(const Instruction &inst, std::stack<const Instruction 
   }
 }
 
+/**
+ * @brief Links control predicates to instructions within a function based on dominator and post-dominator relationships.
+ *
+ * This function traverses the dominator tree of the given LLVM Function to determine control dependencies
+ * and associates each instruction with the set of predicate instructions (typically branch or terminator instructions)
+ * that control its execution. It also handles PHI nodes by linking them to the predicates of their predecessor blocks.
+ *
+ * @param F The LLVM Function to analyze.
+ * @param instToPredicatesMap A map from instructions to the set of predicate instructions that control them.
+ *
+ * The function uses both the DominatorTree and PostDominatorTree to identify control dependencies.
+ * It maintains a stack of predicates as it traverses the dominator tree, and for each instruction,
+ * it records the current set of predicates in the provided map. PHI nodes are specially handled to
+ * accumulate predicates from all incoming blocks.
+ */
 void linkPredicatesToInstructions(
     Function &F,
     std::map<const Instruction *, SmallVector<const Instruction *, 4>>
@@ -410,7 +297,7 @@ void linkPredicatesToInstructions(
         for (unsigned i = 0; i < phi->getNumIncomingValues(); ++i) {
           const BasicBlock *predBB = phi->getIncomingBlock(i);
           const SmallVector<const Instruction *, 4> terminatorLinkedPredicates =
-              instToPredicatesMap[predBB->getTerminator()];
+              instToPredicatesMap[predBB->getTerminator()]; // use block's terminator to get accumulated predicates
           for (const Instruction *pred : terminatorLinkedPredicates) {
             if (instToPredicatesMap[&I].end() ==
                 std::find(instToPredicatesMap[&I].begin(),
@@ -441,6 +328,30 @@ void linkPredicatesToInstructions(
   });
 }
 
+/**
+ * @brief Updates the data dependencies set with control predicate dependencies.
+ *
+ * This function takes the set of data dependencies (`deps`) and, for each instruction in `deps`,
+ * looks up its associated control predicates from the `instToPredicatesMap`. It inserts these predicates
+ * and their corresponding basic blocks into the temporary sets `tmpDeps` and `tmpBBs`, respectively.
+ * For conditional branch and switch instructions, it also recursively computes and inserts the data dependencies
+ * of their condition operands. Any PHI node arguments discovered during this process are added to `tmpPhiOnArgs`.
+ *
+ * If any dependency computation fails (e.g., due to a global variable), the function returns a Status
+ * indicating failure and an error message.
+ *
+ * @param deps                 The set of current data dependencies (instructions and values).
+ * @param instToPredicatesMap  Map from instructions to their associated control predicate instructions.
+ * @param tmpDeps              Set to accumulate additional dependencies discovered via control predicates.
+ * @param tmpPhiOnArgs         Set to accumulate PHI node arguments discovered during dependency computation.
+ * @param tmpBBs               Set to accumulate basic blocks associated with new dependencies.
+ * @param BBs                  Set of basic blocks already in the slice (may be updated).
+ * @param F                    The LLVM Function being analyzed.
+ * @param loop                 The loop containing the slice criterion, or nullptr if not in a loop.
+ * @param loopHeader           The header block of the loop, or nullptr if not in a loop.
+ * @param isSelfLoop           Indicates if the slice criterion is in a critical edge self-loop.
+ * @return                     Status object indicating success or failure and an error message if any.
+ */
 Status updateDataDependencies(
     const std::set<const Value *> &deps,
     std::map<const Instruction *, SmallVector<const Instruction *, 4>>
@@ -506,6 +417,29 @@ Status updateDataDependencies(
   return {true, ""};
 }
 
+/**
+ * @brief Computes and updates the control dependencies for a given set of data dependencies within a function.
+ *
+ * This function analyzes the control dependencies for the provided set of data dependencies (`deps`)
+ * in the context of the specified LLVM Function (`F`). It uses dominator and post-dominator trees
+ * to determine which instructions (predicates) control the execution of the instructions in `deps`.
+ * The function updates the sets of dependencies (`deps`), PHI node arguments (`phiOnArgs`), and
+ * basic blocks (`BBs`) to include those introduced by control dependencies.
+ *
+ * The analysis is performed with respect to the loop context (`loop` and `loopHeader`) and whether
+ * the criterion instruction is in a critical edge self-loop (`isSelfLoop`). The function internally
+ * builds a map from instructions to their controlling predicates and recursively updates the dependency
+ * sets to ensure all relevant control dependencies are included.
+ *
+ * @param F           The LLVM Function being analyzed.
+ * @param deps        The set of current data dependencies (instructions and values); will be updated with control dependencies.
+ * @param phiOnArgs   The set of PHI node arguments; will be updated with those discovered via control dependencies.
+ * @param BBs         The set of basic blocks in the slice; will be updated with blocks introduced by control dependencies.
+ * @param loop        The loop containing the slice criterion, or nullptr if not in a loop.
+ * @param loopHeader  The header block of the loop, or nullptr if not in a loop.
+ * @param isSelfLoop  Indicates if the slice criterion is in a critical edge self-loop.
+ * @return            Status object indicating success or failure and an error message if any.
+ */
 Status computeControlDependencies(Function &F, std::set<const Value *> &deps,
                                   std::set<const Value *> &phiOnArgs,
                                   std::set<const BasicBlock *> &BBs, Loop *loop,
@@ -531,25 +465,24 @@ Status computeControlDependencies(Function &F, std::set<const Value *> &deps,
   return {true, ""};
 }
 
+
 /**
- * @brief Computes the backwards data dependences for the given instruction.
+ * @brief Computes data and control dependencies for a given instruction within a function.
  *
- * @details This function determines which instructions should be part of the
- * slice by computing the backwards data dependences for the specified
- * instruction. It uses phi-function gate information contained in the provided
- * gates to track control dependencies as data dependences. This comprehensive
- * approach is sufficient to compute all dependencies necessary for building a
- * slice.
+ * This function analyzes the specified instruction `I` in the context of the function `F`
+ * using the provided FunctionAnalysisManager `FAM`. It determines the loop context of the
+ * instruction, computes its data dependencies, and then computes control dependencies
+ * based on the data dependencies and loop structure.
  *
- * @param I The instruction for which to compute data dependences.
- * @param gates A map of basic blocks to their corresponding gating values.
- * @return A tuple containing the set of basic blocks, the set of dependencies,
- * the vector of phi-function arguments, and a boolean flag indicating if the
- * criterion is a phi-node.
+ * @param I The instruction for which dependencies are to be computed.
+ * @param F The function containing the instruction.
+ * @param FAM The FunctionAnalysisManager providing analysis results.
+ * @return A pair consisting of a Status object indicating success or failure,
+ *         and a dataDependence structure containing sets of dependent values,
+ *         basic blocks, and related PHI node information.
  */
 std::pair<Status, dataDependence> get_data_dependences_for(
     Instruction &I,
-    std::unordered_map<const BasicBlock *, SmallVector<const Value *>> &gates,
     Function &F, FunctionAnalysisManager &FAM) {
 
   LoopInfo &loopInfo = FAM.getResult<LoopAnalysis>(F);
@@ -568,76 +501,6 @@ std::pair<Status, dataDependence> get_data_dependences_for(
   auto &phiOnArgs = resultsData.phiOnArgs;
   auto &phiCrit = resultsData.phiCrit;
   auto &phiArgs = resultsData.typeAndName;
-
-  // std::set<const Value *> visitedDeps;
-
-  // auto processControlDependencies = [&](const Value *cur, auto processGates)
-  // {
-  //   if (const PHINode *phi = dyn_cast<PHINode>(cur)) {
-  //     for (const BasicBlock *BB : phi->blocks()) {
-  //       LLVM_DEBUG(dbgs() << "\t\t[Control Dependency] PHINode\'s basic "
-  //                            "block being inserted in BBs: "
-  //                         << BB->getName() << "\n");
-  //       BBs.insert(BB);
-  //     }
-  //     processGates(phi->getParent(), cur);
-  //   } else if (const ICmpInst *cmpInst = dyn_cast<ICmpInst>(cur)) {
-  //     const BasicBlock *parentBB = cmpInst->getParent();
-  //     const Instruction *parentTerminator = parentBB->getTerminator();
-
-  //     // Only process gates of the current compare instruction if it is
-  //     really
-  //     // used in the terminator of the current BB
-  //     if (parentTerminator &&
-  //         llvm::any_of(parentTerminator->operands(),
-  //                      [&](const Value *op) { return op == cmpInst; })) {
-  //       for (const BasicBlock *BB : successors(parentBB)) {
-  //         LLVM_DEBUG(dbgs() << "\t\t[Control Dependency] ICmpInst\'s basic "
-  //                              "block being inserted in BBs: "
-  //                           << BB->getName() << "\n");
-  //         BBs.insert(BB);
-  //         processGates(BB, cur);
-  //       }
-  //     }
-  //   }
-  // };
-
-  // auto processGates = [&](const BasicBlock *BB, const Value *cur) {
-  //   for (const Value *gate : gates[BB]) {
-  //     if (gate) {
-  //       if (const Instruction *gateInstruction = dyn_cast<Instruction>(gate))
-  //       {
-  //         if (visitedDeps.count(gateInstruction)) continue;
-
-  //         LLVM_DEBUG(dbgs() << "\t\t[Control Dependency] Gate "
-  //                              "instruction being inserted in the deps list:
-  //                              "
-  //                           << *gate << "\n\t\t\t--> Gated instruction: "
-  //                           << *cur << "\n");
-  //         deps.insert(gateInstruction);
-  //         visitedDeps.insert(gateInstruction);
-
-  //         auto [_, gateResults] = computeDataDependencies(
-  //             *gateInstruction, gates, F, loop,
-  //             loopHeader, isSelfLoop, deps);
-  //         deps.insert(gateResults.dependences.begin(),
-  //                     gateResults.dependences.end());
-  //         BBs.insert(gateResults.BBs.begin(), gateResults.BBs.end());
-  //         phiOnArgs.insert(gateResults.phiOnArgs.begin(),
-  //                          gateResults.phiOnArgs.end());
-  //       }
-  //     }
-  //   }
-  // };
-  // first traversal to get gates for all phinodes
-  // for (const Value *cur : deps) {
-  //   processControlDependencies(cur, processGates);
-  // }
-  // second traversal to get gates for all icmp instructions
-  // for (const Value *cur : deps) {
-  //   processControlDependencies(cur, processGates);
-  // }
-  // removeInvalidBBs(BBs, deps);
 
   Status cdStatus = computeControlDependencies(F, deps, phiOnArgs, BBs, loop,
                                                loopHeader, isSelfLoop);
@@ -670,9 +533,7 @@ ProgramSlice::ProgramSlice(Instruction &Initial, Function &F,
   assert(Initial.getParent()->getParent() == &F &&
          "Slicing instruction from different function!");
 
-  std::unordered_map<const BasicBlock *, SmallVector<const Value *>> gates =
-      computeGates(F);
-  auto [check, data] = get_data_dependences_for(Initial, gates, F, FAM);
+  auto [check, data] = get_data_dependences_for(Initial, F, FAM);
 
   for (auto &BB : data.BBs) {
     if (tryCatchBlocks.count(const_cast<BasicBlock *>(BB))) {
@@ -778,154 +639,6 @@ void ProgramSlice::computeAttractorBlocks() {
 }
 
 /**
- * @brief Reconstructs branches between parent and child nodes.
- *
- * @details This function handles the reconstruction of branches between parent
- * and child nodes in the dominator tree. It ensures that the correct terminator
- * instructions are added to the parent block, based on the original branch
- * instructions.
- *
- * @param parent The parent node in the dominator tree.
- * @param child The child node in the dominator tree.
- * @param _origToNewBBmap Mapping of original basic blocks to new basic blocks.
- * @param _attractors Mapping of basic blocks to their attractor blocks.
- * @param _Imap Mapping of original instructions to their corresponding
- * instructions in the sliced function.
- */
-void reconstructBranches(
-    DomTreeNode *parent, DomTreeNode *child,
-    std::map<const BasicBlock *, BasicBlock *> &_origToNewBBmap,
-    std::map<const BasicBlock *, const BasicBlock *> &_attractors,
-    std::map<Instruction *, Instruction *> &_Imap) {
-
-  if (!parent || !child) {
-    LLVM_DEBUG(dbgs() << "\nParent or child is null...\n");
-    return;
-  }
-
-  BasicBlock *parentNewBB = _origToNewBBmap[parent->getBlock()];
-  BasicBlock *childNewBB = _origToNewBBmap[child->getBlock()];
-
-  if (!parentNewBB) {
-    LLVM_DEBUG(dbgs() << "\nNew parent block is null...\n");
-    return;
-  }
-
-  BasicBlock *childFirstAttractedBy = child->getBlock();
-  if (!childNewBB) {
-    LLVM_DEBUG(
-        dbgs()
-        << "\nNew child block is null. Setting it to its attractor...\n");
-    childNewBB = _origToNewBBmap[_attractors[child->getBlock()]];
-    if (!childNewBB) {
-      LLVM_DEBUG(dbgs() << "\nChild attractor is null...\n");
-      return;
-    }
-  }
-
-  if (parentNewBB->getTerminator() != nullptr) {
-    LLVM_DEBUG(dbgs() << "\nParent block WITH terminator: " << *parentNewBB
-                      << "\n");
-    return; // Skip if parent already has a terminator
-  }
-
-  LLVM_DEBUG(dbgs() << "\nParent block without terminator: " << *parentNewBB
-                    << "\n");
-  LLVM_DEBUG(dbgs() << "Reconstructing branches from " << parentNewBB->getName()
-                    << " to "
-                    << ((childNewBB) ? childNewBB->getName().str() : "null")
-                    << "\n");
-  const Instruction *origTerminator = parent->getBlock()->getTerminator();
-
-  if (const BranchInst *origBranch = dyn_cast<BranchInst>(origTerminator)) {
-    if (origBranch->isConditional()) {
-      Value *condition = origBranch->getCondition();
-      Value *newCondition = isa<Instruction>(condition)
-                                ? _Imap[cast<Instruction>(condition)]
-                                : nullptr;
-
-      BasicBlock *trueBlock = _origToNewBBmap[origBranch->getSuccessor(0)];
-      BasicBlock *falseBlock = _origToNewBBmap[origBranch->getSuccessor(1)];
-
-      trueBlock =
-          trueBlock ? trueBlock
-                    : _origToNewBBmap[_attractors[origBranch->getSuccessor(0)]];
-      falseBlock =
-          falseBlock
-              ? falseBlock
-              : _origToNewBBmap[_attractors[origBranch->getSuccessor(1)]];
-
-      if (newCondition && trueBlock && falseBlock && trueBlock != falseBlock) {
-        LLVM_DEBUG(dbgs() << "Original Condition: " << *condition << "\n"
-                          << "NewCondition: " << *newCondition << "\n"
-                          << "TrueBlock name: " << trueBlock->getName() << "\n"
-                          << "FalseBlock name: " << falseBlock->getName()
-                          << "\n");
-        BranchInst::Create(trueBlock, falseBlock, newCondition, parentNewBB);
-        if (childNewBB) {
-          DominatorTree DT(*parentNewBB->getParent());
-          for (Instruction &I : *childNewBB) {
-            if (!isa<PHINode>(I)) continue;
-            PHINode *phi = cast<PHINode>(&I);
-            for (BasicBlock *newTargetPHIBB : phi->blocks()) {
-              if (newTargetPHIBB == childFirstAttractedBy)
-                phi->replaceIncomingBlockWith(newTargetPHIBB, parentNewBB);
-            }
-          }
-        }
-      } else {
-        if (!newCondition) {
-          LLVM_DEBUG(dbgs() << "NewCondition is null...\n");
-        }
-        if (!trueBlock) {
-          LLVM_DEBUG(dbgs() << "TrueBlock is null...\n");
-        }
-        if (!falseBlock) {
-          LLVM_DEBUG(dbgs() << "FalseBlock is null...\n");
-        }
-        if (trueBlock && trueBlock == falseBlock) {
-          LLVM_DEBUG(dbgs() << "TrueBlock and FalseBlock are equal...\n");
-        }
-        if (childNewBB) {
-          BranchInst::Create(childNewBB, parentNewBB);
-        } else {
-          LLVM_DEBUG(dbgs() << "ChildNewBB is null...\n");
-        }
-      }
-    } else {
-      BranchInst::Create(childNewBB, parentNewBB);
-    }
-  } else if (const SwitchInst *origSwitch =
-                 dyn_cast<SwitchInst>(origTerminator)) {
-    // Handle SwitchInst terminator
-    Value *condition = origSwitch->getCondition();
-    Value *newCondition = isa<Instruction>(condition)
-                              ? _Imap[cast<Instruction>(condition)]
-                              : nullptr;
-
-    if (newCondition) {
-      SwitchInst *newSwitch = SwitchInst::Create(
-          newCondition, childNewBB, origSwitch->getNumCases(), parentNewBB);
-
-      for (auto &casePair : origSwitch->cases()) {
-        BasicBlock *caseBlock = _origToNewBBmap[casePair.getCaseSuccessor()];
-        caseBlock =
-            caseBlock
-                ? caseBlock
-                : _origToNewBBmap[_attractors[casePair.getCaseSuccessor()]];
-
-        if (caseBlock) {
-          newSwitch->addCase(const_cast<ConstantInt *>(casePair.getCaseValue()),
-                             caseBlock);
-        }
-      }
-    } else {
-      BranchInst::Create(childNewBB, parentNewBB);
-    }
-  }
-}
-
-/**
  * @brief Adds branches from immediate dominators which existed in the
  * original function to the slice.
  *
@@ -975,11 +688,6 @@ void ProgramSlice::addDomBranches(DomTreeNode *cur, DomTreeNode *parent,
           BranchInst *newBranch = BranchInst::Create(childBB, parentBB);
         }
       }
-      // if (parentNode) {
-      //   // Reconstruct branches between parent and child
-      //   reconstructBranches(parentNode, child, _origToNewBBmap, _attractors,
-      //                       _Imap);
-      // }
     }
   }
 }
