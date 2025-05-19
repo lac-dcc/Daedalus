@@ -61,18 +61,21 @@ struct Status {
   std::string msg;
 };
 
-
 /**
- * @brief Checks if there is a critical edge self-loop in the control flow graph.
+ * @brief Checks if there is a critical edge self-loop in the control flow
+ * graph.
  *
- * This function iterates over the successors of the parent basic block of the given instruction.
- * It checks if any successor is a basic block that loops back to the parent (i.e., its unique
- * successor is the parent block) and contains only a single instruction (size == 1).
- * If such a block is found, the function updates the loopValid flag accordingly.
+ * This function iterates over the successors of the parent basic block of the
+ * given instruction. It checks if any successor is a basic block that loops
+ * back to the parent (i.e., its unique successor is the parent block) and
+ * contains only a single instruction (size == 1). If such a block is found, the
+ * function updates the loopValid flag accordingly.
  *
  * @param loopValid Initial validity state of the loop.
- * @param Instruction Pointer to the instruction whose parent block's successors are examined.
- * @return Returns the updated validity state of the loop after checking for a critical edge self-loop.
+ * @param Instruction Pointer to the instruction whose parent block's successors
+ * are examined.
+ * @return Returns the updated validity state of the loop after checking for a
+ * critical edge self-loop.
  */
 bool checkIfCritEdgeSelfLoop(bool loopValid, const Instruction *Instruction) {
   for (const BasicBlock *BB : successors(Instruction->getParent())) {
@@ -86,24 +89,32 @@ bool checkIfCritEdgeSelfLoop(bool loopValid, const Instruction *Instruction) {
 }
 
 /**
- * @brief Computes the data dependencies for a given instruction within a function and loop context.
+ * @brief Computes the data dependencies for a given instruction within a
+ * function and loop context.
  *
- * This function traverses the operands of the specified instruction to determine all values and basic blocks
- * on which the instruction depends, taking into account loop boundaries and PHI nodes. It uses a worklist
- * algorithm to recursively explore dependencies, while avoiding global variables and tracking visited nodes
- * to prevent cycles. Special handling is provided for PHI nodes in loop headers and for dependencies outside
- * the current loop, which are collected as arguments to the slice.
+ * This function traverses the operands of the specified instruction to
+ * determine all values and basic blocks on which the instruction depends,
+ * taking into account loop boundaries and PHI nodes. It uses a worklist
+ * algorithm to recursively explore dependencies, while avoiding global
+ * variables and tracking visited nodes to prevent cycles. Special handling is
+ * provided for PHI nodes in loop headers and for dependencies outside the
+ * current loop, which are collected as arguments to the slice.
  *
  * @param I             The instruction for which to compute data dependencies.
  * @param F             The function containing the instruction.
- * @param loop          The loop containing the instruction, or nullptr if not in a loop.
- * @param loopHeader    The header block of the loop, or nullptr if not in a loop.
- * @param isSelfLoop    Indicates if the instruction is in a critical edge self-loop.
- * @param visitedDeps   Set of values already visited to avoid redundant processing.
- * @param visitedBBs    Set of basic blocks already visited to avoid redundant processing.
- * @return              A pair consisting of a Status object (indicating success or failure and a message)
- *                      and a dataDependence struct containing the sets of dependent values, basic blocks,
- *                      PHI node arguments, and related metadata.
+ * @param loop          The loop containing the instruction, or nullptr if not
+ * in a loop.
+ * @param loopHeader    The header block of the loop, or nullptr if not in a
+ * loop.
+ * @param isSelfLoop    Indicates if the instruction is in a critical edge
+ * self-loop.
+ * @param visitedDeps   Set of values already visited to avoid redundant
+ * processing.
+ * @param visitedBBs    Set of basic blocks already visited to avoid redundant
+ * processing.
+ * @return              A pair consisting of a Status object (indicating success
+ * or failure and a message) and a dataDependence struct containing the sets of
+ * dependent values, basic blocks, PHI node arguments, and related metadata.
  */
 std::pair<Status, dataDependence>
 computeDataDependencies(const Instruction &I, Function &F, Loop *loop,
@@ -200,19 +211,24 @@ computeDataDependencies(const Instruction &I, Function &F, Loop *loop,
 }
 
 /**
- * @brief Helper function to map predicates from a stack to the map for a given instruction.
+ * @brief Helper function to map predicates from a stack to the map for a given
+ * instruction.
  *
  * @param inst The instruction to which predicates are mapped.
  * @param stackOfPredicates The stack containing predicates.
  * @param instToPredicatesMap The map linking instructions to their predicates.
  */
-static void mapPredicates(const Instruction &inst, std::stack<const Instruction *> stackOfPredicates,
-                          std::map<const Instruction *, SmallVector<const Instruction *, 4>> &instToPredicatesMap) {
+static void
+mapPredicates(const Instruction &inst,
+              std::stack<const Instruction *> stackOfPredicates,
+              std::unordered_map<const Instruction *, SmallVector<const Instruction *, 4>>
+                  &instToPredicatesMap) {
   // Use a vector for iteration
   std::vector<const Instruction *> predicates;
   std::stack<const Instruction *> tmpStack = stackOfPredicates;
   while (!tmpStack.empty()) {
-    if (std::find(predicates.begin(), predicates.end(), tmpStack.top()) == predicates.end()) {
+    if (std::find(predicates.begin(), predicates.end(), tmpStack.top()) ==
+        predicates.end()) {
       predicates.push_back(tmpStack.top());
     }
     tmpStack.pop();
@@ -225,23 +241,28 @@ static void mapPredicates(const Instruction &inst, std::stack<const Instruction 
 }
 
 /**
- * @brief Links control predicates to instructions within a function based on dominator and post-dominator relationships.
+ * @brief Links control predicates to instructions within a function based on
+ * dominator and post-dominator relationships.
  *
- * This function traverses the dominator tree of the given LLVM Function to determine control dependencies
- * and associates each instruction with the set of predicate instructions (typically branch or terminator instructions)
- * that control its execution. It also handles PHI nodes by linking them to the predicates of their predecessor blocks.
+ * This function traverses the dominator tree of the given LLVM Function to
+ * determine control dependencies and associates each instruction with the set
+ * of predicate instructions (typically branch or terminator instructions) that
+ * control its execution. It also handles PHI nodes by linking them to the
+ * predicates of their predecessor blocks.
  *
  * @param F The LLVM Function to analyze.
- * @param instToPredicatesMap A map from instructions to the set of predicate instructions that control them.
+ * @param instToPredicatesMap A map from instructions to the set of predicate
+ * instructions that control them.
  *
- * The function uses both the DominatorTree and PostDominatorTree to identify control dependencies.
- * It maintains a stack of predicates as it traverses the dominator tree, and for each instruction,
- * it records the current set of predicates in the provided map. PHI nodes are specially handled to
- * accumulate predicates from all incoming blocks.
+ * The function uses both the DominatorTree and PostDominatorTree to identify
+ * control dependencies. It maintains a stack of predicates as it traverses the
+ * dominator tree, and for each instruction, it records the current set of
+ * predicates in the provided map. PHI nodes are specially handled to accumulate
+ * predicates from all incoming blocks.
  */
 void linkPredicatesToInstructions(
     Function &F,
-    std::map<const Instruction *, SmallVector<const Instruction *, 4>>
+    std::unordered_map<const Instruction *, SmallVector<const Instruction *, 4>>
         &instToPredicatesMap) {
   DominatorTree DT(F);
   PostDominatorTree PDT(F);
@@ -277,7 +298,8 @@ void linkPredicatesToInstructions(
             for (const Instruction &inst : *current->getBlock()) {
               if (isa<ReturnInst>(inst)) continue;
 
-              // Copy all predicates from the stack to the map of the current instruction
+              // Copy all predicates from the stack to the map of the current
+              // instruction
               mapPredicates(inst, stackOfPredicates, instToPredicatesMap);
             }
           }
@@ -296,8 +318,10 @@ void linkPredicatesToInstructions(
       if (PHINode *phi = dyn_cast<PHINode>(&I)) {
         for (unsigned i = 0; i < phi->getNumIncomingValues(); ++i) {
           const BasicBlock *predBB = phi->getIncomingBlock(i);
+
+          // use block's terminator to get accumulated predicates
           const SmallVector<const Instruction *, 4> terminatorLinkedPredicates =
-              instToPredicatesMap[predBB->getTerminator()]; // use block's terminator to get accumulated predicates
+              instToPredicatesMap[predBB->getTerminator()];
           for (const Instruction *pred : terminatorLinkedPredicates) {
             if (instToPredicatesMap[&I].end() ==
                 std::find(instToPredicatesMap[&I].begin(),
@@ -331,34 +355,50 @@ void linkPredicatesToInstructions(
 /**
  * @brief Updates the data dependencies set with control predicate dependencies.
  *
- * This function takes the set of data dependencies (`deps`) and, for each instruction in `deps`,
- * looks up its associated control predicates from the `instToPredicatesMap`. It inserts these predicates
- * and their corresponding basic blocks into the temporary sets `tmpDeps` and `tmpBBs`, respectively.
- * For conditional branch and switch instructions, it also recursively computes and inserts the data dependencies
- * of their condition operands. Any PHI node arguments discovered during this process are added to `tmpPhiOnArgs`.
+ * This function takes the set of data dependencies (`deps`) and, for each
+ * instruction in `deps`, looks up its associated control predicates from the
+ * `instToPredicatesMap`. It inserts these predicates and their corresponding
+ * basic blocks into the temporary sets `tmpDeps` and `tmpBBs`, respectively.
+ * For conditional branch and switch instructions, it also recursively computes
+ * and inserts the data dependencies of their condition operands. Any PHI node
+ * arguments discovered during this process are added to `tmpPhiOnArgs`.
  *
- * If any dependency computation fails (e.g., due to a global variable), the function returns a Status
- * indicating failure and an error message.
+ * If any dependency computation fails (e.g., due to a global variable), the
+ * function returns a Status indicating failure and an error message.
  *
- * @param deps                 The set of current data dependencies (instructions and values).
- * @param instToPredicatesMap  Map from instructions to their associated control predicate instructions.
- * @param tmpDeps              Set to accumulate additional dependencies discovered via control predicates.
- * @param tmpPhiOnArgs         Set to accumulate PHI node arguments discovered during dependency computation.
- * @param tmpBBs               Set to accumulate basic blocks associated with new dependencies.
- * @param BBs                  Set of basic blocks already in the slice (may be updated).
+ * @param deps                 The set of current data dependencies
+ * (instructions and values).
+ * @param instToPredicatesMap  Map from instructions to their associated control
+ * predicate instructions.
+ * @param tmpDeps              Set to accumulate additional dependencies
+ * discovered via control predicates.
+ * @param tmpPhiOnArgs         Set to accumulate PHI node arguments discovered
+ * during dependency computation.
+ * @param tmpBBs               Set to accumulate basic blocks associated with
+ * new dependencies.
+ * @param BBs                  Set of basic blocks already in the slice (may be
+ * updated).
  * @param F                    The LLVM Function being analyzed.
- * @param loop                 The loop containing the slice criterion, or nullptr if not in a loop.
- * @param loopHeader           The header block of the loop, or nullptr if not in a loop.
- * @param isSelfLoop           Indicates if the slice criterion is in a critical edge self-loop.
- * @return                     Status object indicating success or failure and an error message if any.
+ * @param loop                 The loop containing the slice criterion, or
+ * nullptr if not in a loop.
+ * @param loopHeader           The header block of the loop, or nullptr if not
+ * in a loop.
+ * @param isSelfLoop           Indicates if the slice criterion is in a critical
+ * edge self-loop.
+ * @return                     Status object indicating success or failure and
+ * an error message if any.
  */
 Status updateDataDependencies(
     const std::set<const Value *> &deps,
-    std::map<const Instruction *, SmallVector<const Instruction *, 4>>
+    std::unordered_map<const Instruction *, SmallVector<const Instruction *, 4>>
         &instToPredicatesMap,
     std::set<const Value *> &tmpDeps, std::set<const Value *> &tmpPhiOnArgs,
     std::set<const BasicBlock *> &tmpBBs, std::set<const BasicBlock *> &BBs,
     Function &F, Loop *loop, BasicBlock *loopHeader, bool isSelfLoop) {
+
+  // For each dep in deps, add each instruction's linked predicates to the list
+  // of deps of the current slice. Also compute the data dependencies of
+  // the condition of the branch/switch instructions
   for (const Value *dep : deps) {
     if (const Instruction *inst = dyn_cast<Instruction>(dep)) {
       auto it = instToPredicatesMap.find(inst);
@@ -418,36 +458,48 @@ Status updateDataDependencies(
 }
 
 /**
- * @brief Computes and updates the control dependencies for a given set of data dependencies within a function.
+ * @brief Computes and updates the control dependencies for a given set of data
+ * dependencies within a function.
  *
- * This function analyzes the control dependencies for the provided set of data dependencies (`deps`)
- * in the context of the specified LLVM Function (`F`). It uses dominator and post-dominator trees
- * to determine which instructions (predicates) control the execution of the instructions in `deps`.
- * The function updates the sets of dependencies (`deps`), PHI node arguments (`phiOnArgs`), and
- * basic blocks (`BBs`) to include those introduced by control dependencies.
+ * This function analyzes the control dependencies for the provided set of data
+ * dependencies (`deps`) in the context of the specified LLVM Function (`F`). It
+ * uses dominator and post-dominator trees to determine which instructions
+ * (predicates) control the execution of the instructions in `deps`. The
+ * function updates the sets of dependencies (`deps`), PHI node arguments
+ * (`phiOnArgs`), and basic blocks (`BBs`) to include those introduced by
+ * control dependencies.
  *
- * The analysis is performed with respect to the loop context (`loop` and `loopHeader`) and whether
- * the criterion instruction is in a critical edge self-loop (`isSelfLoop`). The function internally
- * builds a map from instructions to their controlling predicates and recursively updates the dependency
- * sets to ensure all relevant control dependencies are included.
+ * The analysis is performed with respect to the loop context (`loop` and
+ * `loopHeader`) and whether the criterion instruction is in a critical edge
+ * self-loop (`isSelfLoop`). The function internally builds a map from
+ * instructions to their controlling predicates and recursively updates the
+ * dependency sets to ensure all relevant control dependencies are included.
  *
  * @param F           The LLVM Function being analyzed.
- * @param deps        The set of current data dependencies (instructions and values); will be updated with control dependencies.
- * @param phiOnArgs   The set of PHI node arguments; will be updated with those discovered via control dependencies.
- * @param BBs         The set of basic blocks in the slice; will be updated with blocks introduced by control dependencies.
- * @param loop        The loop containing the slice criterion, or nullptr if not in a loop.
+ * @param deps        The set of current data dependencies (instructions and
+ * values); will be updated with control dependencies.
+ * @param phiOnArgs   The set of PHI node arguments; will be updated with those
+ * discovered via control dependencies.
+ * @param BBs         The set of basic blocks in the slice; will be updated with
+ * blocks introduced by control dependencies.
+ * @param loop        The loop containing the slice criterion, or nullptr if not
+ * in a loop.
  * @param loopHeader  The header block of the loop, or nullptr if not in a loop.
- * @param isSelfLoop  Indicates if the slice criterion is in a critical edge self-loop.
- * @return            Status object indicating success or failure and an error message if any.
+ * @param isSelfLoop  Indicates if the slice criterion is in a critical edge
+ * self-loop.
+ * @return            Status object indicating success or failure and an error
+ * message if any.
  */
 Status computeControlDependencies(Function &F, std::set<const Value *> &deps,
                                   std::set<const Value *> &phiOnArgs,
                                   std::set<const BasicBlock *> &BBs, Loop *loop,
                                   BasicBlock *loopHeader, bool isSelfLoop) {
   // Process Control Dependencies using the Predicate Stacking Algorithm
-  std::map<const Instruction *, SmallVector<const Instruction *, 4>>
+  std::unordered_map<const Instruction *, SmallVector<const Instruction *, 4>>
       instToPredicatesMap;
   linkPredicatesToInstructions(F, instToPredicatesMap);
+
+  // TODO: handle Non-conventional SSA form programs
 
   // Update the data dependencies based on the predicates
   std::set<const Value *> tmpDeps;
@@ -465,14 +517,15 @@ Status computeControlDependencies(Function &F, std::set<const Value *> &deps,
   return {true, ""};
 }
 
-
 /**
- * @brief Computes data and control dependencies for a given instruction within a function.
+ * @brief Computes data and control dependencies for a given instruction within
+ * a function.
  *
- * This function analyzes the specified instruction `I` in the context of the function `F`
- * using the provided FunctionAnalysisManager `FAM`. It determines the loop context of the
- * instruction, computes its data dependencies, and then computes control dependencies
- * based on the data dependencies and loop structure.
+ * This function analyzes the specified instruction `I` in the context of the
+ * function `F` using the provided FunctionAnalysisManager `FAM`. It determines
+ * the loop context of the instruction, computes its data dependencies, and then
+ * computes control dependencies based on the data dependencies and loop
+ * structure.
  *
  * @param I The instruction for which dependencies are to be computed.
  * @param F The function containing the instruction.
@@ -481,9 +534,9 @@ Status computeControlDependencies(Function &F, std::set<const Value *> &deps,
  *         and a dataDependence structure containing sets of dependent values,
  *         basic blocks, and related PHI node information.
  */
-std::pair<Status, dataDependence> get_data_dependences_for(
-    Instruction &I,
-    Function &F, FunctionAnalysisManager &FAM) {
+std::pair<Status, dataDependence>
+get_data_dependences_for(Instruction &I, Function &F,
+                         FunctionAnalysisManager &FAM) {
 
   LoopInfo &loopInfo = FAM.getResult<LoopAnalysis>(F);
   Loop *loop = loopInfo.getLoopFor(I.getParent());
