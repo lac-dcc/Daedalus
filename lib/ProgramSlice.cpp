@@ -290,6 +290,10 @@ void linkPredicatesToInstructions(
                      << parent->getBlock()->getName() << "\n");
           if (!stackOfPredicates.empty()) {
             stackOfPredicates.pop();
+
+
+            // TODO: handle Non-conventional SSA form programs
+            // TODO: check for phi nodes in the post domminator block , and link to it
           }
         } else {
           if (!isa<ReturnInst>(parentTerminator)) {
@@ -502,8 +506,6 @@ Status computeControlDependencies(Function &F, std::set<const Value *> &deps,
   std::unordered_map<const Instruction *, SmallVector<const Instruction *, 4>>
       instToPredicatesMap;
   linkPredicatesToInstructions(F, instToPredicatesMap);
-
-  // TODO: handle Non-conventional SSA form programs
 
   // Update the data dependencies based on the predicates
   std::set<const Value *> tmpDeps;
