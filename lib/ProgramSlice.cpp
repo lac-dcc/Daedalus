@@ -218,11 +218,10 @@ computeDataDependencies(const Instruction &I, Function &F, Loop *loop,
  * @param stackOfPredicates The stack containing predicates.
  * @param instToPredicatesMap The map linking instructions to their predicates.
  */
-static void
-mapPredicates(const Instruction &inst,
-              std::stack<const Instruction *> stackOfPredicates,
-              std::unordered_map<const Instruction *, SmallVector<const Instruction *, 4>>
-                  &instToPredicatesMap) {
+static void mapPredicates(
+    const Instruction &inst, std::stack<const Instruction *> stackOfPredicates,
+    std::unordered_map<const Instruction *, SmallVector<const Instruction *, 4>>
+        &instToPredicatesMap) {
   // Use a vector for iteration
   std::vector<const Instruction *> predicates;
   std::stack<const Instruction *> tmpStack = stackOfPredicates;
@@ -298,9 +297,13 @@ void linkPredicatesToInstructions(
             for (const Instruction &inst : *current->getBlock()) {
               if (isa<ReturnInst>(inst)) continue;
 
-              // Copy all predicates from the stack to the map of the current
-              // instruction
-              mapPredicates(inst, stackOfPredicates, instToPredicatesMap);
+              // Experiment: Copy all predicates from the stack to the map of
+              // the current instruction mapPredicates(inst, stackOfPredicates,
+              // instToPredicatesMap);
+
+              // Push the stack's current top predicate to the map of the
+              // current instruction
+              instToPredicatesMap[&inst].push_back(stackOfPredicates.top());
             }
           }
         }
