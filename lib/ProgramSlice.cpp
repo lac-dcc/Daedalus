@@ -281,10 +281,11 @@ void linkPredicatesToInstructions(
     if (parent) {
       const Instruction *parentTerminator = parent->getBlock()->getTerminator();
       DomTreeNode *currentPostDomBlock = PDT.getNode(current->getBlock());
+      DomTreeNode *parentPostDomBlock = PDT.getNode(parent->getBlock());
       if (parentTerminator && currentPostDomBlock) {
-        if (currentPostDomBlock->getIDom() == parent) {
+        if (currentPostDomBlock == parentPostDomBlock->getIDom()) {
           LLVM_DEBUG(dbgs()
-                     << "--> Basic block " << current->getBlock()->getName()
+                     << "\t\t\t\t--> Basic block " << current->getBlock()->getName()
                      << " is the immediate post dominator of basic block "
                      << parent->getBlock()->getName() << "\n");
           if (!stackOfPredicates.empty()) {
