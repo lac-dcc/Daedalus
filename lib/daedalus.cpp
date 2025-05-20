@@ -554,7 +554,29 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
                         << "\n");
 
       ProgramSlice ps = ProgramSlice(*I, *F, FAM, tryCatchBlocks);
-      LLVM_DEBUG(dbgs() << "Parent function before calling ProgramSlice::outline():\n" << *ps.getParentFunction());
+
+      // Print the entire module containing the parent function to a file, to extract the faulty function separately later
+      LLVM_DEBUG({
+        Module *parentModule = ps.getParentFunction()->getParent();
+        if (parentModule) {
+          std::string fileName =
+              parentModule->getModuleIdentifier() + ".parent_module.ll";
+          std::error_code ec;
+          raw_fd_ostream outFile(fileName, ec, sys::fs::OF_Text);
+          if (!ec) {
+            (*parentModule).print(outFile, nullptr);
+            outFile.close();
+            dbgs() << "\nParent function module written to file: " << fileName
+                   << "\n";
+          } else {
+            dbgs() << "\nFailed to write parent module to file: " << ec.message()
+                   << "\n";
+          }
+        }
+      });
+      // LLVM_DEBUG(dbgs() << "Parent function before calling
+      // ProgramSlice::outline():\n" << *ps.getParentFunction());
+
       Function *G = ps.outline();
 
       if (G == nullptr) continue;
