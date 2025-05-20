@@ -298,8 +298,8 @@ void linkPredicatesToInstructions(
               if (isa<ReturnInst>(inst)) continue;
 
               // Experiment: Copy all predicates from the stack to the map of
-              // the current instruction mapPredicates(inst, stackOfPredicates,
-              // instToPredicatesMap);
+              // the current instruction
+              // mapPredicates(inst, stackOfPredicates, instToPredicatesMap);
 
               // Push the stack's current top predicate to the map of the
               // current instruction
