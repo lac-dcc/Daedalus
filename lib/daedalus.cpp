@@ -588,14 +588,6 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
       std::set<Instruction *> originInstructionSet;
       for (auto &e : constOriginalInst) originInstructionSet.insert(e.first);
 
-      // TODO: remove this if we don't find a good use for it
-      // std::set<Instruction *> tempToRemove;
-      // if (!isSelfContained(originInstructionSet, I, tempToRemove)) {
-      //   LLVM_DEBUG(dbgs() << "Not self contained!\n");
-      //   G->eraseFromParent();
-      //   continue;
-      // }
-
       SmallVector<Value *> funcArgs = ps.getOrigFunctionArgs();
       CallInst *callInst =
           CallInst::Create(G, funcArgs, I->getName(), I->getParent());

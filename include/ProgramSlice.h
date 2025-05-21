@@ -126,11 +126,6 @@ private:
   void insertNewBB(const BasicBlock *originalBB, Function *F);
 
   /**
-   * @brief Prints debugging information about the program slice.
-   */
-  void printSlice();
-
-  /**
    * @brief Computes the attractor blocks (first dominator) for each basic block
    * in the original function.
    */
@@ -144,11 +139,13 @@ private:
                       std::set<DomTreeNode *> &visited);
 
   void size();
-  StructType *computeStructType(bool memo);
 
   /// pointer to the Instruction used as slice criterion
   Instruction *_initial;
 
+
+  /// Pointer to the instruction that produces the return value of the program slice.
+  /// This may be nullptr if the slice does not yield a return value.
   Instruction *_instRetValue;
 
   /// function being sliced
@@ -172,11 +169,6 @@ private:
   /// maps each BasicBlock to its attractor (its first  dominator), used for
   /// rearranging control flow
   std::map<const BasicBlock *, const BasicBlock *> _attractors;
-
-  /// maps original function arguments to new counterparts in the slice function
-  std::map<Argument *, Value *> _argMap;
-
-  size_t _size;
 
   /// maps BasicBlocks in the original function to their new cloned counterparts
   /// in the slice
