@@ -555,7 +555,8 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
 
       ProgramSlice ps = ProgramSlice(*I, *F, FAM, tryCatchBlocks);
 
-      // Print the entire module containing the parent function to a file, to extract the faulty function separately later
+      // Print the entire module containing the parent function to a file, to
+      // extract the faulty function separately later
       LLVM_DEBUG({
         Module *parentModule = ps.getParentFunction()->getParent();
         if (parentModule) {
@@ -569,8 +570,8 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
             dbgs() << "\nParent function module written to file: " << fileName
                    << "\n";
           } else {
-            dbgs() << "\nFailed to write parent module to file: " << ec.message()
-                   << "\n";
+            dbgs() << "\nFailed to write parent module to file: "
+                   << ec.message() << "\n";
           }
         }
       });
@@ -675,7 +676,14 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
     llvm::ProgramSlice::simplifyCfg(originalF, FAM);
   }
 
-  LLVM_DEBUG(dbgs() << "== PRINT PHASE ==\n"; M.print(llvm::outs(), nullptr););
+  LLVM_DEBUG({
+    dbgs() << "== PRINT PHASE ==\n";
+    if (delToNewFunc.size() > 0) {
+      M.print(llvm::outs(), nullptr);
+    } else {
+      dbgs() << "No functions were merged!\n";
+    }
+  });
 
   LLVM_DEBUG(
       LLVM_DEBUG(dbgs() << "== REPORT GENERATION PHASE ==\n");

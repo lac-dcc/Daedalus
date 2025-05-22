@@ -94,10 +94,10 @@ bool checkIfCritEdgeSelfLoop(bool loopValid, const Instruction *Instruction) {
  *
  * This function traverses the operands of the specified instruction to
  * determine all values and basic blocks on which the instruction depends,
- * taking into account loop boundaries and PHI nodes. It uses a worklist
+ * taking into account loop boundaries and PHINodes. It uses a worklist
  * algorithm to recursively explore dependencies, while avoiding global
  * variables and tracking visited nodes to prevent cycles. Special handling is
- * provided for PHI nodes in loop headers and for dependencies outside the
+ * provided for PHINodes in loop headers and for dependencies outside the
  * current loop, which are collected as arguments to the slice.
  *
  * @param I             The instruction for which to compute data dependencies.
@@ -114,7 +114,7 @@ bool checkIfCritEdgeSelfLoop(bool loopValid, const Instruction *Instruction) {
  * processing.
  * @return              A pair consisting of a Status object (indicating success
  * or failure and a message) and a dataDependence struct containing the sets of
- * dependent values, basic blocks, PHI node arguments, and related metadata.
+ * dependent values, basic blocks, PHINode arguments, and related metadata.
  */
 std::pair<Status, dataDependence>
 computeDataDependencies(const Instruction &I, Function &F, Loop *loop,
@@ -213,7 +213,9 @@ computeDataDependencies(const Instruction &I, Function &F, Loop *loop,
       }
     }
 
-    if (phiCrit) break;
+    if (phiCrit) {
+      break;
+    }
   }
 
   return {status, {BBs, deps, phiArguments, phiCrit, phiOnArgs}};
@@ -226,7 +228,7 @@ computeDataDependencies(const Instruction &I, Function &F, Loop *loop,
  * This function traverses the dominator tree of the given LLVM Function to
  * determine control dependencies and associates each instruction with the set
  * of predicate instructions (typically branch or terminator instructions) that
- * control its execution. It also handles PHI nodes by linking them to the
+ * control its execution. It also handles PHINodes by linking them to the
  * predicates of their predecessor blocks.
  *
  * @param F The LLVM Function to analyze.
@@ -236,7 +238,7 @@ computeDataDependencies(const Instruction &I, Function &F, Loop *loop,
  * The function uses both the DominatorTree and PostDominatorTree to identify
  * control dependencies. It maintains a stack of predicates as it traverses the
  * dominator tree, and for each instruction, it records the current set of
- * predicates in the provided map. PHI nodes are specially handled to accumulate
+ * predicates in the provided map. PHINodes are specially handled to accumulate
  * predicates from all incoming blocks.
  */
 void linkPredicatesToInstructions(
@@ -284,7 +286,8 @@ void linkPredicatesToInstructions(
               if (isa<ReturnInst>(inst)) continue;
               // Push the stack's current top predicate to the map of the
               // current instruction
-              instToPredicatesMap[&inst].push_back(stackOfPredicates.top());
+              if (!stackOfPredicates.empty())
+                instToPredicatesMap[&inst].push_back(stackOfPredicates.top());
             }
           }
         }
@@ -296,7 +299,8 @@ void linkPredicatesToInstructions(
     }
   }
 
-  // Also link PHI nodes to their predecessors' predicates
+  // Also link PHINodes to their predecessors' predicates (after the dominator
+  // tree traversal fully find all predicates of all predecessors blocks)
   for (BasicBlock &BB : F) {
     for (Instruction &I : BB) {
       if (PHINode *phi = dyn_cast<PHINode>(&I)) {
@@ -355,7 +359,7 @@ void linkPredicatesToInstructions(
  * @param isSelfLoop     Indicates if the loop is a self-loop.
  * @param tmpDeps        Set to collect dependent values (instructions).
  * @param tmpBBs         Set to collect dependent basic blocks.
- * @param tmpPhiOnArgs   Set to collect PHI node arguments on dependencies.
+ * @param tmpPhiOnArgs   Set to collect PHINode arguments on dependencies.
  * @return Status        A Status object indicating success or failure and an
  * optional message.
  */
@@ -406,6 +410,55 @@ static Status processPredCondDeps(const Instruction *predicate, Function &F,
 }
 
 /**
+ * @brief Activates and processes predicate dependencies for a given
+ * instruction.
+ *
+ * This function looks up the provided instruction in the predicate map and, for
+ * each associated predicate instruction, inserts it into the dependency and
+ * basic block sets. It then processes the conditional dependencies of each
+ * predicate using `processPredCondDeps`. If any predicate processing fails, the
+ * function returns the corresponding error status.
+ *
+ * @param inst The instruction for which predicates are to be activated.
+ * @param instToPredicatesMap A map from instructions to their associated
+ * predicate instructions.
+ * @param F The function containing the instruction.
+ * @param loop The loop context, if any, in which the instruction resides.
+ * @param loopHeader The header basic block of the loop, if applicable.
+ * @param isSelfLoop Indicates if the loop is a self-loop.
+ * @param tmpDeps A set to collect temporary value dependencies.
+ * @param tmpBBs A set to collect temporary basic block dependencies.
+ * @param tmpPhiOnArgs A set to collect PHINode arguments dependencies.
+ * @return Status indicating success or failure, with an error message if
+ * failed.
+ */
+Status activatePredicates(
+    const Instruction *inst,
+    std::unordered_map<const Instruction *, SmallVector<const Instruction *, 4>>
+        &instToPredicatesMap,
+    Function &F, Loop *loop, BasicBlock *loopHeader, bool isSelfLoop,
+    std::set<const Value *> &tmpDeps, std::set<const BasicBlock *> &tmpBBs,
+    std::set<const Value *> &tmpPhiOnArgs) {
+  auto it = instToPredicatesMap.find(inst);
+  if (it != instToPredicatesMap.end()) {
+    SmallVector<const Instruction *, 4> &predicates = it->second;
+    for (const Instruction *predicate : predicates) {
+      tmpDeps.insert(predicate);
+      tmpBBs.insert(predicate->getParent());
+      Status condStatus =
+          processPredCondDeps(predicate, F, loop, loopHeader, isSelfLoop,
+                              tmpDeps, tmpBBs, tmpPhiOnArgs);
+      if (!condStatus.status) {
+        LLVM_DEBUG(dbgs() << "Activation of predicates failed: "
+                          << condStatus.msg << "\n");
+        return condStatus;
+      }
+    }
+  }
+  return {true, ""};
+}
+
+/**
  * @brief Updates the data dependencies set with control predicate dependencies.
  *
  * This function takes the set of data dependencies (`deps`) and, for each
@@ -413,7 +466,7 @@ static Status processPredCondDeps(const Instruction *predicate, Function &F,
  * `instToPredicatesMap`. It inserts these predicates and their corresponding
  * basic blocks into the temporary sets `tmpDeps` and `tmpBBs`, respectively.
  * For conditional branch and switch instructions, it also recursively computes
- * and inserts the data dependencies of their condition operands. Any PHI node
+ * and inserts the data dependencies of their condition operands. Any PHINode
  * arguments discovered during this process are added to `tmpPhiOnArgs`.
  *
  * If any dependency computation fails (e.g., due to a global variable), the
@@ -425,7 +478,7 @@ static Status processPredCondDeps(const Instruction *predicate, Function &F,
  * predicate instructions.
  * @param tmpDeps              Set to accumulate additional dependencies
  * discovered via control predicates.
- * @param tmpPhiOnArgs         Set to accumulate PHI node arguments discovered
+ * @param tmpPhiOnArgs         Set to accumulate PHINode arguments discovered
  * during dependency computation.
  * @param tmpBBs               Set to accumulate basic blocks associated with
  * new dependencies.
@@ -457,29 +510,81 @@ Status updateDataDependencies(
     }
   });
 
-  // For each dep in deps, add each instruction's linked predicates to the list
-  // of deps of the current slice. Also compute the data dependencies of
-  // the condition of the branch/switch instructions
+  SmallPtrSet<const Value *, 4> phiDeps;
   for (const Value *dep : deps) {
-    if (const Instruction *inst = dyn_cast<Instruction>(dep)) {
-      auto it = instToPredicatesMap.find(inst);
-      if (it != instToPredicatesMap.end()) {
-        SmallVector<const Instruction *, 4> &predicates = it->second;
-        for (const Instruction *predicate : predicates) {
-          // Insert the current block's terminator condition into tmpDeps
-          // and compute its data dependencies
-          tmpDeps.insert(predicate);
-          tmpBBs.insert(predicate->getParent());
-          Status condStatus =
-              processPredCondDeps(predicate, F, loop, loopHeader, isSelfLoop,
-                                  tmpDeps, tmpBBs, tmpPhiOnArgs);
-          if (!condStatus.status) {
-            return condStatus;
+    if (const PHINode *phi = dyn_cast<PHINode>(dep)) {
+      // Activates predicates for the PHINode itself
+      activatePredicates(phi, instToPredicatesMap, F, loop, loopHeader,
+                         isSelfLoop, tmpDeps, tmpBBs, tmpPhiOnArgs);
+
+      // Activate predicates for each incoming value of the PHINode
+      for (unsigned i = 0; i < phi->getNumIncomingValues(); ++i) {
+        const BasicBlock *predBB = phi->getIncomingBlock(i);
+        const Value *predValue = phi->getIncomingValue(i);
+        if (const Instruction *incomingInst =
+                dyn_cast<Instruction>(predValue)) {
+          tmpDeps.insert(incomingInst);
+          tmpBBs.insert(incomingInst->getParent());
+          phiDeps.insert(incomingInst);
+
+          activatePredicates(incomingInst, instToPredicatesMap, F, loop,
+                             loopHeader, isSelfLoop, tmpDeps, tmpBBs,
+                             tmpPhiOnArgs);
+        }
+      }
+    }
+  }
+
+  LLVM_DEBUG({
+    dbgs() << "\t\t[Control Dependency] phiDeps size (1): " << phiDeps.size()
+           << "\n";
+  });
+
+  // Filter out PHI dependencies from the original deps set
+  SmallPtrSet<const Value *, 8> tmpPhiDeps;
+  for (const Value *phiDep : phiDeps) {
+    if (const Instruction *inst = dyn_cast<Instruction>(phiDep)) {
+      std::stack<const Value *> operandStack;
+      operandStack.push(inst);
+      while (!operandStack.empty()) {
+        const Value *curOp = operandStack.top();
+        operandStack.pop();
+        if (const Instruction *curInst = dyn_cast<Instruction>(curOp)) {
+          for (const Use &U : curInst->operands()) {
+            const Value *op = U.get();
+            if (!tmpPhiDeps.count(op)) {
+              tmpPhiDeps.insert(op);
+              operandStack.push(op);
+            }
           }
         }
       }
     }
   }
+
+  LLVM_DEBUG({
+    dbgs() << "\t\t[Control Dependency] tmpPhiDeps size (1): "
+           << tmpPhiDeps.size() << "\n";
+  });
+
+  for (const Value *tmpPhiDep : tmpPhiDeps) {
+    if (phiDeps.count(tmpPhiDep)) continue;
+    phiDeps.insert(tmpPhiDep);
+  }
+
+  LLVM_DEBUG({
+    dbgs() << "\t\t[Control Dependency] phiDeps size (2): " << phiDeps.size()
+           << "\n";
+  });
+
+  // Activate predicates for the incoming values' dependencies
+  for (const Value *phiDep : phiDeps) {
+    if (const Instruction *inst = dyn_cast<Instruction>(phiDep)) {
+      activatePredicates(inst, instToPredicatesMap, F, loop, loopHeader,
+                         isSelfLoop, tmpDeps, tmpBBs, tmpPhiOnArgs);
+    }
+  }
+
   return {true, ""};
 }
 
@@ -491,7 +596,7 @@ Status updateDataDependencies(
  * dependencies (`deps`) in the context of the specified LLVM Function (`F`). It
  * uses dominator and post-dominator trees to determine which instructions
  * (predicates) control the execution of the instructions in `deps`. The
- * function updates the sets of dependencies (`deps`), PHI node arguments
+ * function updates the sets of dependencies (`deps`), PHINode arguments
  * (`phiOnArgs`), and basic blocks (`BBs`) to include those introduced by
  * control dependencies.
  *
@@ -504,7 +609,7 @@ Status updateDataDependencies(
  * @param F           The LLVM Function being analyzed.
  * @param deps        The set of current data dependencies (instructions and
  * values); will be updated with control dependencies.
- * @param phiOnArgs   The set of PHI node arguments; will be updated with those
+ * @param phiOnArgs   The set of PHINode arguments; will be updated with those
  * discovered via control dependencies.
  * @param BBs         The set of basic blocks in the slice; will be updated with
  * blocks introduced by control dependencies.
@@ -562,7 +667,7 @@ Status computeControlDependencies(Function &F, std::set<const Value *> &deps,
  * @param FAM The FunctionAnalysisManager providing analysis results.
  * @return A pair consisting of a Status object indicating success or failure,
  *         and a dataDependence structure containing sets of dependent values,
- *         basic blocks, and related PHI node information.
+ *         basic blocks, and related PHINode information.
  */
 std::pair<Status, dataDependence>
 get_data_dependences_for(Instruction &I, Function &F,
@@ -837,7 +942,7 @@ void ProgramSlice::rerouteBranches(Function *F) {
   // slice, BB1 IDom BB2, and BB1 has no terminator, create branch BB1->BB2
   addDomBranches(init, parent, visited);
 
-  // Save list of PHI nodes to update. Old blocks should be replaced by
+  // Save list of PHINodes to update. Old blocks should be replaced by
   // new blocks as predecessors in merging values. We store PHIs to update
   // at the end of the function to avoid invalidating iterators if we
   // modify in-place.
