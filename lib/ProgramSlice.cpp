@@ -552,7 +552,7 @@ Status updateDataDependencies(
         if (const Instruction *curInst = dyn_cast<Instruction>(curOp)) {
           for (const Use &U : curInst->operands()) {
             const Value *op = U.get();
-            if (!tmpPhiDeps.count(op)) {
+            if (!tmpPhiDeps.count(op) && tmpDeps.count(op)) {
               tmpPhiDeps.insert(op);
               operandStack.push(op);
             }
