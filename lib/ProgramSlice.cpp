@@ -62,33 +62,6 @@ struct Status {
 };
 
 /**
- * @brief Checks if there is a critical edge self-loop in the control flow
- * graph.
- *
- * This function iterates over the successors of the parent basic block of the
- * given instruction. It checks if any successor is a basic block that loops
- * back to the parent (i.e., its unique successor is the parent block) and
- * contains only a single instruction (size == 1). If such a block is found, the
- * function updates the loopValid flag accordingly.
- *
- * @param loopValid Initial validity state of the loop.
- * @param Instruction Pointer to the instruction whose parent block's successors
- * are examined.
- * @return Returns the updated validity state of the loop after checking for a
- * critical edge self-loop.
- */
-bool checkIfCritEdgeSelfLoop(bool loopValid, const Instruction *Instruction) {
-  for (const BasicBlock *BB : successors(Instruction->getParent())) {
-    if (BB->getUniqueSuccessor() == Instruction->getParent() &&
-        BB->size() == 1) {
-      loopValid &= true;
-      break;
-    }
-  }
-  return loopValid;
-}
-
-/**
  * @brief Computes the data dependencies for a given instruction within a
  * function and loop context.
  *
@@ -106,8 +79,6 @@ bool checkIfCritEdgeSelfLoop(bool loopValid, const Instruction *Instruction) {
  * in a loop.
  * @param loopHeader    The header block of the loop, or nullptr if not in a
  * loop.
- * @param isSelfLoop    Indicates if the instruction is in a critical edge
- * self-loop.
  * @param visitedDeps   Set of values already visited to avoid redundant
  * processing.
  * @param visitedBBs    Set of basic blocks already visited to avoid redundant
@@ -118,7 +89,7 @@ bool checkIfCritEdgeSelfLoop(bool loopValid, const Instruction *Instruction) {
  */
 std::pair<Status, dataDependence>
 computeDataDependencies(const Instruction &I, Function &F, Loop *loop,
-                        BasicBlock *loopHeader, bool isSelfLoop,
+                        BasicBlock *loopHeader,
                         std::set<const Value *> &visitedDeps,
                         std::set<const BasicBlock *> &visitedBBs,
                         std::set<const Value *> &visitedPhiOnArgs) {
@@ -158,10 +129,10 @@ computeDataDependencies(const Instruction &I, Function &F, Loop *loop,
 
     if (loop && !loop->isInvalid()) {
       if (const PHINode *phi = dyn_cast<PHINode>(operand)) {
-        if (phi->getParent() == loopHeader || isSelfLoop) {
-          LLVM_DEBUG(dbgs()
-                     << "\t\t\t\t--> Operand is a PHINode inside a loop header "
-                        "or self loop...\n");
+        if (phi->getParent() == loopHeader) {
+          LLVM_DEBUG(
+              dbgs()
+              << "\t\t\t\t--> Operand is a PHINode inside a loop header...\n");
           phiOnArgs.insert(operand);
           visited.insert(operand);
           return true;
@@ -244,7 +215,8 @@ computeDataDependencies(const Instruction &I, Function &F, Loop *loop,
 void linkPredicatesToInstructions(
     Function &F,
     std::unordered_map<const Instruction *, SmallVector<const Instruction *, 4>>
-        &instToPredicatesMap) {
+        &instToPredicatesMap,
+    const std::set<const Value *> &deps) {
   DominatorTree DT(F);
   PostDominatorTree PDT(F);
   std::stack<std::pair<DomTreeNode *, DomTreeNode *>> stack;
@@ -301,21 +273,27 @@ void linkPredicatesToInstructions(
 
   // Also link PHINodes to their predecessors' predicates (after the dominator
   // tree traversal fully find all predicates of all predecessors blocks)
-  for (BasicBlock &BB : F) {
-    for (Instruction &I : BB) {
-      if (PHINode *phi = dyn_cast<PHINode>(&I)) {
-        for (unsigned i = 0; i < phi->getNumIncomingValues(); ++i) {
-          const BasicBlock *predBB = phi->getIncomingBlock(i);
+  for (const Value *dep : deps) {
+    if (const PHINode *I = dyn_cast<PHINode>(dep)) {
+      dbgs() << "\t\t[Control Dependency] Processing PHINode predecessors: "
+             << *I << "\n";
+      for (unsigned i = 0; i < I->getNumIncomingValues(); ++i) {
+        const BasicBlock *predBB = I->getIncomingBlock(i);
+        for (const BasicBlock *succ : successors(predBB)) {
+          // Self-loop: add the terminator as a predicate of the PHINode
+          if (succ == predBB) {
+            instToPredicatesMap[I].push_back(predBB->getTerminator());
+          }
+        }
 
-          // use block's terminator to get accumulated predicates
-          const SmallVector<const Instruction *, 4> terminatorLinkedPredicates =
-              instToPredicatesMap[predBB->getTerminator()];
-          for (const Instruction *pred : terminatorLinkedPredicates) {
-            if (instToPredicatesMap[&I].end() ==
-                std::find(instToPredicatesMap[&I].begin(),
-                          instToPredicatesMap[&I].end(), pred)) {
-              instToPredicatesMap[&I].push_back(pred);
-            }
+        // use block's terminator to get accumulated predicates
+        const SmallVector<const Instruction *, 4> terminatorLinkedPredicates =
+            instToPredicatesMap[predBB->getTerminator()];
+        for (const Instruction *pred : terminatorLinkedPredicates) {
+          if (instToPredicatesMap[I].end() ==
+              std::find(instToPredicatesMap[I].begin(),
+                        instToPredicatesMap[I].end(), pred)) {
+            instToPredicatesMap[I].push_back(pred);
           }
         }
       }
@@ -356,7 +334,6 @@ void linkPredicatesToInstructions(
  * @param loop           The loop context in which the predicate resides (may be
  * nullptr).
  * @param loopHeader     The header basic block of the loop (may be nullptr).
- * @param isSelfLoop     Indicates if the loop is a self-loop.
  * @param tmpDeps        Set to collect dependent values (instructions).
  * @param tmpBBs         Set to collect dependent basic blocks.
  * @param tmpPhiOnArgs   Set to collect PHINode arguments on dependencies.
@@ -365,7 +342,6 @@ void linkPredicatesToInstructions(
  */
 static Status processPredCondDeps(const Instruction *predicate, Function &F,
                                   Loop *loop, BasicBlock *loopHeader,
-                                  bool isSelfLoop,
                                   std::set<const Value *> &tmpDeps,
                                   std::set<const BasicBlock *> &tmpBBs,
                                   std::set<const Value *> &tmpPhiOnArgs) {
@@ -375,9 +351,8 @@ static Status processPredCondDeps(const Instruction *predicate, Function &F,
               dyn_cast<Instruction>(BI->getCondition())) {
         tmpDeps.insert(condInst);
         tmpBBs.insert(condInst->getParent());
-        auto [condStatus, condResults] =
-            computeDataDependencies(*condInst, F, loop, loopHeader, isSelfLoop,
-                                    tmpDeps, tmpBBs, tmpPhiOnArgs);
+        auto [condStatus, condResults] = computeDataDependencies(
+            *condInst, F, loop, loopHeader, tmpDeps, tmpBBs, tmpPhiOnArgs);
         if (!condStatus.status) {
           return {false, condStatus.msg};
         }
@@ -393,9 +368,8 @@ static Status processPredCondDeps(const Instruction *predicate, Function &F,
             dyn_cast<Instruction>(SI->getCondition())) {
       tmpDeps.insert(condInst);
       tmpBBs.insert(condInst->getParent());
-      auto [condStatus, condResults] =
-          computeDataDependencies(*condInst, F, loop, loopHeader, isSelfLoop,
-                                  tmpDeps, tmpBBs, tmpPhiOnArgs);
+      auto [condStatus, condResults] = computeDataDependencies(
+          *condInst, F, loop, loopHeader, tmpDeps, tmpBBs, tmpPhiOnArgs);
       if (!condStatus.status) {
         return {false, condStatus.msg};
       }
@@ -425,7 +399,6 @@ static Status processPredCondDeps(const Instruction *predicate, Function &F,
  * @param F The function containing the instruction.
  * @param loop The loop context, if any, in which the instruction resides.
  * @param loopHeader The header basic block of the loop, if applicable.
- * @param isSelfLoop Indicates if the loop is a self-loop.
  * @param tmpDeps A set to collect temporary value dependencies.
  * @param tmpBBs A set to collect temporary basic block dependencies.
  * @param tmpPhiOnArgs A set to collect PHINode arguments dependencies.
@@ -436,7 +409,7 @@ Status activatePredicates(
     const Instruction *inst,
     std::unordered_map<const Instruction *, SmallVector<const Instruction *, 4>>
         &instToPredicatesMap,
-    Function &F, Loop *loop, BasicBlock *loopHeader, bool isSelfLoop,
+    Function &F, Loop *loop, BasicBlock *loopHeader,
     std::set<const Value *> &tmpDeps, std::set<const BasicBlock *> &tmpBBs,
     std::set<const Value *> &tmpPhiOnArgs) {
   auto it = instToPredicatesMap.find(inst);
@@ -445,9 +418,8 @@ Status activatePredicates(
     for (const Instruction *predicate : predicates) {
       tmpDeps.insert(predicate);
       tmpBBs.insert(predicate->getParent());
-      Status condStatus =
-          processPredCondDeps(predicate, F, loop, loopHeader, isSelfLoop,
-                              tmpDeps, tmpBBs, tmpPhiOnArgs);
+      Status condStatus = processPredCondDeps(predicate, F, loop, loopHeader,
+                                              tmpDeps, tmpBBs, tmpPhiOnArgs);
       if (!condStatus.status) {
         LLVM_DEBUG(dbgs() << "Activation of predicates failed: "
                           << condStatus.msg << "\n");
@@ -489,8 +461,6 @@ Status activatePredicates(
  * nullptr if not in a loop.
  * @param loopHeader           The header block of the loop, or nullptr if not
  * in a loop.
- * @param isSelfLoop           Indicates if the slice criterion is in a critical
- * edge self-loop.
  * @return                     Status object indicating success or failure and
  * an error message if any.
  */
@@ -500,7 +470,7 @@ Status updateDataDependencies(
         &instToPredicatesMap,
     std::set<const Value *> &tmpDeps, std::set<const Value *> &tmpPhiOnArgs,
     std::set<const BasicBlock *> &tmpBBs, std::set<const BasicBlock *> &BBs,
-    Function &F, Loop *loop, BasicBlock *loopHeader, bool isSelfLoop) {
+    Function &F, Loop *loop, BasicBlock *loopHeader) {
 
   LLVM_DEBUG({
     dbgs() << "\t\t[Control Dependency] Printing instructions in deps before "
@@ -514,8 +484,8 @@ Status updateDataDependencies(
   for (const Value *dep : deps) {
     if (const PHINode *phi = dyn_cast<PHINode>(dep)) {
       // Activates predicates for the PHINode itself
-      activatePredicates(phi, instToPredicatesMap, F, loop, loopHeader,
-                         isSelfLoop, tmpDeps, tmpBBs, tmpPhiOnArgs);
+      activatePredicates(phi, instToPredicatesMap, F, loop, loopHeader, tmpDeps,
+                         tmpBBs, tmpPhiOnArgs);
 
       // Activate predicates for each incoming value of the PHINode
       for (unsigned i = 0; i < phi->getNumIncomingValues(); ++i) {
@@ -528,8 +498,7 @@ Status updateDataDependencies(
           phiDeps.insert(incomingInst);
 
           activatePredicates(incomingInst, instToPredicatesMap, F, loop,
-                             loopHeader, isSelfLoop, tmpDeps, tmpBBs,
-                             tmpPhiOnArgs);
+                             loopHeader, tmpDeps, tmpBBs, tmpPhiOnArgs);
         }
       }
     }
@@ -568,8 +537,7 @@ Status updateDataDependencies(
   });
 
   for (const Value *tmpPhiDep : tmpPhiDeps) {
-    if (phiDeps.count(tmpPhiDep)) continue;
-    phiDeps.insert(tmpPhiDep);
+    if (!phiDeps.count(tmpPhiDep)) phiDeps.insert(tmpPhiDep);
   }
 
   LLVM_DEBUG({
@@ -581,7 +549,7 @@ Status updateDataDependencies(
   for (const Value *phiDep : phiDeps) {
     if (const Instruction *inst = dyn_cast<Instruction>(phiDep)) {
       activatePredicates(inst, instToPredicatesMap, F, loop, loopHeader,
-                         isSelfLoop, tmpDeps, tmpBBs, tmpPhiOnArgs);
+                         tmpDeps, tmpBBs, tmpPhiOnArgs);
     }
   }
 
@@ -601,8 +569,7 @@ Status updateDataDependencies(
  * control dependencies.
  *
  * The analysis is performed with respect to the loop context (`loop` and
- * `loopHeader`) and whether the criterion instruction is in a critical edge
- * self-loop (`isSelfLoop`). The function internally builds a map from
+ * `loopHeader`). The function internally builds a map from
  * instructions to their controlling predicates and recursively updates the
  * dependency sets to ensure all relevant control dependencies are included.
  *
@@ -616,19 +583,17 @@ Status updateDataDependencies(
  * @param loop        The loop containing the slice criterion, or nullptr if not
  * in a loop.
  * @param loopHeader  The header block of the loop, or nullptr if not in a loop.
- * @param isSelfLoop  Indicates if the slice criterion is in a critical edge
- * self-loop.
  * @return            Status object indicating success or failure and an error
  * message if any.
  */
 Status computeControlDependencies(Function &F, std::set<const Value *> &deps,
                                   std::set<const Value *> &phiOnArgs,
                                   std::set<const BasicBlock *> &BBs, Loop *loop,
-                                  BasicBlock *loopHeader, bool isSelfLoop) {
+                                  BasicBlock *loopHeader) {
   // Process Control Dependencies using the Predicate Stacking Algorithm
   std::unordered_map<const Instruction *, SmallVector<const Instruction *, 4>>
       instToPredicatesMap;
-  linkPredicatesToInstructions(F, instToPredicatesMap);
+  linkPredicatesToInstructions(F, instToPredicatesMap, deps);
 
   // Update the data dependencies based on the predicates
   std::set<const Value *> tmpDeps(deps.begin(), deps.end());
@@ -636,7 +601,7 @@ Status computeControlDependencies(Function &F, std::set<const Value *> &deps,
   std::set<const BasicBlock *> tmpBBs(BBs.begin(), BBs.end());
   Status status =
       updateDataDependencies(deps, instToPredicatesMap, tmpDeps, tmpPhiOnArgs,
-                             tmpBBs, BBs, F, loop, loopHeader, isSelfLoop);
+                             tmpBBs, BBs, F, loop, loopHeader);
   if (!status.status) {
     return status;
   }
@@ -676,13 +641,12 @@ get_data_dependences_for(Instruction &I, Function &F,
   LoopInfo &loopInfo = FAM.getResult<LoopAnalysis>(F);
   Loop *loop = loopInfo.getLoopFor(I.getParent());
   BasicBlock *loopHeader = (loop) ? loop->getHeader() : nullptr;
-  bool isSelfLoop = checkIfCritEdgeSelfLoop(loop && !loop->isInvalid(), &I);
 
   std::set<const Value *> deps;
   std::set<const BasicBlock *> BBs;
   std::set<const Value *> phiOnArgs;
-  auto [status, resultsData] = computeDataDependencies(
-      I, F, loop, loopHeader, isSelfLoop, deps, BBs, phiOnArgs);
+  auto [status, resultsData] =
+      computeDataDependencies(I, F, loop, loopHeader, deps, BBs, phiOnArgs);
   if (!status.status) return {status, resultsData};
 
   deps = resultsData.dependences;
@@ -691,8 +655,8 @@ get_data_dependences_for(Instruction &I, Function &F,
   auto &phiCrit = resultsData.phiCrit;
   auto &phiArgs = resultsData.typeAndName;
 
-  Status cdStatus = computeControlDependencies(F, deps, phiOnArgs, BBs, loop,
-                                               loopHeader, isSelfLoop);
+  Status cdStatus =
+      computeControlDependencies(F, deps, phiOnArgs, BBs, loop, loopHeader);
 
   if (!cdStatus.status) status = cdStatus;
 
