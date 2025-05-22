@@ -1,12 +1,12 @@
 /*
- * LLUBENCHMARK 
+ * LLUBENCHMARK
  * Craig Zilles (zilles@cs.wisc.edu)
  * http://www.cs.wisc.edu/~zilles/llubenchmark.html
  *
  * This program is a linked list traversal micro-benchmark, which can
  * be used (among other things) to approximate the non-benchmark
  * Health.
- * 
+ *
  * The benchmark executes for a proscribed number of iterations (-i),
  * and on every iteration the lists are traversed and potentially
  * extended.  The number of lists can be specified (-n) as well as the
@@ -23,11 +23,11 @@
  *
  * To approximate the non-benchmark Health, use the options:
  *     -i <num iterations> -g .333 -d -t -n 341
- * 
+ *
  * (the growth rate of the lists in health is different for different
  * levels of the hierarchy and the constant .333 is just my
  * approximation of the growth rate).
- *  
+ *
  */
 
 #include <stdio.h>
@@ -45,14 +45,14 @@ struct element {
   int count;
 };
 
-void
-usage(char *name) {
+void usage(char *name) {
   printf("%s:\n", name);
   printf("-i <number of (I)terations>\n");
   printf("[-l <initial (L)ength of list, in elements>] (default 1)\n");
   printf("[-n <(N)umber of lists>] (default 1 list)\n");
   printf("[-s <(S)ize of element>] (default 32 bytes)\n");
-  printf("[-g <(G)rowth rate per list, in elements per iteration>] (default 0)\n");
+  printf(
+      "[-g <(G)rowth rate per list, in elements per iteration>] (default 0)\n");
   printf("[-d] ((D)irty each element during traversal, default off)\n");
   printf("[-t] (insert at (T)ail of list, default off)\n");
 }
@@ -76,19 +76,15 @@ allocate() {
 	 (((char *)free_list) + ((next_free ++) * element_size));
 }
 #else
-struct element * allocate() {
-  num_allocated ++;
-  return (struct element*)malloc(sizeof(struct element));
+struct element *allocate() {
+  num_allocated++;
+  return (struct element *)malloc(sizeof(struct element));
 }
 #endif
 
-int
-main(int argc, char *argv[]) {
-  int max_iterations = 1000,
-	 dirty = 1,
-	 num_lists = 196,
-	 tail = 1,
-	 initial_length = 1;
+int main(int argc, char *argv[]) {
+  int max_iterations = 1000, dirty = 1, num_lists = 196, tail = 1,
+      initial_length = 1;
   float growth_rate = 0.333;
   char c = 0;
   int i = 0, j = 0, k = 0;
@@ -101,91 +97,103 @@ main(int argc, char *argv[]) {
 
   printf("This benchmark modified to not use hard coded pool allocation!\n");
   while (arg < argc) {
-	 if ((argv[arg][0] != '-') || (argv[arg][2] != 0)) {
-		printf("parse error in %s\n", argv[arg]);
-		usage(argv[0]);
-		return(-1);
-	 }
-	 c = argv[arg][1];
-	 arg ++;
-	 switch(c) {
-	 case 'd': 		dirty = 1; break;
-	 case 'g': 		growth_rate = atof(argv[arg++]);  break;
-	 case 'i': 		max_iterations = atoi(argv[arg++]); break;
-	 case 'l': 		initial_length = atoi(argv[arg++]); break;
-	 case 'n': 		num_lists = atoi(argv[arg++]); break;
-	 case 's': 		element_size = atoi(argv[arg++]); break;
-	 case 't': 		tail = 1; break;
-	 default:
-		printf("unrecognized option: %c\n", c);
-		usage(argv[0]);
-		return(-1);
-	 }
+    if ((argv[arg][0] != '-') || (argv[arg][2] != 0)) {
+      printf("parse error in %s\n", argv[arg]);
+      usage(argv[0]);
+      return (-1);
+    }
+    c = argv[arg][1];
+    arg++;
+    switch (c) {
+    case 'd':
+      dirty = 1;
+      break;
+    case 'g':
+      growth_rate = atof(argv[arg++]);
+      break;
+    case 'i':
+      max_iterations = atoi(argv[arg++]);
+      break;
+    case 'l':
+      initial_length = atoi(argv[arg++]);
+      break;
+    case 'n':
+      num_lists = atoi(argv[arg++]);
+      break;
+    case 's':
+      element_size = atoi(argv[arg++]);
+      break;
+    case 't':
+      tail = 1;
+      break;
+    default:
+      printf("unrecognized option: %c\n", c);
+      usage(argv[0]);
+      return (-1);
+    }
   }
-		
-  assert (element_size > sizeof(struct element));
-  assert (initial_length > 0);
+
+  assert(element_size > sizeof(struct element));
+  assert(initial_length > 0);
 
   /* build lists */
-  lists = (struct element **) malloc (num_lists * sizeof(struct element *));
+  lists = (struct element **)malloc(num_lists * sizeof(struct element *));
   assert(lists != 0);
-  
-  for (i = 0 ; i < num_lists ; i ++) { 
-	 lists[i] = NULL;
+
+  for (i = 0; i < num_lists; i++) {
+    lists[i] = NULL;
   }
 
-
-  for (i = 0 ; i < initial_length ; i ++) { 
-	 for (j = 0 ; j < num_lists ; j ++) { 
-		struct element *e = allocate();
-		e->next = lists[j];
-		e->count = 0;
-		lists[j] = e;
-	 }
+  for (i = 0; i < initial_length; i++) {
+    for (j = 0; j < num_lists; j++) {
+      struct element *e = allocate();
+      e->next = lists[j];
+      e->count = 0;
+      lists[j] = e;
+    }
   }
 
   /* iterate */
-  for (i = 0 ; i < max_iterations ; i ++) { 
-	 if ((i % 1000) == 0) {
-		printf("%d\n", i);
-	 }
-	 /* traverse lists */
-	 for (j = 0 ; j < num_lists ; j ++) { 
-		struct element *trav = lists[j];
-		while (trav != NULL) {
-		  accumulate += trav->count;
-		  if (dirty) {
-			 trav->count ++;
-		  }
-		  trav = trav->next;
-		}
-	 }
-	 
-	 /* grow lists */
-	 growth += growth_rate;
-	 j = growth;
-	 growth -= j;
-	 for ( ; j > 0 ; j --) {
-		for (k = 0 ; k < num_lists ; k ++) { 
-		  struct element *e = allocate();
-		  e->count = k+j;
-		  if (tail) {
-			 struct element *trav = lists[k];
-			 while (trav->next != NULL) {
-				trav = trav->next;
-			 }
-			 trav->next = e;
-			 e->next = NULL;
-		  } else {
-			 e->next = lists[k];
-			 lists[k] = e;
-		  }
-		}
-	 }
-  }
-  printf ("output = %d\n", accumulate);
+  for (i = 0; i < max_iterations; i++) {
+    if ((i % 1000) == 0) {
+      printf("%d\n", i);
+    }
+    /* traverse lists */
+    for (j = 0; j < num_lists; j++) {
+      struct element *trav = lists[j];
+      while (trav != NULL) {
+        accumulate += trav->count;
+        if (dirty) {
+          trav->count++;
+        }
+        trav = trav->next;
+      }
+    }
 
-  printf ("num allocated %d\n", num_allocated);
+    /* grow lists */
+    growth += growth_rate;
+    j = growth;
+    growth -= j;
+    for (; j > 0; j--) {
+      for (k = 0; k < num_lists; k++) {
+        struct element *e = allocate();
+        e->count = k + j;
+        if (tail) {
+          struct element *trav = lists[k];
+          while (trav->next != NULL) {
+            trav = trav->next;
+          }
+          trav->next = e;
+          e->next = NULL;
+        } else {
+          e->next = lists[k];
+          lists[k] = e;
+        }
+      }
+    }
+  }
+  printf("output = %d\n", accumulate);
+
+  printf("num allocated %d\n", num_allocated);
   return 0;
 }
-	 
