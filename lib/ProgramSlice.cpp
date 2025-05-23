@@ -136,6 +136,12 @@ computeDataDependencies(const Instruction &I, Function &F, Loop *loop,
           phiOnArgs.insert(operand);
           visited.insert(operand);
           return true;
+        } else if (!loop->contains(phi->getParent())) {
+          LLVM_DEBUG(dbgs() << "\t\t\t\t--> Operand is a PHINode outside the current "
+                               "criterion's loop...\n");
+          phiOnArgs.insert(operand);
+          visited.insert(operand);
+          return true;
         }
       } else if (const Instruction *inst = dyn_cast<Instruction>(operand)) {
         // if a dependency is not inside the loop, pass it as an argument to
@@ -275,25 +281,30 @@ void linkPredicatesToInstructions(
   // tree traversal fully find all predicates of all predecessors blocks)
   for (const Value *dep : deps) {
     if (const PHINode *I = dyn_cast<PHINode>(dep)) {
-      dbgs() << "\t\t[Control Dependency] Processing PHINode predecessors: "
+      dbgs() << "\t\t[Control Dependency] Processing predecessors of PHINode: "
              << *I << "\n";
       for (unsigned i = 0; i < I->getNumIncomingValues(); ++i) {
+        // use predecessor block's terminator as predicate
         const BasicBlock *predBB = I->getIncomingBlock(i);
-        for (const BasicBlock *succ : successors(predBB)) {
-          // Self-loop: add the terminator as a predicate of the PHINode
-          if (succ == predBB) {
-            instToPredicatesMap[I].push_back(predBB->getTerminator());
-          }
-        }
+        const Instruction *predBBTerminator = predBB->getTerminator();
+        dbgs() << "\t\t\tPredecessor BB: " << predBB->getName()
+               << "\n\t\t\t\tTerminator: " << *predBBTerminator << "\n";
 
-        // use block's terminator to get accumulated predicates
-        const SmallVector<const Instruction *, 4> terminatorLinkedPredicates =
-            instToPredicatesMap[predBB->getTerminator()];
-        for (const Instruction *pred : terminatorLinkedPredicates) {
+        // Only add the predecessor's terminator if it is a conditional branch
+        if (const BranchInst *BI = dyn_cast<BranchInst>(predBBTerminator)) {
+          if (BI->isConditional()) {
+            if (instToPredicatesMap[I].end() ==
+                std::find(instToPredicatesMap[I].begin(),
+                          instToPredicatesMap[I].end(), predBBTerminator)) {
+              instToPredicatesMap[I].push_back(predBBTerminator);
+            }
+          }
+        } else if (const SwitchInst *SI =
+                       dyn_cast<SwitchInst>(predBBTerminator)) {
           if (instToPredicatesMap[I].end() ==
               std::find(instToPredicatesMap[I].begin(),
-                        instToPredicatesMap[I].end(), pred)) {
-            instToPredicatesMap[I].push_back(pred);
+                        instToPredicatesMap[I].end(), predBBTerminator)) {
+            instToPredicatesMap[I].push_back(predBBTerminator);
           }
         }
       }
@@ -493,6 +504,11 @@ Status updateDataDependencies(
         const Value *predValue = phi->getIncomingValue(i);
         if (const Instruction *incomingInst =
                 dyn_cast<Instruction>(predValue)) {
+
+          // The incoming instruction will be an argument of the outlined
+          // function
+          if (tmpPhiOnArgs.count(incomingInst)) continue;
+
           tmpDeps.insert(incomingInst);
           tmpBBs.insert(incomingInst->getParent());
           phiDeps.insert(incomingInst);
@@ -521,7 +537,8 @@ Status updateDataDependencies(
         if (const Instruction *curInst = dyn_cast<Instruction>(curOp)) {
           for (const Use &U : curInst->operands()) {
             const Value *op = U.get();
-            if (!tmpPhiDeps.count(op) && tmpDeps.count(op)) {
+            if (!tmpPhiDeps.count(op) && tmpDeps.count(op) &&
+                !tmpPhiOnArgs.count(op)) {
               tmpPhiDeps.insert(op);
               operandStack.push(op);
             }
