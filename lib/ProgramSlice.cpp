@@ -87,12 +87,123 @@ struct Status {
  * or failure and a message) and a dataDependence struct containing the sets of
  * dependent values, basic blocks, PHINode arguments, and related metadata.
  */
-std::pair<Status, dataDependence>
-computeDataDependencies(const Instruction &I, Function &F, Loop *loop,
-                        BasicBlock *loopHeader,
-                        std::set<const Value *> &visitedDeps,
-                        std::set<const BasicBlock *> &visitedBBs,
-                        std::set<const Value *> &visitedPhiOnArgs) {
+// std::pair<Status, dataDependence> computeDataDependencies(
+//     const Instruction &I, Function &F, Loop *loop, BasicBlock *loopHeader,
+//     std::set<const Value *> &visitedDeps,
+//     std::set<const BasicBlock *> &visitedBBs,
+//     std::set<const Value *> &visitedPhiOnArgs) {
+
+//   // Initialize data structures
+//   std::set<const Value *> deps;
+//   std::set<const BasicBlock *> BBs;
+//   std::set<const Value *> visited = {&I};
+//   std::queue<const Value *> worklist;
+//   worklist.push(&I);
+
+//   std::vector<std::pair<Type *, StringRef>> phiArguments;
+//   std::set<const Value *> phiOnArgs;
+//   Status status = {true, ""};
+//   bool phiCrit = false;
+
+//   // Helper to process operands
+//   auto processOperand = [&](const Value *operand) {
+//     if (isa<GlobalVariable>(operand)) {
+//       status = {false, "Some dependency is on a Global Variable."};
+//       return false;
+//     }
+
+//     if (!isa<Instruction>(operand) && !isa<Argument>(operand)) return true;
+
+//     if (visited.count(operand)) {
+//       if (isa<PHINode>(operand) && operand == &I) {
+//         deps = {operand, &I};
+//         while (!worklist.empty()) worklist.pop();
+//         phiCrit = true;
+//       }
+//       return true;
+//     }
+
+//     LLVM_DEBUG(dbgs() << "\t\t\t[Data Dependency] Operand being processed: "
+//                       << *operand << "\n");
+
+//     if (loop && !loop->isInvalid()) {
+//       if (const PHINode *phi = dyn_cast<PHINode>(operand)) {
+//         if (phi->getParent() == loopHeader) {
+//           LLVM_DEBUG(
+//               dbgs()
+//               << "\t\t\t\t--> Operand is a PHINode inside a loop
+//               header...\n");
+//           phiOnArgs.insert(operand);
+//           visited.insert(operand);
+//           return true;
+//         } else if (!loop->contains(phi->getParent())) {
+//           LLVM_DEBUG(dbgs()
+//                      << "\t\t\t\t--> Operand is a PHINode outside the current
+//                      "
+//                         "criterion's loop...\n");
+//           phiOnArgs.insert(operand);
+//           visited.insert(operand);
+//           return true;
+//         }
+//       } else if (const Instruction *inst = dyn_cast<Instruction>(operand)) {
+//         // if a dependency is not inside the loop, pass it as an argument to
+//         // the current slice function
+//         if (!loop->contains(inst->getParent())) {
+//           LLVM_DEBUG(dbgs() << "\t\t\t\t--> Operand is outside the current "
+//                                "criterion's loop...\n");
+//           phiOnArgs.insert(operand);
+//           visited.insert(operand);
+//           return true;
+//         }
+//       }
+//     }
+
+//     visited.insert(operand);
+//     worklist.push(operand);
+//     return true;
+//   };
+
+//   // Process worklist
+//   while (!worklist.empty()) {
+//     const Value *cur = worklist.front();
+//     worklist.pop();
+
+//     deps.insert(cur);
+
+//     if (const Instruction *dep = dyn_cast<Instruction>(cur)) {
+//       LLVM_DEBUG(dbgs() << "\t\t[Data Dependency] Instruction being
+//       processed: "
+//                         << *dep << "\n");
+
+//       if (!visitedBBs.count(dep->getParent())) {
+//         LLVM_DEBUG(dbgs() << "\t\t[Data Dependency] Current instruction's "
+//                              "basic block being inserted in BBs: "
+//                           << dep->getParent()->getName() << "\n");
+//         BBs.insert(dep->getParent());
+//       }
+
+//       for (const Use &U : dep->operands()) {
+//         if (visitedDeps.count(U) || visitedPhiOnArgs.count(U)) {
+//           LLVM_DEBUG(dbgs()
+//                      << "\t\t[Data Dependency] Operand processed already: "
+//                      << *dep << "\n");
+//           continue;
+//         }
+//         if (!processOperand(U.get())) break;
+//       }
+//     }
+
+//     if (phiCrit) {
+//       break;
+//     }
+//   }
+
+//   return {status, {BBs, deps, phiArguments, phiCrit, phiOnArgs}};
+// }
+
+std::pair<Status, dataDependence> computeDataDependencies(
+    const Instruction &I, Function &F, Loop *loop, BasicBlock *loopHeader,
+    std::unordered_map<const BasicBlock *, SmallVector<const Value *>> &gates) {
 
   // Initialize data structures
   std::set<const Value *> deps;
@@ -137,8 +248,9 @@ computeDataDependencies(const Instruction &I, Function &F, Loop *loop,
           visited.insert(operand);
           return true;
         } else if (!loop->contains(phi->getParent())) {
-          LLVM_DEBUG(dbgs() << "\t\t\t\t--> Operand is a PHINode outside the current "
-                               "criterion's loop...\n");
+          LLVM_DEBUG(dbgs()
+                     << "\t\t\t\t--> Operand is a PHINode outside the current "
+                        "criterion's loop...\n");
           phiOnArgs.insert(operand);
           visited.insert(operand);
           return true;
@@ -166,32 +278,91 @@ computeDataDependencies(const Instruction &I, Function &F, Loop *loop,
     const Value *cur = worklist.front();
     worklist.pop();
 
+    if (const BranchInst *BI = dyn_cast<BranchInst>(cur)) {
+      LLVM_DEBUG(dbgs() << "\t\t[Data Dependency] Instruction being processed: "
+                        << *BI << "\n");
+      if (BI->isConditional() && loop && !loop->isInvalid()) {
+        if (!loop->contains(BI->getParent())) {
+          LLVM_DEBUG(dbgs()
+                     << "\t\t\t--> Branch instruction is outside the current "
+                        "criterion's loop...\n");
+          continue;
+        }
+      }
+    }
+    if (const SwitchInst *SI = dyn_cast<SwitchInst>(cur)) {
+      LLVM_DEBUG(dbgs() << "\t\t[Data Dependency] Instruction being processed: "
+                        << *SI << "\n");
+      if (loop && !loop->isInvalid()) {
+        if (!loop->contains(SI->getParent())) {
+          LLVM_DEBUG(dbgs()
+                     << "\t\t\t--> Switch instruction is outside the current "
+                        "criterion's loop...\n");
+          continue;
+        }
+      }
+    }
+
     deps.insert(cur);
 
     if (const Instruction *dep = dyn_cast<Instruction>(cur)) {
       LLVM_DEBUG(dbgs() << "\t\t[Data Dependency] Instruction being processed: "
                         << *dep << "\n");
 
-      if (!visitedBBs.count(dep->getParent())) {
-        LLVM_DEBUG(dbgs() << "\t\t[Data Dependency] Current instruction's "
-                             "basic block being inserted in BBs: "
-                          << dep->getParent()->getName() << "\n");
-        BBs.insert(dep->getParent());
+      BBs.insert(dep->getParent());
+
+      // Also push gates of the current block, even if the current
+      // instruction is not a PHINode
+      if (!isa<PHINode>(dep)) {
+        for (const Value *gate : gates[dep->getParent()]) {
+          if (gate && !visited.count(gate)) {
+            LLVM_DEBUG(dbgs()
+                       << "\t\t\t\t[Gate] Pushing gate: " << *gate << "\n");
+            worklist.push(gate);
+            visited.insert(gate);
+          }
+        }
       }
 
-      for (const Use &U : dep->operands()) {
-        if (visitedDeps.count(U) || visitedPhiOnArgs.count(U)) {
-          LLVM_DEBUG(dbgs()
-                     << "\t\t[Data Dependency] Operand processed already: "
-                     << *dep << "\n");
-          continue;
-        }
+      for (const Use &U : dep->operands())
         if (!processOperand(U.get())) break;
-      }
     }
 
     if (phiCrit) {
       break;
+    }
+
+    if (const PHINode *phi = dyn_cast<PHINode>(cur)) {
+      LLVM_DEBUG(dbgs() << "\t\t[Data Dependency] PHINode being processed: "
+                        << *phi << "\n");
+
+      const BasicBlock *hasBackEdgeTo = nullptr;
+      for (const BasicBlock *BB : phi->blocks()) {
+        BBs.insert(BB);
+
+        // Check for back edge: incoming block is the same as the PHI's parent
+        if (BB == phi->getParent()) {
+          hasBackEdgeTo = BB;
+        }
+      }
+
+      // if the predecessor block of a phinode has a back edge to itself,
+      // then add its terminator to the gates of the phinode's parent
+      if (hasBackEdgeTo) {
+        LLVM_DEBUG(dbgs() << "\t\t[Data Dependency] PHINode has an incoming "
+                             "block with a back edge to itself: "
+                          << phi->getParent()->getName() << "\n");
+        gates[phi->getParent()].push_back(hasBackEdgeTo->getTerminator());
+      }
+
+      for (const Value *gate : gates[phi->getParent()]) {
+        if (gate && !visited.count(gate)) {
+          LLVM_DEBUG(dbgs()
+                     << "\t\t\t\t[PHI Gate] Pushing gate: " << *gate << "\n");
+          worklist.push(gate);
+          visited.insert(gate);
+        }
+      }
     }
   }
 
@@ -218,116 +389,122 @@ computeDataDependencies(const Instruction &I, Function &F, Loop *loop,
  * predicates in the provided map. PHINodes are specially handled to accumulate
  * predicates from all incoming blocks.
  */
-void linkPredicatesToInstructions(
-    Function &F,
-    std::unordered_map<const Instruction *, SmallVector<const Instruction *, 4>>
-        &instToPredicatesMap,
-    const std::set<const Value *> &deps) {
-  DominatorTree DT(F);
-  PostDominatorTree PDT(F);
-  std::stack<std::pair<DomTreeNode *, DomTreeNode *>> stack;
-  std::stack<const Instruction *> stackOfPredicates;
-  stack.push({DT.getRootNode(), nullptr});
+// void linkPredicatesToInstructions(
+//     Function &F,
+//     std::unordered_map<const Instruction *, SmallVector<const Instruction *,
+//     4>>
+//         &instToPredicatesMap,
+//     const std::set<const Value *> &deps) {
+//   DominatorTree DT(F);
+//   PostDominatorTree PDT(F);
+//   std::stack<std::pair<DomTreeNode *, DomTreeNode *>> stack;
+//   std::stack<const Instruction *> stackOfPredicates;
+//   stack.push({DT.getRootNode(), nullptr});
 
-  dbgs() << "\t\t[Control Dependency] Traversing dominator tree...\n";
-  while (!stack.empty()) {
-    auto [current, parent] = stack.top();
-    stack.pop();
+//   dbgs() << "\t\t[Control Dependency] Traversing dominator tree...\n";
+//   while (!stack.empty()) {
+//     auto [current, parent] = stack.top();
+//     stack.pop();
 
-    LLVM_DEBUG(
-        dbgs() << "\t\t\t[Control Dependency] Current DomTree node block: "
-               << current->getBlock()->getName() << "\n");
+//     LLVM_DEBUG(
+//         dbgs() << "\t\t\t[Control Dependency] Current DomTree node block: "
+//                << current->getBlock()->getName() << "\n");
 
-    if (parent) {
-      const Instruction *parentTerminator = parent->getBlock()->getTerminator();
-      DomTreeNode *currentPostDomBlock = PDT.getNode(current->getBlock());
-      DomTreeNode *parentPostDomBlock = PDT.getNode(parent->getBlock());
-      if (parentTerminator && currentPostDomBlock) {
-        if (currentPostDomBlock == parentPostDomBlock->getIDom()) {
-          LLVM_DEBUG(dbgs()
-                     << "\t\t\t\t--> Basic block "
-                     << current->getBlock()->getName()
-                     << " is the immediate post dominator of basic block "
-                     << parent->getBlock()->getName() << "\n");
-          if (!stackOfPredicates.empty()) {
-            stackOfPredicates.pop();
+//     if (parent) {
+//       const Instruction *parentTerminator =
+//       parent->getBlock()->getTerminator(); DomTreeNode *currentPostDomBlock =
+//       PDT.getNode(current->getBlock()); DomTreeNode *parentPostDomBlock =
+//       PDT.getNode(parent->getBlock()); if (parentTerminator &&
+//       currentPostDomBlock) {
+//         if (currentPostDomBlock == parentPostDomBlock->getIDom()) {
+//           LLVM_DEBUG(dbgs()
+//                      << "\t\t\t\t--> Basic block "
+//                      << current->getBlock()->getName()
+//                      << " is the immediate post dominator of basic block "
+//                      << parent->getBlock()->getName() << "\n");
+//           if (!stackOfPredicates.empty()) {
+//             stackOfPredicates.pop();
 
-            // TODO: handle Non-conventional SSA form programs
-            // TODO: check for phi nodes in the post domminator block , and link
-            // to it
-          }
-        } else {
-          if (!isa<ReturnInst>(parentTerminator)) {
-            stackOfPredicates.push(parentTerminator);
+//             // TODO: handle Non-conventional SSA form programs
+//             // TODO: check for phi nodes in the post domminator block , and
+//             link
+//             // to it
+//           }
+//         } else {
+//           if (!isa<ReturnInst>(parentTerminator)) {
+//             stackOfPredicates.push(parentTerminator);
 
-            for (const Instruction &inst : *current->getBlock()) {
-              if (isa<ReturnInst>(inst)) continue;
-              // Push the stack's current top predicate to the map of the
-              // current instruction
-              if (!stackOfPredicates.empty())
-                instToPredicatesMap[&inst].push_back(stackOfPredicates.top());
-            }
-          }
-        }
-      }
-    }
+//             for (const Instruction &inst : *current->getBlock()) {
+//               if (isa<ReturnInst>(inst)) continue;
+//               // Push the stack's current top predicate to the map of the
+//               // current instruction
+//               if (!stackOfPredicates.empty())
+//                 instToPredicatesMap[&inst].push_back(stackOfPredicates.top());
+//             }
+//           }
+//         }
+//       }
+//     }
 
-    for (DomTreeNode *child : *current) {
-      stack.push({child, current});
-    }
-  }
+//     for (DomTreeNode *child : *current) {
+//       stack.push({child, current});
+//     }
+//   }
 
-  // Also link PHINodes to their predecessors' predicates (after the dominator
-  // tree traversal fully find all predicates of all predecessors blocks)
-  for (const Value *dep : deps) {
-    if (const PHINode *I = dyn_cast<PHINode>(dep)) {
-      dbgs() << "\t\t[Control Dependency] Processing predecessors of PHINode: "
-             << *I << "\n";
-      for (unsigned i = 0; i < I->getNumIncomingValues(); ++i) {
-        // use predecessor block's terminator as predicate
-        const BasicBlock *predBB = I->getIncomingBlock(i);
-        const Instruction *predBBTerminator = predBB->getTerminator();
-        dbgs() << "\t\t\tPredecessor BB: " << predBB->getName()
-               << "\n\t\t\t\tTerminator: " << *predBBTerminator << "\n";
+//   // Also link PHINodes to their predecessors' predicates (after the
+//   dominator
+//   // tree traversal fully find all predicates of all predecessors blocks)
+//   for (const Value *dep : deps) {
+//     if (const PHINode *I = dyn_cast<PHINode>(dep)) {
+//       dbgs() << "\t\t[Control Dependency] Processing predecessors of PHINode:
+//       "
+//              << *I << "\n";
+//       for (unsigned i = 0; i < I->getNumIncomingValues(); ++i) {
+//         // use predecessor block's terminator as predicate
+//         const BasicBlock *predBB = I->getIncomingBlock(i);
+//         const Instruction *predBBTerminator = predBB->getTerminator();
+//         dbgs() << "\t\t\tPredecessor BB: " << predBB->getName()
+//                << "\n\t\t\t\tTerminator: " << *predBBTerminator << "\n";
 
-        // Only add the predecessor's terminator if it is a conditional branch
-        if (const BranchInst *BI = dyn_cast<BranchInst>(predBBTerminator)) {
-          if (BI->isConditional()) {
-            if (instToPredicatesMap[I].end() ==
-                std::find(instToPredicatesMap[I].begin(),
-                          instToPredicatesMap[I].end(), predBBTerminator)) {
-              instToPredicatesMap[I].push_back(predBBTerminator);
-            }
-          }
-        } else if (const SwitchInst *SI =
-                       dyn_cast<SwitchInst>(predBBTerminator)) {
-          if (instToPredicatesMap[I].end() ==
-              std::find(instToPredicatesMap[I].begin(),
-                        instToPredicatesMap[I].end(), predBBTerminator)) {
-            instToPredicatesMap[I].push_back(predBBTerminator);
-          }
-        }
-      }
-    }
-  }
+//         // Only add the predecessor's terminator if it is a conditional
+//         branch if (const BranchInst *BI =
+//         dyn_cast<BranchInst>(predBBTerminator)) {
+//           if (BI->isConditional()) {
+//             if (instToPredicatesMap[I].end() ==
+//                 std::find(instToPredicatesMap[I].begin(),
+//                           instToPredicatesMap[I].end(), predBBTerminator)) {
+//               instToPredicatesMap[I].push_back(predBBTerminator);
+//             }
+//           }
+//         } else if (const SwitchInst *SI =
+//                        dyn_cast<SwitchInst>(predBBTerminator)) {
+//           if (instToPredicatesMap[I].end() ==
+//               std::find(instToPredicatesMap[I].begin(),
+//                         instToPredicatesMap[I].end(), predBBTerminator)) {
+//             instToPredicatesMap[I].push_back(predBBTerminator);
+//           }
+//         }
+//       }
+//     }
+//   }
 
-  LLVM_DEBUG({
-    dbgs() << "\t\t[Control Dependency] Printing predicates linked "
-              "to each instruction...\n";
-    for (BasicBlock &BB : F) {
-      dbgs() << "\t\t\t[Control Dependency] Current basic block: "
-             << BB.getName() << "\n";
-      for (const Instruction &I : BB) {
-        if (isa<ReturnInst>(I)) continue;
-        dbgs() << "\t\t\t\t--> Instruction: " << I
-               << "\n\t\t\t\t\tis linked to the following predicates:\n";
-        for (const Instruction *pred : instToPredicatesMap[&I]) {
-          dbgs() << "\t\t\t\t\t\t" << *pred << "\n";
-        }
-      }
-    }
-  });
-}
+//   LLVM_DEBUG({
+//     dbgs() << "\t\t[Control Dependency] Printing predicates linked "
+//               "to each instruction...\n";
+//     for (BasicBlock &BB : F) {
+//       dbgs() << "\t\t\t[Control Dependency] Current basic block: "
+//              << BB.getName() << "\n";
+//       for (const Instruction &I : BB) {
+//         if (isa<ReturnInst>(I)) continue;
+//         dbgs() << "\t\t\t\t--> Instruction: " << I
+//                << "\n\t\t\t\t\tis linked to the following predicates:\n";
+//         for (const Instruction *pred : instToPredicatesMap[&I]) {
+//           dbgs() << "\t\t\t\t\t\t" << *pred << "\n";
+//         }
+//       }
+//     }
+//   });
+// }
 
 /**
  * @brief Processes the data dependencies of a predicate instruction (branch or
@@ -351,48 +528,48 @@ void linkPredicatesToInstructions(
  * @return Status        A Status object indicating success or failure and an
  * optional message.
  */
-static Status processPredCondDeps(const Instruction *predicate, Function &F,
-                                  Loop *loop, BasicBlock *loopHeader,
-                                  std::set<const Value *> &tmpDeps,
-                                  std::set<const BasicBlock *> &tmpBBs,
-                                  std::set<const Value *> &tmpPhiOnArgs) {
-  if (const BranchInst *BI = dyn_cast<BranchInst>(predicate)) {
-    if (BI->isConditional()) {
-      if (const Instruction *condInst =
-              dyn_cast<Instruction>(BI->getCondition())) {
-        tmpDeps.insert(condInst);
-        tmpBBs.insert(condInst->getParent());
-        auto [condStatus, condResults] = computeDataDependencies(
-            *condInst, F, loop, loopHeader, tmpDeps, tmpBBs, tmpPhiOnArgs);
-        if (!condStatus.status) {
-          return {false, condStatus.msg};
-        }
-        tmpDeps.insert(condResults.dependences.begin(),
-                       condResults.dependences.end());
-        tmpPhiOnArgs.insert(condResults.phiOnArgs.begin(),
-                            condResults.phiOnArgs.end());
-        tmpBBs.insert(condResults.BBs.begin(), condResults.BBs.end());
-      }
-    }
-  } else if (const SwitchInst *SI = dyn_cast<SwitchInst>(predicate)) {
-    if (const Instruction *condInst =
-            dyn_cast<Instruction>(SI->getCondition())) {
-      tmpDeps.insert(condInst);
-      tmpBBs.insert(condInst->getParent());
-      auto [condStatus, condResults] = computeDataDependencies(
-          *condInst, F, loop, loopHeader, tmpDeps, tmpBBs, tmpPhiOnArgs);
-      if (!condStatus.status) {
-        return {false, condStatus.msg};
-      }
-      tmpDeps.insert(condResults.dependences.begin(),
-                     condResults.dependences.end());
-      tmpPhiOnArgs.insert(condResults.phiOnArgs.begin(),
-                          condResults.phiOnArgs.end());
-      tmpBBs.insert(condResults.BBs.begin(), condResults.BBs.end());
-    }
-  }
-  return {true, ""};
-}
+// static Status processPredCondDeps(const Instruction *predicate, Function &F,
+//                                   Loop *loop, BasicBlock *loopHeader,
+//                                   std::set<const Value *> &tmpDeps,
+//                                   std::set<const BasicBlock *> &tmpBBs,
+//                                   std::set<const Value *> &tmpPhiOnArgs) {
+//   if (const BranchInst *BI = dyn_cast<BranchInst>(predicate)) {
+//     if (BI->isConditional()) {
+//       if (const Instruction *condInst =
+//               dyn_cast<Instruction>(BI->getCondition())) {
+//         tmpDeps.insert(condInst);
+//         tmpBBs.insert(condInst->getParent());
+//         auto [condStatus, condResults] = computeDataDependencies(
+//             *condInst, F, loop, loopHeader, tmpDeps, tmpBBs, tmpPhiOnArgs);
+//         if (!condStatus.status) {
+//           return {false, condStatus.msg};
+//         }
+//         tmpDeps.insert(condResults.dependences.begin(),
+//                        condResults.dependences.end());
+//         tmpPhiOnArgs.insert(condResults.phiOnArgs.begin(),
+//                             condResults.phiOnArgs.end());
+//         tmpBBs.insert(condResults.BBs.begin(), condResults.BBs.end());
+//       }
+//     }
+//   } else if (const SwitchInst *SI = dyn_cast<SwitchInst>(predicate)) {
+//     if (const Instruction *condInst =
+//             dyn_cast<Instruction>(SI->getCondition())) {
+//       tmpDeps.insert(condInst);
+//       tmpBBs.insert(condInst->getParent());
+//       auto [condStatus, condResults] = computeDataDependencies(
+//           *condInst, F, loop, loopHeader, tmpDeps, tmpBBs, tmpPhiOnArgs);
+//       if (!condStatus.status) {
+//         return {false, condStatus.msg};
+//       }
+//       tmpDeps.insert(condResults.dependences.begin(),
+//                      condResults.dependences.end());
+//       tmpPhiOnArgs.insert(condResults.phiOnArgs.begin(),
+//                           condResults.phiOnArgs.end());
+//       tmpBBs.insert(condResults.BBs.begin(), condResults.BBs.end());
+//     }
+//   }
+//   return {true, ""};
+// }
 
 /**
  * @brief Activates and processes predicate dependencies for a given
@@ -416,30 +593,31 @@ static Status processPredCondDeps(const Instruction *predicate, Function &F,
  * @return Status indicating success or failure, with an error message if
  * failed.
  */
-Status activatePredicates(
-    const Instruction *inst,
-    std::unordered_map<const Instruction *, SmallVector<const Instruction *, 4>>
-        &instToPredicatesMap,
-    Function &F, Loop *loop, BasicBlock *loopHeader,
-    std::set<const Value *> &tmpDeps, std::set<const BasicBlock *> &tmpBBs,
-    std::set<const Value *> &tmpPhiOnArgs) {
-  auto it = instToPredicatesMap.find(inst);
-  if (it != instToPredicatesMap.end()) {
-    SmallVector<const Instruction *, 4> &predicates = it->second;
-    for (const Instruction *predicate : predicates) {
-      tmpDeps.insert(predicate);
-      tmpBBs.insert(predicate->getParent());
-      Status condStatus = processPredCondDeps(predicate, F, loop, loopHeader,
-                                              tmpDeps, tmpBBs, tmpPhiOnArgs);
-      if (!condStatus.status) {
-        LLVM_DEBUG(dbgs() << "Activation of predicates failed: "
-                          << condStatus.msg << "\n");
-        return condStatus;
-      }
-    }
-  }
-  return {true, ""};
-}
+// Status activatePredicates(
+//     const Instruction *inst,
+//     std::unordered_map<const Instruction *, SmallVector<const Instruction *,
+//     4>>
+//         &instToPredicatesMap,
+//     Function &F, Loop *loop, BasicBlock *loopHeader,
+//     std::set<const Value *> &tmpDeps, std::set<const BasicBlock *> &tmpBBs,
+//     std::set<const Value *> &tmpPhiOnArgs) {
+//   auto it = instToPredicatesMap.find(inst);
+//   if (it != instToPredicatesMap.end()) {
+//     SmallVector<const Instruction *, 4> &predicates = it->second;
+//     for (const Instruction *predicate : predicates) {
+//       tmpDeps.insert(predicate);
+//       tmpBBs.insert(predicate->getParent());
+//       Status condStatus = processPredCondDeps(predicate, F, loop, loopHeader,
+//                                               tmpDeps, tmpBBs, tmpPhiOnArgs);
+//       if (!condStatus.status) {
+//         LLVM_DEBUG(dbgs() << "Activation of predicates failed: "
+//                           << condStatus.msg << "\n");
+//         return condStatus;
+//       }
+//     }
+//   }
+//   return {true, ""};
+// }
 
 /**
  * @brief Updates the data dependencies set with control predicate dependencies.
@@ -475,103 +653,106 @@ Status activatePredicates(
  * @return                     Status object indicating success or failure and
  * an error message if any.
  */
-Status updateDataDependencies(
-    const std::set<const Value *> &deps,
-    std::unordered_map<const Instruction *, SmallVector<const Instruction *, 4>>
-        &instToPredicatesMap,
-    std::set<const Value *> &tmpDeps, std::set<const Value *> &tmpPhiOnArgs,
-    std::set<const BasicBlock *> &tmpBBs, std::set<const BasicBlock *> &BBs,
-    Function &F, Loop *loop, BasicBlock *loopHeader) {
+// Status updateDataDependencies(
+//     const std::set<const Value *> &deps,
+//     std::unordered_map<const Instruction *, SmallVector<const Instruction *,
+//     4>>
+//         &instToPredicatesMap,
+//     std::set<const Value *> &tmpDeps, std::set<const Value *> &tmpPhiOnArgs,
+//     std::set<const BasicBlock *> &tmpBBs, std::set<const BasicBlock *> &BBs,
+//     Function &F, Loop *loop, BasicBlock *loopHeader) {
 
-  LLVM_DEBUG({
-    dbgs() << "\t\t[Control Dependency] Printing instructions in deps before "
-              "updating...\n";
-    for (const Value *dep : deps) {
-      dbgs() << "\t\t\t" << *dep << "\n";
-    }
-  });
+//   LLVM_DEBUG({
+//     dbgs() << "\t\t[Control Dependency] Printing instructions in deps before
+//     "
+//               "updating...\n";
+//     for (const Value *dep : deps) {
+//       dbgs() << "\t\t\t" << *dep << "\n";
+//     }
+//   });
 
-  SmallPtrSet<const Value *, 4> phiDeps;
-  for (const Value *dep : deps) {
-    if (const PHINode *phi = dyn_cast<PHINode>(dep)) {
-      // Activates predicates for the PHINode itself
-      activatePredicates(phi, instToPredicatesMap, F, loop, loopHeader, tmpDeps,
-                         tmpBBs, tmpPhiOnArgs);
+//   SmallPtrSet<const Value *, 4> phiDeps;
+//   for (const Value *dep : deps) {
+//     if (const PHINode *phi = dyn_cast<PHINode>(dep)) {
+//       // Activates predicates for the PHINode itself
+//       activatePredicates(phi, instToPredicatesMap, F, loop, loopHeader,
+//       tmpDeps,
+//                          tmpBBs, tmpPhiOnArgs);
 
-      // Activate predicates for each incoming value of the PHINode
-      for (unsigned i = 0; i < phi->getNumIncomingValues(); ++i) {
-        const BasicBlock *predBB = phi->getIncomingBlock(i);
-        const Value *predValue = phi->getIncomingValue(i);
-        if (const Instruction *incomingInst =
-                dyn_cast<Instruction>(predValue)) {
+//       // Activate predicates for each incoming value of the PHINode
+//       for (unsigned i = 0; i < phi->getNumIncomingValues(); ++i) {
+//         const BasicBlock *predBB = phi->getIncomingBlock(i);
+//         const Value *predValue = phi->getIncomingValue(i);
+//         if (const Instruction *incomingInst =
+//                 dyn_cast<Instruction>(predValue)) {
 
-          // The incoming instruction will be an argument of the outlined
-          // function
-          if (tmpPhiOnArgs.count(incomingInst)) continue;
+//           // The incoming instruction will be an argument of the outlined
+//           // function
+//           if (tmpPhiOnArgs.count(incomingInst)) continue;
 
-          tmpDeps.insert(incomingInst);
-          tmpBBs.insert(incomingInst->getParent());
-          phiDeps.insert(incomingInst);
+//           tmpDeps.insert(incomingInst);
+//           tmpBBs.insert(incomingInst->getParent());
+//           phiDeps.insert(incomingInst);
 
-          activatePredicates(incomingInst, instToPredicatesMap, F, loop,
-                             loopHeader, tmpDeps, tmpBBs, tmpPhiOnArgs);
-        }
-      }
-    }
-  }
+//           activatePredicates(incomingInst, instToPredicatesMap, F, loop,
+//                              loopHeader, tmpDeps, tmpBBs, tmpPhiOnArgs);
+//         }
+//       }
+//     }
+//   }
 
-  LLVM_DEBUG({
-    dbgs() << "\t\t[Control Dependency] phiDeps size (1): " << phiDeps.size()
-           << "\n";
-  });
+//   LLVM_DEBUG({
+//     dbgs() << "\t\t[Control Dependency] phiDeps size (1): " << phiDeps.size()
+//            << "\n";
+//   });
 
-  // Filter out PHI dependencies from the original deps set
-  SmallPtrSet<const Value *, 8> tmpPhiDeps;
-  for (const Value *phiDep : phiDeps) {
-    if (const Instruction *inst = dyn_cast<Instruction>(phiDep)) {
-      std::stack<const Value *> operandStack;
-      operandStack.push(inst);
-      while (!operandStack.empty()) {
-        const Value *curOp = operandStack.top();
-        operandStack.pop();
-        if (const Instruction *curInst = dyn_cast<Instruction>(curOp)) {
-          for (const Use &U : curInst->operands()) {
-            const Value *op = U.get();
-            if (!tmpPhiDeps.count(op) && tmpDeps.count(op) &&
-                !tmpPhiOnArgs.count(op)) {
-              tmpPhiDeps.insert(op);
-              operandStack.push(op);
-            }
-          }
-        }
-      }
-    }
-  }
+//   // Filter out PHI dependencies from the original deps set
+//   SmallPtrSet<const Value *, 8> tmpPhiDeps;
+//   for (const Value *phiDep : phiDeps) {
+//     if (const Instruction *inst = dyn_cast<Instruction>(phiDep)) {
+//       std::stack<const Value *> operandStack;
+//       operandStack.push(inst);
+//       while (!operandStack.empty()) {
+//         const Value *curOp = operandStack.top();
+//         operandStack.pop();
+//         if (const Instruction *curInst = dyn_cast<Instruction>(curOp)) {
+//           for (const Use &U : curInst->operands()) {
+//             const Value *op = U.get();
+//             if (!tmpPhiDeps.count(op) && tmpDeps.count(op) &&
+//                 !tmpPhiOnArgs.count(op)) {
+//               tmpPhiDeps.insert(op);
+//               operandStack.push(op);
+//             }
+//           }
+//         }
+//       }
+//     }
+//   }
 
-  LLVM_DEBUG({
-    dbgs() << "\t\t[Control Dependency] tmpPhiDeps size (1): "
-           << tmpPhiDeps.size() << "\n";
-  });
+//   LLVM_DEBUG({
+//     dbgs() << "\t\t[Control Dependency] tmpPhiDeps size (1): "
+//            << tmpPhiDeps.size() << "\n";
+//   });
 
-  for (const Value *tmpPhiDep : tmpPhiDeps) {
-    if (!phiDeps.count(tmpPhiDep)) phiDeps.insert(tmpPhiDep);
-  }
+//   for (const Value *tmpPhiDep : tmpPhiDeps) {
+//     if (!phiDeps.count(tmpPhiDep)) phiDeps.insert(tmpPhiDep);
+//   }
 
-  LLVM_DEBUG({
-    dbgs() << "\t\t[Control Dependency] phiDeps size (2): " << phiDeps.size()
-           << "\n";
-  });
+//   LLVM_DEBUG({
+//     dbgs() << "\t\t[Control Dependency] phiDeps size (2): " << phiDeps.size()
+//            << "\n";
+//   });
 
-  // Activate predicates for the incoming values' dependencies
-  for (const Value *phiDep : phiDeps) {
-    if (const Instruction *inst = dyn_cast<Instruction>(phiDep)) {
-      activatePredicates(inst, instToPredicatesMap, F, loop, loopHeader,
-                         tmpDeps, tmpBBs, tmpPhiOnArgs);
-    }
-  }
+//   // Activate predicates for the incoming values' dependencies
+//   for (const Value *phiDep : phiDeps) {
+//     if (const Instruction *inst = dyn_cast<Instruction>(phiDep)) {
+//       activatePredicates(inst, instToPredicatesMap, F, loop, loopHeader,
+//                          tmpDeps, tmpBBs, tmpPhiOnArgs);
+//     }
+//   }
 
-  return {true, ""};
-}
+//   return {true, ""};
+// }
 
 /**
  * @brief Computes and updates the control dependencies for a given set of data
@@ -603,36 +784,38 @@ Status updateDataDependencies(
  * @return            Status object indicating success or failure and an error
  * message if any.
  */
-Status computeControlDependencies(Function &F, std::set<const Value *> &deps,
-                                  std::set<const Value *> &phiOnArgs,
-                                  std::set<const BasicBlock *> &BBs, Loop *loop,
-                                  BasicBlock *loopHeader) {
-  // Process Control Dependencies using the Predicate Stacking Algorithm
-  std::unordered_map<const Instruction *, SmallVector<const Instruction *, 4>>
-      instToPredicatesMap;
-  linkPredicatesToInstructions(F, instToPredicatesMap, deps);
+// Status computeControlDependencies(Function &F, std::set<const Value *> &deps,
+//                                   std::set<const Value *> &phiOnArgs,
+//                                   std::set<const BasicBlock *> &BBs, Loop
+//                                   *loop, BasicBlock *loopHeader) {
+//   // Process Control Dependencies using the Predicate Stacking Algorithm
+//   std::unordered_map<const Instruction *, SmallVector<const Instruction *,
+//   4>>
+//       instToPredicatesMap;
+//   linkPredicatesToInstructions(F, instToPredicatesMap, deps);
 
-  // Update the data dependencies based on the predicates
-  std::set<const Value *> tmpDeps(deps.begin(), deps.end());
-  std::set<const Value *> tmpPhiOnArgs(phiOnArgs.begin(), phiOnArgs.end());
-  std::set<const BasicBlock *> tmpBBs(BBs.begin(), BBs.end());
-  Status status =
-      updateDataDependencies(deps, instToPredicatesMap, tmpDeps, tmpPhiOnArgs,
-                             tmpBBs, BBs, F, loop, loopHeader);
-  if (!status.status) {
-    return status;
-  }
-  deps.insert(tmpDeps.begin(), tmpDeps.end());
-  phiOnArgs.insert(tmpPhiOnArgs.begin(), tmpPhiOnArgs.end());
-  BBs.insert(tmpBBs.begin(), tmpBBs.end());
-  LLVM_DEBUG({
-    dbgs() << "\t\t[Control Dependency] Basic blocks in BBs after updating:\n";
-    for (const BasicBlock *BB : BBs) {
-      dbgs() << "\t\t\t" << BB->getName() << "\n";
-    }
-  });
-  return {true, ""};
-}
+//   // Update the data dependencies based on the predicates
+//   std::set<const Value *> tmpDeps(deps.begin(), deps.end());
+//   std::set<const Value *> tmpPhiOnArgs(phiOnArgs.begin(), phiOnArgs.end());
+//   std::set<const BasicBlock *> tmpBBs(BBs.begin(), BBs.end());
+//   Status status =
+//       updateDataDependencies(deps, instToPredicatesMap, tmpDeps,
+//       tmpPhiOnArgs,
+//                              tmpBBs, BBs, F, loop, loopHeader);
+//   if (!status.status) {
+//     return status;
+//   }
+//   deps.insert(tmpDeps.begin(), tmpDeps.end());
+//   phiOnArgs.insert(tmpPhiOnArgs.begin(), tmpPhiOnArgs.end());
+//   BBs.insert(tmpBBs.begin(), tmpBBs.end());
+//   LLVM_DEBUG({
+//     dbgs() << "\t\t[Control Dependency] Basic blocks in BBs after
+//     updating:\n"; for (const BasicBlock *BB : BBs) {
+//       dbgs() << "\t\t\t" << BB->getName() << "\n";
+//     }
+//   });
+//   return {true, ""};
+// }
 
 /**
  * @brief Computes data and control dependencies for a given instruction within
@@ -651,9 +834,9 @@ Status computeControlDependencies(Function &F, std::set<const Value *> &deps,
  *         and a dataDependence structure containing sets of dependent values,
  *         basic blocks, and related PHINode information.
  */
-std::pair<Status, dataDependence>
-get_data_dependences_for(Instruction &I, Function &F,
-                         FunctionAnalysisManager &FAM) {
+std::pair<Status, dataDependence> get_data_dependences_for(
+    Instruction &I, Function &F, FunctionAnalysisManager &FAM,
+    std::unordered_map<const BasicBlock *, SmallVector<const Value *>> &gates) {
 
   LoopInfo &loopInfo = FAM.getResult<LoopAnalysis>(F);
   Loop *loop = loopInfo.getLoopFor(I.getParent());
@@ -662,8 +845,10 @@ get_data_dependences_for(Instruction &I, Function &F,
   std::set<const Value *> deps;
   std::set<const BasicBlock *> BBs;
   std::set<const Value *> phiOnArgs;
-  auto [status, resultsData] =
-      computeDataDependencies(I, F, loop, loopHeader, deps, BBs, phiOnArgs);
+  // auto [status, resultsData] = computeDataDependencies(
+  //     I, F, loop, loopHeader, deps, BBs, phiOnArgs, gates);
+    auto [status, resultsData] = computeDataDependencies(
+      I, F, loop, loopHeader, gates);
   if (!status.status) return {status, resultsData};
 
   deps = resultsData.dependences;
@@ -672,12 +857,71 @@ get_data_dependences_for(Instruction &I, Function &F,
   auto &phiCrit = resultsData.phiCrit;
   auto &phiArgs = resultsData.typeAndName;
 
-  Status cdStatus =
-      computeControlDependencies(F, deps, phiOnArgs, BBs, loop, loopHeader);
-
-  if (!cdStatus.status) status = cdStatus;
+  // Status cdStatus =
+  //     computeControlDependencies(F, deps, phiOnArgs, BBs, loop, loopHeader);
+  // if (!cdStatus.status) status = cdStatus;
 
   return {status, {BBs, deps, phiArgs, phiCrit, phiOnArgs}};
+}
+
+static const BasicBlock *getController(const BasicBlock *BB, DominatorTree &DT,
+                                       PostDominatorTree &PDT) {
+  const DomTreeNode *dom_node = DT.getNode(BB);
+  while (dom_node) {
+    const BasicBlock *dom_BB = dom_node->getBlock();
+    if (!PDT.dominates(BB, dom_BB)) {
+      return dom_BB;
+    } else {
+      dom_node = dom_node->getIDom();
+    }
+  }
+  return nullptr;
+}
+
+static const Value *getGate(const BasicBlock *BB) {
+  const Value *branchInst = nullptr;
+
+  const Instruction *terminator = BB->getTerminator();
+  if (const BranchInst *BI = dyn_cast<BranchInst>(terminator)) {
+    assert(BI->isConditional() && "Unconditional terminator!");
+    branchInst = BI;
+  }
+
+  else if (const SwitchInst *SI = dyn_cast<SwitchInst>(terminator)) {
+    branchInst = SI;
+  }
+
+  return branchInst;
+}
+
+static const std::unordered_map<const BasicBlock *, SmallVector<const Value *>>
+computeGates(Function &F) {
+  DominatorTree DT(F);
+  PostDominatorTree PDT(F);
+  std::unordered_map<const BasicBlock *, SmallVector<const Value *>> gates;
+  for (const BasicBlock &BB : F) {
+    SmallVector<const Value *> BB_gates;
+    const unsigned num_preds = pred_size(&BB);
+    LLVM_DEBUG(dbgs() << BB.getName() << " predecessors:\n");
+    for (const BasicBlock *pred : predecessors(&BB)) {
+      LLVM_DEBUG(dbgs() << " - " << pred->getName() << " :");
+      if (DT.dominates(pred, &BB) && !PDT.dominates(&BB, pred)) {
+        LLVM_DEBUG(dbgs() << "\n\tInstruction: " << *getGate(pred) << "\n");
+        BB_gates.push_back(getGate(pred));
+      } else {
+        const BasicBlock *ctrl_BB = getController(pred, DT, PDT);
+        if (ctrl_BB) {
+          LLVM_DEBUG(dbgs()
+                     << " EDGE CONTROLLED BY " << ctrl_BB->getName() << " "
+                     << getGate(ctrl_BB)->getName()
+                     << "\n\tInstruction: " << *getGate(ctrl_BB) << "\n");
+          BB_gates.push_back(getGate(ctrl_BB));
+        }
+      }
+    }
+    gates.emplace(std::make_pair(&BB, BB_gates));
+  }
+  return gates;
 }
 
 /**
@@ -703,7 +947,10 @@ ProgramSlice::ProgramSlice(Instruction &Initial, Function &F,
   assert(Initial.getParent()->getParent() == &F &&
          "Slicing instruction from different function!");
 
-  auto [check, data] = get_data_dependences_for(Initial, F, FAM);
+  std::unordered_map<const BasicBlock *, SmallVector<const Value *>> gates =
+      computeGates(F);
+
+  auto [check, data] = get_data_dependences_for(Initial, F, FAM, gates);
 
   for (auto &BB : data.BBs) {
     if (tryCatchBlocks.count(const_cast<BasicBlock *>(BB))) {
