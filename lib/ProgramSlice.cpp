@@ -847,8 +847,8 @@ std::pair<Status, dataDependence> get_data_dependences_for(
   std::set<const Value *> phiOnArgs;
   // auto [status, resultsData] = computeDataDependencies(
   //     I, F, loop, loopHeader, deps, BBs, phiOnArgs, gates);
-    auto [status, resultsData] = computeDataDependencies(
-      I, F, loop, loopHeader, gates);
+  auto [status, resultsData] =
+      computeDataDependencies(I, F, loop, loopHeader, gates);
   if (!status.status) return {status, resultsData};
 
   deps = resultsData.dependences;
@@ -880,17 +880,20 @@ static const BasicBlock *getController(const BasicBlock *BB, DominatorTree &DT,
 
 static const Value *getGate(const BasicBlock *BB) {
   const Value *branchInst = nullptr;
-
-  const Instruction *terminator = BB->getTerminator();
-  if (const BranchInst *BI = dyn_cast<BranchInst>(terminator)) {
-    assert(BI->isConditional() && "Unconditional terminator!");
-    branchInst = BI;
+  if (BB) {
+    const Instruction *terminator = BB->getTerminator();
+    if (const BranchInst *BI = dyn_cast<BranchInst>(terminator)) {
+      if (!BI->isConditional()) {
+        LLVM_DEBUG(
+            dbgs() << "Unconditional terminator found when trying to get "
+                      "gate instruction...\n");
+      } else {
+        branchInst = BI;
+      }
+    } else if (const SwitchInst *SI = dyn_cast<SwitchInst>(terminator)) {
+      branchInst = SI;
+    }
   }
-
-  else if (const SwitchInst *SI = dyn_cast<SwitchInst>(terminator)) {
-    branchInst = SI;
-  }
-
   return branchInst;
 }
 
@@ -905,19 +908,25 @@ computeGates(Function &F) {
     LLVM_DEBUG(dbgs() << BB.getName() << " predecessors:\n");
     for (const BasicBlock *pred : predecessors(&BB)) {
       LLVM_DEBUG(dbgs() << " - " << pred->getName() << " :");
+      const Value *gate = getGate(pred);
+      if (!gate) {
+        LLVM_DEBUG(dbgs() << "\n\tNo gate\n");
+        continue;
+      }
       if (DT.dominates(pred, &BB) && !PDT.dominates(&BB, pred)) {
-        LLVM_DEBUG(dbgs() << "\n\tInstruction: " << *getGate(pred) << "\n");
-        BB_gates.push_back(getGate(pred));
+        LLVM_DEBUG(dbgs() << "\n\tInstruction: " << *gate << "\n");
+        BB_gates.push_back(gate);
       } else {
         const BasicBlock *ctrl_BB = getController(pred, DT, PDT);
-        if (ctrl_BB) {
-          LLVM_DEBUG(dbgs()
-                     << " EDGE CONTROLLED BY " << ctrl_BB->getName() << " "
-                     << getGate(ctrl_BB)->getName()
-                     << "\n\tInstruction: " << *getGate(ctrl_BB) << "\n");
-          BB_gates.push_back(getGate(ctrl_BB));
+        const Value *ctrl_gate = getGate(ctrl_BB);
+        if (ctrl_gate) {
+          LLVM_DEBUG(dbgs() << " EDGE CONTROLLED BY " << ctrl_BB->getName()
+                            << " " << ctrl_gate->getName()
+                            << "\n\tInstruction: " << *ctrl_gate << "\n");
+          BB_gates.push_back(ctrl_gate);
         }
       }
+      LLVM_DEBUG(dbgs() << "\n");
     }
     gates.emplace(std::make_pair(&BB, BB_gates));
   }
