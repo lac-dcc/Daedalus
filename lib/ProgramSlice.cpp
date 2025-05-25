@@ -231,6 +231,7 @@ std::pair<Status, dataDependence> computeDataDependencies(
         deps = {operand, &I};
         while (!worklist.empty()) worklist.pop();
         phiCrit = true;
+        LLVM_DEBUG(dbgs() << "\t\t\t[Data Dependency] phiCrit true..." << "\n");
       }
       return true;
     }
@@ -278,31 +279,6 @@ std::pair<Status, dataDependence> computeDataDependencies(
     const Value *cur = worklist.front();
     worklist.pop();
 
-    if (const BranchInst *BI = dyn_cast<BranchInst>(cur)) {
-      LLVM_DEBUG(dbgs() << "\t\t[Data Dependency] Instruction being processed: "
-                        << *BI << "\n");
-      if (BI->isConditional() && loop && !loop->isInvalid()) {
-        if (!loop->contains(BI->getParent())) {
-          LLVM_DEBUG(dbgs()
-                     << "\t\t\t--> Branch instruction is outside the current "
-                        "criterion's loop...\n");
-          continue;
-        }
-      }
-    }
-    if (const SwitchInst *SI = dyn_cast<SwitchInst>(cur)) {
-      LLVM_DEBUG(dbgs() << "\t\t[Data Dependency] Instruction being processed: "
-                        << *SI << "\n");
-      if (loop && !loop->isInvalid()) {
-        if (!loop->contains(SI->getParent())) {
-          LLVM_DEBUG(dbgs()
-                     << "\t\t\t--> Switch instruction is outside the current "
-                        "criterion's loop...\n");
-          continue;
-        }
-      }
-    }
-
     deps.insert(cur);
 
     if (const Instruction *dep = dyn_cast<Instruction>(cur)) {
@@ -310,19 +286,6 @@ std::pair<Status, dataDependence> computeDataDependencies(
                         << *dep << "\n");
 
       BBs.insert(dep->getParent());
-
-      // Also push gates of the current block, even if the current
-      // instruction is not a PHINode
-      if (!isa<PHINode>(dep)) {
-        for (const Value *gate : gates[dep->getParent()]) {
-          if (gate && !visited.count(gate)) {
-            LLVM_DEBUG(dbgs()
-                       << "\t\t\t\t[Gate] Pushing gate: " << *gate << "\n");
-            worklist.push(gate);
-            visited.insert(gate);
-          }
-        }
-      }
 
       for (const Use &U : dep->operands())
         if (!processOperand(U.get())) break;
@@ -337,30 +300,60 @@ std::pair<Status, dataDependence> computeDataDependencies(
                         << *phi << "\n");
 
       const BasicBlock *hasBackEdgeTo = nullptr;
-      for (const BasicBlock *BB : phi->blocks()) {
-        BBs.insert(BB);
+      for (unsigned i = 0, e = phi->getNumIncomingValues(); i != e; ++i) {
+        const BasicBlock *incomingBB = phi->getIncomingBlock(i);
+        const Value *incomingValue = phi->getIncomingValue(i);
+
+        BBs.insert(incomingBB);
 
         // Check for back edge: incoming block is the same as the PHI's parent
-        if (BB == phi->getParent()) {
-          hasBackEdgeTo = BB;
+        if (incomingBB == phi->getParent()) {
+          hasBackEdgeTo = incomingBB;
         }
       }
 
       // if the predecessor block of a phinode has a back edge to itself,
       // then add its terminator to the gates of the phinode's parent
       if (hasBackEdgeTo) {
-        LLVM_DEBUG(dbgs() << "\t\t[Data Dependency] PHINode has an incoming "
+        LLVM_DEBUG(dbgs() << "\t\t[Control Dependency] PHINode has an incoming "
                              "block with a back edge to itself: "
                           << phi->getParent()->getName() << "\n");
         gates[phi->getParent()].push_back(hasBackEdgeTo->getTerminator());
       }
 
       for (const Value *gate : gates[phi->getParent()]) {
-        if (gate && !visited.count(gate)) {
-          LLVM_DEBUG(dbgs()
-                     << "\t\t\t\t[PHI Gate] Pushing gate: " << *gate << "\n");
-          worklist.push(gate);
-          visited.insert(gate);
+        if (gate) {
+          if (!visited.count(gate)) {
+            LLVM_DEBUG(dbgs()
+                       << "\t\t\t[Control Dependency] Pushing gate: " << *gate << "\n");
+
+            // if the gate instruction is outside the current slice criterion's loop
+            // don't treat it as a dependency
+            if (const BranchInst *BI = dyn_cast<BranchInst>(gate)) {
+              if (BI->isConditional() && loop && !loop->isInvalid()) {
+                if (!loop->contains(BI->getParent())) {
+                  LLVM_DEBUG(
+                      dbgs()
+                      << "\t\t\t--> Branch instruction is outside the current "
+                         "criterion's loop...\n");
+                  continue;
+                }
+              }
+            } else if (const SwitchInst *SI = dyn_cast<SwitchInst>(cur)) {
+              if (loop && !loop->isInvalid()) {
+                if (!loop->contains(SI->getParent())) {
+                  LLVM_DEBUG(
+                      dbgs()
+                      << "\t\t\t--> Switch instruction is outside the current "
+                         "criterion's loop...\n");
+                  continue;
+                }
+              }
+            }
+
+            worklist.push(gate);
+            visited.insert(gate);
+          }
         }
       }
     }
