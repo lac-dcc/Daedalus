@@ -1,3 +1,4 @@
+/* test2.c, but with no global variables */
 #include <stdio.h>
 #include <stdlib.h>
 
