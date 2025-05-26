@@ -328,12 +328,67 @@ std::pair<Status, dataDependence> computeDataDependencies(
             for (const Value *gate : gates[incomingBB])
               gates[phi->getParent()].push_back(gate);
           } else {
-            // TODO:
             // if the incoming value is from the incoming block in the current
             // PHINode, but the incoming block has no PHINodes in it, but has
             // incoming value's data dependencies, then add the missing blocks
             // and branch instructions to the gates of the current PHINode's
             // parent
+            LLVM_DEBUG(dbgs()
+                       << "\t\t[Control Dependency] PHINode's incoming value "
+                          "is from the same block. Checking for control using "
+                          "data dependencies...\n");
+
+            auto it = gates.find(incomingBB);
+            if (it != gates.end()) {
+              LLVM_DEBUG(dbgs() << "\t\t\t\tAdding gates from block "
+                                << incomingBB->getName() << "\n");
+              for (const Value *gate : it->second) {
+                gates[phi->getParent()].push_back(gate);
+                LLVM_DEBUG(dbgs() << "\t\t\t\tAdded gate: " << *gate << "\n");
+              }
+            }
+
+            // Check if the incoming block has no PHINodes
+            if (incomingBB->phis().empty()) {
+              LLVM_DEBUG(dbgs() << "\t\t\t[Control Dependency] Incoming block "
+                                   "has no PHINodes. Checking operands of "
+                                   "original incoming value...\n");
+              // Traverse operands using a non-recursive DFS
+              std::stack<const Value *> operandStack;
+              SmallPtrSet<const Value *, 8> visitedOperands;
+              operandStack.push(incomingInst);
+
+              while (!operandStack.empty()) {
+                const Value *curOp = operandStack.top();
+                operandStack.pop();
+
+                if (!visitedOperands.insert(curOp).second) continue;
+
+                if (const Instruction *opInst = dyn_cast<Instruction>(curOp)) {
+                  if (opInst->getParent() != incomingBB) {
+                    LLVM_DEBUG(dbgs() << "\t\t\t\t[Control Dependency] Operand "
+                                         "is from different block: "
+                                      << *opInst << "\n");
+                    // Check if the operand's parent block has gates
+                    auto it = gates.find(opInst->getParent());
+                    if (it != gates.end()) {
+                      LLVM_DEBUG(dbgs()
+                                 << "\t\t\t\tAdding gates from block "
+                                 << opInst->getParent()->getName() << "\n");
+                      for (const Value *gate : it->second) {
+                        gates[phi->getParent()].push_back(gate);
+                        LLVM_DEBUG(dbgs()
+                                   << "\t\t\t\tAdded gate: " << *gate << "\n");
+                      }
+                    }
+                  }
+                  // Push operands for further traversal
+                  for (const Use &U : opInst->operands()) {
+                    operandStack.push(U.get());
+                  }
+                }
+              }
+            }
           }
         }
       }
