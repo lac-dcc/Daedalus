@@ -74,10 +74,14 @@ if [ -e "$ORIGINAL_EXECUTABLE" ]; then
     "$ORIGINAL_EXECUTABLE" $ARGUMENTS > "${SOURCEFILEBASENAMEWEXT}.reference_output"
 fi
 
-# TODO: Check if the total slices merged are the expected number for each test case
-
-if cmp -s "${SOURCEFILEBASENAMEWEXT}.output" "${SOURCEFILEBASENAMEWEXT}.reference_output"; then
-    exit 0
+# Check if the transformation log file contains the expected pattern
+if FileCheck "$SOURCEFOLDER/$SOURCEFILEBASENAMEWEXT.pattern" < "$BUILDTESTSPATH/$SOURCEFILEBASENAMEWEXT.ll.parent_module.ll" ; then
+    # Check if the output matches the reference output
+    if cmp -s "${SOURCEFILEBASENAMEWEXT}.output" "${SOURCEFILEBASENAMEWEXT}.reference_output"; then
+        exit 0
+    else
+        exit 1
+    fi
 else
     exit 1
 fi

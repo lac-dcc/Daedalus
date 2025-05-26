@@ -296,39 +296,56 @@ std::pair<Status, dataDependence> computeDataDependencies(
     }
 
     if (const PHINode *phi = dyn_cast<PHINode>(cur)) {
-      LLVM_DEBUG(dbgs() << "\t\t[Data Dependency] PHINode being processed: "
+      LLVM_DEBUG(dbgs() << "\t\t[Control Dependency] PHINode being processed: "
                         << *phi << "\n");
 
-      const BasicBlock *hasBackEdgeTo = nullptr;
       for (unsigned i = 0, e = phi->getNumIncomingValues(); i != e; ++i) {
         const BasicBlock *incomingBB = phi->getIncomingBlock(i);
         const Value *incomingValue = phi->getIncomingValue(i);
 
         BBs.insert(incomingBB);
 
-        // Check for back edge: incoming block is the same as the PHI's parent
+        // if the predecessor block of a phinode has a back edge to itself,
+        // then add its terminator to the gates of the phinode's parent
         if (incomingBB == phi->getParent()) {
-          hasBackEdgeTo = incomingBB;
+          LLVM_DEBUG(dbgs()
+                     << "\t\t[Control Dependency] PHINode has an incoming "
+                        "block with a back edge to itself: "
+                     << phi->getParent()->getName() << "\n");
+          gates[phi->getParent()].push_back(incomingBB->getTerminator());
         }
-      }
 
-      // if the predecessor block of a phinode has a back edge to itself,
-      // then add its terminator to the gates of the phinode's parent
-      if (hasBackEdgeTo) {
-        LLVM_DEBUG(dbgs() << "\t\t[Control Dependency] PHINode has an incoming "
-                             "block with a back edge to itself: "
-                          << phi->getParent()->getName() << "\n");
-        gates[phi->getParent()].push_back(hasBackEdgeTo->getTerminator());
+        if (const Instruction *incomingInst =
+                dyn_cast<Instruction>(incomingValue)) {
+          // if the incoming value is not from the incoming block in the current
+          // PHINode, then add the incoming block's terminator to the gates of
+          // the current PHINode's parent
+          if (incomingInst->getParent() != incomingBB) {
+            LLVM_DEBUG(dbgs()
+                       << "\t\t[Control Dependency] Incoming value is not "
+                          "from its incoming block in the current PHINode..."
+                       << "\n");
+            for (const Value *gate : gates[incomingBB])
+              gates[phi->getParent()].push_back(gate);
+          } else {
+            // TODO:
+            // if the incoming value is from the incoming block in the current
+            // PHINode, but the incoming block has no PHINodes in it, but has
+            // incoming value's data dependencies, then add the missing blocks
+            // and branch instructions to the gates of the current PHINode's
+            // parent
+          }
+        }
       }
 
       for (const Value *gate : gates[phi->getParent()]) {
         if (gate) {
           if (!visited.count(gate)) {
-            LLVM_DEBUG(dbgs()
-                       << "\t\t\t[Control Dependency] Pushing gate: " << *gate << "\n");
+            LLVM_DEBUG(dbgs() << "\t\t\t[Control Dependency] Pushing gate: "
+                              << *gate << "\n");
 
-            // if the gate instruction is outside the current slice criterion's loop
-            // don't treat it as a dependency
+            // if the gate instruction is outside the current slice criterion's
+            // loop, don't treat it as a dependency
             if (const BranchInst *BI = dyn_cast<BranchInst>(gate)) {
               if (BI->isConditional() && loop && !loop->isInvalid()) {
                 if (!loop->contains(BI->getParent())) {
@@ -878,7 +895,7 @@ static const Value *getGate(const BasicBlock *BB) {
     if (const BranchInst *BI = dyn_cast<BranchInst>(terminator)) {
       if (!BI->isConditional()) {
         LLVM_DEBUG(
-            dbgs() << "Unconditional terminator found when trying to get "
+            dbgs() << " Unconditional terminator found when trying to get "
                       "gate instruction...\n");
       } else {
         branchInst = BI;
@@ -913,7 +930,7 @@ computeGates(Function &F) {
         const BasicBlock *ctrl_BB = getController(pred, DT, PDT);
         const Value *ctrl_gate = getGate(ctrl_BB);
         if (ctrl_gate) {
-          LLVM_DEBUG(dbgs() << " EDGE CONTROLLED BY " << ctrl_BB->getName()
+          LLVM_DEBUG(dbgs() << " Edge controlled by " << ctrl_BB->getName()
                             << " " << ctrl_gate->getName()
                             << "\n\tInstruction: " << *ctrl_gate << "\n");
           BB_gates.push_back(ctrl_gate);
