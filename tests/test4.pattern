@@ -1,5 +1,5 @@
 ; CHECK: ; Function Attrs: noinline nounwind optsize willreturn
-; CHECK-NEXT: define internal i32 @_daedalus_slice_passShort__[[ID:[0-9]+]]({{.*}}) #4 {
+; CHECK-NEXT: define internal i32 @_daedalus_slice_passShort__[[ID:[0-9]+]](i8 %0, i16 %1) #4 {
 ; CHECK-NEXT: sliceclone_BB_0:
 ; CHECK-NEXT:   %2 = sext i16 %1 to i32
 ; CHECK-NEXT:   %3 = sext i8 %0 to i32
@@ -8,7 +8,7 @@
 ; CHECK-NEXT: }
 ; CHECK-EMPTY:
 ; CHECK-NEXT: ; Function Attrs: noinline nounwind optsize willreturn
-; CHECK-NEXT: define internal i32 @_daedalus_slice_getShort__[[ID:[0-9]+]]({{.*}}) #4 {
+; CHECK-NEXT: define internal i32 @_daedalus_slice_getShort__[[ID:[0-9]+]](i8 %0, i8 %1) #4 {
 ; CHECK-NEXT: sliceclone_BB_0:
 ; CHECK-NEXT:   %2 = sext i8 %0 to i32
 ; CHECK-NEXT:   %3 = sext i8 %1 to i32
@@ -17,34 +17,34 @@
 ; CHECK-NEXT: }
 ; CHECK-EMPTY:
 ; CHECK-NEXT: ; Function Attrs: noinline nounwind optsize willreturn
-; CHECK-NEXT: define internal i32 @_daedalus_slice_getShort__[[ID:[0-9]+]]({{.*}}) #4 {
+; CHECK-NEXT: define internal i32 @_daedalus_slice_getShort__[[ID:[0-9]+]](i8 %0, i8 %1, i8 %2) #4 {
 ; CHECK-NEXT: sliceclone_BB_0:
 ; CHECK-NEXT:   %3 = sext i8 %2 to i32
-; CHECK-NEXT:   %4 = call i32 @_daedalus_slice_getShort__[[ID:[0-9]+]]({{.*}})
+; CHECK-NEXT:   %4 = call i32 @_daedalus_slice_getShort__[[ID:[0-9]+]](i8 %0, i8 %1)
 ; CHECK-NEXT:   %5 = add nsw i32 %4, %3
 ; CHECK-NEXT:   ret i32 %5
 ; CHECK-NEXT: }
 ; CHECK-EMPTY:
 ; CHECK-NEXT: ; Function Attrs: noinline nounwind optsize willreturn
-; CHECK-NEXT: define internal i32 @_daedalus_slice_getShort__[[ID:[0-9]+]]({{.*}}) #4 {
+; CHECK-NEXT: define internal i32 @_daedalus_slice_getShort__[[ID:[0-9]+]](i8 %0, i8 %1, i8 %2, i16 %3) #4 {
 ; CHECK-NEXT: sliceclone_BB_0:
 ; CHECK-NEXT:   %4 = sext i16 %3 to i32
-; CHECK-NEXT:   %5 = call i32 @_daedalus_slice_getShort__[[ID:[0-9]+]]({{.*}})
+; CHECK-NEXT:   %5 = call i32 @_daedalus_slice_getShort__[[ID:[0-9]+]](i8 %0, i8 %1, i8 %2)
 ; CHECK-NEXT:   %6 = add nsw i32 %5, %4
 ; CHECK-NEXT:   ret i32 %6
 ; CHECK-NEXT: }
 ; CHECK-EMPTY:
 ; CHECK-NEXT: ; Function Attrs: noinline nounwind optsize willreturn
-; CHECK-NEXT: define internal i32 @_daedalus_slice_getShort__[[ID:[0-9]+]]({{.*}}) #4 {
+; CHECK-NEXT: define internal i32 @_daedalus_slice_getShort__[[ID:[0-9]+]](i8 %0, i8 %1, i8 %2, i16 %3, i16 %4) #4 {
 ; CHECK-NEXT: sliceclone_BB_0:
 ; CHECK-NEXT:   %5 = sext i16 %4 to i32
-; CHECK-NEXT:   %6 = call i32 @_daedalus_slice_getShort__[[ID:[0-9]+]]({{.*}})
+; CHECK-NEXT:   %6 = call i32 @_daedalus_slice_getShort__[[ID:[0-9]+]](i8 %0, i8 %1, i8 %2, i16 %3)
 ; CHECK-NEXT:   %7 = add nsw i32 %6, %5
 ; CHECK-NEXT:   ret i32 %7
 ; CHECK-NEXT: }
 ; CHECK-EMPTY:
 ; CHECK-NEXT: ; Function Attrs: noinline nounwind optsize willreturn
-; CHECK-NEXT: define internal i32 @_daedalus_slice_getUnknown__[[ID:[0-9]+]]({{.*}}) #4 {
+; CHECK-NEXT: define internal i32 @_daedalus_slice_getUnknown__[[ID:[0-9]+]]() #4 {
 ; CHECK-NEXT: sliceclone_BB_0:
 ; CHECK-NEXT:   %0 = alloca [1 x %struct.__va_list_tag], align 16
 ; CHECK-NEXT:   %1 = load i32, ptr %0, align 16
@@ -56,7 +56,7 @@
 ; CHECK-NEXT: }
 ; CHECK-EMPTY:
 ; CHECK-NEXT: ; Function Attrs: noinline nounwind optsize willreturn
-; CHECK-NEXT: define internal i32 @_daedalus_slice_getUnknown__[[ID:[0-9]+]]({{.*}}) #4 {
+; CHECK-NEXT: define internal i32 @_daedalus_slice_getUnknown__[[ID:[0-9]+]]() #4 {
 ; CHECK-NEXT: sliceclone_BB_0:
 ; CHECK-NEXT:   %0 = alloca [1 x %struct.__va_list_tag], align 16
 ; CHECK-NEXT:   %1 = load i32, ptr %0, align 16
@@ -68,7 +68,7 @@
 ; CHECK-NEXT: }
 ; CHECK-EMPTY:
 ; CHECK-NEXT: ; Function Attrs: noinline nounwind optsize willreturn
-; CHECK-NEXT: define internal i32 @_daedalus_slice_getUnknown__[[ID:[0-9]+]]({{.*}}) #4 {
+; CHECK-NEXT: define internal i32 @_daedalus_slice_getUnknown__[[ID:[0-9]+]]() #4 {
 ; CHECK-NEXT: sliceclone_BB_0:
 ; CHECK-NEXT:   %0 = alloca [1 x %struct.__va_list_tag], align 16
 ; CHECK-NEXT:   %1 = load i32, ptr %0, align 16
@@ -80,7 +80,7 @@
 ; CHECK-NEXT: }
 ; CHECK-EMPTY:
 ; CHECK-NEXT: ; Function Attrs: noinline nounwind optsize willreturn
-; CHECK-NEXT: define internal i32 @_daedalus_slice_getUnknown__[[ID:[0-9]+]]({{.*}}) #4 {
+; CHECK-NEXT: define internal i32 @_daedalus_slice_getUnknown__[[ID:[0-9]+]]() #4 {
 ; CHECK-NEXT: sliceclone_BB_0:
 ; CHECK-NEXT:   %0 = alloca [1 x %struct.__va_list_tag], align 16
 ; CHECK-NEXT:   %1 = load i32, ptr %0, align 16
@@ -92,7 +92,7 @@
 ; CHECK-NEXT: }
 ; CHECK-EMPTY:
 ; CHECK-NEXT: ; Function Attrs: noinline nounwind optsize willreturn
-; CHECK-NEXT: define internal i32 @_daedalus_slice_getUnknown__[[ID:[0-9]+]]({{.*}}) #4 {
+; CHECK-NEXT: define internal i32 @_daedalus_slice_getUnknown__[[ID:[0-9]+]]() #4 {
 ; CHECK-NEXT: sliceclone_BB_0:
 ; CHECK-NEXT:   %0 = alloca [1 x %struct.__va_list_tag], align 16
 ; CHECK-NEXT:   %1 = load i32, ptr %0, align 16
@@ -104,7 +104,7 @@
 ; CHECK-NEXT: }
 ; CHECK-EMPTY:
 ; CHECK-NEXT: ; Function Attrs: noinline nounwind optsize willreturn
-; CHECK-NEXT: define internal i32 @_daedalus_slice_getUnknown__[[ID:[0-9]+]]({{.*}}) #4 {
+; CHECK-NEXT: define internal i32 @_daedalus_slice_getUnknown__[[ID:[0-9]+]]() #4 {
 ; CHECK-NEXT: sliceclone_BB_0:
 ; CHECK-NEXT:   %0 = alloca [1 x %struct.__va_list_tag], align 16
 ; CHECK-NEXT:   %1 = load i32, ptr %0, align 16
@@ -116,7 +116,7 @@
 ; CHECK-NEXT: }
 ; CHECK-EMPTY:
 ; CHECK-NEXT: ; Function Attrs: noinline nounwind optsize willreturn
-; CHECK-NEXT: define internal i32 @_daedalus_slice_getUnknown__[[ID:[0-9]+]]({{.*}}) #4 {
+; CHECK-NEXT: define internal i32 @_daedalus_slice_getUnknown__[[ID:[0-9]+]]() #4 {
 ; CHECK-NEXT: sliceclone_BB_0:
 ; CHECK-NEXT:   %0 = alloca [1 x %struct.__va_list_tag], align 16
 ; CHECK-NEXT:   %1 = load i32, ptr %0, align 16
@@ -184,7 +184,7 @@
 ; CHECK-NEXT: }
 ; CHECK-EMPTY:
 ; CHECK-NEXT: ; Function Attrs: noinline nounwind optsize willreturn
-; CHECK-NEXT: define internal i32 @_daedalus_slice_getUnknown__[[ID:[0-9]+]]({{.*}}) #4 {
+; CHECK-NEXT: define internal i32 @_daedalus_slice_getUnknown__[[ID:[0-9]+]]() #4 {
 ; CHECK-NEXT: sliceclone_BB_0:
 ; CHECK-NEXT:   %0 = alloca [1 x %struct.__va_list_tag], align 16
 ; CHECK-NEXT:   %1 = load i32, ptr %0, align 16
@@ -198,7 +198,7 @@
 ; CHECK-NEXT:   br label %sliceclone_BB_5
 ; CHECK-EMPTY:
 ; CHECK-NEXT: sliceclone_BB_2:                                  ; preds = %sliceclone_BB_0
-; CHECK-NEXT:   %6 = call i32 @_daedalus_slice_getUnknown__[[ID:[0-9]+]]({{.*}})
+; CHECK-NEXT:   %6 = call i32 @_daedalus_slice_getUnknown__[[ID:[0-9]+]]()
 ; CHECK-NEXT:   %7 = icmp ult i32 %1, 33
 ; CHECK-NEXT:   br i1 %7, label %sliceclone_BB_4, label %sliceclone_BB_3
 ; CHECK-EMPTY:
@@ -249,7 +249,7 @@
 ; CHECK-NEXT: }
 ; CHECK-EMPTY:
 ; CHECK-NEXT: ; Function Attrs: noinline nounwind optsize willreturn
-; CHECK-NEXT: define internal i32 @_daedalus_slice_getUnknown__[[ID:[0-9]+]]({{.*}}) #4 {
+; CHECK-NEXT: define internal i32 @_daedalus_slice_getUnknown__[[ID:[0-9]+]]() #4 {
 ; CHECK-NEXT: sliceclone_BB_0:
 ; CHECK-NEXT:   %0 = alloca [1 x %struct.__va_list_tag], align 16
 ; CHECK-NEXT:   %1 = load i32, ptr %0, align 16
@@ -261,7 +261,7 @@
 ; CHECK-NEXT:   br i1 %3, label %sliceclone_BB_4, label %sliceclone_BB_5
 ; CHECK-EMPTY:
 ; CHECK-NEXT: sliceclone_BB_4:                                  ; preds = %sliceclone_BB_2
-; CHECK-NEXT:   %4 = call i32 @_daedalus_slice_getUnknown__[[ID:[0-9]+]]({{.*}})
+; CHECK-NEXT:   %4 = call i32 @_daedalus_slice_getUnknown__[[ID:[0-9]+]]()
 ; CHECK-NEXT:   %5 = icmp ult i32 %1, 25
 ; CHECK-NEXT:   br i1 %5, label %sliceclone_BB_6, label %sliceclone_BB_5
 ; CHECK-EMPTY:
@@ -310,7 +310,7 @@
 ; CHECK-NEXT: }
 ; CHECK-EMPTY:
 ; CHECK-NEXT: ; Function Attrs: noinline nounwind optsize willreturn
-; CHECK-NEXT: define internal i32 @_daedalus_slice_getUnknown__[[ID:[0-9]+]]({{.*}}) #4 {
+; CHECK-NEXT: define internal i32 @_daedalus_slice_getUnknown__[[ID:[0-9]+]]() #4 {
 ; CHECK-NEXT: sliceclone_BB_0:
 ; CHECK-NEXT:   %0 = alloca [1 x %struct.__va_list_tag], align 16
 ; CHECK-NEXT:   %1 = load i32, ptr %0, align 16
@@ -326,7 +326,7 @@
 ; CHECK-NEXT:   br i1 %4, label %sliceclone_BB_6, label %sliceclone_BB_7
 ; CHECK-EMPTY:
 ; CHECK-NEXT: sliceclone_BB_6:                                  ; preds = %sliceclone_BB_4
-; CHECK-NEXT:   %5 = call i32 @_daedalus_slice_getUnknown__[[ID:[0-9]+]]({{.*}})
+; CHECK-NEXT:   %5 = call i32 @_daedalus_slice_getUnknown__[[ID:[0-9]+]]()
 ; CHECK-NEXT:   %6 = icmp ult i32 %1, 17
 ; CHECK-NEXT:   br i1 %6, label %sliceclone_BB_8, label %sliceclone_BB_7
 ; CHECK-EMPTY:
@@ -367,7 +367,7 @@
 ; CHECK-NEXT: }
 ; CHECK-EMPTY:
 ; CHECK-NEXT: ; Function Attrs: noinline nounwind optsize willreturn
-; CHECK-NEXT: define internal i32 @_daedalus_slice_getUnknown__[[ID:[0-9]+]]({{.*}}) #4 {
+; CHECK-NEXT: define internal i32 @_daedalus_slice_getUnknown__[[ID:[0-9]+]]() #4 {
 ; CHECK-NEXT: sliceclone_BB_0:
 ; CHECK-NEXT:   %0 = alloca [1 x %struct.__va_list_tag], align 16
 ; CHECK-NEXT:   %1 = load i32, ptr %0, align 16
@@ -387,7 +387,7 @@
 ; CHECK-NEXT:   br i1 %5, label %sliceclone_BB_8, label %sliceclone_BB_9
 ; CHECK-EMPTY:
 ; CHECK-NEXT: sliceclone_BB_8:                                  ; preds = %sliceclone_BB_6
-; CHECK-NEXT:   %6 = call i32 @_daedalus_slice_getUnknown__[[ID:[0-9]+]]({{.*}})
+; CHECK-NEXT:   %6 = call i32 @_daedalus_slice_getUnknown__[[ID:[0-9]+]]()
 ; CHECK-NEXT:   %7 = icmp ult i32 %1, 9
 ; CHECK-NEXT:   br i1 %7, label %sliceclone_BB_10, label %sliceclone_BB_9
 ; CHECK-EMPTY:
@@ -420,51 +420,51 @@
 ; CHECK-NEXT: }
 ; CHECK-EMPTY:
 ; CHECK-NEXT: ; Function Attrs: noinline nounwind optsize willreturn
-; CHECK-NEXT: define internal i32 @_daedalus_slice_getUnknown__[[ID:[0-9]+]]({{.*}}) #4 {
+; CHECK-NEXT: define internal i32 @_daedalus_slice_getUnknown__[[ID:[0-9]+]](i8 %0) #4 {
 ; CHECK-NEXT: sliceclone_BB_13:
 ; CHECK-NEXT:   %1 = sext i8 %0 to i32
-; CHECK-NEXT:   %2 = call i32 @_daedalus_slice_getUnknown__[[ID:[0-9]+]]({{.*}})
+; CHECK-NEXT:   %2 = call i32 @_daedalus_slice_getUnknown__[[ID:[0-9]+]]()
 ; CHECK-NEXT:   %3 = ashr exact i32 %2, 24
 ; CHECK-NEXT:   %4 = add nsw i32 %3, %1
 ; CHECK-NEXT:   ret i32 %4
 ; CHECK-NEXT: }
 ; CHECK-EMPTY:
 ; CHECK-NEXT: ; Function Attrs: noinline nounwind optsize willreturn
-; CHECK-NEXT: define internal i32 @_daedalus_slice_getUnknown__[[ID:[0-9]+]]({{.*}}) #4 {
+; CHECK-NEXT: define internal i32 @_daedalus_slice_getUnknown__[[ID:[0-9]+]](i8 %0) #4 {
 ; CHECK-NEXT: sliceclone_BB_13:
-; CHECK-NEXT:   %1 = call i32 @_daedalus_slice_getUnknown__[[ID:[0-9]+]]({{.*}})
+; CHECK-NEXT:   %1 = call i32 @_daedalus_slice_getUnknown__[[ID:[0-9]+]]()
 ; CHECK-NEXT:   %2 = ashr exact i32 %1, 24
-; CHECK-NEXT:   %3 = call i32 @_daedalus_slice_getUnknown__[[ID:[0-9]+]]({{.*}})
+; CHECK-NEXT:   %3 = call i32 @_daedalus_slice_getUnknown__[[ID:[0-9]+]](i8 %0)
 ; CHECK-NEXT:   %4 = add nsw i32 %3, %2
 ; CHECK-NEXT:   ret i32 %4
 ; CHECK-NEXT: }
 ; CHECK-EMPTY:
 ; CHECK-NEXT: ; Function Attrs: noinline nounwind optsize willreturn
-; CHECK-NEXT: define internal i32 @_daedalus_slice_getUnknown__[[ID:[0-9]+]]({{.*}}) #4 {
+; CHECK-NEXT: define internal i32 @_daedalus_slice_getUnknown__[[ID:[0-9]+]](i8 %0) #4 {
 ; CHECK-NEXT: sliceclone_BB_13:
-; CHECK-NEXT:   %1 = call i32 @_daedalus_slice_getUnknown__[[ID:[0-9]+]]({{.*}})
+; CHECK-NEXT:   %1 = call i32 @_daedalus_slice_getUnknown__[[ID:[0-9]+]]()
 ; CHECK-NEXT:   %2 = ashr exact i32 %1, 16
-; CHECK-NEXT:   %3 = call i32 @_daedalus_slice_getUnknown__[[ID:[0-9]+]]({{.*}})
+; CHECK-NEXT:   %3 = call i32 @_daedalus_slice_getUnknown__[[ID:[0-9]+]](i8 %0)
 ; CHECK-NEXT:   %4 = add nsw i32 %3, %2
 ; CHECK-NEXT:   ret i32 %4
 ; CHECK-NEXT: }
 ; CHECK-EMPTY:
 ; CHECK-NEXT: ; Function Attrs: noinline nounwind optsize willreturn
-; CHECK-NEXT: define internal i32 @_daedalus_slice_getUnknown__[[ID:[0-9]+]]({{.*}}) #4 {
+; CHECK-NEXT: define internal i32 @_daedalus_slice_getUnknown__[[ID:[0-9]+]](i8 %0) #4 {
 ; CHECK-NEXT: sliceclone_BB_13:
-; CHECK-NEXT:   %1 = call i32 @_daedalus_slice_getUnknown__[[ID:[0-9]+]]({{.*}})
+; CHECK-NEXT:   %1 = call i32 @_daedalus_slice_getUnknown__[[ID:[0-9]+]]()
 ; CHECK-NEXT:   %2 = ashr exact i32 %1, 16
-; CHECK-NEXT:   %3 = call i32 @_daedalus_slice_getUnknown__[[ID:[0-9]+]]({{.*}})
+; CHECK-NEXT:   %3 = call i32 @_daedalus_slice_getUnknown__[[ID:[0-9]+]](i8 %0)
 ; CHECK-NEXT:   %4 = add nsw i32 %3, %2
 ; CHECK-NEXT:   ret i32 %4
 ; CHECK-NEXT: }
 ; CHECK-EMPTY:
 ; CHECK-NEXT: ; Function Attrs: noinline nounwind optsize willreturn
-; CHECK-NEXT: define internal i32 @_daedalus_slice_getUnknown__[[ID:[0-9]+]]({{.*}}) #4 {
+; CHECK-NEXT: define internal i32 @_daedalus_slice_getUnknown__[[ID:[0-9]+]](i8 %0) #4 {
 ; CHECK-NEXT: sliceclone_BB_13:
-; CHECK-NEXT:   %1 = call i32 @_daedalus_slice_getUnknown__[[ID:[0-9]+]]({{.*}})
+; CHECK-NEXT:   %1 = call i32 @_daedalus_slice_getUnknown__[[ID:[0-9]+]]()
 ; CHECK-NEXT:   %2 = ashr exact i32 %1, 16
-; CHECK-NEXT:   %3 = call i32 @_daedalus_slice_getUnknown__[[ID:[0-9]+]]({{.*}})
+; CHECK-NEXT:   %3 = call i32 @_daedalus_slice_getUnknown__[[ID:[0-9]+]](i8 %0)
 ; CHECK-NEXT:   %4 = add nsw i32 %3, %2
 ; CHECK-NEXT:   ret i32 %4
 ; CHECK-NEXT: }
