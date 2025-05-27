@@ -99,7 +99,7 @@ static void appendBlockGatesToPhiParent(
     auto it = gates.find(curBB);
     if (it != gates.end()) {
       LLVM_DEBUG(dbgs() << "\t\t\t\tAdding gates from block "
-                        << curBB->getName() << " into block "
+                        << curBB->getName() << " into gates of block "
                         << curPhi->getParent()->getName() << "\n");
       for (const Value *gate : it->second) {
         gates[curPhi->getParent()].push_back(gate);
@@ -109,6 +109,18 @@ static void appendBlockGatesToPhiParent(
       }
     }
   }
+}
+
+bool doesBBHaveDataDep(const BasicBlock *BB,
+                       SmallPtrSet<const Value *, 32> deps) {
+  bool hasDep = false;
+  for (const Instruction &inst : *BB) {
+    if (llvm::is_contained(deps, &inst)) {
+      hasDep = true;
+      break;
+    }
+  }
+  return hasDep;
 }
 
 /**
@@ -147,8 +159,9 @@ static void appendBlockGatesToPhiParent(
  */
 std::pair<Status, dataDependence> computeDataDependencies(
     const Instruction &I, Function &F, Loop *loop, BasicBlock *loopHeader,
-    std::unordered_map<const BasicBlock *, SmallVector<const Value *>> &gates) {
-  bool isLoopValid = loop && !loop->isInvalid();
+    std::unordered_map<const BasicBlock *, SmallVector<const Value *>> &gates,
+    FunctionAnalysisManager &FAM) {
+  bool isSliceCriteionInLoop = loop && !loop->isInvalid();
   SmallPtrSet<const Value *, 32> deps;
   SmallPtrSet<const BasicBlock *, 32> BBs;
   SmallPtrSet<const Value *, 32> visited;
@@ -165,6 +178,7 @@ std::pair<Status, dataDependence> computeDataDependencies(
 
   // Helper to process operands
   auto processOperand = [&](const Value *operand) {
+    // ~special case~
     if (isa<GlobalVariable>(operand)) {
       status = {false, "Some dependency is on a Global Variable."};
       return false;
@@ -185,16 +199,16 @@ std::pair<Status, dataDependence> computeDataDependencies(
     LLVM_DEBUG(dbgs() << "\t\t\t[Data Dependency] Operand being processed: "
                       << *operand << "\n");
 
-    if (isLoopValid) {
+    if (isSliceCriteionInLoop) {
       if (const PHINode *phi = dyn_cast<PHINode>(operand)) {
-        if (phi->getParent() == loopHeader) {
+        if (phi->getParent() == loopHeader) { // ~special case~
           LLVM_DEBUG(
               dbgs()
               << "\t\t\t\t--> Operand is a PHINode inside a loop header...\n");
           phiOnArgs.insert(operand);
           visited.insert(operand);
           return true;
-        } else if (!loop->contains(phi->getParent())) {
+        } else if (!loop->contains(phi->getParent())) { // ~special case~
           LLVM_DEBUG(dbgs()
                      << "\t\t\t\t--> Operand is a PHINode outside the current "
                         "criterion's loop...\n");
@@ -203,8 +217,8 @@ std::pair<Status, dataDependence> computeDataDependencies(
           return true;
         }
       } else if (const Instruction *inst = dyn_cast<Instruction>(operand)) {
-        // if a dependency is not inside the loop, pass it as an argument to
-        // the current slice function
+        // ~special case~ if a dependency is not inside the loop, pass it as an
+        // argument to the current slice function
         if (!loop->contains(inst->getParent())) {
           LLVM_DEBUG(dbgs() << "\t\t\t\t--> Operand is outside the current "
                                "criterion's loop...\n");
@@ -249,23 +263,40 @@ std::pair<Status, dataDependence> computeDataDependencies(
         const BasicBlock *incomingBB = phi->getIncomingBlock(i);
         const Value *incomingValue = phi->getIncomingValue(i);
 
+        // ~special case~ Skip if incomingValue is a constant zero
+        if (const ConstantData *CD = dyn_cast<ConstantData>(incomingValue)) {
+          continue; // don't follow this logic if the
+                    // incoming value is a constant
+        }
+
+        bool hasDep = doesBBHaveDataDep(incomingBB, deps);
+
+        LLVM_DEBUG(dbgs() << "\t\t\t\tInserting incomingBB: "
+                          << incomingBB->getName() << "\n");
         BBs.insert(incomingBB);
 
-        // if the predecessor block of a phinode has a back edge to itself,
-        // then add its terminator to the gates of the phinode's parent
-        if (incomingBB == phi->getParent()) {
-          LLVM_DEBUG(dbgs()
-                     << "\t\t[Control Dependency] PHINode has an incoming "
-                        "block with a back edge to itself: "
-                     << phi->getParent()->getName() << "\n");
-          gates[phi->getParent()].push_back(incomingBB->getTerminator());
+        // ~special case~ if a phinode's incoming block is an exit block of a
+        // loop, then add its terminator to the gates of the phinode's parent
+        LoopInfo &loopInfo = FAM.getResult<LoopAnalysis>(F);
+        Loop *loopForBB = loopInfo.getLoopFor(incomingBB);
+        if (loopForBB && loopForBB->isLoopExiting(incomingBB)) {
+          // Only add the terminator as a gate if incomingBB has at least one
+          // instruction in deps
+          if (hasDep) {
+            LLVM_DEBUG(dbgs()
+                       << "\t\t[Control Dependency] PHINode has an incoming "
+                          "block that is an exit block of a loop and contains "
+                          "a dependency: "
+                       << incomingBB->getName() << "\n");
+            gates[phi->getParent()].push_back(incomingBB->getTerminator());
+          }
         }
 
         if (const Instruction *incomingInst =
                 dyn_cast<Instruction>(incomingValue)) {
-          // if the incoming value is not from the incoming block in the current
-          // PHINode, then add the incoming block's terminator to the gates of
-          // the current PHINode's parent
+          // ~special case~ if the incoming value is not from the incoming block
+          // in the current PHINode, then add the incoming block's terminator to
+          // the gates of the current PHINode's parent
           if (incomingInst->getParent() != incomingBB) {
             LLVM_DEBUG(dbgs()
                        << "\t\t[Control Dependency] Incoming value is not "
@@ -274,17 +305,17 @@ std::pair<Status, dataDependence> computeDataDependencies(
             for (const Value *gate : gates[incomingBB])
               gates[phi->getParent()].push_back(gate);
           } else {
-            // if the incoming value is from the incoming block in the current
-            // PHINode, but the incoming block has no PHINodes in it, but has
-            // incoming value's data dependencies, then add the missing blocks
-            // and branch instructions to the gates of the current PHINode's
-            // parent
+            // ~special case~ if the incoming value is from the incoming block
+            // in the current PHINode, but the incoming block has no PHINodes in
+            // it, but has incoming value's data dependencies, then add the
+            // missing blocks and branch instructions to the gates of the
+            // current PHINode's parent
             LLVM_DEBUG(dbgs()
                        << "\t\t[Control Dependency] PHINode's incoming value "
                           "is from the same block. Checking for control using "
                           "data dependencies...\n");
-
-            appendBlockGatesToPhiParent(incomingBB, phi, gates, visitedPairs);
+            if (incomingBB->phis().empty())
+              appendBlockGatesToPhiParent(incomingBB, phi, gates, visitedPairs);
           }
         }
       }
@@ -295,12 +326,11 @@ std::pair<Status, dataDependence> computeDataDependencies(
             LLVM_DEBUG(dbgs() << "\t\t\t[Control Dependency] Pushing gate: "
                               << *gate << "\n");
 
-            // if the gate instruction is outside the current slice criterion's
-            // loop, don't treat it as a dependency
+            // ~special case~ if the gate instruction is outside the current
+            // slice criterion's loop, don't treat it as a dependency
             if (const BranchInst *BI = dyn_cast<BranchInst>(gate)) {
               if (BI->isConditional()) {
-                if (isLoopValid &&
-                    !loop->contains(BI->getParent())) {
+                if (isSliceCriteionInLoop && !loop->contains(BI->getParent())) {
                   LLVM_DEBUG(
                       dbgs()
                       << "\t\t\t--> Branch instruction is outside the current "
@@ -309,8 +339,7 @@ std::pair<Status, dataDependence> computeDataDependencies(
                 }
               }
             } else if (const SwitchInst *SI = dyn_cast<SwitchInst>(cur)) {
-              if (isLoopValid &&
-                  !loop->contains(SI->getParent())) {
+              if (isSliceCriteionInLoop && !loop->contains(SI->getParent())) {
                 LLVM_DEBUG(
                     dbgs()
                     << "\t\t\t--> Switch instruction is outside the current "
@@ -350,7 +379,7 @@ std::pair<Status, dataDependence> computeDataDependencies(
  *         and a dataDependence structure containing sets of dependent values,
  *         basic blocks, and related PHINode information.
  */
-std::pair<Status, dataDependence> get_data_dependences_for(
+std::pair<Status, dataDependence> getDataDependencies(
     Instruction &I, Function &F, FunctionAnalysisManager &FAM,
     std::unordered_map<const BasicBlock *, SmallVector<const Value *>> &gates) {
 
@@ -359,7 +388,7 @@ std::pair<Status, dataDependence> get_data_dependences_for(
   BasicBlock *loopHeader = (loop) ? loop->getHeader() : nullptr;
 
   auto [status, resultsData] =
-      computeDataDependencies(I, F, loop, loopHeader, gates);
+      computeDataDependencies(I, F, loop, loopHeader, gates, FAM);
 
   return {status, resultsData};
 }
@@ -459,8 +488,9 @@ ProgramSlice::ProgramSlice(Instruction &Initial, Function &F,
   std::unordered_map<const BasicBlock *, SmallVector<const Value *>> gates =
       computeGates(F);
 
-  auto [check, data] = get_data_dependences_for(Initial, F, FAM, gates);
+  auto [check, data] = getDataDependencies(Initial, F, FAM, gates);
 
+  // ~special case~
   for (auto &BB : data.BBs) {
     if (tryCatchBlocks.count(const_cast<BasicBlock *>(BB))) {
       _canOutline.first = false;
@@ -732,6 +762,24 @@ void ProgramSlice::rerouteBranches(Function *F) {
             }
           }
           break;
+        }
+      } else if (const SwitchInst *origSwitch =
+                     dyn_cast<SwitchInst>(parentBB->getTerminator())) {
+        // ~special case~ if the new function has just one target from the
+        // original switch, then create an unconditional branch to it
+
+        // Collect valid new targets for the switch's successors
+        SmallVector<BasicBlock *, 4> validTargets;
+        for (unsigned int idx = 0; idx < origSwitch->getNumSuccessors();
+             ++idx) {
+          BasicBlock *suc = origSwitch->getSuccessor(idx);
+          BasicBlock *newTarget = _origToNewBBmap[_attractors[suc]];
+          if (newTarget) validTargets.push_back(newTarget);
+        }
+        // Only create an unconditional branch if there is exactly one valid
+        // target
+        if (validTargets.size() == 1) {
+          BranchInst::Create(validTargets.front(), &BB);
         }
       }
     } else {
@@ -1204,10 +1252,28 @@ Function *ProgramSlice::outline() {
   reorderBlocks(F);
   replaceArgs(F, dt);
 
+  // ~special case~ create a new entry block if the outlined function starts
+  // with a loop header as entry block
+  BasicBlock &entry = F->getEntryBlock();
+  if (pred_begin(&entry) != pred_end(&entry)) {
+    // Entry block has predecessors, create a new entry block
+    BasicBlock *newEntry =
+        BasicBlock::Create(F->getContext(), "BB_Entry", F, &entry);
+    BranchInst::Create(&entry, newEntry);
+    // Move function arguments' uses from old entry to new entry if needed
+    newEntry->moveBefore(&entry);
+    for (Instruction &I : entry) {
+      if (auto *PN = dyn_cast<PHINode>(&I)) {
+        Value *zero = Constant::getNullValue(PN->getType());
+        PN->addIncoming(zero, newEntry);
+      }
+    }
+  }
+
   LLVM_DEBUG(dbgs() << "Outlined function:\n" << *F);
 
-  // Assert that there is only one basic block with no predecessors, and it is
-  // the entry block.
+  // ~special case~ Assert that there is only one basic block with no
+  // predecessors, and it is the entry block.
   int numEntryBlocks = 0;
   for (BasicBlock &BB : *F)
     if (BB.hasNPredecessors(0)) ++numEntryBlocks;

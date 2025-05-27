@@ -238,13 +238,21 @@ std::pair<uint, uint> removeInstructions(std::vector<iSlice> &allSlices,
 
     if (F == nullptr) continue;
 
-    LLVM_DEBUG(dbgs() << "Processing slice: " << F->getName() << "\n");
+    if (F->hasName())
+      LLVM_DEBUG(dbgs() << "Processing slice: " << F->getName() << "\n");
+    else
+      LLVM_DEBUG(dbgs() << "Processing slice: no name\n");
 
     F = callInst->getCalledFunction();
     if (mergeTo.count(F) == 0) {
-      LLVM_DEBUG(dbgs() << "Function '" << F->getName()
-                        << "' was not merged. Hence, it will be discarded..."
-                        << "\n");
+
+      if (F->hasName())
+        LLVM_DEBUG(dbgs() << "Function '" << F->getName()
+                          << "' was not merged. Hence, it will be discarded..."
+                          << "\n");
+      else
+        LLVM_DEBUG(dbgs() << "Processing slice: no name\n");
+      
       removeCallInstruction(F, callInst, sliceCriterion);
       ++dontMerge;
       continue;
@@ -541,10 +549,11 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
     // that can be used as slicing criterion. this function enables us
     // to change how we manage the slicing criterion.
 
-    // Search for try-catch logic inside the current function
+    // ~special case~ Search for try-catch logic inside the current function
     std::set<BasicBlock *> tryCatchBlocks = searchForTryCatchLogic(*F);
 
-    // Replace all uses of I with the correpondent call
+    // Replace all uses of I with the correpondent call to the new outlined
+    // function
     for (Instruction *I : S) {
       if (!canBeSliceCriterion(*I)) continue;
 
@@ -575,8 +584,6 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
           }
         }
       });
-      // LLVM_DEBUG(dbgs() << "Parent function before calling
-      // ProgramSlice::outline():\n" << *ps.getParentFunction());
 
       Function *G = ps.outline();
 

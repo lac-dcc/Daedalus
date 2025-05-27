@@ -4,9 +4,9 @@
 ; CHECK-NEXT:   %2 = icmp sgt i32 %0, 1
 ; CHECK-NEXT:   br i1 %2, label %sliceclone_BB_1, label %sliceclone_BB_12
 ; CHECK-EMPTY:
-; CHECK-NEXT: sliceclone_BB_1:                                  ; preds = %sliceclone_BB_0
-; CHECK-NEXT:   %3 = phi i32 [ 1, %sliceclone_BB_0 ]
-; CHECK-NEXT:   %4 = phi i32 [ 196, %sliceclone_BB_0 ]
+; CHECK-NEXT: sliceclone_BB_1:                                  ; preds = %sliceclone_BB_11, %sliceclone_BB_0
+; CHECK-NEXT:   %3 = phi i32 [ %14, %sliceclone_BB_11 ], [ 1, %sliceclone_BB_0 ]
+; CHECK-NEXT:   %4 = phi i32 [ %13, %sliceclone_BB_11 ], [ 196, %sliceclone_BB_0 ]
 ; CHECK-NEXT:   %5 = sext i32 %3 to i64
 ; CHECK-NEXT:   %6 = getelementptr inbounds ptr, ptr %1, i64 %5
 ; CHECK-NEXT:   %7 = load ptr, ptr %6, align 8, !tbaa !7
@@ -21,22 +21,23 @@
 ; CHECK-NEXT:   ret i64 %12
 ; CHECK-EMPTY:
 ; CHECK-NEXT: sliceclone_BB_11:                                 ; preds = %sliceclone_BB_9, %sliceclone_BB_8, %sliceclone_BB_7, %sliceclone_BB_6, %sliceclone_BB_5, %sliceclone_BB_4, %sliceclone_BB_4
-; CHECK-NEXT:   %13 = phi i32 [ %4, %sliceclone_BB_9 ], [ %29, %sliceclone_BB_8 ], [ %4, %sliceclone_BB_7 ], [ %4, %sliceclone_BB_6 ], [ %4, %sliceclone_BB_5 ], [ %4, %sliceclone_BB_4 ], [ %4, %sliceclone_BB_4 ]
-; CHECK-NEXT:   %14 = phi i32 [ %30, %sliceclone_BB_9 ], [ %25, %sliceclone_BB_8 ], [ %24, %sliceclone_BB_7 ], [ %23, %sliceclone_BB_6 ], [ %22, %sliceclone_BB_5 ], [ %20, %sliceclone_BB_4 ], [ %20, %sliceclone_BB_4 ]
-; CHECK-NEXT:   br label %sliceclone_BB_12
+; CHECK-NEXT:   %13 = phi i32 [ %4, %sliceclone_BB_9 ], [ %30, %sliceclone_BB_8 ], [ %4, %sliceclone_BB_7 ], [ %4, %sliceclone_BB_6 ], [ %4, %sliceclone_BB_5 ], [ %4, %sliceclone_BB_4 ], [ %4, %sliceclone_BB_4 ]
+; CHECK-NEXT:   %14 = phi i32 [ %31, %sliceclone_BB_9 ], [ %26, %sliceclone_BB_8 ], [ %25, %sliceclone_BB_7 ], [ %24, %sliceclone_BB_6 ], [ %23, %sliceclone_BB_5 ], [ %21, %sliceclone_BB_4 ], [ %21, %sliceclone_BB_4 ]
+; CHECK-NEXT:   %15 = icmp slt i32 %14, %0
+; CHECK-NEXT:   br i1 %15, label %sliceclone_BB_1, label %sliceclone_BB_12, !llvm.loop !14
 ; CHECK-EMPTY:
 ; CHECK-NEXT: sliceclone_BB_2:                                  ; preds = %sliceclone_BB_1
-; CHECK-NEXT:   %15 = getelementptr inbounds i8, ptr %7, i64 2
-; CHECK-NEXT:   %16 = load i8, ptr %15, align 1, !tbaa !11
-; CHECK-NEXT:   %17 = icmp eq i8 %16, 0
-; CHECK-NEXT:   br i1 %17, label %sliceclone_BB_4, label %_daedalus_unreachable
+; CHECK-NEXT:   %16 = getelementptr inbounds i8, ptr %7, i64 2
+; CHECK-NEXT:   %17 = load i8, ptr %16, align 1, !tbaa !11
+; CHECK-NEXT:   %18 = icmp eq i8 %17, 0
+; CHECK-NEXT:   br i1 %18, label %sliceclone_BB_4, label %_daedalus_unreachable
 ; CHECK-EMPTY:
 ; CHECK-NEXT: sliceclone_BB_4:                                  ; preds = %sliceclone_BB_2
-; CHECK-NEXT:   %18 = getelementptr inbounds i8, ptr %7, i64 1
-; CHECK-NEXT:   %19 = load i8, ptr %18, align 1, !tbaa !11
-; CHECK-NEXT:   %20 = add nsw i32 %3, 1
-; CHECK-NEXT:   %21 = sext i8 %19 to i32
-; CHECK-NEXT:   switch i32 %21, label %_daedalus_unreachable [
+; CHECK-NEXT:   %19 = getelementptr inbounds i8, ptr %7, i64 1
+; CHECK-NEXT:   %20 = load i8, ptr %19, align 1, !tbaa !11
+; CHECK-NEXT:   %21 = add nsw i32 %3, 1
+; CHECK-NEXT:   %22 = sext i8 %20 to i32
+; CHECK-NEXT:   switch i32 %22, label %_daedalus_unreachable [
 ; CHECK-NEXT:     i32 100, label %sliceclone_BB_11
 ; CHECK-NEXT:     i32 103, label %sliceclone_BB_5
 ; CHECK-NEXT:     i32 105, label %sliceclone_BB_6
@@ -47,27 +48,27 @@
 ; CHECK-NEXT:   ]
 ; CHECK-EMPTY:
 ; CHECK-NEXT: sliceclone_BB_5:                                  ; preds = %sliceclone_BB_4
-; CHECK-NEXT:   %22 = add nsw i32 %3, 2
-; CHECK-NEXT:   br label %sliceclone_BB_11
-; CHECK-EMPTY:
-; CHECK-NEXT: sliceclone_BB_6:                                  ; preds = %sliceclone_BB_4
 ; CHECK-NEXT:   %23 = add nsw i32 %3, 2
 ; CHECK-NEXT:   br label %sliceclone_BB_11
 ; CHECK-EMPTY:
-; CHECK-NEXT: sliceclone_BB_7:                                  ; preds = %sliceclone_BB_4
+; CHECK-NEXT: sliceclone_BB_6:                                  ; preds = %sliceclone_BB_4
 ; CHECK-NEXT:   %24 = add nsw i32 %3, 2
 ; CHECK-NEXT:   br label %sliceclone_BB_11
 ; CHECK-EMPTY:
-; CHECK-NEXT: sliceclone_BB_8:                                  ; preds = %sliceclone_BB_4
+; CHECK-NEXT: sliceclone_BB_7:                                  ; preds = %sliceclone_BB_4
 ; CHECK-NEXT:   %25 = add nsw i32 %3, 2
-; CHECK-NEXT:   %26 = sext i32 %20 to i64
-; CHECK-NEXT:   %27 = getelementptr inbounds ptr, ptr %1, i64 %26
-; CHECK-NEXT:   %28 = load ptr, ptr %27, align 8, !tbaa !7
-; CHECK-NEXT:   %29 = tail call i32 @atoi(ptr nocapture noundef %28) #8
+; CHECK-NEXT:   br label %sliceclone_BB_11
+; CHECK-EMPTY:
+; CHECK-NEXT: sliceclone_BB_8:                                  ; preds = %sliceclone_BB_4
+; CHECK-NEXT:   %26 = add nsw i32 %3, 2
+; CHECK-NEXT:   %27 = sext i32 %21 to i64
+; CHECK-NEXT:   %28 = getelementptr inbounds ptr, ptr %1, i64 %27
+; CHECK-NEXT:   %29 = load ptr, ptr %28, align 8, !tbaa !7
+; CHECK-NEXT:   %30 = tail call i32 @atoi(ptr nocapture noundef %29) #8
 ; CHECK-NEXT:   br label %sliceclone_BB_11
 ; CHECK-EMPTY:
 ; CHECK-NEXT: sliceclone_BB_9:                                  ; preds = %sliceclone_BB_4
-; CHECK-NEXT:   %30 = add nsw i32 %3, 2
+; CHECK-NEXT:   %31 = add nsw i32 %3, 2
 ; CHECK-NEXT:   br label %sliceclone_BB_11
 ; CHECK-EMPTY:
 ; CHECK-NEXT: _daedalus_unreachable:                            ; preds = %sliceclone_BB_4, %sliceclone_BB_1, %sliceclone_BB_2
@@ -80,9 +81,9 @@
 ; CHECK-NEXT:   %2 = icmp sgt i32 %0, 1
 ; CHECK-NEXT:   br i1 %2, label %sliceclone_BB_1, label %sliceclone_BB_12
 ; CHECK-EMPTY:
-; CHECK-NEXT: sliceclone_BB_1:                                  ; preds = %sliceclone_BB_0
-; CHECK-NEXT:   %3 = phi i32 [ 1, %sliceclone_BB_0 ]
-; CHECK-NEXT:   %4 = phi i32 [ 196, %sliceclone_BB_0 ]
+; CHECK-NEXT: sliceclone_BB_1:                                  ; preds = %sliceclone_BB_11, %sliceclone_BB_0
+; CHECK-NEXT:   %3 = phi i32 [ %12, %sliceclone_BB_11 ], [ 1, %sliceclone_BB_0 ]
+; CHECK-NEXT:   %4 = phi i32 [ %11, %sliceclone_BB_11 ], [ 196, %sliceclone_BB_0 ]
 ; CHECK-NEXT:   %5 = sext i32 %3 to i64
 ; CHECK-NEXT:   %6 = getelementptr inbounds ptr, ptr %1, i64 %5
 ; CHECK-NEXT:   %7 = load ptr, ptr %6, align 8, !tbaa !7
@@ -95,22 +96,23 @@
 ; CHECK-NEXT:   br label %sliceclone_BB_13
 ; CHECK-EMPTY:
 ; CHECK-NEXT: sliceclone_BB_11:                                 ; preds = %sliceclone_BB_9, %sliceclone_BB_8, %sliceclone_BB_7, %sliceclone_BB_6, %sliceclone_BB_5, %sliceclone_BB_4, %sliceclone_BB_4
-; CHECK-NEXT:   %11 = phi i32 [ %4, %sliceclone_BB_9 ], [ %27, %sliceclone_BB_8 ], [ %4, %sliceclone_BB_7 ], [ %4, %sliceclone_BB_6 ], [ %4, %sliceclone_BB_5 ], [ %4, %sliceclone_BB_4 ], [ %4, %sliceclone_BB_4 ]
-; CHECK-NEXT:   %12 = phi i32 [ %28, %sliceclone_BB_9 ], [ %23, %sliceclone_BB_8 ], [ %22, %sliceclone_BB_7 ], [ %21, %sliceclone_BB_6 ], [ %20, %sliceclone_BB_5 ], [ %18, %sliceclone_BB_4 ], [ %18, %sliceclone_BB_4 ]
-; CHECK-NEXT:   br label %sliceclone_BB_12
+; CHECK-NEXT:   %11 = phi i32 [ %4, %sliceclone_BB_9 ], [ %28, %sliceclone_BB_8 ], [ %4, %sliceclone_BB_7 ], [ %4, %sliceclone_BB_6 ], [ %4, %sliceclone_BB_5 ], [ %4, %sliceclone_BB_4 ], [ %4, %sliceclone_BB_4 ]
+; CHECK-NEXT:   %12 = phi i32 [ %29, %sliceclone_BB_9 ], [ %24, %sliceclone_BB_8 ], [ %23, %sliceclone_BB_7 ], [ %22, %sliceclone_BB_6 ], [ %21, %sliceclone_BB_5 ], [ %19, %sliceclone_BB_4 ], [ %19, %sliceclone_BB_4 ]
+; CHECK-NEXT:   %13 = icmp slt i32 %12, %0
+; CHECK-NEXT:   br i1 %13, label %sliceclone_BB_1, label %sliceclone_BB_12, !llvm.loop !14
 ; CHECK-EMPTY:
 ; CHECK-NEXT: sliceclone_BB_2:                                  ; preds = %sliceclone_BB_1
-; CHECK-NEXT:   %13 = getelementptr inbounds i8, ptr %7, i64 2
-; CHECK-NEXT:   %14 = load i8, ptr %13, align 1, !tbaa !11
-; CHECK-NEXT:   %15 = icmp eq i8 %14, 0
-; CHECK-NEXT:   br i1 %15, label %sliceclone_BB_4, label %_daedalus_unreachable
+; CHECK-NEXT:   %14 = getelementptr inbounds i8, ptr %7, i64 2
+; CHECK-NEXT:   %15 = load i8, ptr %14, align 1, !tbaa !11
+; CHECK-NEXT:   %16 = icmp eq i8 %15, 0
+; CHECK-NEXT:   br i1 %16, label %sliceclone_BB_4, label %_daedalus_unreachable
 ; CHECK-EMPTY:
 ; CHECK-NEXT: sliceclone_BB_4:                                  ; preds = %sliceclone_BB_2
-; CHECK-NEXT:   %16 = getelementptr inbounds i8, ptr %7, i64 1
-; CHECK-NEXT:   %17 = load i8, ptr %16, align 1, !tbaa !11
-; CHECK-NEXT:   %18 = add nsw i32 %3, 1
-; CHECK-NEXT:   %19 = sext i8 %17 to i32
-; CHECK-NEXT:   switch i32 %19, label %_daedalus_unreachable [
+; CHECK-NEXT:   %17 = getelementptr inbounds i8, ptr %7, i64 1
+; CHECK-NEXT:   %18 = load i8, ptr %17, align 1, !tbaa !11
+; CHECK-NEXT:   %19 = add nsw i32 %3, 1
+; CHECK-NEXT:   %20 = sext i8 %18 to i32
+; CHECK-NEXT:   switch i32 %20, label %_daedalus_unreachable [
 ; CHECK-NEXT:     i32 100, label %sliceclone_BB_11
 ; CHECK-NEXT:     i32 103, label %sliceclone_BB_5
 ; CHECK-NEXT:     i32 105, label %sliceclone_BB_6
@@ -121,33 +123,33 @@
 ; CHECK-NEXT:   ]
 ; CHECK-EMPTY:
 ; CHECK-NEXT: sliceclone_BB_5:                                  ; preds = %sliceclone_BB_4
-; CHECK-NEXT:   %20 = add nsw i32 %3, 2
-; CHECK-NEXT:   br label %sliceclone_BB_11
-; CHECK-EMPTY:
-; CHECK-NEXT: sliceclone_BB_6:                                  ; preds = %sliceclone_BB_4
 ; CHECK-NEXT:   %21 = add nsw i32 %3, 2
 ; CHECK-NEXT:   br label %sliceclone_BB_11
 ; CHECK-EMPTY:
-; CHECK-NEXT: sliceclone_BB_7:                                  ; preds = %sliceclone_BB_4
+; CHECK-NEXT: sliceclone_BB_6:                                  ; preds = %sliceclone_BB_4
 ; CHECK-NEXT:   %22 = add nsw i32 %3, 2
 ; CHECK-NEXT:   br label %sliceclone_BB_11
 ; CHECK-EMPTY:
-; CHECK-NEXT: sliceclone_BB_8:                                  ; preds = %sliceclone_BB_4
+; CHECK-NEXT: sliceclone_BB_7:                                  ; preds = %sliceclone_BB_4
 ; CHECK-NEXT:   %23 = add nsw i32 %3, 2
-; CHECK-NEXT:   %24 = sext i32 %18 to i64
-; CHECK-NEXT:   %25 = getelementptr inbounds ptr, ptr %1, i64 %24
-; CHECK-NEXT:   %26 = load ptr, ptr %25, align 8, !tbaa !7
-; CHECK-NEXT:   %27 = tail call i32 @atoi(ptr nocapture noundef %26) #8
+; CHECK-NEXT:   br label %sliceclone_BB_11
+; CHECK-EMPTY:
+; CHECK-NEXT: sliceclone_BB_8:                                  ; preds = %sliceclone_BB_4
+; CHECK-NEXT:   %24 = add nsw i32 %3, 2
+; CHECK-NEXT:   %25 = sext i32 %19 to i64
+; CHECK-NEXT:   %26 = getelementptr inbounds ptr, ptr %1, i64 %25
+; CHECK-NEXT:   %27 = load ptr, ptr %26, align 8, !tbaa !7
+; CHECK-NEXT:   %28 = tail call i32 @atoi(ptr nocapture noundef %27) #8
 ; CHECK-NEXT:   br label %sliceclone_BB_11
 ; CHECK-EMPTY:
 ; CHECK-NEXT: sliceclone_BB_9:                                  ; preds = %sliceclone_BB_4
-; CHECK-NEXT:   %28 = add nsw i32 %3, 2
+; CHECK-NEXT:   %29 = add nsw i32 %3, 2
 ; CHECK-NEXT:   br label %sliceclone_BB_11
 ; CHECK-EMPTY:
 ; CHECK-NEXT: sliceclone_BB_13:                                 ; preds = %sliceclone_BB_12
-; CHECK-NEXT:   %29 = zext i32 %10 to i64
-; CHECK-NEXT:   %30 = shl nuw nsw i64 %29, 3
-; CHECK-NEXT:   ret i64 %30
+; CHECK-NEXT:   %30 = zext i32 %10 to i64
+; CHECK-NEXT:   %31 = shl nuw nsw i64 %30, 3
+; CHECK-NEXT:   ret i64 %31
 ; CHECK-EMPTY:
 ; CHECK-NEXT: _daedalus_unreachable:                            ; preds = %sliceclone_BB_4, %sliceclone_BB_1, %sliceclone_BB_2
 ; CHECK-NEXT:   unreachable
