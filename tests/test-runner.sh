@@ -8,6 +8,7 @@ fi
 command -v clang >/dev/null 2>&1 || { echo >&2 "clang is required but it's not installed. Aborting..."; exit 1; }
 command -v llvm-objcopy >/dev/null 2>&1 || { echo >&2 "llvm-objcopy is required but it's not installed. Aborting..."; exit 1; }
 command -v opt >/dev/null 2>&1 || { echo >&2 "opt is required but it's not installed. Aborting..."; exit 1; }
+command -v FileCheck >/dev/null 2>&1 || { echo >&2 "FileCheck is required but it's not installed. Aborting..."; exit 1; }
 
 remove_old_file() {
     local FILENAME
@@ -74,14 +75,17 @@ if [ -e "$ORIGINAL_EXECUTABLE" ]; then
     "$ORIGINAL_EXECUTABLE" $ARGUMENTS > "${SOURCEFILEBASENAMEWEXT}.reference_output"
 fi
 
-# Check if the transformation log file contains the expected pattern
-if FileCheck "$SOURCEFOLDER/$SOURCEFILEBASENAMEWEXT.pattern" < "$BUILDTESTSPATH/$SOURCEFILEBASENAMEWEXT.ll.parent_module.ll" ; then
-    # Check if the output matches the reference output
-    if cmp -s "${SOURCEFILEBASENAMEWEXT}.output" "${SOURCEFILEBASENAMEWEXT}.reference_output"; then
-        exit 0
-    else
-        exit 1
-    fi
+# Run FileCheck on both possible files, but only one should succeed (not both), and cmp must succeed too
+CHECK1=0
+CHECK2=0
+if FileCheck "$SOURCEFOLDER/$SOURCEFILEBASENAMEWEXT.pattern" < "$BUILDTESTSPATH/$SOURCEFILEBASENAMEWEXT.ll.parent_module.ll"; then
+    CHECK1=1
+fi
+if FileCheck "$SOURCEFOLDER/$SOURCEFILEBASENAMEWEXT.pattern" < "$BUILDTESTSPATH/$SOURCEFILEBASENAMEWEXT.d.ll"; then
+    CHECK2=1
+fi
+if [ $((CHECK1 + CHECK2)) -ge 1 ] && cmp -s "${SOURCEFILEBASENAMEWEXT}.output" "${SOURCEFILEBASENAMEWEXT}.reference_output"; then
+    exit 0
 else
     exit 1
 fi

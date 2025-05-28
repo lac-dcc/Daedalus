@@ -159,8 +159,8 @@ bool doesBBHaveDataDep(const BasicBlock *BB,
  */
 std::pair<Status, dataDependence> computeDataDependencies(
     const Instruction &I, Function &F, Loop *loop, BasicBlock *loopHeader,
-    std::unordered_map<const BasicBlock *, SmallVector<const Value *>> &gates,
-    FunctionAnalysisManager &FAM) {
+    LoopInfo &loopInfo,
+    std::unordered_map<const BasicBlock *, SmallVector<const Value *>> &gates) {
   bool isSliceCriteionInLoop = loop && !loop->isInvalid();
   SmallPtrSet<const Value *, 32> deps;
   SmallPtrSet<const BasicBlock *, 32> BBs;
@@ -263,21 +263,18 @@ std::pair<Status, dataDependence> computeDataDependencies(
         const BasicBlock *incomingBB = phi->getIncomingBlock(i);
         const Value *incomingValue = phi->getIncomingValue(i);
 
-        // ~special case~ Skip if incomingValue is a constant zero
-        if (const ConstantData *CD = dyn_cast<ConstantData>(incomingValue)) {
-          continue; // don't follow this logic if the
-                    // incoming value is a constant
+        bool hasDep = doesBBHaveDataDep(incomingBB, deps);
+        
+        // ~special case~ if the incoming block has no dependencies, but have control
+        // dependencies, we still need to compute its terminator dependencies
+        if (!hasDep) {
+          worklist.push(incomingBB->getTerminator());
         }
 
-        bool hasDep = doesBBHaveDataDep(incomingBB, deps);
-
-        LLVM_DEBUG(dbgs() << "\t\t\t\tInserting incomingBB: "
-                          << incomingBB->getName() << "\n");
         BBs.insert(incomingBB);
 
         // ~special case~ if a phinode's incoming block is an exit block of a
         // loop, then add its terminator to the gates of the phinode's parent
-        LoopInfo &loopInfo = FAM.getResult<LoopAnalysis>(F);
         Loop *loopForBB = loopInfo.getLoopFor(incomingBB);
         if (loopForBB && loopForBB->isLoopExiting(incomingBB)) {
           // Only add the terminator as a gate if incomingBB has at least one
@@ -388,7 +385,7 @@ std::pair<Status, dataDependence> getDataDependencies(
   BasicBlock *loopHeader = (loop) ? loop->getHeader() : nullptr;
 
   auto [status, resultsData] =
-      computeDataDependencies(I, F, loop, loopHeader, gates, FAM);
+      computeDataDependencies(I, F, loop, loopHeader, loopInfo, gates);
 
   return {status, resultsData};
 }
@@ -726,21 +723,19 @@ void ProgramSlice::rerouteBranches(Function *F) {
   for (BasicBlock &BB : *F) {
     Instruction *terminator = BB.getTerminator();
     if (!terminator) {
-      LLVM_DEBUG(dbgs() << "Parent BB without terminator (2): " << BB.getName()
+      LLVM_DEBUG(dbgs() << "Parent BB without terminator: " << BB.getName()
                         << "\n");
       const BasicBlock *parentBB = _newToOrigBBmap[&BB];
       if (const BranchInst *origBranch =
               dyn_cast<BranchInst>(parentBB->getTerminator())) {
         for (const BasicBlock *suc : origBranch->successors()) {
           BasicBlock *newTarget = _origToNewBBmap[_attractors[suc]];
+          if (!newTarget) continue;
           LLVM_DEBUG(dbgs()
-                     << "Successor of parent BB without terminator (2): "
-                     << BB.getName() << "\nSuccessor: " << suc->getName()
-                     << "\nAttractor: "
+                     << "Successor: " << suc->getName() << "\nAttractor: "
                      << (_attractors[suc] ? _attractors[suc]->getName().str()
                                           : "null")
                      << "\n");
-          if (!newTarget) continue;
           BranchInst::Create(newTarget, &BB);
 
           // If new successor has any PHINodes that merged a path from
@@ -783,7 +778,7 @@ void ProgramSlice::rerouteBranches(Function *F) {
         }
       }
     } else {
-      LLVM_DEBUG(dbgs() << "Parent BB WITH terminator (2): " << BB.getName()
+      LLVM_DEBUG(dbgs() << "Parent BB WITH terminator: " << BB.getName()
                         << "\n");
       if (BranchInst *BI = dyn_cast<BranchInst>(terminator)) {
         for (unsigned int idx = 0; idx < BI->getNumSuccessors(); ++idx) {
@@ -1251,24 +1246,6 @@ Function *ProgramSlice::outline() {
   addReturnValue(F);
   reorderBlocks(F);
   replaceArgs(F, dt);
-
-  // ~special case~ create a new entry block if the outlined function starts
-  // with a loop header as entry block
-  BasicBlock &entry = F->getEntryBlock();
-  if (pred_begin(&entry) != pred_end(&entry)) {
-    // Entry block has predecessors, create a new entry block
-    BasicBlock *newEntry =
-        BasicBlock::Create(F->getContext(), "BB_Entry", F, &entry);
-    BranchInst::Create(&entry, newEntry);
-    // Move function arguments' uses from old entry to new entry if needed
-    newEntry->moveBefore(&entry);
-    for (Instruction &I : entry) {
-      if (auto *PN = dyn_cast<PHINode>(&I)) {
-        Value *zero = Constant::getNullValue(PN->getType());
-        PN->addIncoming(zero, newEntry);
-      }
-    }
-  }
 
   LLVM_DEBUG(dbgs() << "Outlined function:\n" << *F);
 
