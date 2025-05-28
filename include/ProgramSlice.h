@@ -34,12 +34,6 @@ public:
   std::pair<bool, std::string> _canOutline = {true, ""};
 
   /**
-   * @brief if a phi-function is the criterion and dont post dominates all phi
-   * in your slice
-   */
-  bool _phiCrit;
-
-  /**
    * @brief Retrieves the original function arguments as a SmallVector of
    * Values.
    */
@@ -153,7 +147,6 @@ private:
 
   /// list of formal arguments on which the slice depends on (if any)
   SmallVector<Value *> _depArgs;
-  std::vector<std::pair<Type *, StringRef>> _phiDepArgs;
 
   /// set of instructions that must be in the slice, accordingto dependence
   /// analysis

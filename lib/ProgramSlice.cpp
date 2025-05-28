@@ -51,8 +51,6 @@ using namespace llvm;
 struct dataDependence {
   std::set<const BasicBlock *> BBs;
   std::set<const Value *> dependences;
-  std::vector<std::pair<Type *, StringRef>> typeAndName;
-  bool phiCrit;
   std::set<const Value *> phiOnArgs;
 };
 
@@ -111,7 +109,17 @@ static void appendBlockGatesToPhiParent(
   }
 }
 
-bool doesBBHaveDataDep(const BasicBlock *BB,
+/**
+ * @brief Checks if a basic block contains any instruction with a data dependency.
+ *
+ * Iterates over all instructions in the given basic block and determines if any
+ * of them are present in the provided set of dependent values.
+ *
+ * @param BB Pointer to the basic block to be checked.
+ * @param deps Set of values representing data dependencies.
+ * @return true if any instruction in the basic block is found in the dependency set, false otherwise.
+ */
+bool blockContainsDataDependency(const BasicBlock *BB,
                        SmallPtrSet<const Value *, 32> deps) {
   bool hasDep = false;
   for (const Instruction &inst : *BB) {
@@ -168,10 +176,8 @@ std::pair<Status, dataDependence> computeDataDependencies(
   visited.insert(&I);
   std::queue<const Value *> worklist;
   worklist.push(&I);
-  std::vector<std::pair<Type *, StringRef>> phiArguments;
   SmallPtrSet<const Value *, 8> phiOnArgs;
   Status status = {true, ""};
-  bool phiCrit = false;
 
   // Initialize visitedPairs for PHI/BBlock pairs
   std::set<VisitedPair> visitedPairs;
@@ -187,12 +193,6 @@ std::pair<Status, dataDependence> computeDataDependencies(
     if (!isa<Instruction>(operand) && !isa<Argument>(operand)) return true;
 
     if (visited.count(operand)) {
-      if (isa<PHINode>(operand) && operand == &I) {
-        deps = {operand, &I};
-        while (!worklist.empty()) worklist.pop();
-        phiCrit = true;
-        LLVM_DEBUG(dbgs() << "\t\t\t[Data Dependency] phiCrit true..." << "\n");
-      }
       return true;
     }
 
@@ -251,10 +251,6 @@ std::pair<Status, dataDependence> computeDataDependencies(
         if (!processOperand(U.get())) break;
     }
 
-    if (phiCrit) {
-      break;
-    }
-
     if (const PHINode *phi = dyn_cast<PHINode>(cur)) {
       LLVM_DEBUG(dbgs() << "\t\t[Control Dependency] PHINode being processed: "
                         << *phi << "\n");
@@ -263,10 +259,11 @@ std::pair<Status, dataDependence> computeDataDependencies(
         const BasicBlock *incomingBB = phi->getIncomingBlock(i);
         const Value *incomingValue = phi->getIncomingValue(i);
 
-        bool hasDep = doesBBHaveDataDep(incomingBB, deps);
-        
-        // ~special case~ if the incoming block has no dependencies, but have control
-        // dependencies, we still need to compute its terminator dependencies
+        bool hasDep = blockContainsDataDependency(incomingBB, deps);
+
+        // ~special case~ if the incoming block has no dependencies, but have
+        // control dependencies, we still need to compute its terminator
+        // dependencies
         if (!hasDep) {
           worklist.push(incomingBB->getTerminator());
         }
@@ -356,7 +353,7 @@ std::pair<Status, dataDependence> computeDataDependencies(
   std::set<const Value *> depsSet(deps.begin(), deps.end());
   std::set<const BasicBlock *> BBsSet(BBs.begin(), BBs.end());
   std::set<const Value *> phiOnArgsSet(phiOnArgs.begin(), phiOnArgs.end());
-  return {status, {BBsSet, depsSet, phiArguments, phiCrit, phiOnArgsSet}};
+  return {status, {BBsSet, depsSet, phiOnArgsSet}};
 }
 
 /**
@@ -390,6 +387,18 @@ std::pair<Status, dataDependence> getDataDependencies(
   return {status, resultsData};
 }
 
+/**
+ * @brief Finds the nearest dominator of a basic block that is not post-dominated by it.
+ *
+ * Given a basic block \p BB, this function traverses up the dominator tree (using \p DT)
+ * and returns the first dominator block that is not post-dominated by \p BB (according to \p PDT).
+ * If all dominators are post-dominated by \p BB, returns nullptr.
+ *
+ * @param BB The basic block for which to find the controller.
+ * @param DT The dominator tree for the function.
+ * @param PDT The post-dominator tree for the function.
+ * @return The nearest controlling basic block, or nullptr if none is found.
+ */
 static const BasicBlock *getController(const BasicBlock *BB, DominatorTree &DT,
                                        PostDominatorTree &PDT) {
   const DomTreeNode *dom_node = DT.getNode(BB);
@@ -404,6 +413,17 @@ static const BasicBlock *getController(const BasicBlock *BB, DominatorTree &DT,
   return nullptr;
 }
 
+/**
+ * @brief Retrieves the gate instruction (conditional branch or switch) for a given basic block.
+ *
+ * This function examines the terminator instruction of the specified basic block @p BB.
+ * If the terminator is a conditional branch or a switch instruction, it returns a pointer
+ * to that instruction, which serves as the "gate" controlling the block's outgoing control flow.
+ * If the terminator is an unconditional branch or not a branch/switch, the function returns nullptr.
+ *
+ * @param BB Pointer to the basic block whose gate instruction is to be retrieved.
+ * @return const Value* Pointer to the gate instruction (conditional branch or switch), or nullptr if none.
+ */
 static const Value *getGate(const BasicBlock *BB) {
   const Value *branchInst = nullptr;
   if (BB) {
@@ -423,6 +443,22 @@ static const Value *getGate(const BasicBlock *BB) {
   return branchInst;
 }
 
+/**
+ * @brief Computes the control dependency "gates" for each basic block in a function.
+ *
+ * This function analyzes the control flow of the given function @p F and determines,
+ * for each basic block, the set of instructions (gates) that control entry into that block.
+ * Gates are typically conditional branch or switch instructions in predecessor blocks that
+ * dominate the current block but are not post-dominated by it. If a predecessor does not
+ * directly dominate the block, the function finds the controlling block and its gate.
+ *
+ * The result is a mapping from each basic block to a vector of gate instructions that
+ * represent the control dependencies for that block.
+ *
+ * @param F The function for which to compute gates.
+ * @return A map from each basic block to a vector of gate instructions (conditional branches or switches)
+ *         that control entry into the block.
+ */
 static const std::unordered_map<const BasicBlock *, SmallVector<const Value *>>
 computeGates(Function &F) {
   DominatorTree DT(F);
@@ -502,8 +538,6 @@ ProgramSlice::ProgramSlice(Instruction &Initial, Function &F,
     return;
   }
 
-  _phiCrit = data.phiCrit;
-
   std::set<const Instruction *> instsInSlice;
   SmallVector<Value *> depArgs;
 
@@ -533,7 +567,6 @@ ProgramSlice::ProgramSlice(Instruction &Initial, Function &F,
 
   _instsInSlice = instsInSlice;
   _depArgs = depArgs;
-  _phiDepArgs = data.typeAndName;
   _BBsInSlice = data.BBs;
 
   computeAttractorBlocks();
@@ -1085,22 +1118,19 @@ void ProgramSlice::simplifyCfg(Function *F, FunctionAnalysisManager &AM) {
 // }
 
 /**
- * @brief Adds a return instruction to function F, returning the computed
- * value of the sliced function.
+ * @brief Adds a return instruction to the exit basic block of the given function.
  *
- * @details This function inserts a return instruction into the exit block
- * of function F. Depending on the type of the initial instruction
- * (_initial), different return scenarios are handled:
- * - If _initial is a ReturnInst, it creates a return instruction returning
- * the value computed by _initial.
- * - If _initial is a CallInst, it checks if the called function has a void
- * return type; if so, it creates a return instruction with a nullptr return
- * value.
- * - If _phiCrit is set, it returns the argument corresponding to the phi
- * instruction criterion.
+ * This method ensures that the exit basic block of the function has a valid return instruction.
+ * If the block already has a terminator (such as an unconditional branch), it removes any invalid
+ * PHINode incoming values from successor blocks and erases the existing terminator.
  *
- * @param F The Function where the return instruction is added.
- * @return The newly created ReturnInst.
+ * The return value is determined based on the type of the initial instruction:
+ * - If the initial instruction is a ReturnInst, its return value is used.
+ * - If the initial instruction is a CallInst to a function returning void, a void return is created.
+ * - Otherwise, the value mapped from the initial instruction is used as the return value.
+ *
+ * @param F The function to which the return instruction will be added.
+ * @return A pointer to the newly created ReturnInst.
  */
 ReturnInst *ProgramSlice::addReturnValue(Function *F) {
   BasicBlock *exit = _Imap[_initial]->getParent();
@@ -1132,16 +1162,6 @@ ReturnInst *ProgramSlice::addReturnValue(Function *F) {
     if (ftype) {
       if (ftype->getReturnType()->isVoidTy())
         return ReturnInst::Create(F->getParent()->getContext(), nullptr, exit);
-    }
-  }
-  // If PhiCrit was seted, just return the argument that correspondes to the
-  // phi instruction criterion. (i.e take an argument and return it)
-  if (_phiCrit) {
-    for (int k = 0; k < F->arg_size(); ++k) {
-      Value *myArg = F->getArg(k);
-      if (myArg->getName() == _initial->getName()) {
-        return ReturnInst::Create(F->getParent()->getContext(), myArg, exit);
-      }
     }
   }
   return ReturnInst::Create(F->getParent()->getContext(), _Imap[_initial],
