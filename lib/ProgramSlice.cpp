@@ -110,17 +110,19 @@ static void appendBlockGatesToPhiParent(
 }
 
 /**
- * @brief Checks if a basic block contains any instruction with a data dependency.
+ * @brief Checks if a basic block contains any instruction with a data
+ * dependency.
  *
  * Iterates over all instructions in the given basic block and determines if any
  * of them are present in the provided set of dependent values.
  *
  * @param BB Pointer to the basic block to be checked.
  * @param deps Set of values representing data dependencies.
- * @return true if any instruction in the basic block is found in the dependency set, false otherwise.
+ * @return true if any instruction in the basic block is found in the dependency
+ * set, false otherwise.
  */
 bool blockContainsDataDependency(const BasicBlock *BB,
-                       SmallPtrSet<const Value *, 32> deps) {
+                                 std::set<const Value *> deps) {
   bool hasDep = false;
   for (const Instruction &inst : *BB) {
     if (llvm::is_contained(deps, &inst)) {
@@ -170,14 +172,15 @@ std::pair<Status, dataDependence> computeDataDependencies(
     LoopInfo &loopInfo,
     std::unordered_map<const BasicBlock *, SmallVector<const Value *>> &gates) {
   bool isSliceCriteionInLoop = loop && !loop->isInvalid();
-  SmallPtrSet<const Value *, 32> deps;
-  SmallPtrSet<const BasicBlock *, 32> BBs;
-  SmallPtrSet<const Value *, 32> visited;
-  visited.insert(&I);
-  std::queue<const Value *> worklist;
-  worklist.push(&I);
-  SmallPtrSet<const Value *, 8> phiOnArgs;
   Status status = {true, ""};
+  std::set<const Value *> deps;
+  std::set<const BasicBlock *> BBs;
+  std::set<const Value *> visited;
+  std::queue<const Value *> worklist;
+  std::set<const Value *> phiOnArgs;
+
+  visited.insert(&I);
+  worklist.push(&I);
 
   // Initialize visitedPairs for PHI/BBlock pairs
   std::set<VisitedPair> visitedPairs;
@@ -266,6 +269,7 @@ std::pair<Status, dataDependence> computeDataDependencies(
         // dependencies
         if (!hasDep) {
           worklist.push(incomingBB->getTerminator());
+          visited.insert(incomingBB->getTerminator());
         }
 
         BBs.insert(incomingBB);
@@ -349,11 +353,7 @@ std::pair<Status, dataDependence> computeDataDependencies(
       }
     }
   }
-  // Convert SmallPtrSet to std::set for return type compatibility
-  std::set<const Value *> depsSet(deps.begin(), deps.end());
-  std::set<const BasicBlock *> BBsSet(BBs.begin(), BBs.end());
-  std::set<const Value *> phiOnArgsSet(phiOnArgs.begin(), phiOnArgs.end());
-  return {status, {BBsSet, depsSet, phiOnArgsSet}};
+  return {status, {BBs, deps, phiOnArgs}};
 }
 
 /**
@@ -388,11 +388,13 @@ std::pair<Status, dataDependence> getDataDependencies(
 }
 
 /**
- * @brief Finds the nearest dominator of a basic block that is not post-dominated by it.
+ * @brief Finds the nearest dominator of a basic block that is not
+ * post-dominated by it.
  *
- * Given a basic block \p BB, this function traverses up the dominator tree (using \p DT)
- * and returns the first dominator block that is not post-dominated by \p BB (according to \p PDT).
- * If all dominators are post-dominated by \p BB, returns nullptr.
+ * Given a basic block \p BB, this function traverses up the dominator tree
+ * (using \p DT) and returns the first dominator block that is not
+ * post-dominated by \p BB (according to \p PDT). If all dominators are
+ * post-dominated by \p BB, returns nullptr.
  *
  * @param BB The basic block for which to find the controller.
  * @param DT The dominator tree for the function.
@@ -414,15 +416,19 @@ static const BasicBlock *getController(const BasicBlock *BB, DominatorTree &DT,
 }
 
 /**
- * @brief Retrieves the gate instruction (conditional branch or switch) for a given basic block.
+ * @brief Retrieves the gate instruction (conditional branch or switch) for a
+ * given basic block.
  *
- * This function examines the terminator instruction of the specified basic block @p BB.
- * If the terminator is a conditional branch or a switch instruction, it returns a pointer
- * to that instruction, which serves as the "gate" controlling the block's outgoing control flow.
- * If the terminator is an unconditional branch or not a branch/switch, the function returns nullptr.
+ * This function examines the terminator instruction of the specified basic
+ * block @p BB. If the terminator is a conditional branch or a switch
+ * instruction, it returns a pointer to that instruction, which serves as the
+ * "gate" controlling the block's outgoing control flow. If the terminator is an
+ * unconditional branch or not a branch/switch, the function returns nullptr.
  *
- * @param BB Pointer to the basic block whose gate instruction is to be retrieved.
- * @return const Value* Pointer to the gate instruction (conditional branch or switch), or nullptr if none.
+ * @param BB Pointer to the basic block whose gate instruction is to be
+ * retrieved.
+ * @return const Value* Pointer to the gate instruction (conditional branch or
+ * switch), or nullptr if none.
  */
 static const Value *getGate(const BasicBlock *BB) {
   const Value *branchInst = nullptr;
@@ -444,20 +450,22 @@ static const Value *getGate(const BasicBlock *BB) {
 }
 
 /**
- * @brief Computes the control dependency "gates" for each basic block in a function.
+ * @brief Computes the control dependency "gates" for each basic block in a
+ * function.
  *
- * This function analyzes the control flow of the given function @p F and determines,
- * for each basic block, the set of instructions (gates) that control entry into that block.
- * Gates are typically conditional branch or switch instructions in predecessor blocks that
- * dominate the current block but are not post-dominated by it. If a predecessor does not
- * directly dominate the block, the function finds the controlling block and its gate.
+ * This function analyzes the control flow of the given function @p F and
+ * determines, for each basic block, the set of instructions (gates) that
+ * control entry into that block. Gates are typically conditional branch or
+ * switch instructions in predecessor blocks that dominate the current block but
+ * are not post-dominated by it. If a predecessor does not directly dominate the
+ * block, the function finds the controlling block and its gate.
  *
- * The result is a mapping from each basic block to a vector of gate instructions that
- * represent the control dependencies for that block.
+ * The result is a mapping from each basic block to a vector of gate
+ * instructions that represent the control dependencies for that block.
  *
  * @param F The function for which to compute gates.
- * @return A map from each basic block to a vector of gate instructions (conditional branches or switches)
- *         that control entry into the block.
+ * @return A map from each basic block to a vector of gate instructions
+ * (conditional branches or switches) that control entry into the block.
  */
 static const std::unordered_map<const BasicBlock *, SmallVector<const Value *>>
 computeGates(Function &F) {
@@ -1118,16 +1126,20 @@ void ProgramSlice::simplifyCfg(Function *F, FunctionAnalysisManager &AM) {
 // }
 
 /**
- * @brief Adds a return instruction to the exit basic block of the given function.
+ * @brief Adds a return instruction to the exit basic block of the given
+ * function.
  *
- * This method ensures that the exit basic block of the function has a valid return instruction.
- * If the block already has a terminator (such as an unconditional branch), it removes any invalid
- * PHINode incoming values from successor blocks and erases the existing terminator.
+ * This method ensures that the exit basic block of the function has a valid
+ * return instruction. If the block already has a terminator (such as an
+ * unconditional branch), it removes any invalid PHINode incoming values from
+ * successor blocks and erases the existing terminator.
  *
  * The return value is determined based on the type of the initial instruction:
  * - If the initial instruction is a ReturnInst, its return value is used.
- * - If the initial instruction is a CallInst to a function returning void, a void return is created.
- * - Otherwise, the value mapped from the initial instruction is used as the return value.
+ * - If the initial instruction is a CallInst to a function returning void, a
+ * void return is created.
+ * - Otherwise, the value mapped from the initial instruction is used as the
+ * return value.
  *
  * @param F The function to which the return instruction will be added.
  * @return A pointer to the newly created ReturnInst.

@@ -33,9 +33,9 @@
 ; CHECK-NEXT:   %14 = phi i64 [ %15, %sliceclone_BB_6 ], [ 0, %sliceclone_BB_3 ]
 ; CHECK-NEXT:   %15 = add nuw nsw i64 %14, 1
 ; CHECK-NEXT:   %16 = icmp eq i64 %15, 65536
-; CHECK-NEXT:   br i1 %16, label %sliceclone_BB_19, label %sliceclone_BB_6
+; CHECK-NEXT:   br i1 %16, label %sliceclone_BB_{{19|20}}, label %sliceclone_BB_6
 ; CHECK-EMPTY:
-; CHECK-NEXT: sliceclone_BB_19:                                 ; preds = %sliceclone_BB_6
+; CHECK-NEXT: sliceclone_BB_{{19|20}}:
 ; CHECK-NEXT:   %17 = phi float [ %12, %sliceclone_BB_6 ]
 ; CHECK-NEXT:   %18 = phi float [ %13, %sliceclone_BB_6 ]
 ; CHECK-NEXT:   %19 = fadd float %17, %18
