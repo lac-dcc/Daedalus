@@ -784,8 +784,8 @@ void ProgramSlice::rerouteBranches(Function *F) {
           // block that is in the slice
           if (!newTarget) {
             bool sliceHasPHINodes = false;
-            for (const BasicBlock *bbInSlice : _BBsInSlice) {
-              if (!bbInSlice->phis().empty()) {
+            for (const Instruction *instInSlice : _instsInSlice) {
+              if (isa<PHINode>(instInSlice)) {
                 sliceHasPHINodes = true;
                 break;
               }
