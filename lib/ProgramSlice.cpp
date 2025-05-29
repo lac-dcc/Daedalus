@@ -577,6 +577,13 @@ ProgramSlice::ProgramSlice(Instruction &Initial, Function &F,
   _depArgs = depArgs;
   _BBsInSlice = data.BBs;
 
+  LLVM_DEBUG({
+    dbgs() << "\nBasic blocks in _BBsInSlice:\n";
+    for (const BasicBlock *BB : _BBsInSlice) {
+      dbgs() << "\t" << BB->getName() << "\n";
+    }
+  });
+
   computeAttractorBlocks();
 }
 
@@ -771,7 +778,45 @@ void ProgramSlice::rerouteBranches(Function *F) {
               dyn_cast<BranchInst>(parentBB->getTerminator())) {
         for (const BasicBlock *suc : origBranch->successors()) {
           BasicBlock *newTarget = _origToNewBBmap[_attractors[suc]];
-          if (!newTarget) continue;
+
+          // ~special case~ if the new target is not in the slice, we
+          // find a new target that is in the slice by searching for a dominated
+          // block that is in the slice
+          if (!newTarget) {
+            bool sliceHasPHINodes = false;
+            for (const BasicBlock *bbInSlice : _BBsInSlice) {
+              if (!bbInSlice->phis().empty()) {
+                sliceHasPHINodes = true;
+                break;
+              }
+            }
+            if (sliceHasPHINodes)
+              continue; // ~special case~ if slice has PHINodes, we cannot find
+                        // a new target doing this
+
+            // Perform a DFS to find a dominated block in the slice
+            std::stack<DomTreeNode *> dfsStack;
+            std::set<const BasicBlock *> visitedDFS;
+            DomTreeNode *domNode = DT.getNode(const_cast<BasicBlock *>(suc));
+            if (domNode) dfsStack.push(domNode);
+
+            while (!dfsStack.empty()) {
+              DomTreeNode *curNode = dfsStack.top();
+              dfsStack.pop();
+              const BasicBlock *curBB = curNode->getBlock();
+              if (visitedDFS.count(curBB)) continue;
+              visitedDFS.insert(curBB);
+
+              if (_BBsInSlice.count(curBB)) {
+                newTarget = _origToNewBBmap[curBB];
+                break;
+              }
+              for (DomTreeNode *child : *curNode) {
+                dfsStack.push(child);
+              }
+            }
+            if (!newTarget) continue;
+          }
           LLVM_DEBUG(dbgs()
                      << "Successor: " << suc->getName() << "\nAttractor: "
                      << (_attractors[suc] ? _attractors[suc]->getName().str()
