@@ -728,6 +728,46 @@ void updatePHINodes(Function *F) {
 }
 
 /**
+ * @brief Performs a BFS on the dominator tree to find the next dominated basic
+ * block that is present in the target set.
+ *
+ * @param DT The DominatorTree for the function.
+ * @param startNodeBB The BasicBlock from which to start the BFS.
+ * @param targetBBs A set of BasicBlocks to search within.
+ * @param origToNewBBmap A map from original BasicBlocks to their new
+ * counterparts in the slice.
+ * @return BasicBlock* The new BasicBlock corresponding to the found dominated
+ * block, or nullptr if not found.
+ */
+static BasicBlock *findNextDominatedNode(
+    DominatorTree &DT, const BasicBlock *startNodeBB,
+    const std::set<const BasicBlock *> &targetBBs,
+    std::map<const BasicBlock *, BasicBlock *> &origToNewBBmap) {
+  BasicBlock *newTarget = nullptr;
+  std::stack<DomTreeNode *> bfsStack;
+  std::set<const BasicBlock *> visitedBFS;
+  DomTreeNode *domNode = DT.getNode(const_cast<BasicBlock *>(startNodeBB));
+  if (domNode) bfsStack.push(domNode);
+  while (!bfsStack.empty()) {
+    DomTreeNode *curNode = bfsStack.top();
+    bfsStack.pop();
+    const BasicBlock *curBB = curNode->getBlock();
+    if (visitedBFS.count(curBB)) continue;
+    visitedBFS.insert(curBB);
+    BasicBlock *curBBNew = origToNewBBmap[curBB];
+    if (curBBNew && curBB != startNodeBB &&
+        targetBBs.count(curBB)) {
+      newTarget = curBBNew;
+      break;
+    }
+    for (DomTreeNode *child : *curNode) {
+      bfsStack.push(child);
+    }
+  }
+  return newTarget;
+}
+
+/**
  * @brief Reroutes branches in the slice to properly build control flow in
  * the delegate function.
  *
@@ -783,38 +823,8 @@ void ProgramSlice::rerouteBranches(Function *F) {
           // find a new target that is in the slice by searching for a dominated
           // block that is in the slice
           if (!newTarget) {
-            bool sliceHasPHINodes = false;
-            for (const Instruction *instInSlice : _instsInSlice) {
-              if (isa<PHINode>(instInSlice)) {
-                sliceHasPHINodes = true;
-                break;
-              }
-            }
-            if (sliceHasPHINodes)
-              continue; // ~special case~ if slice has PHINodes, we cannot find
-                        // a new target doing this
-
-            // Perform a DFS to find a dominated block in the slice
-            std::stack<DomTreeNode *> dfsStack;
-            std::set<const BasicBlock *> visitedDFS;
-            DomTreeNode *domNode = DT.getNode(const_cast<BasicBlock *>(suc));
-            if (domNode) dfsStack.push(domNode);
-
-            while (!dfsStack.empty()) {
-              DomTreeNode *curNode = dfsStack.top();
-              dfsStack.pop();
-              const BasicBlock *curBB = curNode->getBlock();
-              if (visitedDFS.count(curBB)) continue;
-              visitedDFS.insert(curBB);
-
-              if (_BBsInSlice.count(curBB)) {
-                newTarget = _origToNewBBmap[curBB];
-                break;
-              }
-              for (DomTreeNode *child : *curNode) {
-                dfsStack.push(child);
-              }
-            }
+            newTarget =
+                findNextDominatedNode(DT, suc, _BBsInSlice, _origToNewBBmap);
             if (!newTarget) continue;
           }
           LLVM_DEBUG(dbgs()
@@ -855,12 +865,21 @@ void ProgramSlice::rerouteBranches(Function *F) {
              ++idx) {
           BasicBlock *suc = origSwitch->getSuccessor(idx);
           BasicBlock *newTarget = _origToNewBBmap[_attractors[suc]];
-          if (newTarget) validTargets.push_back(newTarget);
+          if (newTarget && _BBsInSlice.count(newTarget))
+            validTargets.push_back(newTarget);
         }
         // Only create an unconditional branch if there is exactly one valid
         // target
         if (validTargets.size() == 1) {
           BranchInst::Create(validTargets.front(), &BB);
+        } else if (validTargets.size() == 0) {
+          // ~special case~ if the new target is not in the slice, we
+          // find a new target that is in the slice by searching for a dominated
+          // block that is in the slice
+          BasicBlock *newTarget =
+              findNextDominatedNode(DT, parentBB, _BBsInSlice, _origToNewBBmap);
+          if (!newTarget) continue;
+          BranchInst::Create(newTarget, &BB);
         }
       }
     } else {
@@ -873,12 +892,19 @@ void ProgramSlice::rerouteBranches(Function *F) {
           const BasicBlock *attractor = _attractors[suc];
           BasicBlock *newSucc = _origToNewBBmap[attractor];
           if (!newSucc) {
-            suc->replaceUsesWithIf(unreachableBlock, [F](Use &U) {
-              auto *UserI = dyn_cast<Instruction>(U.getUser());
-              return UserI && UserI->getParent()->getParent() == F;
-            });
-            BI->setSuccessor(idx, unreachableBlock);
-            continue;
+            // ~special case~ if the new target is not in the slice, we
+            // find a new target that is in the slice by searching for a
+            // dominated block that is in the slice
+            newSucc =
+                findNextDominatedNode(DT, suc, _BBsInSlice, _origToNewBBmap);
+            if (!newSucc) {
+              suc->replaceUsesWithIf(unreachableBlock, [F](Use &U) {
+                auto *UserI = dyn_cast<Instruction>(U.getUser());
+                return UserI && UserI->getParent()->getParent() == F;
+              });
+              BI->setSuccessor(idx, unreachableBlock);
+              continue;
+            }
           }
           BI->setSuccessor(idx, newSucc);
           for (Instruction &I : *newSucc) {
@@ -894,12 +920,19 @@ void ProgramSlice::rerouteBranches(Function *F) {
           const BasicBlock *attractor = _attractors[suc];
           BasicBlock *newSucc = _origToNewBBmap[attractor];
           if (!newSucc) {
-            suc->replaceUsesWithIf(unreachableBlock, [F](Use &U) {
-              auto *UserI = dyn_cast<Instruction>(U.getUser());
-              return UserI && UserI->getParent()->getParent() == F;
-            });
-            SI->setSuccessor(idx, unreachableBlock);
-            continue;
+            // ~special case~ if the new target is not in the slice, we
+            // find a new target that is in the slice by searching for a
+            // dominated block that is in the slice
+            newSucc =
+                findNextDominatedNode(DT, suc, _BBsInSlice, _origToNewBBmap);
+            if (!newSucc) {
+              suc->replaceUsesWithIf(unreachableBlock, [F](Use &U) {
+                auto *UserI = dyn_cast<Instruction>(U.getUser());
+                return UserI && UserI->getParent()->getParent() == F;
+              });
+              SI->setSuccessor(idx, unreachableBlock);
+              continue;
+            }
           }
           SI->setSuccessor(idx, newSucc);
           for (Instruction &I : *newSucc) {
