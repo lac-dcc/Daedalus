@@ -83,7 +83,8 @@ using VisitedPair = std::pair<const BasicBlock *, const PHINode *>;
 static void appendBlockGatesToPhiParent(
     const BasicBlock *BB, const PHINode *phi,
     std::unordered_map<const BasicBlock *, SmallVector<const Value *>> &gates,
-    std::set<VisitedPair> &visitedPairs) {
+    std::set<VisitedPair> &visitedPairs, Loop *loop,
+    bool isSliceCriterionInsideLoop) {
   std::stack<VisitedPair> callStack;
   callStack.push({BB, phi});
 
@@ -99,11 +100,30 @@ static void appendBlockGatesToPhiParent(
       LLVM_DEBUG(dbgs() << "\t\t\t\tAdding gates from block "
                         << curBB->getName() << " into gates of block "
                         << curPhi->getParent()->getName() << "\n");
+
+      if (isSliceCriterionInsideLoop) {
+        if (loop->getHeader() == curBB) {
+          LLVM_DEBUG(
+              dbgs()
+              << "\t\t\t\t\t---> Basic block " << curBB->getName()
+              << " is the header of slice criterion's loop...\n");
+          continue;
+        }
+        if (loop->contains(curBB) && loop->isLoopExiting(curBB)) {
+          LLVM_DEBUG(
+              dbgs()
+              << "\t\t\t\t\t---> Basic block " << curBB->getName()
+              << " is an exiting block of the slice criterion's loop...\n");
+          continue;
+        }
+      }
+
       for (const Value *gate : it->second) {
-        gates[curPhi->getParent()].push_back(gate);
-        LLVM_DEBUG(dbgs() << "\t\t\t\tAdded gate: " << *gate << "\n");
-        if (const Instruction *gateInst = dyn_cast<Instruction>(gate))
+        if (const Instruction *gateInst = dyn_cast<Instruction>(gate)) {
+          gates[curPhi->getParent()].push_back(gate);
+          LLVM_DEBUG(dbgs() << "\t\t\t\tAdded gate: " << *gate << "\n");
           callStack.push({gateInst->getParent(), curPhi});
+        }
       }
     }
   }
@@ -171,7 +191,7 @@ std::pair<Status, dataDependence> computeDataDependencies(
     const Instruction &I, Function &F, Loop *loop, BasicBlock *loopHeader,
     LoopInfo &loopInfo,
     std::unordered_map<const BasicBlock *, SmallVector<const Value *>> &gates) {
-  bool isSliceCriteionInLoop = loop && !loop->isInvalid();
+  bool isSliceCriterionInsideLoop = loop && !loop->isInvalid();
   Status status = {true, ""};
   std::set<const Value *> deps;
   std::set<const BasicBlock *> BBs;
@@ -202,7 +222,7 @@ std::pair<Status, dataDependence> computeDataDependencies(
     LLVM_DEBUG(dbgs() << "\t\t\t[Data Dependency] Operand being processed: "
                       << *operand << "\n");
 
-    if (isSliceCriteionInLoop) {
+    if (isSliceCriterionInsideLoop) {
       if (const PHINode *phi = dyn_cast<PHINode>(operand)) {
         if (phi->getParent() == loopHeader) { // ~special case~
           LLVM_DEBUG(
@@ -313,7 +333,8 @@ std::pair<Status, dataDependence> computeDataDependencies(
                           "is from the same block. Checking for control using "
                           "data dependencies...\n");
             if (incomingBB->phis().empty())
-              appendBlockGatesToPhiParent(incomingBB, phi, gates, visitedPairs);
+              appendBlockGatesToPhiParent(incomingBB, phi, gates, visitedPairs,
+                                          loop, isSliceCriterionInsideLoop);
           }
         }
       }
@@ -327,17 +348,17 @@ std::pair<Status, dataDependence> computeDataDependencies(
             // ~special case~ if the gate instruction is outside the current
             // slice criterion's loop, don't treat it as a dependency
             if (const BranchInst *BI = dyn_cast<BranchInst>(gate)) {
-              if (BI->isConditional()) {
-                if (isSliceCriteionInLoop && !loop->contains(BI->getParent())) {
-                  LLVM_DEBUG(
-                      dbgs()
-                      << "\t\t\t--> Branch instruction is outside the current "
-                         "criterion's loop...\n");
-                  continue;
-                }
+              if (isSliceCriterionInsideLoop &&
+                  !loop->contains(BI->getParent())) {
+                LLVM_DEBUG(
+                    dbgs()
+                    << "\t\t\t--> Branch instruction is outside the current "
+                       "criterion's loop...\n");
+                continue;
               }
             } else if (const SwitchInst *SI = dyn_cast<SwitchInst>(cur)) {
-              if (isSliceCriteionInLoop && !loop->contains(SI->getParent())) {
+              if (isSliceCriterionInsideLoop &&
+                  !loop->contains(SI->getParent())) {
                 LLVM_DEBUG(
                     dbgs()
                     << "\t\t\t--> Switch instruction is outside the current "
@@ -744,24 +765,23 @@ static BasicBlock *findNextDominatedNode(
     const std::set<const BasicBlock *> &targetBBs,
     std::map<const BasicBlock *, BasicBlock *> &origToNewBBmap) {
   BasicBlock *newTarget = nullptr;
-  std::stack<DomTreeNode *> bfsStack;
-  std::set<const BasicBlock *> visitedBFS;
+  std::stack<DomTreeNode *> stack;
+  std::set<const BasicBlock *> visited;
   DomTreeNode *domNode = DT.getNode(const_cast<BasicBlock *>(startNodeBB));
-  if (domNode) bfsStack.push(domNode);
-  while (!bfsStack.empty()) {
-    DomTreeNode *curNode = bfsStack.top();
-    bfsStack.pop();
+  if (domNode) stack.push(domNode);
+  while (!stack.empty()) {
+    DomTreeNode *curNode = stack.top();
+    stack.pop();
     const BasicBlock *curBB = curNode->getBlock();
-    if (visitedBFS.count(curBB)) continue;
-    visitedBFS.insert(curBB);
+    if (visited.count(curBB)) continue;
+    visited.insert(curBB);
     BasicBlock *curBBNew = origToNewBBmap[curBB];
-    if (curBBNew && curBB != startNodeBB &&
-        targetBBs.count(curBB)) {
+    if (curBBNew && curBB != startNodeBB && targetBBs.count(curBB)) {
       newTarget = curBBNew;
       break;
     }
     for (DomTreeNode *child : *curNode) {
-      bfsStack.push(child);
+      stack.push(child);
     }
   }
   return newTarget;
@@ -810,10 +830,10 @@ void ProgramSlice::rerouteBranches(Function *F) {
   // Iterate over all blocks in the function
   for (BasicBlock &BB : *F) {
     Instruction *terminator = BB.getTerminator();
+  const BasicBlock *parentBB = _newToOrigBBmap[&BB];
     if (!terminator) {
       LLVM_DEBUG(dbgs() << "Parent BB without terminator: " << BB.getName()
                         << "\n");
-      const BasicBlock *parentBB = _newToOrigBBmap[&BB];
       if (const BranchInst *origBranch =
               dyn_cast<BranchInst>(parentBB->getTerminator())) {
         for (const BasicBlock *suc : origBranch->successors()) {
@@ -823,9 +843,10 @@ void ProgramSlice::rerouteBranches(Function *F) {
           // find a new target that is in the slice by searching for a dominated
           // block that is in the slice
           if (!newTarget) {
-            newTarget =
-                findNextDominatedNode(DT, suc, _BBsInSlice, _origToNewBBmap);
-            if (!newTarget) continue;
+            // newTarget =
+            //     findNextDominatedNode(DT, parentBB, _BBsInSlice, _origToNewBBmap);
+            // if (!newTarget)
+              continue;
           }
           LLVM_DEBUG(dbgs()
                      << "Successor: " << suc->getName() << "\nAttractor: "
@@ -865,7 +886,7 @@ void ProgramSlice::rerouteBranches(Function *F) {
              ++idx) {
           BasicBlock *suc = origSwitch->getSuccessor(idx);
           BasicBlock *newTarget = _origToNewBBmap[_attractors[suc]];
-          if (newTarget && _BBsInSlice.count(newTarget))
+          if (newTarget && _BBsInSlice.count(suc))
             validTargets.push_back(newTarget);
         }
         // Only create an unconditional branch if there is exactly one valid
@@ -876,10 +897,10 @@ void ProgramSlice::rerouteBranches(Function *F) {
           // ~special case~ if the new target is not in the slice, we
           // find a new target that is in the slice by searching for a dominated
           // block that is in the slice
-          BasicBlock *newTarget =
-              findNextDominatedNode(DT, parentBB, _BBsInSlice, _origToNewBBmap);
-          if (!newTarget) continue;
-          BranchInst::Create(newTarget, &BB);
+          // BasicBlock *newTarget =
+          //     findNextDominatedNode(DT, parentBB, _BBsInSlice, _origToNewBBmap);
+          // if (!newTarget) continue;
+          // BranchInst::Create(newTarget, &BB);
         }
       }
     } else {
@@ -895,8 +916,8 @@ void ProgramSlice::rerouteBranches(Function *F) {
             // ~special case~ if the new target is not in the slice, we
             // find a new target that is in the slice by searching for a
             // dominated block that is in the slice
-            newSucc =
-                findNextDominatedNode(DT, suc, _BBsInSlice, _origToNewBBmap);
+            // newSucc =
+            //     findNextDominatedNode(DT, parentBB, _BBsInSlice, _origToNewBBmap);
             if (!newSucc) {
               suc->replaceUsesWithIf(unreachableBlock, [F](Use &U) {
                 auto *UserI = dyn_cast<Instruction>(U.getUser());
@@ -923,8 +944,8 @@ void ProgramSlice::rerouteBranches(Function *F) {
             // ~special case~ if the new target is not in the slice, we
             // find a new target that is in the slice by searching for a
             // dominated block that is in the slice
-            newSucc =
-                findNextDominatedNode(DT, suc, _BBsInSlice, _origToNewBBmap);
+            // newSucc =
+            //     findNextDominatedNode(DT, suc, _BBsInSlice, _origToNewBBmap);
             if (!newSucc) {
               suc->replaceUsesWithIf(unreachableBlock, [F](Use &U) {
                 auto *UserI = dyn_cast<Instruction>(U.getUser());
