@@ -103,10 +103,8 @@ static void appendBlockGatesToPhiParent(
 
       if (isSliceCriterionInsideLoop) {
         if (loop->getHeader() == curBB) {
-          LLVM_DEBUG(
-              dbgs()
-              << "\t\t\t\t\t---> Basic block " << curBB->getName()
-              << " is the header of slice criterion's loop...\n");
+          LLVM_DEBUG(dbgs() << "\t\t\t\t\t---> Basic block " << curBB->getName()
+                            << " is the header of slice criterion's loop...\n");
           continue;
         }
         if (loop->contains(curBB) && loop->isLoopExiting(curBB)) {
@@ -190,8 +188,8 @@ bool blockContainsDataDependency(const BasicBlock *BB,
 std::pair<Status, dataDependence> computeDataDependencies(
     const Instruction &I, Function &F, Loop *loop, BasicBlock *loopHeader,
     LoopInfo &loopInfo,
-    std::unordered_map<const BasicBlock *, SmallVector<const Value *>> &gates) {
-  bool isSliceCriterionInsideLoop = loop && !loop->isInvalid();
+    std::unordered_map<const BasicBlock *, SmallVector<const Value *>> &gates,
+    bool isSliceCriterionInsideLoop) {
   Status status = {true, ""};
   std::set<const Value *> deps;
   std::set<const BasicBlock *> BBs;
@@ -396,14 +394,12 @@ std::pair<Status, dataDependence> computeDataDependencies(
  */
 std::pair<Status, dataDependence> getDataDependencies(
     Instruction &I, Function &F, FunctionAnalysisManager &FAM,
-    std::unordered_map<const BasicBlock *, SmallVector<const Value *>> &gates) {
+    std::unordered_map<const BasicBlock *, SmallVector<const Value *>> &gates,
+    bool isSliceCriterionInsideLoop, LoopInfo &loopInfo, Loop *loop,
+    BasicBlock *loopHeader) {
 
-  LoopInfo &loopInfo = FAM.getResult<LoopAnalysis>(F);
-  Loop *loop = loopInfo.getLoopFor(I.getParent());
-  BasicBlock *loopHeader = (loop) ? loop->getHeader() : nullptr;
-
-  auto [status, resultsData] =
-      computeDataDependencies(I, F, loop, loopHeader, loopInfo, gates);
+  auto [status, resultsData] = computeDataDependencies(
+      I, F, loop, loopHeader, loopInfo, gates, isSliceCriterionInsideLoop);
 
   return {status, resultsData};
 }
@@ -550,7 +546,15 @@ ProgramSlice::ProgramSlice(Instruction &Initial, Function &F,
   std::unordered_map<const BasicBlock *, SmallVector<const Value *>> gates =
       computeGates(F);
 
-  auto [check, data] = getDataDependencies(Initial, F, FAM, gates);
+  LoopInfo &loopInfo = FAM.getResult<LoopAnalysis>(F);
+  Loop *loop = loopInfo.getLoopFor(Initial.getParent());
+  BasicBlock *loopHeader = (loop) ? loop->getHeader() : nullptr;
+
+  bool isSliceCriterionInsideLoop = loop && !loop->isInvalid();
+
+  auto [check, data] =
+      getDataDependencies(Initial, F, FAM, gates, isSliceCriterionInsideLoop,
+                          loopInfo, loop, loopHeader);
 
   // ~special case~
   for (auto &BB : data.BBs) {
@@ -605,7 +609,66 @@ ProgramSlice::ProgramSlice(Instruction &Initial, Function &F,
     }
   });
 
-  computeAttractorBlocks();
+  computeAttractorBlocks(loop, loopInfo);
+  LLVM_DEBUG({
+    dbgs() << "\n\tAttractors:\n";
+    for (const BasicBlock &BB : *_parentFunction) {
+      StringRef attractorBlockName =
+          (_attractors[&BB]) ? _attractors[&BB]->getName() : "null";
+      dbgs() << "\t\tBlock: " << BB.getName()
+             << " -> Attractor: " << attractorBlockName << "\n";
+    }
+    dbgs() << "\tPredecessors of original function:\n";
+    for (const BasicBlock &BB : *_parentFunction) {
+      dbgs() << "\t\tBlock: " << BB.getName() << " -> Predecessors: ";
+      for (const BasicBlock *pred : predecessors(&BB)) {
+        dbgs() << pred->getName() << " ";
+      }
+      dbgs() << "\n";
+    }
+    dbgs() << "\n";
+  });
+}
+
+/**
+ * @brief Performs a BFS on the dominator tree to find the next dominated basic
+ * block that is present in the target set.
+ *
+ * @param DT The DominatorTree for the function.
+ * @param startNodeBB The BasicBlock from which to start the BFS.
+ * @param targetBBs A set of BasicBlocks to search within.
+ * @param origToNewBBmap A map from original BasicBlocks to their new
+ * counterparts in the slice.
+ * @return BasicBlock* The new BasicBlock corresponding to the found dominated
+ * block, or nullptr if not found.
+ */
+static BasicBlock *findNextDominatedNode(
+    DominatorTree &DT, const BasicBlock *startNodeBB,
+    const std::set<const BasicBlock *> &targetBBs,
+    std::map<const BasicBlock *, BasicBlock *> &origToNewBBmap) {
+  BasicBlock *newTarget = nullptr;
+  std::stack<DomTreeNode *> stack;
+  std::set<const BasicBlock *> visited;
+  DomTreeNode *domNode = DT.getNode(startNodeBB);
+  if (domNode) stack.push(domNode);
+  while (!stack.empty()) {
+    DomTreeNode *curNode = stack.top();
+    stack.pop();
+    BasicBlock *curBB = curNode->getBlock();
+    if (visited.count(curBB)) continue;
+    visited.insert(curBB);
+    BasicBlock *curBBNew = origToNewBBmap[curBB];
+    LLVM_DEBUG(dbgs() << "\t\tVisiting: " << curBB->getName() << "\n");
+    if (/*curBBNew &&*/ curBB != startNodeBB && targetBBs.count(curBB)) {
+      // newTarget = curBBNew;
+      newTarget = curBB;
+      break;
+    }
+    for (DomTreeNode *child : *curNode) {
+      stack.push(child);
+    }
+  }
+  return newTarget;
 }
 
 /**
@@ -631,32 +694,50 @@ ProgramSlice::ProgramSlice(Instruction &Initial, Function &F,
  * @post `_attractors` will contain a mapping of basic blocks to their
  *       attractor blocks.
  */
-void ProgramSlice::computeAttractorBlocks() {
-  PostDominatorTree PDT(*_parentFunction);
+void ProgramSlice::computeAttractorBlocks(Loop *loop, LoopInfo &loopInfo) {
   std::map<const BasicBlock *, const BasicBlock *> attractors;
-
-  for (const BasicBlock &BB : *_parentFunction) {
-    if (attractors.count(&BB) > 0) {
-      continue;
-    }
-
-    if (_BBsInSlice.count(&BB) > 0) {
-      attractors[&BB] = &BB;
-      continue;
-    }
-
-    DomTreeNode *OrigBB = PDT.getNode(&BB);
-    DomTreeNode *Cand = OrigBB->getIDom();
-    while (Cand != nullptr) {
-      if (_BBsInSlice.count(Cand->getBlock()) > 0) {
-        break;
+/*  if (loop && !loop->isInvalid()) {
+    // ~special case~ if the slice criterion is inside a loop, find attractors
+    // only for the blocks inside the loop. In this case the attractror is the
+    // next dominated block that is inside _BBsInSlice
+    LLVM_DEBUG(
+        dbgs()
+        << "Computing blocks' attractors inside slice criterion's loop...\n");
+    DominatorTree DT(*_parentFunction);
+    for (const BasicBlock *BB : loop->getBlocks()) {
+      if (_BBsInSlice.count(BB)) {
+        attractors[BB] =
+            findNextDominatedNode(DT, BB, _BBsInSlice, _origToNewBBmap);
+        if (attractors[BB]) {
+          LLVM_DEBUG(dbgs() << BB->getName() << "'s attractor name: "
+                            << attractors[BB]->getName() << "\n");
+        } else {
+          attractors[BB] = BB;
+          LLVM_DEBUG(dbgs() << BB->getName() << " is its own attractor...\n");
+        }
       }
-      Cand = Cand->getIDom();
     }
-    if (Cand) {
-      attractors[&BB] = Cand->getBlock();
+  } else {*/
+    LLVM_DEBUG(dbgs() << "Computing attractors...\n");
+    PostDominatorTree PDT(*_parentFunction);
+    for (const BasicBlock &BB : *_parentFunction) {
+      if (_BBsInSlice.count(&BB) > 0) {
+        attractors[&BB] = &BB;
+        continue;
+      }
+      DomTreeNode *OrigBB = PDT.getNode(&BB);
+      DomTreeNode *Cand = OrigBB->getIDom();
+      while (Cand != nullptr) {
+        if (_BBsInSlice.count(Cand->getBlock()) > 0) {
+          break;
+        }
+        Cand = Cand->getIDom();
+      }
+      if (Cand) {
+        attractors[&BB] = Cand->getBlock();
+      }
     }
-  }
+  // }
   _attractors = attractors;
 }
 
@@ -749,45 +830,6 @@ void updatePHINodes(Function *F) {
 }
 
 /**
- * @brief Performs a BFS on the dominator tree to find the next dominated basic
- * block that is present in the target set.
- *
- * @param DT The DominatorTree for the function.
- * @param startNodeBB The BasicBlock from which to start the BFS.
- * @param targetBBs A set of BasicBlocks to search within.
- * @param origToNewBBmap A map from original BasicBlocks to their new
- * counterparts in the slice.
- * @return BasicBlock* The new BasicBlock corresponding to the found dominated
- * block, or nullptr if not found.
- */
-static BasicBlock *findNextDominatedNode(
-    DominatorTree &DT, const BasicBlock *startNodeBB,
-    const std::set<const BasicBlock *> &targetBBs,
-    std::map<const BasicBlock *, BasicBlock *> &origToNewBBmap) {
-  BasicBlock *newTarget = nullptr;
-  std::stack<DomTreeNode *> stack;
-  std::set<const BasicBlock *> visited;
-  DomTreeNode *domNode = DT.getNode(const_cast<BasicBlock *>(startNodeBB));
-  if (domNode) stack.push(domNode);
-  while (!stack.empty()) {
-    DomTreeNode *curNode = stack.top();
-    stack.pop();
-    const BasicBlock *curBB = curNode->getBlock();
-    if (visited.count(curBB)) continue;
-    visited.insert(curBB);
-    BasicBlock *curBBNew = origToNewBBmap[curBB];
-    if (curBBNew && curBB != startNodeBB && targetBBs.count(curBB)) {
-      newTarget = curBBNew;
-      break;
-    }
-    for (DomTreeNode *child : *curNode) {
-      stack.push(child);
-    }
-  }
-  return newTarget;
-}
-
-/**
  * @brief Reroutes branches in the slice to properly build control flow in
  * the delegate function.
  *
@@ -830,28 +872,26 @@ void ProgramSlice::rerouteBranches(Function *F) {
   // Iterate over all blocks in the function
   for (BasicBlock &BB : *F) {
     Instruction *terminator = BB.getTerminator();
-  const BasicBlock *parentBB = _newToOrigBBmap[&BB];
+    const BasicBlock *parentBB = _newToOrigBBmap[&BB];
     if (!terminator) {
       LLVM_DEBUG(dbgs() << "Parent BB without terminator: " << BB.getName()
                         << "\n");
       if (const BranchInst *origBranch =
               dyn_cast<BranchInst>(parentBB->getTerminator())) {
+/*        int validSuccs = 0;
         for (const BasicBlock *suc : origBranch->successors()) {
-          BasicBlock *newTarget = _origToNewBBmap[_attractors[suc]];
-
-          // ~special case~ if the new target is not in the slice, we
-          // find a new target that is in the slice by searching for a dominated
-          // block that is in the slice
+          if (_BBsInSlice.count(suc)) validSuccs++;
+        }
+        if (validSuccs == 0) {
+          const BasicBlock *attractor = _attractors[origBranch->getParent()];
+          BasicBlock *newTarget = _origToNewBBmap[attractor];
           if (!newTarget) {
-            // newTarget =
-            //     findNextDominatedNode(DT, parentBB, _BBsInSlice, _origToNewBBmap);
-            // if (!newTarget)
-              continue;
+            continue;
           }
           LLVM_DEBUG(dbgs()
-                     << "Successor: " << suc->getName() << "\nAttractor: "
-                     << (_attractors[suc] ? _attractors[suc]->getName().str()
-                                          : "null")
+                     << "Successor: " << origBranch->getParent()->getName()
+                     << "\nAttractor: "
+                     << (attractor ? attractor->getName().str() : "null")
                      << "\n");
           BranchInst::Create(newTarget, &BB);
 
@@ -873,8 +913,48 @@ void ProgramSlice::rerouteBranches(Function *F) {
               }
             }
           }
-          break;
-        }
+        } else {*/
+          for (const BasicBlock *suc : origBranch->successors()) {
+            const BasicBlock *attractor = _attractors[suc];
+            BasicBlock *newTarget = _origToNewBBmap[attractor];
+
+            // ~special case~ if the new target is not in the slice, we
+            // find a new target that is in the slice by searching for a
+            // dominated block that is in the slice
+            if (!newTarget) {
+              // newTarget =
+              //     findNextDominatedNode(DT, parentBB, _BBsInSlice,
+              //     _origToNewBBmap);
+              // if (!newTarget)
+              continue;
+            }
+            LLVM_DEBUG(dbgs()
+                       << "Successor: " << suc->getName() << "\nAttractor: "
+                       << (attractor ? attractor->getName().str() : "null")
+                       << "\n");
+            BranchInst::Create(newTarget, &BB);
+
+            // If new successor has any PHINodes that merged a path from
+            // a block that was dominated by this block, update its
+            // incoming block to be this instead.
+            for (Instruction &I : *newTarget) {
+              if (!isa<PHINode>(I)) continue;
+              PHINode *phi = cast<PHINode>(&I);
+              for (BasicBlock *newTargetPHIBB : phi->blocks()) {
+                if (newTargetPHIBB->getParent() != F) {
+                  DomTreeNode *OrigBB = DT.getNode(newTargetPHIBB);
+                  DomTreeNode *Cand = OrigBB->getIDom();
+                  while (Cand) {
+                    if (Cand->getBlock() == parentBB) break;
+                    Cand = Cand->getIDom();
+                  }
+                  if (Cand) phi->replaceIncomingBlockWith(newTargetPHIBB, &BB);
+                }
+              }
+            }
+            break;
+          }
+        // }
       } else if (const SwitchInst *origSwitch =
                      dyn_cast<SwitchInst>(parentBB->getTerminator())) {
         // ~special case~ if the new function has just one target from the
@@ -898,7 +978,8 @@ void ProgramSlice::rerouteBranches(Function *F) {
           // find a new target that is in the slice by searching for a dominated
           // block that is in the slice
           // BasicBlock *newTarget =
-          //     findNextDominatedNode(DT, parentBB, _BBsInSlice, _origToNewBBmap);
+          //     findNextDominatedNode(DT, parentBB, _BBsInSlice,
+          //     _origToNewBBmap);
           // if (!newTarget) continue;
           // BranchInst::Create(newTarget, &BB);
         }
@@ -917,7 +998,8 @@ void ProgramSlice::rerouteBranches(Function *F) {
             // find a new target that is in the slice by searching for a
             // dominated block that is in the slice
             // newSucc =
-            //     findNextDominatedNode(DT, parentBB, _BBsInSlice, _origToNewBBmap);
+            //     findNextDominatedNode(DT, parentBB, _BBsInSlice,
+            //     _origToNewBBmap);
             if (!newSucc) {
               suc->replaceUsesWithIf(unreachableBlock, [F](Use &U) {
                 auto *UserI = dyn_cast<Instruction>(U.getUser());
@@ -975,20 +1057,6 @@ void ProgramSlice::rerouteBranches(Function *F) {
   updatePHINodes(F);
 
   LLVM_DEBUG({
-    dbgs() << "\n\tAttractors:\n";
-    for (const auto &pair : _attractors) {
-      std::string name = (pair.second) ? pair.second->getName().str() : "null";
-      dbgs() << "\t\tBlock: " << pair.first->getName()
-             << " -> Attractor: " << name << "\n";
-    }
-    dbgs() << "\tPredecessors of original function:\n";
-    for (const BasicBlock &BB : *_parentFunction) {
-      dbgs() << "\t\tBlock: " << BB.getName() << " -> Predecessors: ";
-      for (const BasicBlock *pred : predecessors(&BB)) {
-        dbgs() << pred->getName() << " ";
-      }
-      dbgs() << "\n";
-    }
     dbgs() << "\tPredecessors of new function:\n";
     for (const BasicBlock &BB : *F) {
       dbgs() << "\t\tBlock: " << BB.getName() << " -> Predecessors: ";
@@ -1036,6 +1104,15 @@ void ProgramSlice::insertNewBB(const BasicBlock *originalBB, Function *F) {
   std::string newBBName = "sliceclone_" + originalName.str();
   BasicBlock *newBB =
       BasicBlock::Create(F->getParent()->getContext(), newBBName, F);
+
+  if (_origToNewBBmap.count(originalBB)) {
+    _origToNewBBmap.erase(originalBB);
+  }
+
+  if (_newToOrigBBmap.count(newBB)) {
+    _newToOrigBBmap.erase(newBB);
+  }
+
   _origToNewBBmap.insert(std::make_pair(originalBB, newBB));
   _newToOrigBBmap.insert(std::make_pair(newBB, originalBB));
 }

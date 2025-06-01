@@ -12,6 +12,7 @@
 #include "llvm/Analysis/PostDominators.h"
 #include "llvm/IR/Dominators.h"
 #include "llvm/IR/Function.h"
+#include "llvm/Analysis/LoopInfo.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/PassManager.h"
 #include "llvm/Support/Error.h"
@@ -123,7 +124,7 @@ private:
    * @brief Computes the attractor blocks (first dominator) for each basic block
    * in the original function.
    */
-  void computeAttractorBlocks();
+  void computeAttractorBlocks(Loop *loop, LoopInfo &loopInfo);
 
   /**
    * @brief Adds branches from immediate dominators which existed in the
