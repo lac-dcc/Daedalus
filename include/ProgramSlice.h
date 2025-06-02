@@ -124,7 +124,7 @@ private:
    * @brief Computes the attractor blocks (first dominator) for each basic block
    * in the original function.
    */
-  void computeAttractorBlocks();
+  void computeAttractorBlocks(Loop *loop, LoopInfo &loopInfo);
 
   /**
    * @brief Adds branches from immediate dominators which existed in the

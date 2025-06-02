@@ -152,44 +152,61 @@ bool blockContainsDataDependency(const BasicBlock *BB,
 }
 
 /**
- * @brief Computes the data dependencies for a given LLVM instruction within a
- * function and (optionally) a loop.
+ * @brief Retrieves the gate instruction (conditional branch or switch) for a
+ * given basic block.
  *
- * This function traverses the operands of the specified instruction, collecting
- * all values and basic blocks that are data-dependent on the instruction. It
- * also handles PHI nodes, loop boundaries, and global variables, and identifies
- * special cases such as critical PHI dependencies. The function populates a set
- * of "gates" (instructions that act as control/data boundaries) for PHI nodes
- * and returns a status indicating success or failure (e.g., if a dependency is
- * on a global variable).
+ * This function examines the terminator instruction of the specified basic
+ * block @p BB. If the terminator is a conditional branch or a switch
+ * instruction, it returns a pointer to that instruction, which serves as the
+ * "gate" controlling the block's outgoing control flow. If the terminator is an
+ * unconditional branch or not a branch/switch, the function returns nullptr.
  *
- * @param I The LLVM instruction for which to compute data dependencies.
- * @param F The LLVM function containing the instruction.
- * @param loop Optional pointer to the loop containing the instruction, or
- * nullptr if not in a loop.
- * @param loopHeader Optional pointer to the loop header basic block, or nullptr
- * if not in a loop.
- * @param gates A map from basic blocks to vectors of values representing "gate"
- * instructions for PHI nodes. This map may be updated during the computation.
- * @return std::pair<Status, dataDependence>
- *         - Status: Indicates whether the computation was successful and
- * provides an error message if not.
- *         - dataDependence: Contains sets of dependent basic blocks, values,
- * PHI arguments, a flag for critical PHI, and values that should be passed as
- * arguments due to loop boundaries.
- *
- * @note
- * - Dependencies on global variables are treated as errors.
- * - Handles PHI nodes specially, including those at loop headers and those with
- * back edges.
- * - Only considers dependencies within the specified loop if provided.
- * - Updates the gates map with control dependencies for PHI nodes.
+ * @param BB Pointer to the basic block whose gate instruction is to be
+ * retrieved.
+ * @return const Value* Pointer to the gate instruction (conditional branch or
+ * switch), or nullptr if none.
  */
-std::pair<Status, dataDependence> computeDataDependencies(
-    const Instruction &I, Function &F, Loop *loop, BasicBlock *loopHeader,
-    LoopInfo &loopInfo,
+static const Value *getGate(const BasicBlock *BB) {
+  const Value *branchInst = nullptr;
+  if (BB) {
+    const Instruction *terminator = BB->getTerminator();
+    if (const BranchInst *BI = dyn_cast<BranchInst>(terminator)) {
+      if (!BI->isConditional()) {
+        LLVM_DEBUG(
+            dbgs() << " Unconditional terminator found when trying to get "
+                      "gate instruction...\n");
+      } else {
+        branchInst = BI;
+      }
+    } else if (const SwitchInst *SI = dyn_cast<SwitchInst>(terminator)) {
+      branchInst = SI;
+    }
+  }
+  return branchInst;
+}
+
+/**
+ * @brief Computes data and control dependencies for a given instruction within
+ * a function.
+ *
+ * This function analyzes the specified instruction `I` in the context of the
+ * function `F` using the provided FunctionAnalysisManager `FAM`. It determines
+ * the loop context of the instruction, computes its data dependencies, and then
+ * computes control dependencies based on the data dependencies and loop
+ * structure.
+ *
+ * @param I The instruction for which dependencies are to be computed.
+ * @param F The function containing the instruction.
+ * @param FAM The FunctionAnalysisManager providing analysis results.
+ * @return A pair consisting of a Status object indicating success or failure,
+ *         and a dataDependence structure containing sets of dependent values,
+ *         basic blocks, and related PHINode information.
+ */
+std::pair<Status, dataDependence> getDataDependencies(
+    Instruction &I, Function &F, FunctionAnalysisManager &FAM,
     std::unordered_map<const BasicBlock *, SmallVector<const Value *>> &gates,
-    bool isSliceCriterionInsideLoop) {
+    bool isSliceCriterionInsideLoop, LoopInfo &loopInfo, Loop *loop,
+    BasicBlock *loopHeader) {
   Status status = {true, ""};
   std::set<const Value *> deps;
   std::set<const BasicBlock *> BBs;
@@ -266,7 +283,8 @@ std::pair<Status, dataDependence> computeDataDependencies(
       LLVM_DEBUG(dbgs() << "\t\t[Data Dependency] Instruction being processed: "
                         << *dep << "\n");
 
-      BBs.insert(dep->getParent());
+      const BasicBlock *currentDepBB = dep->getParent();
+      BBs.insert(currentDepBB);
 
       for (const Use &U : dep->operands())
         if (!processOperand(U.get())) break;
@@ -361,36 +379,8 @@ std::pair<Status, dataDependence> computeDataDependencies(
       }
     }
   }
+
   return {status, {BBs, deps, phiOnArgs}};
-}
-
-/**
- * @brief Computes data and control dependencies for a given instruction within
- * a function.
- *
- * This function analyzes the specified instruction `I` in the context of the
- * function `F` using the provided FunctionAnalysisManager `FAM`. It determines
- * the loop context of the instruction, computes its data dependencies, and then
- * computes control dependencies based on the data dependencies and loop
- * structure.
- *
- * @param I The instruction for which dependencies are to be computed.
- * @param F The function containing the instruction.
- * @param FAM The FunctionAnalysisManager providing analysis results.
- * @return A pair consisting of a Status object indicating success or failure,
- *         and a dataDependence structure containing sets of dependent values,
- *         basic blocks, and related PHINode information.
- */
-std::pair<Status, dataDependence> getDataDependencies(
-    Instruction &I, Function &F, FunctionAnalysisManager &FAM,
-    std::unordered_map<const BasicBlock *, SmallVector<const Value *>> &gates,
-    bool isSliceCriterionInsideLoop, LoopInfo &loopInfo, Loop *loop,
-    BasicBlock *loopHeader) {
-
-  auto [status, resultsData] = computeDataDependencies(
-      I, F, loop, loopHeader, loopInfo, gates, isSliceCriterionInsideLoop);
-
-  return {status, resultsData};
 }
 
 /**
@@ -419,40 +409,6 @@ static const BasicBlock *getController(const BasicBlock *BB, DominatorTree &DT,
     }
   }
   return nullptr;
-}
-
-/**
- * @brief Retrieves the gate instruction (conditional branch or switch) for a
- * given basic block.
- *
- * This function examines the terminator instruction of the specified basic
- * block @p BB. If the terminator is a conditional branch or a switch
- * instruction, it returns a pointer to that instruction, which serves as the
- * "gate" controlling the block's outgoing control flow. If the terminator is an
- * unconditional branch or not a branch/switch, the function returns nullptr.
- *
- * @param BB Pointer to the basic block whose gate instruction is to be
- * retrieved.
- * @return const Value* Pointer to the gate instruction (conditional branch or
- * switch), or nullptr if none.
- */
-static const Value *getGate(const BasicBlock *BB) {
-  const Value *branchInst = nullptr;
-  if (BB) {
-    const Instruction *terminator = BB->getTerminator();
-    if (const BranchInst *BI = dyn_cast<BranchInst>(terminator)) {
-      if (!BI->isConditional()) {
-        LLVM_DEBUG(
-            dbgs() << " Unconditional terminator found when trying to get "
-                      "gate instruction...\n");
-      } else {
-        branchInst = BI;
-      }
-    } else if (const SwitchInst *SI = dyn_cast<SwitchInst>(terminator)) {
-      branchInst = SI;
-    }
-  }
-  return branchInst;
 }
 
 /**
@@ -598,7 +554,7 @@ ProgramSlice::ProgramSlice(Instruction &Initial, Function &F,
     }
   });
 
-  computeAttractorBlocks();
+  computeAttractorBlocks(loop, loopInfo);
   LLVM_DEBUG({
     dbgs() << "\n\tAttractors:\n";
     for (const BasicBlock &BB : *_parentFunction) {
@@ -671,7 +627,7 @@ BasicBlock *ProgramSlice::findNextDominatedNode(DominatorTree &DT,
  * @post `_attractors` will contain a mapping of basic blocks to their
  *       attractor blocks.
  */
-void ProgramSlice::computeAttractorBlocks() {
+void ProgramSlice::computeAttractorBlocks(Loop *loop, LoopInfo &loopInfo) {
   std::map<const BasicBlock *, const BasicBlock *> attractors;
   LLVM_DEBUG(dbgs() << "Computing attractors...\n");
   PostDominatorTree PDT(*_parentFunction);
@@ -689,7 +645,15 @@ void ProgramSlice::computeAttractorBlocks() {
       Cand = Cand->getIDom();
     }
     if (Cand) {
-      attractors[&BB] = Cand->getBlock();
+      // ~special case~ the slice criterion is inside a loop, hence
+      // we should not set an attractor if it's a loop header
+      if (loop && !loop->isInvalid()) {
+        if (Cand->getBlock() != loop->getHeader()) {
+          attractors[&BB] = Cand->getBlock();
+        }
+      } else {
+        attractors[&BB] = Cand->getBlock();
+      }
     }
   }
   _attractors = attractors;
