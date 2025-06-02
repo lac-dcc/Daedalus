@@ -118,8 +118,10 @@ static void appendBlockGatesToPhiParent(
 
       for (const Value *gate : it->second) {
         if (const Instruction *gateInst = dyn_cast<Instruction>(gate)) {
-          gates[curPhi->getParent()].push_back(gate);
-          LLVM_DEBUG(dbgs() << "\t\t\t\tAdded gate: " << *gate << "\n");
+          if (!llvm::is_contained(gates[curPhi->getParent()], gate)) {
+            gates[curPhi->getParent()].push_back(gate);
+            LLVM_DEBUG(dbgs() << "\t\t\t\tAdded gate: " << *gate << "\n");
+          }
           callStack.push({gateInst->getParent(), curPhi});
         }
       }
@@ -298,14 +300,18 @@ std::pair<Status, dataDependence> getDataDependencies(
         const BasicBlock *incomingBB = phi->getIncomingBlock(i);
         const Value *incomingValue = phi->getIncomingValue(i);
 
-        bool hasDep = blockContainsDataDependency(incomingBB, deps);
-
         // ~special case~ if the incoming block has no dependencies, but have
         // control dependencies, we still need to compute its terminator
         // dependencies
+        bool hasDep = blockContainsDataDependency(incomingBB, deps);
         if (!hasDep) {
-          worklist.push(incomingBB->getTerminator());
-          visited.insert(incomingBB->getTerminator());
+          if (isa<BranchInst>(incomingBB->getTerminator()) &&
+                  cast<BranchInst>(incomingBB->getTerminator())
+                      ->isConditional() ||
+              isa<SwitchInst>(incomingBB->getTerminator())) {
+            worklist.push(incomingBB->getTerminator());
+            visited.insert(incomingBB->getTerminator());
+          }
         }
 
         BBs.insert(incomingBB);
