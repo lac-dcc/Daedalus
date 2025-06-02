@@ -124,7 +124,7 @@ private:
    * @brief Computes the attractor blocks (first dominator) for each basic block
    * in the original function.
    */
-  void computeAttractorBlocks(Loop *loop, LoopInfo &loopInfo);
+  void computeAttractorBlocks();
 
   /**
    * @brief Adds branches from immediate dominators which existed in the
@@ -133,6 +133,10 @@ private:
   void addDomBranches(DomTreeNode *cur, DomTreeNode *parent,
                       std::set<DomTreeNode *> &visited);
 
+  /// Find next dominated node that exists in the slice, when a new target of a
+  /// branch is not found
+  BasicBlock *findNextDominatedNode(DominatorTree &DT,
+                                    const BasicBlock *startNodeBB);
   /// Helper function to create an unreachable block.
   BasicBlock *createUnreachableBlock(Function *F);
   /// Helper function to handle basic blocks without terminators.
