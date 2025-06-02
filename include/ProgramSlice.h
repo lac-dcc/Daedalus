@@ -9,10 +9,10 @@
 
 #include "llvm/Analysis/AliasAnalysis.h"
 
+#include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/PostDominators.h"
 #include "llvm/IR/Dominators.h"
 #include "llvm/IR/Function.h"
-#include "llvm/Analysis/LoopInfo.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/PassManager.h"
 #include "llvm/Support/Error.h"
@@ -133,14 +133,60 @@ private:
   void addDomBranches(DomTreeNode *cur, DomTreeNode *parent,
                       std::set<DomTreeNode *> &visited);
 
+  /// Helper function to create an unreachable block.
+  BasicBlock *createUnreachableBlock(Function *F);
+  /// Helper function to handle basic blocks without terminators.
+  void handleNoTerminatorBlock(BasicBlock &BB, const BasicBlock *originalBB,
+                               Function *F, DominatorTree &DT,
+                               BasicBlock *unreachableBlock);
+  /// Helper for blocks without terminators: handles original BranchInst.
+  void handleNoTerminatorBranch(BasicBlock &BB, const BasicBlock *originalBB,
+                                Function *F, DominatorTree &DT);
+  /// Helper for blocks without terminators: handles original SwitchInst.
+  void handleNoTerminatorSwitch(BasicBlock &BB, const BasicBlock *originalBB,
+                                Function *F, DominatorTree &DT);
+  /// Helper function to handle basic blocks with existing terminators.
+  void handleTerminatorBlock(BasicBlock &BB, const BasicBlock *originalBB,
+                             Function *F, DominatorTree &DT,
+                             BasicBlock *unreachableBlock);
+  /// Helper for blocks with terminators: handles existing BranchInst.
+  void handleExistingBranchInst(BranchInst *BI, BasicBlock &currentBB,
+                                const BasicBlock *originalBB, Function *F,
+                                DominatorTree &DT,
+                                BasicBlock *unreachableBlock);
+  /// Helper for blocks with terminators: handles existing SwitchInst.
+  void handleExistingSwitchInst(SwitchInst *SI, BasicBlock &currentBB,
+                                const BasicBlock *originalBB, Function *F,
+                                DominatorTree &DT,
+                                BasicBlock *unreachableBlock);
+  /// Determines the target block for a successor, potentially finding a
+  /// dominated node if direct mapping fails.
+  BasicBlock *getOrCreateTargetBlock(const BasicBlock *successor,
+                                     const BasicBlock *originalBB,
+                                     DominatorTree &DT);
+  /// Updates PHI nodes in the new successor block.
+  void updatePHINodesForSuccessor(BasicBlock *newSuccessor,
+                                  const BasicBlock *originalIncomingBlock,
+                                  BasicBlock *currentBB, Function *F,
+                                  DominatorTree &DT);
+  /// Replaces uses of a successor with the unreachable block and updates the
+  /// terminator.
+  void replaceUsesAndSetSuccessor(BasicBlock *successorToReplace,
+                                  BasicBlock *unreachableBlock, Function *F,
+                                  Instruction *terminator,
+                                  unsigned int successorIndex);
+  /// Cleans up the unreachable block if it wasn't used.
+  void cleanupUnreachableBlock(BasicBlock *unreachableBlock);
+  /// Debugging helper to log predecessors.
+  void logPredecessors(Function *F);
+
   void size();
 
   /// pointer to the Instruction used as slice criterion
   Instruction *_initial;
 
-
-  /// Pointer to the instruction that produces the return value of the program slice.
-  /// This may be nullptr if the slice does not yield a return value.
+  /// Pointer to the instruction that produces the return value of the program
+  /// slice. This may be nullptr if the slice does not yield a return value.
   Instruction *_instRetValue;
 
   /// function being sliced

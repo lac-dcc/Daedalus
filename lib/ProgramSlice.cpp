@@ -659,9 +659,8 @@ static BasicBlock *findNextDominatedNode(
     visited.insert(curBB);
     BasicBlock *curBBNew = origToNewBBmap[curBB];
     LLVM_DEBUG(dbgs() << "\t\tVisiting: " << curBB->getName() << "\n");
-    if (/*curBBNew &&*/ curBB != startNodeBB && targetBBs.count(curBB)) {
-      // newTarget = curBBNew;
-      newTarget = curBB;
+    if (curBBNew && curBB != startNodeBB && targetBBs.count(curBB)) {
+      newTarget = curBBNew;
       break;
     }
     for (DomTreeNode *child : *curNode) {
@@ -696,48 +695,25 @@ static BasicBlock *findNextDominatedNode(
  */
 void ProgramSlice::computeAttractorBlocks(Loop *loop, LoopInfo &loopInfo) {
   std::map<const BasicBlock *, const BasicBlock *> attractors;
-/*  if (loop && !loop->isInvalid()) {
-    // ~special case~ if the slice criterion is inside a loop, find attractors
-    // only for the blocks inside the loop. In this case the attractror is the
-    // next dominated block that is inside _BBsInSlice
-    LLVM_DEBUG(
-        dbgs()
-        << "Computing blocks' attractors inside slice criterion's loop...\n");
-    DominatorTree DT(*_parentFunction);
-    for (const BasicBlock *BB : loop->getBlocks()) {
-      if (_BBsInSlice.count(BB)) {
-        attractors[BB] =
-            findNextDominatedNode(DT, BB, _BBsInSlice, _origToNewBBmap);
-        if (attractors[BB]) {
-          LLVM_DEBUG(dbgs() << BB->getName() << "'s attractor name: "
-                            << attractors[BB]->getName() << "\n");
-        } else {
-          attractors[BB] = BB;
-          LLVM_DEBUG(dbgs() << BB->getName() << " is its own attractor...\n");
-        }
-      }
+  LLVM_DEBUG(dbgs() << "Computing attractors...\n");
+  PostDominatorTree PDT(*_parentFunction);
+  for (const BasicBlock &BB : *_parentFunction) {
+    if (_BBsInSlice.count(&BB) > 0) {
+      attractors[&BB] = &BB;
+      continue;
     }
-  } else {*/
-    LLVM_DEBUG(dbgs() << "Computing attractors...\n");
-    PostDominatorTree PDT(*_parentFunction);
-    for (const BasicBlock &BB : *_parentFunction) {
-      if (_BBsInSlice.count(&BB) > 0) {
-        attractors[&BB] = &BB;
-        continue;
+    DomTreeNode *OrigBB = PDT.getNode(&BB);
+    DomTreeNode *Cand = OrigBB->getIDom();
+    while (Cand != nullptr) {
+      if (_BBsInSlice.count(Cand->getBlock()) > 0) {
+        break;
       }
-      DomTreeNode *OrigBB = PDT.getNode(&BB);
-      DomTreeNode *Cand = OrigBB->getIDom();
-      while (Cand != nullptr) {
-        if (_BBsInSlice.count(Cand->getBlock()) > 0) {
-          break;
-        }
-        Cand = Cand->getIDom();
-      }
-      if (Cand) {
-        attractors[&BB] = Cand->getBlock();
-      }
+      Cand = Cand->getIDom();
     }
-  // }
+    if (Cand) {
+      attractors[&BB] = Cand->getBlock();
+    }
+  }
   _attractors = attractors;
 }
 
@@ -846,216 +822,236 @@ void ProgramSlice::rerouteBranches(Function *F) {
   std::set<DomTreeNode *> visited;
   DomTreeNode *parent = nullptr;
 
+  // Initialize dominance tree traversal and identify the initial parent block.
   DomTreeNode *init = DT.getRootNode();
   visited.insert(init);
   if (_BBsInSlice.count(init->getBlock())) {
     parent = init;
   }
 
-  // Visit blocks in order of dominance. If BB1 and BB2 are in
-  // slice, BB1 IDom BB2, and BB1 has no terminator, create branch BB1->BB2
+  // Add branches based on dominance relationships.
   addDomBranches(init, parent, visited);
 
-  // Save list of PHINodes to update. Old blocks should be replaced by
-  // new blocks as predecessors in merging values. We store PHIs to update
-  // at the end of the function to avoid invalidating iterators if we
-  // modify in-place.
-  std::map<PHINode *, std::pair<BasicBlock *, BasicBlock *>> PHIsToUpdate;
+  // Create a single unreachable block to simplify branch removal.
+  BasicBlock *unreachableBlock = createUnreachableBlock(F);
 
-  // Add an unreachable block to be the target of branches that should
-  // be removed.
-  BasicBlock *unreachableBlock =
-      BasicBlock::Create(F->getContext(), "_daedalus_unreachable", F);
-  UnreachableInst *unreach =
-      new UnreachableInst(F->getContext(), unreachableBlock);
-
-  // Iterate over all blocks in the function
+  // Iterate over all basic blocks in the function to reroute branches.
   for (BasicBlock &BB : *F) {
     Instruction *terminator = BB.getTerminator();
-    const BasicBlock *parentBB = _newToOrigBBmap[&BB];
+    const BasicBlock *originalBB = _newToOrigBBmap[&BB];
+
     if (!terminator) {
-      LLVM_DEBUG(dbgs() << "Parent BB without terminator: " << BB.getName()
-                        << "\n");
-      if (const BranchInst *origBranch =
-              dyn_cast<BranchInst>(parentBB->getTerminator())) {
-/*        int validSuccs = 0;
-        for (const BasicBlock *suc : origBranch->successors()) {
-          if (_BBsInSlice.count(suc)) validSuccs++;
-        }
-        if (validSuccs == 0) {
-          const BasicBlock *attractor = _attractors[origBranch->getParent()];
-          BasicBlock *newTarget = _origToNewBBmap[attractor];
-          if (!newTarget) {
-            continue;
-          }
-          LLVM_DEBUG(dbgs()
-                     << "Successor: " << origBranch->getParent()->getName()
-                     << "\nAttractor: "
-                     << (attractor ? attractor->getName().str() : "null")
-                     << "\n");
-          BranchInst::Create(newTarget, &BB);
-
-          // If new successor has any PHINodes that merged a path from
-          // a block that was dominated by this block, update its
-          // incoming block to be this instead.
-          for (Instruction &I : *newTarget) {
-            if (!isa<PHINode>(I)) continue;
-            PHINode *phi = cast<PHINode>(&I);
-            for (BasicBlock *newTargetPHIBB : phi->blocks()) {
-              if (newTargetPHIBB->getParent() != F) {
-                DomTreeNode *OrigBB = DT.getNode(newTargetPHIBB);
-                DomTreeNode *Cand = OrigBB->getIDom();
-                while (Cand) {
-                  if (Cand->getBlock() == parentBB) break;
-                  Cand = Cand->getIDom();
-                }
-                if (Cand) phi->replaceIncomingBlockWith(newTargetPHIBB, &BB);
-              }
-            }
-          }
-        } else {*/
-          for (const BasicBlock *suc : origBranch->successors()) {
-            const BasicBlock *attractor = _attractors[suc];
-            BasicBlock *newTarget = _origToNewBBmap[attractor];
-
-            // ~special case~ if the new target is not in the slice, we
-            // find a new target that is in the slice by searching for a
-            // dominated block that is in the slice
-            if (!newTarget) {
-              // newTarget =
-              //     findNextDominatedNode(DT, parentBB, _BBsInSlice,
-              //     _origToNewBBmap);
-              // if (!newTarget)
-              continue;
-            }
-            LLVM_DEBUG(dbgs()
-                       << "Successor: " << suc->getName() << "\nAttractor: "
-                       << (attractor ? attractor->getName().str() : "null")
-                       << "\n");
-            BranchInst::Create(newTarget, &BB);
-
-            // If new successor has any PHINodes that merged a path from
-            // a block that was dominated by this block, update its
-            // incoming block to be this instead.
-            for (Instruction &I : *newTarget) {
-              if (!isa<PHINode>(I)) continue;
-              PHINode *phi = cast<PHINode>(&I);
-              for (BasicBlock *newTargetPHIBB : phi->blocks()) {
-                if (newTargetPHIBB->getParent() != F) {
-                  DomTreeNode *OrigBB = DT.getNode(newTargetPHIBB);
-                  DomTreeNode *Cand = OrigBB->getIDom();
-                  while (Cand) {
-                    if (Cand->getBlock() == parentBB) break;
-                    Cand = Cand->getIDom();
-                  }
-                  if (Cand) phi->replaceIncomingBlockWith(newTargetPHIBB, &BB);
-                }
-              }
-            }
-            break;
-          }
-        // }
-      } else if (const SwitchInst *origSwitch =
-                     dyn_cast<SwitchInst>(parentBB->getTerminator())) {
-        // ~special case~ if the new function has just one target from the
-        // original switch, then create an unconditional branch to it
-
-        // Collect valid new targets for the switch's successors
-        SmallVector<BasicBlock *, 4> validTargets;
-        for (unsigned int idx = 0; idx < origSwitch->getNumSuccessors();
-             ++idx) {
-          BasicBlock *suc = origSwitch->getSuccessor(idx);
-          BasicBlock *newTarget = _origToNewBBmap[_attractors[suc]];
-          if (newTarget && _BBsInSlice.count(suc))
-            validTargets.push_back(newTarget);
-        }
-        // Only create an unconditional branch if there is exactly one valid
-        // target
-        if (validTargets.size() == 1) {
-          BranchInst::Create(validTargets.front(), &BB);
-        } else if (validTargets.size() == 0) {
-          // ~special case~ if the new target is not in the slice, we
-          // find a new target that is in the slice by searching for a dominated
-          // block that is in the slice
-          // BasicBlock *newTarget =
-          //     findNextDominatedNode(DT, parentBB, _BBsInSlice,
-          //     _origToNewBBmap);
-          // if (!newTarget) continue;
-          // BranchInst::Create(newTarget, &BB);
-        }
-      }
+      handleNoTerminatorBlock(BB, originalBB, F, DT, unreachableBlock);
     } else {
-      LLVM_DEBUG(dbgs() << "Parent BB WITH terminator: " << BB.getName()
-                        << "\n");
-      if (BranchInst *BI = dyn_cast<BranchInst>(terminator)) {
-        for (unsigned int idx = 0; idx < BI->getNumSuccessors(); ++idx) {
-          BasicBlock *suc = BI->getSuccessor(idx);
-          if (suc->getParent() == F) continue;
-          const BasicBlock *attractor = _attractors[suc];
-          BasicBlock *newSucc = _origToNewBBmap[attractor];
-          if (!newSucc) {
-            // ~special case~ if the new target is not in the slice, we
-            // find a new target that is in the slice by searching for a
-            // dominated block that is in the slice
-            // newSucc =
-            //     findNextDominatedNode(DT, parentBB, _BBsInSlice,
-            //     _origToNewBBmap);
-            if (!newSucc) {
-              suc->replaceUsesWithIf(unreachableBlock, [F](Use &U) {
-                auto *UserI = dyn_cast<Instruction>(U.getUser());
-                return UserI && UserI->getParent()->getParent() == F;
-              });
-              BI->setSuccessor(idx, unreachableBlock);
-              continue;
-            }
-          }
-          BI->setSuccessor(idx, newSucc);
-          for (Instruction &I : *newSucc) {
-            if (!isa<PHINode>(I)) continue;
-            PHINode *phi = cast<PHINode>(&I);
-            phi->replaceIncomingBlockWith(suc, &BB);
-          }
-        }
-      } else if (SwitchInst *SI = dyn_cast<SwitchInst>(terminator)) {
-        for (unsigned int idx = 0; idx < SI->getNumSuccessors(); ++idx) {
-          BasicBlock *suc = SI->getSuccessor(idx);
-          if (suc->getParent() == F) continue;
-          const BasicBlock *attractor = _attractors[suc];
-          BasicBlock *newSucc = _origToNewBBmap[attractor];
-          if (!newSucc) {
-            // ~special case~ if the new target is not in the slice, we
-            // find a new target that is in the slice by searching for a
-            // dominated block that is in the slice
-            // newSucc =
-            //     findNextDominatedNode(DT, suc, _BBsInSlice, _origToNewBBmap);
-            if (!newSucc) {
-              suc->replaceUsesWithIf(unreachableBlock, [F](Use &U) {
-                auto *UserI = dyn_cast<Instruction>(U.getUser());
-                return UserI && UserI->getParent()->getParent() == F;
-              });
-              SI->setSuccessor(idx, unreachableBlock);
-              continue;
-            }
-          }
-          SI->setSuccessor(idx, newSucc);
-          for (Instruction &I : *newSucc) {
-            if (!isa<PHINode>(I)) continue;
-            PHINode *phi = cast<PHINode>(&I);
-            phi->replaceIncomingBlockWith(suc, &BB);
-          }
-        }
-      }
+      handleTerminatorBlock(BB, originalBB, F, DT, unreachableBlock);
     }
   }
 
-  // If unreachable block was never used, remove it so we avoid mistaking it
-  // as a potential entry block (due to it having no predecessors)
+  // Clean up the unreachable block if it was not used.
+  cleanupUnreachableBlock(unreachableBlock);
+
+  // Update PHI nodes after all branch rerouting is complete.
+  updatePHINodes(F);
+
+  // Debugging output for predecessors (optional).
+  logPredecessors(F);
+}
+
+BasicBlock *ProgramSlice::createUnreachableBlock(Function *F) {
+  BasicBlock *unreachableBlock =
+      BasicBlock::Create(F->getContext(), "_daedalus_unreachable", F);
+  new UnreachableInst(F->getContext(), unreachableBlock);
+  return unreachableBlock;
+}
+
+void ProgramSlice::handleNoTerminatorBlock(BasicBlock &BB,
+                                           const BasicBlock *originalBB,
+                                           Function *F, DominatorTree &DT,
+                                           BasicBlock *unreachableBlock) {
+  LLVM_DEBUG(dbgs() << "Parent BB without terminator: " << BB.getName()
+                    << "\n");
+
+  if (const BranchInst *origBranch =
+          dyn_cast<BranchInst>(originalBB->getTerminator())) {
+    handleNoTerminatorBranch(BB, originalBB, F, DT);
+  } else if (const SwitchInst *origSwitch =
+                 dyn_cast<SwitchInst>(originalBB->getTerminator())) {
+    handleNoTerminatorSwitch(BB, originalBB, F, DT);
+  }
+}
+
+void ProgramSlice::handleNoTerminatorBranch(BasicBlock &BB,
+                                            const BasicBlock *originalBB,
+                                            Function *F, DominatorTree &DT) {
+  const BranchInst *origBranch = cast<BranchInst>(originalBB->getTerminator());
+
+  for (const BasicBlock *successor : origBranch->successors()) {
+    BasicBlock *newTarget = getOrCreateTargetBlock(successor, originalBB, DT);
+
+    if (newTarget) {
+      BranchInst::Create(newTarget, &BB);
+      updatePHINodesForSuccessor(newTarget, originalBB, &BB, F, DT);
+    }
+    // We break after the first successor because a block without a
+    // terminator can only have one implicit successor in the original code,
+    // which is the first successor of the original branch.
+    break;
+  }
+}
+
+void ProgramSlice::handleNoTerminatorSwitch(BasicBlock &BB,
+                                            const BasicBlock *originalBB,
+                                            Function *F, DominatorTree &DT) {
+  const SwitchInst *origSwitch = cast<SwitchInst>(originalBB->getTerminator());
+  SmallVector<BasicBlock *, 4> validTargets;
+
+  for (unsigned int idx = 0; idx < origSwitch->getNumSuccessors(); ++idx) {
+    BasicBlock *successor = origSwitch->getSuccessor(idx);
+    BasicBlock *newTarget = _origToNewBBmap[_attractors[successor]];
+    if (newTarget && _BBsInSlice.count(successor)) {
+      validTargets.push_back(newTarget);
+    }
+  }
+
+  if (validTargets.size() == 1) {
+    BranchInst::Create(validTargets.front(), &BB);
+  } else {
+    // If no single valid target or multiple, find a dominated node.
+    BasicBlock *newTarget =
+        findNextDominatedNode(DT, originalBB, _BBsInSlice, _origToNewBBmap);
+    if (newTarget) {
+      BranchInst::Create(newTarget, &BB);
+    }
+  }
+}
+
+void ProgramSlice::handleTerminatorBlock(BasicBlock &BB,
+                                         const BasicBlock *originalBB,
+                                         Function *F, DominatorTree &DT,
+                                         BasicBlock *unreachableBlock) {
+  LLVM_DEBUG(dbgs() << "Parent BB WITH terminator: " << BB.getName() << "\n");
+
+  if (BranchInst *BI = dyn_cast<BranchInst>(BB.getTerminator())) {
+    handleExistingBranchInst(BI, BB, originalBB, F, DT, unreachableBlock);
+  } else if (SwitchInst *SI = dyn_cast<SwitchInst>(BB.getTerminator())) {
+    handleExistingSwitchInst(SI, BB, originalBB, F, DT, unreachableBlock);
+  }
+}
+
+void ProgramSlice::handleExistingBranchInst(BranchInst *BI,
+                                            BasicBlock &currentBB,
+                                            const BasicBlock *originalBB,
+                                            Function *F, DominatorTree &DT,
+                                            BasicBlock *unreachableBlock) {
+  for (unsigned int idx = 0; idx < BI->getNumSuccessors(); ++idx) {
+    BasicBlock *successor = BI->getSuccessor(idx);
+    // If the successor is within the current function, no rerouting is needed
+    // for it.
+    if (successor->getParent() == F) {
+      continue;
+    }
+
+    BasicBlock *newSucc = getOrCreateTargetBlock(successor, originalBB, DT);
+
+    if (newSucc) {
+      BI->setSuccessor(idx, newSucc);
+      updatePHINodesForSuccessor(newSucc, successor, &currentBB, F, DT);
+    } else {
+      // If no valid new successor, reroute to the unreachable block.
+      replaceUsesAndSetSuccessor(successor, unreachableBlock, F, BI, idx);
+    }
+  }
+}
+
+void ProgramSlice::handleExistingSwitchInst(SwitchInst *SI,
+                                            BasicBlock &currentBB,
+                                            const BasicBlock *originalBB,
+                                            Function *F, DominatorTree &DT,
+                                            BasicBlock *unreachableBlock) {
+  for (unsigned int idx = 0; idx < SI->getNumSuccessors(); ++idx) {
+    BasicBlock *successor = SI->getSuccessor(idx);
+    // If the successor is within the current function, no rerouting is needed
+    // for it.
+    if (successor->getParent() == F) {
+      continue;
+    }
+
+    BasicBlock *newSucc = getOrCreateTargetBlock(successor, originalBB, DT);
+
+    if (newSucc) {
+      SI->setSuccessor(idx, newSucc);
+      updatePHINodesForSuccessor(newSucc, successor, &currentBB, F, DT);
+    } else {
+      // If no valid new successor, reroute to the unreachable block.
+      replaceUsesAndSetSuccessor(successor, unreachableBlock, F, SI, idx);
+    }
+  }
+}
+
+BasicBlock *ProgramSlice::getOrCreateTargetBlock(const BasicBlock *successor,
+                                                 const BasicBlock *originalBB,
+                                                 DominatorTree &DT) {
+  const BasicBlock *attractor = _attractors[successor];
+  BasicBlock *newTarget = _origToNewBBmap[attractor];
+
+  // Special case: if the new target is not in the slice, find a dominated
+  // block.
+  if (!newTarget) {
+    newTarget =
+        findNextDominatedNode(DT, originalBB, _BBsInSlice, _origToNewBBmap);
+  }
+  return newTarget;
+}
+
+void ProgramSlice::updatePHINodesForSuccessor(
+    BasicBlock *newSuccessor, const BasicBlock *originalIncomingBlock,
+    BasicBlock *currentBB, Function *F, DominatorTree &DT) {
+  for (Instruction &I : *newSuccessor) {
+    if (PHINode *phi = dyn_cast<PHINode>(&I)) {
+      // This part handles a specific dominance-based PHI update.
+      // It checks if the original incoming block's dominator chain leads back
+      // to currentBB.
+      if (originalIncomingBlock->getParent() !=
+          F) { // Check if originalIncomingBlock is not in the current function
+               // F
+        DomTreeNode *origBBNode = DT.getNode(originalIncomingBlock);
+        if (origBBNode) {
+          DomTreeNode *ancestorNode = origBBNode->getIDom();
+          while (ancestorNode) {
+            if (ancestorNode->getBlock() == originalIncomingBlock) {
+              phi->replaceIncomingBlockWith(originalIncomingBlock, currentBB);
+              break;
+            }
+            ancestorNode = ancestorNode->getIDom();
+          }
+        }
+      } else {
+        // If originalIncomingBlock is in F, simply replace it.
+        phi->replaceIncomingBlockWith(originalIncomingBlock, currentBB);
+      }
+    }
+  }
+}
+
+void ProgramSlice::replaceUsesAndSetSuccessor(BasicBlock *successorToReplace,
+                                              BasicBlock *unreachableBlock,
+                                              Function *F,
+                                              Instruction *terminator,
+                                              unsigned int successorIndex) {
+  successorToReplace->replaceUsesWithIf(unreachableBlock, [F](Use &U) {
+    auto *UserI = dyn_cast<Instruction>(U.getUser());
+    return UserI && UserI->getParent()->getParent() == F;
+  });
+  terminator->setSuccessor(successorIndex, unreachableBlock);
+}
+
+void ProgramSlice::cleanupUnreachableBlock(BasicBlock *unreachableBlock) {
   if (unreachableBlock->hasNPredecessors(0)) {
     unreachableBlock->eraseFromParent();
   }
+}
 
-  updatePHINodes(F);
-
+void ProgramSlice::logPredecessors(Function *F) {
   LLVM_DEBUG({
     dbgs() << "\tPredecessors of new function:\n";
     for (const BasicBlock &BB : *F) {
