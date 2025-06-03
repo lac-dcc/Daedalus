@@ -14,6 +14,7 @@
 #include <tuple>
 #include <utility>
 
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/AliasSetTracker.h"
@@ -295,6 +296,28 @@ std::pair<Status, dataDependence> getDataDependencies(
     if (const PHINode *phi = dyn_cast<PHINode>(cur)) {
       LLVM_DEBUG(dbgs() << "\t\t[Control Dependency] PHINode being processed: "
                         << *phi << "\n");
+
+      SmallPtrSet<BasicBlock *, 2> phiNodePreds;
+      for (unsigned i = 0, e = phi->getNumIncomingValues(); i != e; ++i) {
+        const BasicBlock *phiParent = phi->getParent();
+        BasicBlock *incomingBlock = phi->getIncomingBlock(i);
+        for (const BasicBlock *pred : predecessors(incomingBlock)) {
+          if (incomingBlock->phis().empty() &&
+              ((isa<BranchInst>(pred->getTerminator()) &&
+                cast<BranchInst>(pred->getTerminator())->isConditional()) ||
+               isa<SwitchInst>(pred->getTerminator())) &&
+              !llvm::is_contained(gates[incomingBlock], pred->getTerminator())) {
+            phiNodePreds.insert(incomingBlock);
+          }
+        }
+      }
+      if (phiNodePreds.size() > 0) {
+        status = {false,
+                  "There's a PHINode whose incoming blocks don't have PHINodes "
+                  "and one of its predecessors has a conditinal branch or "
+                  "switches, that don't controls it"};
+        return {status, {}};
+      }
 
       for (unsigned i = 0, e = phi->getNumIncomingValues(); i != e; ++i) {
         const BasicBlock *incomingBB = phi->getIncomingBlock(i);
@@ -1398,8 +1421,6 @@ Function *ProgramSlice::outline() {
 
   LLVM_DEBUG(dbgs() << "Outlined function:\n" << *F);
 
-  // ~special case~ Assert that there is only one basic block with no
-  // predecessors, and it is the entry block.
   int numEntryBlocks = 0;
   for (BasicBlock &BB : *F)
     if (BB.hasNPredecessors(0)) ++numEntryBlocks;
