@@ -311,7 +311,7 @@ std::pair<Status, dataDependence> getDataDependencies(
           }
         }
       }
-      if (phiNodePreds.size() > 0) {
+      if (phiNodePreds.size() > 1) {
         status = {false,
                   "There's a PHINode whose incoming blocks don't have PHINodes "
                   "and one of its predecessors has a conditinal branch or "
