@@ -297,6 +297,9 @@ std::pair<Status, dataDependence> getDataDependencies(
       LLVM_DEBUG(dbgs() << "\t\t[Control Dependency] PHINode being processed: "
                         << *phi << "\n");
 
+      // ~special case~ abort outline process if there's a PHINode whose
+      // incoming blocks don't have PHINodes " and one of its predecessors has a
+      // conditinal branch or switches, that don't controls it
       SmallPtrSet<BasicBlock *, 2> phiNodePreds;
       for (unsigned i = 0, e = phi->getNumIncomingValues(); i != e; ++i) {
         const BasicBlock *phiParent = phi->getParent();
@@ -306,7 +309,8 @@ std::pair<Status, dataDependence> getDataDependencies(
               ((isa<BranchInst>(pred->getTerminator()) &&
                 cast<BranchInst>(pred->getTerminator())->isConditional()) ||
                isa<SwitchInst>(pred->getTerminator())) &&
-              !llvm::is_contained(gates[incomingBlock], pred->getTerminator())) {
+              !llvm::is_contained(gates[incomingBlock],
+                                  pred->getTerminator())) {
             phiNodePreds.insert(incomingBlock);
           }
         }
