@@ -369,12 +369,6 @@ std::pair<Status, dataDependence> getDataDependencies(
                        << "\t\t[Control Dependency] Incoming value is not "
                           "from its incoming block in the current PHINode..."
                        << "\n");
-            for (const Value *gate : gates[incomingBB])
-              gates[phi->getParent()].push_back(gate);
-
-            if (incomingBB->phis().empty())
-              appendBlockGatesToPhiParent(incomingBB, phi, gates, visitedPairs,
-                                          loop, isSliceCriterionInsideLoop);
           } else {
             // ~special case~ if the incoming value is from the incoming block
             // in the current PHINode, but the incoming block has no PHINodes in
@@ -385,11 +379,14 @@ std::pair<Status, dataDependence> getDataDependencies(
                        << "\t\t[Control Dependency] PHINode's incoming value "
                           "is from the same block. Checking for control using "
                           "data dependencies...\n");
-            if (incomingBB->phis().empty())
-              appendBlockGatesToPhiParent(incomingBB, phi, gates, visitedPairs,
-                                          loop, isSliceCriterionInsideLoop);
           }
         }
+
+        // ~special case~ if the incoming block has no PHINodes, then add
+        // its terminator and the terminator gates to the current PHINode
+        if (incomingBB->phis().empty())
+          appendBlockGatesToPhiParent(incomingBB, phi, gates, visitedPairs,
+                                      loop, isSliceCriterionInsideLoop);
       }
 
       for (const Value *gate : gates[phi->getParent()]) {
@@ -538,6 +535,13 @@ ProgramSlice::ProgramSlice(Instruction &Initial, Function &F,
       getDataDependencies(Initial, F, FAM, gates, isSliceCriterionInsideLoop,
                           loopInfo, loop, loopHeader);
 
+  // ~special case (part 1)~ if loopHeader exists and is not in the set of basic
+  // blocks in the slice, add it to the slice and add an unconditional branch to
+  // the old entry block.
+  if (loopHeader && (data.BBs.count(loopHeader) == 0)) {
+    data.BBs.insert(loopHeader);
+  }
+
   // ~special case~
   for (auto &BB : data.BBs) {
     if (tryCatchBlocks.count(const_cast<BasicBlock *>(BB))) {
@@ -618,6 +622,7 @@ BasicBlock *ProgramSlice::findNextDominatedNode(DominatorTree &DT,
   BasicBlock *newTarget = nullptr;
   std::stack<DomTreeNode *> stack;
   std::set<const BasicBlock *> visited;
+  LLVM_DEBUG(dbgs() << "\tStart node: " << startNodeBB->getName() << "\n");
   DomTreeNode *domNode = DT.getNode(startNodeBB);
   if (domNode) stack.push(domNode);
   while (!stack.empty()) {
@@ -974,7 +979,7 @@ BasicBlock *ProgramSlice::getOrCreateTargetBlock(const BasicBlock *successor,
   // ~special case~ if the new target is not in the slice, find a dominated
   // block.
   if (!newTarget) {
-    newTarget = findNextDominatedNode(DT, successor);
+    newTarget = findNextDominatedNode(DT, originalBB);
   }
   return newTarget;
 }
