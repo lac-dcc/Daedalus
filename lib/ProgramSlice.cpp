@@ -361,14 +361,16 @@ std::pair<Status, dataDependence> getDataDependencies(
 
         if (const Instruction *incomingInst =
                 dyn_cast<Instruction>(incomingValue)) {
-          // ~special case~ if the incoming value is not from the incoming block
-          // in the current PHINode, then add the incoming block's terminator to
-          // the gates of the current PHINode's parent
           if (incomingInst->getParent() != incomingBB) {
+            // ~special case~ if the incoming value is not from the incoming
+            // block in the current PHINode, then add the incoming block's
+            // terminator to the gates of the current PHINode's parent
             LLVM_DEBUG(dbgs()
                        << "\t\t[Control Dependency] Incoming value is not "
                           "from its incoming block in the current PHINode..."
                        << "\n");
+            for (const Value *gate : gates[incomingBB])
+              gates[phi->getParent()].push_back(gate);
           } else {
             // ~special case~ if the incoming value is from the incoming block
             // in the current PHINode, but the incoming block has no PHINodes in
@@ -893,7 +895,7 @@ void ProgramSlice::handleNoTerminatorSwitch(BasicBlock &BB,
     BranchInst::Create(validTargets.front(), &BB);
   } else if (validTargets.empty()) {
     // If no single valid target, find a dominated node.
-    BasicBlock *newTarget = findNextDominatedNode(DT, originalBB);
+    BasicBlock *newTarget = getOrCreateTargetBlock(nullptr, originalBB, DT);
     if (newTarget) {
       BranchInst::Create(newTarget, &BB);
     }
@@ -966,14 +968,20 @@ void ProgramSlice::handleExistingSwitchInst(SwitchInst *SI,
 BasicBlock *ProgramSlice::getOrCreateTargetBlock(const BasicBlock *successor,
                                                  const BasicBlock *originalBB,
                                                  DominatorTree &DT) {
-  const BasicBlock *attractor = _attractors[successor];
-  BasicBlock *newTarget = _origToNewBBmap[attractor];
-
+  BasicBlock *newTarget = nullptr;
+  if (successor) {
+    const BasicBlock *attractor = _attractors[successor];
+    newTarget = _origToNewBBmap[attractor];
+  }
   // ~special case~ if the new target is not in the slice, find a dominated
   // block.
-  if (!newTarget) {
-    newTarget = findNextDominatedNode(DT, originalBB);
-  }
+  // if (!newTarget) {
+  //   newTarget = findNextDominatedNode(DT, originalBB);
+  //   if (newTarget && llvm::is_contained(successors(_origToNewBBmap[originalBB]),
+  //                                       newTarget)) {
+  //     newTarget = nullptr;
+  //   }
+  // }
   return newTarget;
 }
 
