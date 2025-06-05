@@ -535,13 +535,6 @@ ProgramSlice::ProgramSlice(Instruction &Initial, Function &F,
       getDataDependencies(Initial, F, FAM, gates, isSliceCriterionInsideLoop,
                           loopInfo, loop, loopHeader);
 
-  // ~special case (part 1)~ if loopHeader exists and is not in the set of basic
-  // blocks in the slice, add it to the slice and add an unconditional branch to
-  // the old entry block.
-  if (loopHeader && (data.BBs.count(loopHeader) == 0)) {
-    data.BBs.insert(loopHeader);
-  }
-
   // ~special case~
   for (auto &BB : data.BBs) {
     if (tryCatchBlocks.count(const_cast<BasicBlock *>(BB))) {
