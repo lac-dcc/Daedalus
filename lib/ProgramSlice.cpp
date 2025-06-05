@@ -371,6 +371,10 @@ std::pair<Status, dataDependence> getDataDependencies(
                        << "\n");
             for (const Value *gate : gates[incomingBB])
               gates[phi->getParent()].push_back(gate);
+
+            if (incomingBB->phis().empty())
+              appendBlockGatesToPhiParent(incomingBB, phi, gates, visitedPairs,
+                                          loop, isSliceCriterionInsideLoop);
           } else {
             // ~special case~ if the incoming value is from the incoming block
             // in the current PHINode, but the incoming block has no PHINodes in
