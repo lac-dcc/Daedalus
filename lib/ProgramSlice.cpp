@@ -1100,14 +1100,14 @@ BasicBlock *ProgramSlice::getOrCreateTargetBlock(const BasicBlock *successor,
   }
   // ~special case~ if the new target is not in the slice, find a dominated
   // block.
-  // if (!newTarget) {
-  //   newTarget = findNextDominatedNode(DT, originalBB);
-  //   if (newTarget &&
-  //   llvm::is_contained(successors(_origToNewBBmap[originalBB]),
-  //                                       newTarget)) {
-  //     newTarget = nullptr;
-  //   }
-  // }
+  if (!newTarget) {
+    newTarget = findNextDominatedNode(DT, originalBB);
+    if (newTarget &&
+    llvm::is_contained(successors(originalBB),
+                                        _newToOrigBBmap[newTarget])) {
+      newTarget = nullptr;
+    }
+  }
   return newTarget;
 }
 
