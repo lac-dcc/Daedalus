@@ -199,7 +199,12 @@ static Status getPhiDataDependencies(
     worklist.pop();
     deps.insert(cur);
     if (auto *phi = dyn_cast<PHINode>(cur)) {
-      if (visited.count(phi)) continue;
+      if (phiNodeDeps.count(phi)) {
+        deps.insert(phiNodeDeps[phi].begin(), phiNodeDeps[phi].end());
+        continue;
+      }
+      if (visited.count(phi))
+        continue;
       visited.insert(phi);
       LLVM_DEBUG(dbgs() << "\t\t[Control Dependency] PHINode being processed: "
                         << *phi << "\n");
@@ -248,7 +253,8 @@ static Status getPhiDataDependencies(
         if (!isa<Instruction>(operand) && !isa<Argument>(operand)) continue;
         if (visited.count(operand)) continue;
         worklist.push(operand);
-        visited.insert(operand);
+        if (!isa<PHINode>(operand))
+          visited.insert(operand);
       }
     }
   }
