@@ -47,18 +47,16 @@
 
 using namespace llvm;
 
-struct dataDependence {
-  std::set<const BasicBlock *> BBs;
-  std::set<const Value *> dependences;
-  std::set<const Value *> phiOnArgs;
+struct DataDependencies {
+  std::set<const BasicBlock *> basicBlocks;
+  std::set<const Value *> instructions;
+  std::set<const Value *> functionArguments;
 };
 
 struct Status {
   bool status;
   std::string msg;
 };
-
-using VisitedPair = std::pair<const BasicBlock *, const PHINode *>;
 
 /**
  * @brief Appends gate values from a given basic block to the parent block of a
@@ -74,31 +72,30 @@ using VisitedPair = std::pair<const BasicBlock *, const PHINode *>;
  * gates are considered for the PHI node's parent block.
  *
  * @param BB           The starting basic block for traversal.
- * @param phi          The PHI node whose parent block will receive the gates.
+ * @param currentPhi          The PHI node whose parent block will receive the
+ * gates.
  * @param gates        A map from basic blocks to their associated gate values.
- * @param visitedPairs A set used to track visited (basic block, PHI node) pairs
+ * @param visitedBBs A set used to track visited (basic block, PHI node) pairs
  * to avoid cycles.
  */
 static void appendBlockGatesToPhiParent(
-    const BasicBlock *BB, const PHINode *phi,
+    const BasicBlock *BB, const PHINode *currentPhi,
     std::unordered_map<const BasicBlock *, SmallVector<const Value *>> &gates,
-    std::set<VisitedPair> &visitedPairs, Loop *loop,
+    std::set<const BasicBlock *> &visitedBBs, Loop *loop,
     bool isSliceCriterionInsideLoop) {
-  std::stack<VisitedPair> callStack;
-  callStack.push({BB, phi});
+  std::stack<const BasicBlock *> stack;
+  stack.push(BB);
 
-  while (!callStack.empty()) {
-    auto [curBB, curPhi] = callStack.top();
-    callStack.pop();
-    VisitedPair curPair = {curBB, curPhi};
-    if (visitedPairs.count(curPair)) continue;
-    visitedPairs.insert(curPair);
-    if (curBB == curPhi->getParent()) continue;
-    auto it = gates.find(curBB);
-    if (it != gates.end()) {
+  while (!stack.empty()) {
+    const BasicBlock *curBB = stack.top();
+    stack.pop();
+    if (visitedBBs.count(curBB)) continue;
+    visitedBBs.insert(curBB);
+    if (curBB == currentPhi->getParent()) continue;
+    if (auto it = gates.find(curBB); it != gates.end()) {
       LLVM_DEBUG(dbgs() << "\t\t\t\tTrying to add gates from block "
                         << curBB->getName() << " into gates of block "
-                        << curPhi->getParent()->getName() << "\n");
+                        << currentPhi->getParent()->getName() << "\n");
 
       if (isSliceCriterionInsideLoop) {
         if (loop->getHeader() == curBB) {
@@ -116,40 +113,16 @@ static void appendBlockGatesToPhiParent(
       }
 
       for (const Value *gate : it->second) {
-        if (const Instruction *gateInst = dyn_cast<Instruction>(gate)) {
-          if (!llvm::is_contained(gates[curPhi->getParent()], gate)) {
-            gates[curPhi->getParent()].push_back(gate);
+        if (const auto *gateInst = dyn_cast<Instruction>(gate)) {
+          if (!is_contained(gates[currentPhi->getParent()], gate)) {
+            gates[currentPhi->getParent()].push_back(gate);
             LLVM_DEBUG(dbgs() << "\t\t\t\tAdded gate: " << *gate << "\n");
           }
-          callStack.push({gateInst->getParent(), curPhi});
+          stack.push(gateInst->getParent());
         }
       }
     }
   }
-}
-
-/**
- * @brief Checks if a basic block contains any instruction with a data
- * dependency.
- *
- * Iterates over all instructions in the given basic block and determines if any
- * of them are present in the provided set of dependent values.
- *
- * @param BB Pointer to the basic block to be checked.
- * @param deps Set of values representing data dependencies.
- * @return true if any instruction in the basic block is found in the dependency
- * set, false otherwise.
- */
-bool blockContainsDataDependency(const BasicBlock *BB,
-                                 std::set<const Value *> deps) {
-  bool hasDep = false;
-  for (const Instruction &inst : *BB) {
-    if (llvm::is_contained(deps, &inst)) {
-      hasDep = true;
-      break;
-    }
-  }
-  return hasDep;
 }
 
 /**
@@ -186,82 +159,6 @@ static const Value *getGate(const BasicBlock *BB) {
   return branchInst;
 }
 
-/**
- * @brief Computes only data dependencies for a given instruction within a
- * function.
- *
- * This function analyzes the specified instruction `I` in the context of the
- * function `F` using the provided FunctionAnalysisManager `FAM`. It determines
- * the loop context of the instruction and computes its data dependencies,
- * without traversing control dependencies (i.e., does not process PHINodes'
- * incoming blocks or gates).
- *
- * @param I The instruction for which data dependencies are to be computed.
- * @param F The function containing the instruction.
- * @param FAM The FunctionAnalysisManager providing analysis results.
- * @param isSliceCriterionInsideLoop Whether the slice criterion is inside a
- * loop.
- * @param loopInfo LoopInfo for the function.
- * @param loop The loop containing the instruction, if any.
- * @param loopHeader The header block of the loop, if any.
- * @return A pair consisting of a Status object indicating success or failure,
- *         and a dataDependence structure containing sets of dependent values,
- *         basic blocks, and related PHINode information.
- */
-static void getPhiDataDependencies(
-    const PHINode &phiNode,
-    std::map<const PHINode *, SmallPtrSet<const Value *, 4>> &phiNodeDeps) {
-  std::set<const Value *> deps;
-  std::set<const Value *> visited;
-  std::queue<const Value *> worklist;
-
-  visited.insert(&phiNode);
-  worklist.push(&phiNode);
-
-  auto processOperand = [&](const Value *operand) {
-    if (isa<PHINode>(operand)) return false;
-    if (!isa<Instruction>(operand) && !isa<Argument>(operand)) return true;
-    if (visited.count(operand)) return true;
-    visited.insert(operand);
-    worklist.push(operand);
-    return true;
-  };
-
-  while (!worklist.empty()) {
-    const Value *cur = worklist.front();
-    worklist.pop();
-    deps.insert(cur);
-    if (const Instruction *dep = dyn_cast<Instruction>(cur))
-      for (const Use &U : dep->operands())
-        if (!processOperand(U.get())) continue;
-  }
-  phiNodeDeps[&phiNode] =
-      SmallPtrSet<const Value *, 4>(deps.begin(), deps.end());
-}
-
-/**
- * @brief Checks if a given Value* is present in any of the dependency sets of
- * phiNodeDeps.
- *
- * @param phiNodeDeps A map from PHINode pointers to sets of dependent Value
- * pointers.
- * @param val The Value pointer to check for.
- * @return true if val is found in any dependency set, false otherwise.
- */
-static const PHINode *isPhiDep(
-    const std::map<const PHINode *, SmallPtrSet<const Value *, 4>> &phiNodeDeps,
-    const Value *val) {
-  for (const auto &entry : phiNodeDeps) {
-    if (entry.second.count(val)) {
-      return entry.first;
-    }
-  }
-  return nullptr;
-}
-
-/**
- * @brief Helper function to check for the weird CFG case
- */
 static bool isWeirdCFG(
     const PHINode *phi,
     const std::unordered_map<const BasicBlock *, SmallVector<const Value *>>
@@ -282,29 +179,87 @@ static bool isWeirdCFG(
   return phiNodePreds.size() > 1;
 }
 
-/**
- * @brief Computes data and control dependencies for a given instruction within
- * a function.
- *
- * This function analyzes the specified instruction `I` in the context of the
- * function `F` using the provided FunctionAnalysisManager `FAM`. It determines
- * the loop context of the instruction, computes its data dependencies, and then
- * computes control dependencies based on the data dependencies and loop
- * structure.
- *
- * @param I The instruction for which dependencies are to be computed.
- * @param F The function containing the instruction.
- * @param FAM The FunctionAnalysisManager providing analysis results.
- * @return A pair consisting of a Status object indicating success or failure,
- *         and a dataDependence structure containing sets of dependent values,
- *         basic blocks, and related PHINode information.
- */
-std::pair<Status, dataDependence> getDataDependencies(
-    Instruction &I, Function &F, FunctionAnalysisManager &FAM,
-    std::unordered_map<const BasicBlock *, SmallVector<const Value *>> &gates,
-    bool isSliceCriterionInsideLoop, LoopInfo &loopInfo, Loop *loop,
-    BasicBlock *loopHeader,
-    std::map<const PHINode *, SmallPtrSet<const Value *, 4>> &phiNodeDeps) {
+static Status getPhiDataDependencies(
+    const PHINode &phiNode,
+    std::map<const PHINode *, SmallPtrSet<const Value *, 16>> &phiNodeDeps,
+    const std::unordered_map<const BasicBlock *, SmallVector<const Value *>>
+        &gates,
+    Loop *criterionLoop) {
+
+  Status status = {true, ""};
+  std::set<const Value *> deps;
+  std::set<const BasicBlock *> BBs;
+  std::set<const Value *> visited;
+  std::queue<const Value *> worklist;
+
+  worklist.push(&phiNode);
+
+  while (!worklist.empty()) {
+    const Value *cur = worklist.front();
+    worklist.pop();
+    deps.insert(cur);
+    if (auto *phi = dyn_cast<PHINode>(cur)) {
+      if (visited.count(phi)) continue;
+      visited.insert(phi);
+      LLVM_DEBUG(dbgs() << "\t\t[Control Dependency] PHINode being processed: "
+                        << *phi << "\n");
+
+      // ~special case~ don't outline slice if it contains the weird CFG pattern
+      if (isWeirdCFG(phi, gates)) {
+        status = {false,
+                  "There's a PHINode whose incoming blocks don't have PHINodes "
+                  "and one of its predecessors has a conditinal branch or "
+                  "switches, that don't controls it"};
+        return status;
+      }
+
+      for (unsigned i = 0, e = phi->getNumIncomingValues(); i != e; ++i) {
+        const BasicBlock *incomingBB = phi->getIncomingBlock(i);
+        BBs.insert(incomingBB);
+        // ~special case~ if a phinode's incoming block is an exit block of a
+        // loop, then add its terminator to the gates of the phinode's parent
+        // Loop *loopForBB = loopInfo.getLoopFor(incomingBB);
+        // if (loopForBB && loopForBB->isLoopExiting(incomingBB)) {
+        //   // Only add the terminator as a gate if incomingBB has at least one
+        //   // instruction in deps
+        //   if (hasDep) {
+        //     LLVM_DEBUG(dbgs()
+        //                << "\t\t[Control Dependency] PHINode has an incoming "
+        //                   "block that is an exit block of a loop and contains
+        //                   " "a dependency: "
+        //                << incomingBB->getName() << "\n");
+        //     gates[phi->getParent()].push_back(incomingBB->getTerminator());
+        //   }
+        // }
+      }
+      if (auto it = gates.find(phi->getParent()); it != gates.end()) {
+        for (const Value *gate : it->second) {
+          if (gate && !visited.count(gate)) {
+            LLVM_DEBUG(dbgs() << "\t\t\t[Control Dependency] Pushing gate: "
+                              << *gate << "\n");
+            worklist.push(gate);
+            visited.insert(gate);
+          }
+        }
+      }
+    }
+    if (auto *dep = dyn_cast<Instruction>(cur)) {
+      for (const Use &operand : dep->operands()) {
+        if (!isa<Instruction>(operand) && !isa<Argument>(operand)) continue;
+        if (visited.count(operand)) continue;
+        worklist.push(operand);
+        visited.insert(operand);
+      }
+    }
+  }
+  phiNodeDeps[&phiNode] =
+      SmallPtrSet<const Value *, 16>(deps.begin(), deps.end());
+  phiNodeDeps[&phiNode].insert(BBs.begin(), BBs.end());
+  return status;
+}
+
+static std::pair<Status, DataDependencies>
+getDataDependencies(Instruction &I, Loop *loop, BasicBlock *loopHeader) {
   Status status = {true, ""};
   std::set<const Value *> deps;
   std::set<const BasicBlock *> BBs;
@@ -315,29 +270,22 @@ std::pair<Status, dataDependence> getDataDependencies(
   visited.insert(&I);
   worklist.push(&I);
 
-  // Initialize visitedPairs for PHI/BBlock pairs
-  std::set<VisitedPair> visitedPairs;
-
   // Helper to process operands
   auto processOperand = [&](const Value *operand) {
-    // ~special case~
+    // ~special case~ don't outline a slice if it depends on a global variable
     if (isa<GlobalVariable>(operand)) {
       status = {false, "Some dependency is on a Global Variable."};
       return false;
     }
-
     if (!isa<Instruction>(operand) && !isa<Argument>(operand)) return true;
-
-    if (visited.count(operand)) {
-      return true;
-    }
-
+    if (visited.count(operand)) return true;
     LLVM_DEBUG(dbgs() << "\t\t\t[Data Dependency] Operand being processed: "
                       << *operand << "\n");
 
-    if (isSliceCriterionInsideLoop) {
+    if (loop && !loop->isInvalid()) {
       if (const PHINode *phi = dyn_cast<PHINode>(operand)) {
-        if (phi->getParent() == loopHeader) { // ~special case~
+        if (phi->getParent() == loopHeader) {
+          // ~special case~ operand is a PHINode inside a loop header
           LLVM_DEBUG(
               dbgs()
               << "\t\t\t\t--> Operand is a PHINode inside a loop header...\n");
@@ -345,7 +293,8 @@ std::pair<Status, dataDependence> getDataDependencies(
           visited.insert(operand);
           return true;
         }
-        if (!loop->contains(phi->getParent())) { // ~special case~
+        if (!loop->contains(phi->getParent())) {
+          // ~special case~ operand is a PHINode outside the current criterion's loop
           LLVM_DEBUG(dbgs()
                      << "\t\t\t\t--> Operand is a PHINode outside the current "
                         "criterion's loop...\n");
@@ -375,108 +324,14 @@ std::pair<Status, dataDependence> getDataDependencies(
   while (!worklist.empty()) {
     const Value *cur = worklist.front();
     worklist.pop();
-
     deps.insert(cur);
-
     if (const Instruction *dep = dyn_cast<Instruction>(cur)) {
       LLVM_DEBUG(dbgs() << "\t\t[Data Dependency] Instruction being processed: "
                         << *dep << "\n");
-
       const BasicBlock *currentDepBB = dep->getParent();
       BBs.insert(currentDepBB);
-
       for (const Use &U : dep->operands())
         if (!processOperand(U.get())) break;
-    }
-
-    if (const PHINode *phi = dyn_cast<PHINode>(cur)) {
-      LLVM_DEBUG(dbgs() << "\t\t[Control Dependency] PHINode being processed: "
-                        << *phi << "\n");
-
-      // ~special case~
-      if (isWeirdCFG(phi, gates)) {
-        status = {false,
-                  "There's a PHINode whose incoming blocks don't have PHINodes "
-                  "and one of its predecessors has a conditinal branch or "
-                  "switches, that don't controls it"};
-        return {status, {}};
-      }
-
-      for (unsigned i = 0, e = phi->getNumIncomingValues(); i != e; ++i) {
-        const BasicBlock *incomingBB = phi->getIncomingBlock(i);
-
-        // ~special case~ if the incoming block has no dependencies, but have
-        // control dependencies, we still need to compute its terminator
-        // dependencies
-        bool hasDep = blockContainsDataDependency(incomingBB, deps);
-        if (!hasDep) {
-          if (isa<BranchInst>(incomingBB->getTerminator()) &&
-                  cast<BranchInst>(incomingBB->getTerminator())
-                      ->isConditional() ||
-              isa<SwitchInst>(incomingBB->getTerminator())) {
-            worklist.push(incomingBB->getTerminator());
-            visited.insert(incomingBB->getTerminator());
-          }
-        }
-
-        BBs.insert(incomingBB);
-
-        // ~special case~ if a phinode's incoming block is an exit block of a
-        // loop, then add its terminator to the gates of the phinode's parent
-        Loop *loopForBB = loopInfo.getLoopFor(incomingBB);
-        if (loopForBB && loopForBB->isLoopExiting(incomingBB)) {
-          // Only add the terminator as a gate if incomingBB has at least one
-          // instruction in deps
-          if (hasDep) {
-            LLVM_DEBUG(dbgs()
-                       << "\t\t[Control Dependency] PHINode has an incoming "
-                          "block that is an exit block of a loop and contains "
-                          "a dependency: "
-                       << incomingBB->getName() << "\n");
-            gates[phi->getParent()].push_back(incomingBB->getTerminator());
-          }
-        }
-
-        // ~special case~ if the incoming block has no PHINodes, then add
-        // its terminator and the terminator gates to the current PHINode
-        // list of gates
-        // if (incomingBB->phis().empty()) {
-        // LLVM_DEBUG(
-        //     dbgs()
-        //     << "\t\t[Control Dependency] Appending gates from incoming "
-        //        "block with no PHINodes: "
-        //     << incomingBB->getName() << "\n");
-        LLVM_DEBUG(dbgs() << "\t\t[Control Dependency] Appending gates from "
-                             "PHINode's incoming "
-                             "block: "
-                          << incomingBB->getName() << "\n");
-        appendBlockGatesToPhiParent(incomingBB, phi, gates, visitedPairs, loop,
-                                    isSliceCriterionInsideLoop);
-        // }
-      }
-
-      for (const Value *gate : gates[phi->getParent()]) {
-        if (gate && !visited.count(gate)) {
-          LLVM_DEBUG(dbgs() << "\t\t\t[Control Dependency] Pushing gate: "
-                            << *gate << "\n");
-
-          // ~special case~ if the gate instruction is outside the current
-          // slice criterion's loop, don't treat it as a dependency
-          if (const Instruction *inst = dyn_cast<Instruction>(gate)) {
-            if (isSliceCriterionInsideLoop &&
-                !loop->contains(inst->getParent())) {
-              LLVM_DEBUG(
-                  dbgs()
-                  << "\t\t\t--> Branching instruction is outside the current "
-                     "criterion's loop...\n");
-              continue;
-            }
-          }
-
-          worklist.push(gate);
-          visited.insert(gate);
-        }
-      }
     }
   }
 
@@ -595,49 +450,78 @@ ProgramSlice::ProgramSlice(Instruction &Initial, Function &F,
   Loop *loop = loopInfo.getLoopFor(Initial.getParent());
   BasicBlock *loopHeader = (loop) ? loop->getHeader() : nullptr;
 
-  bool isSliceCriterionInsideLoop = loop && !loop->isInvalid();
+  // Get slice criterion's data dependencies
+  auto [check, data] = getDataDependencies(Initial, loop, loopHeader);
+  LLVM_DEBUG({
+    dbgs() << "Slice criterion: " << Initial << "\n";
+    dbgs() << "  Deps:\n";
+    for (const Value *dep : data.instructions) {
+      if (auto depI = dyn_cast<Instruction>(dep))
+        dbgs() << "    Instruction: " << *depI << "\n";
+    }
+    for (const Value *dep : data.basicBlocks) {
+      if (auto depBB = dyn_cast<BasicBlock>(dep))
+        dbgs() << "    Basic Block: " << depBB->getName() << "\n";
+    }
+    for (const Value *dep : data.functionArguments) {
+      if (auto depI = dyn_cast<Instruction>(dep))
+        dbgs() << "    Func. Argument: " << *depI << "\n";
+    }
+    dbgs() << "\n";
+  });
 
-  std::map<const PHINode *, SmallPtrSet<const Value *, 4>> phiNodeDeps;
+  // Get function's PHINodes data dependencies
+  std::map<const PHINode *, SmallPtrSet<const Value *, 16>> phiNodeDeps;
   for (const BasicBlock &BB : F) {
     for (const PHINode &phi : BB.phis()) {
-      getPhiDataDependencies(phi, phiNodeDeps);
+      Status phiStatus = getPhiDataDependencies(phi, phiNodeDeps, gates, loop);
+      if (!phiStatus.status) {
+        _canOutline.first = check.status;
+        _canOutline.second = check.msg;
+        return;
+      }
     }
   }
   for (const auto &entry : phiNodeDeps) {
     const PHINode *phi = entry.first;
-    const SmallPtrSet<const Value *, 4> &deps = entry.second;
+    const SmallPtrSet<const Value *, 16> &deps = entry.second;
     LLVM_DEBUG({
       dbgs() << "PHINode: " << *phi << "\n";
       dbgs() << "  Deps:\n";
       for (const Value *dep : deps) {
-        dbgs() << "    " << *dep << "\n";
+        if (auto depBB = dyn_cast<BasicBlock>(dep))
+          dbgs() << "    Basic Block: " << depBB->getName() << "\n";
+        if (auto depI = dyn_cast<Instruction>(dep))
+          dbgs() << "    Instruction: " << *depI << "\n";
       }
+      dbgs() << "\n";
     });
   }
 
-  auto [check, data] =
-      getDataDependencies(Initial, F, FAM, gates, isSliceCriterionInsideLoop,
-                          loopInfo, loop, loopHeader, phiNodeDeps);
-
-  // ~special case~
-  for (auto &BB : data.BBs) {
+  // ~special case~ don't outline if the slice contains try-catch blocks
+  for (auto &BB : data.basicBlocks) {
     if (tryCatchBlocks.count(const_cast<BasicBlock *>(BB))) {
       _canOutline.first = false;
       _canOutline.second = "Slice contains try-catch blocks.";
       break;
     }
   }
-
   if (!check.status) {
     _canOutline.first = check.status;
     _canOutline.second = check.msg;
     return;
   }
 
+  // Get control dependencies by the intersection of gates and data dependencies
+  for (auto dep : data.instructions) {
+    if (auto phiNode = dyn_cast<PHINode>(dep)) {
+    }
+  }
+
   std::set<const Instruction *> instsInSlice;
   SmallVector<Value *> depArgs;
 
-  for (auto &val : data.dependences) {
+  for (auto &val : data.instructions) {
     if (Argument *A = dyn_cast<Argument>(const_cast<Value *>(val))) {
       LLVM_DEBUG(
           dbgs() << "\tValue from data.dependences being inserted in depArgs: "
@@ -648,7 +532,7 @@ ProgramSlice::ProgramSlice(Instruction &Initial, Function &F,
     }
   }
 
-  for (auto &val : data.phiOnArgs) {
+  for (auto &val : data.functionArguments) {
     LLVM_DEBUG(dbgs() << "\tValue from phiOnArgs being inserted in depArgs: "
                       << *val << "\n");
     depArgs.push_back(const_cast<Value *>(val));
@@ -663,7 +547,7 @@ ProgramSlice::ProgramSlice(Instruction &Initial, Function &F,
 
   _instsInSlice = instsInSlice;
   _depArgs = depArgs;
-  _BBsInSlice = data.BBs;
+  _BBsInSlice = data.basicBlocks;
 
   LLVM_DEBUG({
     dbgs() << "\nBasic blocks in _BBsInSlice:\n";
