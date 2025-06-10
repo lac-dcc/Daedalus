@@ -5,7 +5,6 @@
  *  @date   2024-07-08
  ***********************************************/
 #include "ProgramSlice.h"
-// #include "DebugUtils.h"
 
 #include <map>
 #include <queue>
@@ -20,7 +19,6 @@
 #include "llvm/Analysis/AliasSetTracker.h"
 #include "llvm/Analysis/CaptureTracking.h"
 #include "llvm/Analysis/LoopInfo.h"
-#include "llvm/Analysis/MemoryLocation.h"
 #include "llvm/Analysis/PostDominators.h"
 #include "llvm/Analysis/TargetLibraryInfo.h"
 #include "llvm/Analysis/TargetTransformInfo.h"
@@ -98,7 +96,7 @@ static void appendBlockGatesToPhiParent(
     if (curBB == curPhi->getParent()) continue;
     auto it = gates.find(curBB);
     if (it != gates.end()) {
-      LLVM_DEBUG(dbgs() << "\t\t\t\tAdding gates from block "
+      LLVM_DEBUG(dbgs() << "\t\t\t\tTrying to add gates from block "
                         << curBB->getName() << " into gates of block "
                         << curPhi->getParent()->getName() << "\n");
 
@@ -264,10 +262,12 @@ static const PHINode *isPhiDep(
 /**
  * @brief Helper function to check for the weird CFG case
  */
-static bool isWeirdCFG(const PHINode *phi, const std::unordered_map<const BasicBlock *, SmallVector<const Value *>> &gates) {
+static bool isWeirdCFG(
+    const PHINode *phi,
+    const std::unordered_map<const BasicBlock *, SmallVector<const Value *>>
+        &gates) {
   SmallPtrSet<BasicBlock *, 2> phiNodePreds;
   for (unsigned i = 0, e = phi->getNumIncomingValues(); i != e; ++i) {
-    const BasicBlock *phiParent = phi->getParent();
     BasicBlock *incomingBlock = phi->getIncomingBlock(i);
     for (const BasicBlock *pred : predecessors(incomingBlock)) {
       if (incomingBlock->phis().empty() &&
@@ -344,7 +344,8 @@ std::pair<Status, dataDependence> getDataDependencies(
           phiOnArgs.insert(operand);
           visited.insert(operand);
           return true;
-        } else if (!loop->contains(phi->getParent())) { // ~special case~
+        }
+        if (!loop->contains(phi->getParent())) { // ~special case~
           LLVM_DEBUG(dbgs()
                      << "\t\t\t\t--> Operand is a PHINode outside the current "
                         "criterion's loop...\n");
@@ -378,36 +379,6 @@ std::pair<Status, dataDependence> getDataDependencies(
     deps.insert(cur);
 
     if (const Instruction *dep = dyn_cast<Instruction>(cur)) {
-      // if (const PHINode * phi = isPhiDep(phiNodeDeps, dep)) {
-      //   LLVM_DEBUG(dbgs() << "\n");
-      //   for (const Value * gate: gates[phi->getParent()]) {
-      //     if (gate && !visited.count(gate)) {
-      //       LLVM_DEBUG(dbgs() << "\t\t\t[Data Dependency] Transitive gate
-      //       found: "
-      //                         << *gate << "\n");
-      //       visited.insert(gate);
-      //       worklist.push(gate);
-      //     }
-      //   }
-      // }
-
-      // ~special case~ if dep's block has no PHINodes and only one predecessor,
-      // add the predecessor's terminator to the worklist
-      // const BasicBlock *depBB = dep->getParent();
-      // if (depBB->phis().empty() && pred_size(depBB) == 1) {
-      //   const BasicBlock *predBB = *pred_begin(depBB);
-      //   const Instruction *predTerm = predBB->getTerminator();
-      //   if (predTerm && !visited.count(predTerm)) {
-      //     // Only add if it's a conditional branch or a switch
-      //     if ((isa<BranchInst>(predTerm) &&
-      //          cast<BranchInst>(predTerm)->isConditional()) ||
-      //         isa<SwitchInst>(predTerm)) {
-      //       worklist.push(predTerm);
-      //       visited.insert(predTerm);
-      //     }
-      //   }
-      // }
-
       LLVM_DEBUG(dbgs() << "\t\t[Data Dependency] Instruction being processed: "
                         << *dep << "\n");
 
@@ -433,7 +404,6 @@ std::pair<Status, dataDependence> getDataDependencies(
 
       for (unsigned i = 0, e = phi->getNumIncomingValues(); i != e; ++i) {
         const BasicBlock *incomingBB = phi->getIncomingBlock(i);
-        const Value *incomingValue = phi->getIncomingValue(i);
 
         // ~special case~ if the incoming block has no dependencies, but have
         // control dependencies, we still need to compute its terminator
@@ -467,35 +437,22 @@ std::pair<Status, dataDependence> getDataDependencies(
           }
         }
 
-        if (const Instruction *incomingInst =
-                dyn_cast<Instruction>(incomingValue)) {
-          if (incomingInst->getParent() != incomingBB) {
-            // ~special case~ if the incoming value is not from the incoming
-            // block in the current PHINode, then add the incoming block's
-            // terminator to the gates of the current PHINode's parent
-            LLVM_DEBUG(dbgs()
-                       << "\t\t[Control Dependency] Incoming value is not "
-                          "from its incoming block in the current PHINode..."
-                       << "\n");
-          } else {
-            // ~special case~ if the incoming value is from the incoming block
-            // in the current PHINode, but the incoming block has no PHINodes in
-            // it, but has incoming value's data dependencies, then add the
-            // missing blocks and branch instructions to the gates of the
-            // current PHINode's parent
-            LLVM_DEBUG(dbgs()
-                       << "\t\t[Control Dependency] PHINode's incoming value "
-                          "is from the same block. Checking for control using "
-                          "data dependencies...\n");
-          }
-        }
-
         // ~special case~ if the incoming block has no PHINodes, then add
         // its terminator and the terminator gates to the current PHINode
         // list of gates
-        if (incomingBB->phis().empty())
-          appendBlockGatesToPhiParent(incomingBB, phi, gates, visitedPairs,
-                                      loop, isSliceCriterionInsideLoop);
+        // if (incomingBB->phis().empty()) {
+        // LLVM_DEBUG(
+        //     dbgs()
+        //     << "\t\t[Control Dependency] Appending gates from incoming "
+        //        "block with no PHINodes: "
+        //     << incomingBB->getName() << "\n");
+        LLVM_DEBUG(dbgs() << "\t\t[Control Dependency] Appending gates from "
+                             "PHINode's incoming "
+                             "block: "
+                          << incomingBB->getName() << "\n");
+        appendBlockGatesToPhiParent(incomingBB, phi, gates, visitedPairs, loop,
+                                    isSliceCriterionInsideLoop);
+        // }
       }
 
       for (const Value *gate : gates[phi->getParent()]) {
@@ -943,7 +900,7 @@ void ProgramSlice::rerouteBranches(Function *F) {
   for (BasicBlock &BB : *F) {
     const BasicBlock *originalBB = _newToOrigBBmap[&BB];
     if (originalBB == _initial->getParent())
-      continue; // ~special case~ skip slice criterion's basic block
+      continue; // skip slice criterion's basic block
     Instruction *terminator = BB.getTerminator();
 
     if (!terminator) {
@@ -1102,8 +1059,7 @@ BasicBlock *ProgramSlice::getOrCreateTargetBlock(const BasicBlock *successor,
   // block.
   if (!newTarget) {
     newTarget = findNextDominatedNode(DT, originalBB);
-    if (newTarget &&
-    llvm::is_contained(successors(originalBB),
+    if (newTarget && llvm::is_contained(successors(originalBB),
                                         _newToOrigBBmap[newTarget])) {
       newTarget = nullptr;
     }

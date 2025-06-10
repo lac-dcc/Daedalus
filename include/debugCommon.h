@@ -5,8 +5,6 @@
 #include "llvm/Support/Debug.h"
 #include <string>
 
-#define dbg(msg) LLVM_DEBUG(dbgs() << msg << '\n')
-
 namespace COLOR {
 const std::string BLACK = "\033[30m";
 const std::string RED = "\033[31m";
@@ -17,9 +15,6 @@ const std::string MAGENTA = "\033[35m";
 const std::string CYAN = "\033[36m";
 const std::string WHITE = "\033[37m";
 const std::string CLEAN = "\033[0m";
-
 }; // namespace COLOR
 
-template <typename T>
-void debugContainerOfInstructions(T &instContainer, std::string msg);
 #endif

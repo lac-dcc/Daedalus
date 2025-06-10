@@ -3,9 +3,8 @@ add_library(daedalus SHARED
 	daedalusPlugin.cpp
 	debugCommon.cpp
 	ProgramSlice.cpp
-	DebugUtils.cpp
 	reports.cpp
-	)
+)
 
 target_include_directories(daedalus PUBLIC
     "${CMAKE_CURRENT_SOURCE_DIR}/../include")
