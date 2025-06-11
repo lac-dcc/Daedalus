@@ -230,13 +230,13 @@ static std::pair<Status, PhiDependencies> getPhiDependencies(
                         << *phi << "\n");
 
       // ~special case~ don't outline slice if it contains the weird CFG pattern
-      if (isWeirdCFG(phi, gates)) {
-        status = {false,
-                  "There's a PHINode whose incoming blocks don't have PHINodes "
-                  "and one of its predecessors has a conditinal branch or "
-                  "switches, that don't controls it"};
-        return {status, {}};
-      }
+      // if (isWeirdCFG(phi, gates)) {
+      //   status = {false,
+      //             "There's a PHINode whose incoming blocks don't have PHINodes "
+      //             "and one of its predecessors has a conditional branch or "
+      //             "switches, that don't control it"};
+      //   return {status, {}};
+      // }
 
       for (unsigned i = 0, e = phi->getNumIncomingValues(); i != e; ++i) {
         const BasicBlock *incomingBB = phi->getIncomingBlock(i);
@@ -292,9 +292,7 @@ static std::pair<Status, PhiDependencies> getPhiDependencies(
             isOperandOutsideLoopOrHeader(operand, criterionLoop,
                                          criterionLoop->getHeader(),
                                          functionArgs, visited)) {
-          LLVM_DEBUG(
-              dbgs()
-              << "\t\t\t[Control Dependency] Operand pushed to worklist...\n");
+          continue;
         }
         worklist.push(operand);
         if (!isa<PHINode>(operand)) visited.insert(operand);
@@ -515,8 +513,8 @@ ProgramSlice::ProgramSlice(Instruction &Initial, Function &F,
       auto [phiStatus, phiDependencies] =
           getPhiDependencies(phi, gates, loop, loopInfo);
       if (!phiStatus.status) {
-        _canOutline.first = check.status;
-        _canOutline.second = check.msg;
+        _canOutline.first = phiStatus.status;
+        _canOutline.second = phiStatus.msg;
         return;
       }
       phiDeps.phiNodeDeps.insert(phiDependencies.phiNodeDeps.begin(),
@@ -602,9 +600,11 @@ ProgramSlice::ProgramSlice(Instruction &Initial, Function &F,
     }
   }
   // Updating data.basicBlocks
-  data.basicBlocks.insert(missingBlocks.begin(), missingBlocks.end());
+  if (!missingBlocks.empty())
+    data.basicBlocks.insert(missingBlocks.begin(), missingBlocks.end());
   // Updating data.instructions
-  data.instructions.insert(missingDeps.begin(), missingDeps.end());
+  if (!missingDeps.empty())
+    data.instructions.insert(missingDeps.begin(), missingDeps.end());
 
   SmallPtrSet<const Value *, 16> missingArgs;
   for (const PHINode *phiNode : phiNodes) {
@@ -625,7 +625,8 @@ ProgramSlice::ProgramSlice(Instruction &Initial, Function &F,
     }
   }
   // Updating data.functionArguments
-  data.functionArguments.insert(missingArgs.begin(), missingArgs.end());
+  if (!missingArgs.empty())
+    data.functionArguments.insert(missingArgs.begin(), missingArgs.end());
 
   std::set<const Instruction *> instsInSlice;
   SmallVector<Value *> depArgs;
