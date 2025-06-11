@@ -574,7 +574,7 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
           std::error_code ec;
           raw_fd_ostream outFile(fileName, ec, sys::fs::OF_Text);
           if (!ec) {
-            (*parentModule).print(outFile, nullptr);
+            parentModule->print(outFile, nullptr);
             outFile.close();
             dbgs() << "\nParent function module written to file: " << fileName
                    << "\n";

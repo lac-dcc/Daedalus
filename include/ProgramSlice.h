@@ -19,6 +19,9 @@
 
 // #include "llvm/Transforms/IPO/FunctionMerging.h"
 
+struct PhiDependencies;
+struct DataDependencies;
+
 namespace llvm {
 
 class ProgramSlice {
@@ -169,20 +172,20 @@ private:
                                      const BasicBlock *originalBB,
                                      DominatorTree &DT);
   /// Updates PHI nodes in the new successor block.
-  void updatePHINodesForSuccessor(BasicBlock *newSuccessor,
-                                  const BasicBlock *originalIncomingBlock,
-                                  BasicBlock *currentBB, Function *F,
-                                  DominatorTree &DT);
+  static void updatePHINodesForSuccessor(
+      BasicBlock *newSuccessor, const BasicBlock *originalIncomingBlock,
+      BasicBlock *currentBB, const Function *F, const DominatorTree &DT);
+
   /// Replaces uses of a successor with the unreachable block and updates the
   /// terminator.
-  void replaceUsesAndSetSuccessor(BasicBlock *successorToReplace,
-                                  BasicBlock *unreachableBlock, Function *F,
-                                  Instruction *terminator,
-                                  unsigned int successorIndex);
+  static void replaceUsesAndSetSuccessor(BasicBlock *successorToReplace,
+                                         BasicBlock *unreachableBlock,
+                                         Function *F, Instruction *terminator,
+                                         unsigned int successorIndex);
   /// Cleans up the unreachable block if it wasn't used.
-  void cleanupUnreachableBlock(BasicBlock *unreachableBlock);
+  static void cleanupUnreachableBlock(BasicBlock *unreachableBlock);
   /// Debugging helper to log predecessors.
-  void logPredecessors(Function *F);
+  static void logPredecessors(Function *F);
 
   void size();
 
