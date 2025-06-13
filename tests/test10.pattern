@@ -1,0 +1,1 @@
+; CHECK: There's a PHINode whose incoming blocks don't have PHINodes and one of its predecessors has a conditional branch or switch, that don't control it

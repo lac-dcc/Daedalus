@@ -226,6 +226,7 @@ private:
 
   /// maps Instructions in the original function to their cloned counterparts in
   /// the slice
-  std::map<Instruction *, Instruction *> _Imap;
+  std::map<Instruction *, Instruction *> _origToNewInst;
+  std::map<Instruction *, Instruction *> _newToOrigInst;
 };
 } // namespace llvm

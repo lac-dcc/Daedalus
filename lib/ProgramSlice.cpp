@@ -145,7 +145,8 @@ static const Value *getGate(const BasicBlock *BB) {
 static bool isWeirdCFG(
     const PHINode *phi,
     const std::unordered_map<const BasicBlock *, SmallVector<const Value *>>
-        &gates) {
+        &gates,
+    const DominatorTree &DT, const PostDominatorTree &PDT) {
   SmallPtrSet<BasicBlock *, 2> phiNodePreds;
   for (unsigned i = 0, e = phi->getNumIncomingValues(); i != e; ++i) {
     BasicBlock *incomingBlock = phi->getIncomingBlock(i);
@@ -154,12 +155,14 @@ static bool isWeirdCFG(
           ((isa<BranchInst>(pred->getTerminator()) &&
             cast<BranchInst>(pred->getTerminator())->isConditional()) ||
            isa<SwitchInst>(pred->getTerminator())) &&
-          !is_contained(gates.at(incomingBlock), pred->getTerminator())) {
+          !is_contained(gates.at(incomingBlock), pred->getTerminator()) &&
+          !PDT.dominates(incomingBlock, pred) &&
+          !DT.dominates(pred, incomingBlock)) {
         phiNodePreds.insert(incomingBlock);
       }
     }
   }
-  return phiNodePreds.size() > 1;
+  return phiNodePreds.size() == 2;
 }
 
 static bool
@@ -200,7 +203,8 @@ isOperandOutsideLoopOrHeader(const Value *operand, Loop *loop,
 static std::pair<Status, PhiDependencies> getPhiDependencies(
     const PHINode &phiNode,
     std::unordered_map<const BasicBlock *, SmallVector<const Value *>> &gates,
-    Loop *criterionLoop, LoopInfo &criterionLoopInfo) {
+    Loop *criterionLoop, LoopInfo &criterionLoopInfo, const DominatorTree &DT,
+    const PostDominatorTree &PDT) {
 
   Status status = {true, ""};
   SmallVector<const Value *> functionArgs;
@@ -230,16 +234,17 @@ static std::pair<Status, PhiDependencies> getPhiDependencies(
                         << *phi << "\n");
 
       // ~special case~ don't outline slice if it contains the weird CFG pattern
-      // if (isWeirdCFG(phi, gates)) {
-      //   status = {false,
-      //             "There's a PHINode whose incoming blocks don't have PHINodes "
-      //             "and one of its predecessors has a conditional branch or "
-      //             "switches, that don't control it"};
-      //   return {status, {}};
-      // }
+      if (isWeirdCFG(phi, gates, DT, PDT)) {
+        status = {false,
+                  "There's a PHINode whose incoming blocks don't have PHINodes "
+                  "and one of its predecessors has a conditional branch or "
+                  "switch, that don't control it"};
+        return {status, {}};
+      }
 
       for (unsigned i = 0, e = phi->getNumIncomingValues(); i != e; ++i) {
         const BasicBlock *incomingBB = phi->getIncomingBlock(i);
+
         // Activate gates that dominates incoming blocks, when the current
         // PHINode's parent has no gates
         if (gates[phi->getParent()].empty()) {
@@ -260,8 +265,8 @@ static std::pair<Status, PhiDependencies> getPhiDependencies(
           // instruction in deps
           LLVM_DEBUG(dbgs()
                      << "\t\t\t[Control Dependency] PHINode has an incoming "
-                        "block that has an exiting edge of a loop (probably a "
-                        "self loop): "
+                        "block that is an exiting edge of a loop and has a "
+                        "back edge: "
                      << incomingBB->getName() << "\n");
           gates[phi->getParent()].push_back(incomingBB->getTerminator());
         }
@@ -353,7 +358,8 @@ getDataDependencies(Instruction &I, Loop *loop, BasicBlock *loopHeader) {
         if (!processOperand(U.get())) break;
     }
   }
-  std::set<const Value *> functionArguments(functionArgs.begin(), functionArgs.end());
+  std::set<const Value *> functionArguments(functionArgs.begin(),
+                                            functionArgs.end());
   return {status, {BBs, deps, functionArguments}};
 }
 
@@ -508,10 +514,12 @@ ProgramSlice::ProgramSlice(Instruction &Initial, Function &F,
 
   // Get function's PHINodes data dependencies
   PhiDependencies phiDeps;
+  DominatorTree DT(F);
+  PostDominatorTree PDT(F);
   for (const BasicBlock &BB : F) {
     for (const PHINode &phi : BB.phis()) {
       auto [phiStatus, phiDependencies] =
-          getPhiDependencies(phi, gates, loop, loopInfo);
+          getPhiDependencies(phi, gates, loop, loopInfo, DT, PDT);
       if (!phiStatus.status) {
         _canOutline.first = phiStatus.status;
         _canOutline.second = phiStatus.msg;
@@ -562,7 +570,6 @@ ProgramSlice::ProgramSlice(Instruction &Initial, Function &F,
   }
 
   // Get missing dependencies by the intersection of gates and data dependencies
-  DominatorTree DT(F);
   const BasicBlock *commonDominator = findCommonDominator(DT, data.basicBlocks);
   LLVM_DEBUG(dbgs() << "Common dominator: " << commonDominator->getName()
                     << "\n");
@@ -643,8 +650,10 @@ ProgramSlice::ProgramSlice(Instruction &Initial, Function &F,
   }
 
   for (auto val : data.functionArguments) {
-    LLVM_DEBUG(dbgs() << "\tValue from data.functionArguments being inserted in depArgs: "
-                      << *val << "\n");
+    LLVM_DEBUG(
+        dbgs()
+        << "\tValue from data.functionArguments being inserted in depArgs: "
+        << *val << "\n");
     depArgs.push_back(const_cast<Value *>(val));
   };
 
@@ -1196,7 +1205,8 @@ void ProgramSlice::populateBBsWithInsts(Function *F) {
       if (_instsInSlice.count(&origInst)) {
         Instruction *newInst = origInst.clone();
         newInst->setName(origInst.getName());
-        _Imap.insert(std::make_pair(&origInst, newInst));
+        _origToNewInst.insert(std::make_pair(&origInst, newInst));
+        _newToOrigInst.insert(std::make_pair(newInst, &origInst));
         IRBuilder<> builder(_origToNewBBmap[&BB]);
         builder.Insert(newInst);
       }
@@ -1222,7 +1232,7 @@ void ProgramSlice::populateBBsWithInsts(Function *F) {
 void ProgramSlice::reorganizeUses(Function *F) {
   IRBuilder<> builder(F->getContext());
 
-  for (auto &pair : _Imap) {
+  for (auto &pair : _origToNewInst) {
     Instruction *originalInst = pair.first;
     Instruction *newInst = pair.second;
 
@@ -1365,7 +1375,7 @@ void ProgramSlice::simplifyCfg(Function *F, FunctionAnalysisManager &AM) {
  * @return A pointer to the newly created ReturnInst.
  */
 ReturnInst *ProgramSlice::addReturnValue(Function *F) {
-  BasicBlock *exit = _Imap[_initial]->getParent();
+  BasicBlock *exit = _origToNewInst[_initial]->getParent();
 
   if (exit->getTerminator()) {
     // The current terminator is an unconditional branch to a basic block with
@@ -1396,8 +1406,8 @@ ReturnInst *ProgramSlice::addReturnValue(Function *F) {
         return ReturnInst::Create(F->getParent()->getContext(), nullptr, exit);
     }
   }
-  return ReturnInst::Create(F->getParent()->getContext(), _Imap[_initial],
-                            exit);
+  return ReturnInst::Create(F->getParent()->getContext(),
+                            _origToNewInst[_initial], exit);
 }
 
 /**
@@ -1494,20 +1504,34 @@ Function *ProgramSlice::outline() {
   BasicBlock *oldEntry = &F->getEntryBlock();
   if (pred_begin(oldEntry) != pred_end(oldEntry)) {
     LLVMContext &Ctx = F->getContext();
-    // If oldEntry has PHINodes, add an undef incoming value from the new entry
-    for (auto I = oldEntry->begin(); isa<PHINode>(I); ++I) {
-      PHINode *PN = cast<PHINode>(I);
-      Value *UndefV = UndefValue::get(PN->getType());
-      PN->addIncoming(UndefV, nullptr); // nullptr for the new entry block, will set below
-    }
     BasicBlock *newEntry = BasicBlock::Create(Ctx, "BB_Entry", F, oldEntry);
     IRBuilder<> builder(newEntry);
     builder.CreateBr(oldEntry);
-    // Now set the correct incoming block for the new entry
+    // If oldEntry has PHINodes, add an incoming value from the new entry
     for (auto I = oldEntry->begin(); isa<PHINode>(I); ++I) {
-      PHINode *PN = cast<PHINode>(I);
-      int idx = PN->getNumIncomingValues() - 1;
-      PN->setIncomingBlock(idx, newEntry);
+      auto *newInst = dyn_cast<Instruction>(I);
+      auto *origPhiNode = dyn_cast<PHINode>(_newToOrigInst[newInst]);
+      LLVM_DEBUG(dbgs() << "Original PHINode: " << *origPhiNode << "\n");
+      // Find a ConstantInt in the original PHINode's incoming values
+      Constant *constantVal = nullptr;
+      for (unsigned idx = 0; idx < origPhiNode->getNumIncomingValues(); ++idx) {
+        if (auto *cv = dyn_cast<Constant>(origPhiNode->getIncomingValue(idx))) {
+          if (cv->getType()->isIntegerTy() ||
+              cv->getType()->isFloatingPointTy()) {
+            constantVal = cv;
+            break;
+          }
+        }
+      }
+      Value *incomingVal = nullptr;
+      if (constantVal) {
+        incomingVal = constantVal;
+      } else {
+        incomingVal = UndefValue::get(origPhiNode->getType());
+      }
+      auto *newPhiNode = dyn_cast<PHINode>(I);
+      newPhiNode->addIncoming(incomingVal, newEntry);
+      LLVM_DEBUG(dbgs() << "New PHINode: " << *newPhiNode << "\n");
     }
   }
 
@@ -1536,7 +1560,7 @@ Function *ProgramSlice::outline() {
  * instructions in the sliced function.
  */
 std::map<Instruction *, Instruction *> ProgramSlice::getInstructionInSlice() {
-  return _Imap;
+  return _origToNewInst;
 }
 
 /**

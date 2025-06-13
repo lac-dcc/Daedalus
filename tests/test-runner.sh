@@ -76,16 +76,20 @@ if [ -e "$ORIGINAL_EXECUTABLE" ]; then
 fi
 
 # Run FileCheck on both possible files, but only one should succeed (not both), and cmp must succeed too
-CHECK1=0
-CHECK2=0
-if FileCheck "$SOURCEFOLDER/$SOURCEFILEBASENAMEWEXT.pattern" < "$BUILDTESTSPATH/$SOURCEFILEBASENAMEWEXT.ll.parent_module.ll"; then
-    CHECK1=1
-fi
-if FileCheck "$SOURCEFOLDER/$SOURCEFILEBASENAMEWEXT.pattern" < "$BUILDTESTSPATH/$SOURCEFILEBASENAMEWEXT.d.ll"; then
-    CHECK2=1
-fi
-if [ $((CHECK1 + CHECK2)) -ge 1 ] && cmp -s "${SOURCEFILEBASENAMEWEXT}.output" "${SOURCEFILEBASENAMEWEXT}.reference_output"; then
+for CHECKFILE in "$BUILDTESTSPATH/$SOURCEFILEBASENAMEWEXT.ll.parent_module.ll" \
+                   "$BUILDTESTSPATH/$SOURCEFILEBASENAMEWEXT.d.ll" \
+                   "$BUILDTESTSPATH/${SOURCEFILEBASENAMEWEXT}_transformation.log"; do
+    if FileCheck "$SOURCEFOLDER/$SOURCEFILEBASENAMEWEXT.pattern" < "$CHECKFILE"; then
+        CHECK=1
+        echco -e "\nFileCheck succeed on $CHECKFILE!"
+        break
+    fi
+    echo -e "\nFileCheck failed on $CHECKFILE"
+    CHECK=0
+done
+if [ $CHECK -eq 1 ] && cmp -s "${SOURCEFILEBASENAMEWEXT}.output" "${SOURCEFILEBASENAMEWEXT}.reference_output"; then
     exit 0
 else
+    echo -e "\nFileCheck failed or outputs do not match."
     exit 1
 fi
