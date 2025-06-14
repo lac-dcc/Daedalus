@@ -68,6 +68,9 @@ fi
 echo "clang $EXTRAPARAMS -Os \"$SOURCEFILENAMEDLL\" -o \"$FINAL_EXECUTABLE\""
 clang $EXTRAPARAMS -Os "$SOURCEFILENAMEDLL" -o "$FINAL_EXECUTABLE"
 
+# TODO: also check if the output of the bitcode file is the same as the original one
+# using lli over the .ll files
+
 if [ -e "$FINAL_EXECUTABLE" ]; then
     "$FINAL_EXECUTABLE" $ARGUMENTS > "${SOURCEFILEBASENAMEWEXT}.output"
 fi

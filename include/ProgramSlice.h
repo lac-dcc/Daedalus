@@ -90,6 +90,7 @@ private:
    * value of the sliced function.
    */
   ReturnInst *addReturnValue(Function *F);
+  void createNewEntryBlock(Function *F);
 
   /**
    * @brief Fixes the instruction/argument/BB uses in new function F,
