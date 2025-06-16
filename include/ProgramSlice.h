@@ -68,7 +68,7 @@ public:
   /*
    * @brief Retrieves the current slice's parent function.
    */
-  Function *getParentFunction();
+  Function *getParentFunction() const;
 
 private:
   /**
@@ -77,7 +77,7 @@ private:
    * is first in the layout. This is necessary because LLVM assumes the first
    * block of a function is always its entry block.
    */
-  void reorderBlocks(Function *F);
+  static void reorderBlocks(Function *F);
 
   /**
    * @brief Reroutes branches in the slice to properly build control flow in the
@@ -109,7 +109,7 @@ private:
    * @brief Adjusts references between the function arguments and the operands
    * of the instructions in function F.
    */
-  void replaceArgs(Function *F, DenseMap<Value *, uint> dt);
+  static void replaceArgs(Function *F, DenseMap<Value *, uint> dt);
 
   /**
    * @brief Populates function F with BasicBlocks corresponding to the BBs in
@@ -128,7 +128,7 @@ private:
    * @brief Computes the attractor blocks (first dominator) for each basic block
    * in the original function.
    */
-  void computeAttractorBlocks(Loop *loop, LoopInfo &loopInfo);
+  void computeAttractorBlocks(const Loop *loop);
 
   /**
    * @brief Adds branches from immediate dominators which existed in the
@@ -139,39 +139,38 @@ private:
 
   /// Find next dominated node that exists in the slice, when a new target of a
   /// branch is not found
-  BasicBlock *findNextDominatedNode(DominatorTree &DT,
+  BasicBlock *findNextDominatedNode(const DominatorTree &DT,
                                     const BasicBlock *startNodeBB);
   /// Helper function to create an unreachable block.
-  BasicBlock *createUnreachableBlock(Function *F);
+  static BasicBlock *createUnreachableBlock(Function *F);
   /// Helper function to handle basic blocks without terminators.
   void handleNoTerminatorBlock(BasicBlock &BB, const BasicBlock *originalBB,
-                               Function *F, DominatorTree &DT,
-                               BasicBlock *unreachableBlock);
+                               const Function *F, const DominatorTree &DT);
   /// Helper for blocks without terminators: handles original BranchInst.
   void handleNoTerminatorBranch(BasicBlock &BB, const BasicBlock *originalBB,
-                                Function *F, DominatorTree &DT);
+                                const Function *F, const DominatorTree &DT);
   /// Helper for blocks without terminators: handles original SwitchInst.
   void handleNoTerminatorSwitch(BasicBlock &BB, const BasicBlock *originalBB,
-                                Function *F, DominatorTree &DT);
+                                const DominatorTree &DT);
   /// Helper function to handle basic blocks with existing terminators.
   void handleTerminatorBlock(BasicBlock &BB, const BasicBlock *originalBB,
-                             Function *F, DominatorTree &DT,
+                             Function *F, const DominatorTree &DT,
                              BasicBlock *unreachableBlock);
   /// Helper for blocks with terminators: handles existing BranchInst.
   void handleExistingBranchInst(BranchInst *BI, BasicBlock &currentBB,
                                 const BasicBlock *originalBB, Function *F,
-                                DominatorTree &DT,
+                                const DominatorTree &DT,
                                 BasicBlock *unreachableBlock);
   /// Helper for blocks with terminators: handles existing SwitchInst.
   void handleExistingSwitchInst(SwitchInst *SI, BasicBlock &currentBB,
                                 const BasicBlock *originalBB, Function *F,
-                                DominatorTree &DT,
+                                const DominatorTree &DT,
                                 BasicBlock *unreachableBlock);
   /// Determines the target block for a successor, potentially finding a
   /// dominated node if direct mapping fails.
   BasicBlock *getOrCreateTargetBlock(const BasicBlock *successor,
                                      const BasicBlock *originalBB,
-                                     DominatorTree &DT);
+                                     const DominatorTree &DT);
   /// Updates PHI nodes in the new successor block.
   static void updatePHINodesForSuccessor(
       BasicBlock *newSuccessor, const BasicBlock *originalIncomingBlock,

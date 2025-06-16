@@ -91,12 +91,13 @@ if [ $CHECK -eq 1 ] && cmp -s "${SOURCEFILEBASENAMEWEXT}.output" "${SOURCEFILEBA
 
     # Also check if the output of the bitcode file is the same as the original one using lli over the .ll files
     if ! diff <(lli "$SOURCEFILENAMELL" $ARGUMENTS) <(lli "$SOURCEFILENAMEDLL" $ARGUMENTS); then
-        echo -e "\nlli outputs do not match!"
+        echo -e "\nlli outputs do not match..."
         exit 1
     else
+        echo -e "\nlli outputs match!"
         exit 0
     fi
 else
-    echo -e "\nFileCheck failed or outputs do not match."
+    echo -e "\nFileCheck failed or outputs do not match..."
     exit 1
 fi

@@ -151,7 +151,7 @@ static const Value *getGate(const BasicBlock *BB) {
   const Value *branchInst = nullptr;
   if (BB) {
     const Instruction *terminator = BB->getTerminator();
-    if (const BranchInst *BI = dyn_cast<BranchInst>(terminator)) {
+    if (const auto *BI = dyn_cast<BranchInst>(terminator)) {
       if (!BI->isConditional()) {
         LLVM_DEBUG(
             dbgs() << " Unconditional terminator found when trying to get "
@@ -159,7 +159,7 @@ static const Value *getGate(const BasicBlock *BB) {
       } else {
         branchInst = BI;
       }
-    } else if (const SwitchInst *SI = dyn_cast<SwitchInst>(terminator)) {
+    } else if (const auto *SI = dyn_cast<SwitchInst>(terminator)) {
       branchInst = SI;
     }
   }
@@ -228,7 +228,7 @@ static std::pair<Status, PhiDependencies> processPHINode(
     std::set<const Value *> visited;      // mocked visited set
     std::set<const Value *> functionArgs; // mocked function args set
     for (const Value *gate : it->second) {
-      if (const auto gateInst = dyn_cast<Instruction>(gate)) {
+      if (gate) {
         // ~special case~ don't consider gates that are outside the slice
         if (criterionLoop &&
             isOperandOutsideLoopOrHeader(gate, criterionLoop,
@@ -301,7 +301,8 @@ static std::pair<Status, PhiDependencies> getPhiDependencies(
 }
 
 static std::pair<Status, DataDependencies>
-getDataDependencies(const Instruction &I, Loop *loop, BasicBlock *loopHeader) {
+getDataDependencies(const Instruction &I, const Loop *loop,
+                    const BasicBlock *loopHeader) {
   Status status = {true, ""};
   std::set<const Value *> deps;
   std::set<const BasicBlock *> BBs;
@@ -371,8 +372,9 @@ getDataDependencies(const Instruction &I, Loop *loop, BasicBlock *loopHeader) {
  * @param PDT The post-dominator tree for the function.
  * @return The nearest controlling basic block, or nullptr if none is found.
  */
-static const BasicBlock *getController(const BasicBlock *BB, DominatorTree &DT,
-                                       PostDominatorTree &PDT) {
+static const BasicBlock *getController(const BasicBlock *BB,
+                                       const DominatorTree &DT,
+                                       const PostDominatorTree &PDT) {
   const DomTreeNode *dom_node = DT.getNode(BB);
   while (dom_node) {
     const BasicBlock *dom_BB = dom_node->getBlock();
@@ -402,7 +404,7 @@ static const BasicBlock *getController(const BasicBlock *BB, DominatorTree &DT,
  * @return A map from each basic block to a vector of gate instructions
  * (conditional branches or switches) that control entry into the block.
  */
-static const std::unordered_map<const BasicBlock *, SmallVector<const Value *>>
+static std::unordered_map<const BasicBlock *, SmallVector<const Value *>>
 computeGates(Function &F) {
   DominatorTree DT(F);
   PostDominatorTree PDT(F);
@@ -433,7 +435,7 @@ computeGates(Function &F) {
       }
       LLVM_DEBUG(dbgs() << "\n");
     }
-    gates.emplace(std::make_pair(&BB, BB_gates));
+    gates.emplace(&BB, BB_gates);
   }
   return gates;
 }
@@ -451,21 +453,7 @@ findCommonDominator(const DominatorTree &DT,
   return commonDom;
 }
 
-/**
- * @brief Constructs a ProgramSlice object.
- *
- * @details This constructor initializes a ProgramSlice object by computing
- * the data and control dependencies of the given initial instruction within
- * the context of the specified function and post-dominator tree. It sets up
- * the necessary structures for representing the program slice, including the
- * set of instructions in the slice, dependency arguments, phi-function types,
- * and basic blocks in the slice. It also pre-computes struct types to avoid
- * redundant type creation and computes attractor blocks.
- *
- * @param Initial The initial instruction to be sliced.
- * @param F The function containing the initial instruction.
- * @param PDT The post-dominator tree of the function.
- */
+
 ProgramSlice::ProgramSlice(Instruction &Initial, Function &F,
                            FunctionAnalysisManager &FAM,
                            std::set<BasicBlock *> &tryCatchBlocks)
@@ -552,6 +540,11 @@ ProgramSlice::ProgramSlice(Instruction &Initial, Function &F,
   }
 
   const BasicBlock *commonDominator = findCommonDominator(DT, data.basicBlocks);
+  if (!commonDominator) {
+    _canOutline.first = false;
+    _canOutline.second = "No common dominator found for the slice.";
+    return;
+  }
   LLVM_DEBUG(dbgs() << "Common dominator: " << commonDominator->getName()
                     << "\n");
 
@@ -660,7 +653,7 @@ ProgramSlice::ProgramSlice(Instruction &Initial, Function &F,
     dbgs() << "\n";
   });
 
-  computeAttractorBlocks(loop, loopInfo);
+  computeAttractorBlocks(loop);
   LLVM_DEBUG({
     dbgs() << "\n\tAttractors:\n";
     for (const BasicBlock &BB : *_parentFunction) {
@@ -682,14 +675,13 @@ ProgramSlice::ProgramSlice(Instruction &Initial, Function &F,
   });
 }
 
-BasicBlock *ProgramSlice::findNextDominatedNode(DominatorTree &DT,
+BasicBlock *ProgramSlice::findNextDominatedNode(const DominatorTree &DT,
                                                 const BasicBlock *startNodeBB) {
   BasicBlock *newTarget = nullptr;
   std::stack<DomTreeNode *> stack;
   std::set<const BasicBlock *> visited;
   LLVM_DEBUG(dbgs() << "\tStart node: " << startNodeBB->getName() << "\n");
-  DomTreeNode *domNode = DT.getNode(startNodeBB);
-  if (domNode) stack.push(domNode);
+  if (DomTreeNode *domNode = DT.getNode(startNodeBB)) stack.push(domNode);
   while (!stack.empty()) {
     DomTreeNode *curNode = stack.top();
     stack.pop();
@@ -734,7 +726,7 @@ BasicBlock *ProgramSlice::findNextDominatedNode(DominatorTree &DT,
  * @post `_attractors` will contain a mapping of basic blocks to their
  *       attractor blocks.
  */
-void ProgramSlice::computeAttractorBlocks(Loop *loop, LoopInfo &loopInfo) {
+void ProgramSlice::computeAttractorBlocks(const Loop *loop) {
   std::map<const BasicBlock *, const BasicBlock *> attractors;
   LLVM_DEBUG(dbgs() << "Computing attractors...\n");
   PostDominatorTree PDT(*_parentFunction);
@@ -785,7 +777,7 @@ void ProgramSlice::addDomBranches(DomTreeNode *cur, DomTreeNode *parent,
                                   std::set<DomTreeNode *> &visited) {
   // Stack for iterative traversal
   std::stack<std::pair<DomTreeNode *, DomTreeNode *>> stack;
-  stack.push({cur, parent});
+  stack.emplace(cur, parent);
 
   while (!stack.empty()) {
     auto [current, parentNode] = stack.top();
@@ -806,14 +798,14 @@ void ProgramSlice::addDomBranches(DomTreeNode *cur, DomTreeNode *parent,
       }
 
       // Push child and updated parent to the stack
-      stack.push({child, parentNode});
+      stack.emplace(child, parentNode);
 
       // If the child block is part of the slice and there is a valid parent
       if (parentNode && _BBsInSlice.count(child->getBlock())) {
         BasicBlock *parentBB = _origToNewBBmap[parent->getBlock()];
         BasicBlock *childBB = _origToNewBBmap[child->getBlock()];
         if (parentBB->getTerminator() == nullptr) {
-          BranchInst *newBranch = BranchInst::Create(childBB, parentBB);
+          BranchInst::Create(childBB, parentBB);
         }
       }
     }
@@ -880,7 +872,7 @@ void ProgramSlice::rerouteBranches(Function *F) {
     Instruction *terminator = BB.getTerminator();
 
     if (!terminator) {
-      handleNoTerminatorBlock(BB, originalBB, F, DT, unreachableBlock);
+      handleNoTerminatorBlock(BB, originalBB, F, DT);
     } else {
       handleTerminatorBlock(BB, originalBB, F, DT, unreachableBlock);
     }
@@ -905,29 +897,28 @@ BasicBlock *ProgramSlice::createUnreachableBlock(Function *F) {
 
 void ProgramSlice::handleNoTerminatorBlock(BasicBlock &BB,
                                            const BasicBlock *originalBB,
-                                           Function *F, DominatorTree &DT,
-                                           BasicBlock *unreachableBlock) {
+                                           const Function *F,
+                                           const DominatorTree &DT) {
   LLVM_DEBUG(dbgs() << "Parent BB without terminator: " << BB.getName()
                     << "\n");
 
-  if (const BranchInst *origBranch =
-          dyn_cast<BranchInst>(originalBB->getTerminator())) {
+  if (isa<BranchInst>(originalBB->getTerminator())) {
     handleNoTerminatorBranch(BB, originalBB, F, DT);
-  } else if (const SwitchInst *origSwitch =
-                 dyn_cast<SwitchInst>(originalBB->getTerminator())) {
-    handleNoTerminatorSwitch(BB, originalBB, F, DT);
+  } else if (isa<SwitchInst>(originalBB->getTerminator())) {
+    handleNoTerminatorSwitch(BB, originalBB, DT);
   }
 }
 
 void ProgramSlice::handleNoTerminatorBranch(BasicBlock &BB,
                                             const BasicBlock *originalBB,
-                                            Function *F, DominatorTree &DT) {
-  const BranchInst *origBranch = cast<BranchInst>(originalBB->getTerminator());
+                                            const Function *F,
+                                            const DominatorTree &DT) {
+  const auto *origBranch = cast<BranchInst>(originalBB->getTerminator());
 
   for (const BasicBlock *successor : origBranch->successors()) {
-    BasicBlock *newTarget = getOrCreateTargetBlock(successor, originalBB, DT);
 
-    if (newTarget) {
+    if (BasicBlock *newTarget =
+            getOrCreateTargetBlock(successor, originalBB, DT)) {
       BranchInst::Create(newTarget, &BB);
       updatePHINodesForSuccessor(newTarget, originalBB, &BB, F, DT);
       break;
@@ -937,8 +928,8 @@ void ProgramSlice::handleNoTerminatorBranch(BasicBlock &BB,
 
 void ProgramSlice::handleNoTerminatorSwitch(BasicBlock &BB,
                                             const BasicBlock *originalBB,
-                                            Function *F, DominatorTree &DT) {
-  const SwitchInst *origSwitch = cast<SwitchInst>(originalBB->getTerminator());
+                                            const DominatorTree &DT) {
+  const auto *origSwitch = cast<SwitchInst>(originalBB->getTerminator());
   SmallVector<BasicBlock *, 4> validTargets;
 
   for (unsigned int idx = 0; idx < origSwitch->getNumSuccessors(); ++idx) {
@@ -953,8 +944,8 @@ void ProgramSlice::handleNoTerminatorSwitch(BasicBlock &BB,
     BranchInst::Create(validTargets.front(), &BB);
   } else if (validTargets.empty()) {
     // If no single valid target, find a dominated node.
-    BasicBlock *newTarget = getOrCreateTargetBlock(nullptr, originalBB, DT);
-    if (newTarget) {
+    if (BasicBlock *newTarget =
+            getOrCreateTargetBlock(nullptr, originalBB, DT)) {
       BranchInst::Create(newTarget, &BB);
     }
   }
@@ -962,22 +953,20 @@ void ProgramSlice::handleNoTerminatorSwitch(BasicBlock &BB,
 
 void ProgramSlice::handleTerminatorBlock(BasicBlock &BB,
                                          const BasicBlock *originalBB,
-                                         Function *F, DominatorTree &DT,
+                                         Function *F, const DominatorTree &DT,
                                          BasicBlock *unreachableBlock) {
   LLVM_DEBUG(dbgs() << "Parent BB WITH terminator: " << BB.getName() << "\n");
 
-  if (BranchInst *BI = dyn_cast<BranchInst>(BB.getTerminator())) {
+  if (auto *BI = dyn_cast<BranchInst>(BB.getTerminator())) {
     handleExistingBranchInst(BI, BB, originalBB, F, DT, unreachableBlock);
-  } else if (SwitchInst *SI = dyn_cast<SwitchInst>(BB.getTerminator())) {
+  } else if (auto *SI = dyn_cast<SwitchInst>(BB.getTerminator())) {
     handleExistingSwitchInst(SI, BB, originalBB, F, DT, unreachableBlock);
   }
 }
 
-void ProgramSlice::handleExistingBranchInst(BranchInst *BI,
-                                            BasicBlock &currentBB,
-                                            const BasicBlock *originalBB,
-                                            Function *F, DominatorTree &DT,
-                                            BasicBlock *unreachableBlock) {
+void ProgramSlice::handleExistingBranchInst(
+    BranchInst *BI, BasicBlock &currentBB, const BasicBlock *originalBB,
+    Function *F, const DominatorTree &DT, BasicBlock *unreachableBlock) {
   for (unsigned int idx = 0; idx < BI->getNumSuccessors(); ++idx) {
     BasicBlock *successor = BI->getSuccessor(idx);
     // If the successor is within the current function, no rerouting is needed
@@ -986,9 +975,8 @@ void ProgramSlice::handleExistingBranchInst(BranchInst *BI,
       continue;
     }
 
-    BasicBlock *newSucc = getOrCreateTargetBlock(successor, originalBB, DT);
-
-    if (newSucc) {
+    if (BasicBlock *newSucc =
+            getOrCreateTargetBlock(successor, originalBB, DT)) {
       BI->setSuccessor(idx, newSucc);
       updatePHINodesForSuccessor(newSucc, successor, &currentBB, F, DT);
     } else {
@@ -998,11 +986,9 @@ void ProgramSlice::handleExistingBranchInst(BranchInst *BI,
   }
 }
 
-void ProgramSlice::handleExistingSwitchInst(SwitchInst *SI,
-                                            BasicBlock &currentBB,
-                                            const BasicBlock *originalBB,
-                                            Function *F, DominatorTree &DT,
-                                            BasicBlock *unreachableBlock) {
+void ProgramSlice::handleExistingSwitchInst(
+    SwitchInst *SI, BasicBlock &currentBB, const BasicBlock *originalBB,
+    Function *F, const DominatorTree &DT, BasicBlock *unreachableBlock) {
   for (unsigned int idx = 0; idx < SI->getNumSuccessors(); ++idx) {
     BasicBlock *successor = SI->getSuccessor(idx);
     // If the successor is within the current function, no rerouting is needed
@@ -1011,9 +997,8 @@ void ProgramSlice::handleExistingSwitchInst(SwitchInst *SI,
       continue;
     }
 
-    BasicBlock *newSucc = getOrCreateTargetBlock(successor, originalBB, DT);
-
-    if (newSucc) {
+    if (BasicBlock *newSucc =
+            getOrCreateTargetBlock(successor, originalBB, DT)) {
       SI->setSuccessor(idx, newSucc);
       updatePHINodesForSuccessor(newSucc, successor, &currentBB, F, DT);
     } else {
@@ -1025,7 +1010,7 @@ void ProgramSlice::handleExistingSwitchInst(SwitchInst *SI,
 
 BasicBlock *ProgramSlice::getOrCreateTargetBlock(const BasicBlock *successor,
                                                  const BasicBlock *originalBB,
-                                                 DominatorTree &DT) {
+                                                 const DominatorTree &DT) {
   BasicBlock *newTarget = nullptr;
   if (successor) {
     const BasicBlock *attractor = _attractors[successor];
@@ -1035,7 +1020,7 @@ BasicBlock *ProgramSlice::getOrCreateTargetBlock(const BasicBlock *successor,
   // block.
   if (!newTarget) {
     newTarget = findNextDominatedNode(DT, originalBB);
-    if (newTarget && llvm::is_contained(successors(originalBB),
+    if (newTarget && is_contained(successors(originalBB),
                                         _newToOrigBBmap[newTarget])) {
       newTarget = nullptr;
     }
@@ -1049,8 +1034,8 @@ void ProgramSlice::updatePHINodesForSuccessor(
   for (Instruction &I : *newSuccessor) {
     if (auto *phi = dyn_cast<PHINode>(&I)) {
       for (unsigned i = 0, e = phi->getNumIncomingValues(); i != e; ++i) {
-        const BasicBlock *incomingBlock = phi->getIncomingBlock(i);
-        if (originalIncomingBlock == incomingBlock) {
+        if (const BasicBlock *incomingBlock = phi->getIncomingBlock(i);
+            originalIncomingBlock == incomingBlock) {
           phi->replaceIncomingBlockWith(originalIncomingBlock, currentBB);
         }
       }
@@ -1063,7 +1048,7 @@ void ProgramSlice::replaceUsesAndSetSuccessor(BasicBlock *successorToReplace,
                                               Function *F,
                                               Instruction *terminator,
                                               unsigned int successorIndex) {
-  successorToReplace->replaceUsesWithIf(unreachableBlock, [F](Use &U) {
+  successorToReplace->replaceUsesWithIf(unreachableBlock, [F](const Use &U) {
     auto *UserI = dyn_cast<Instruction>(U.getUser());
     return UserI && UserI->getParent()->getParent() == F;
   });
@@ -1102,7 +1087,7 @@ void ProgramSlice::logPredecessors(Function *F) {
  */
 SmallVector<Value *> ProgramSlice::getOrigFunctionArgs() {
   SmallVector<Value *> args;
-  for (auto &arg : _depArgs) {
+  for (const auto &arg : _depArgs) {
     args.push_back(cast<Value>(arg));
   }
   return args;
@@ -1204,7 +1189,7 @@ void ProgramSlice::reorganizeUses(Function *F) {
     Instruction *originalInst = pair.first;
     Instruction *newInst = pair.second;
 
-    if (PHINode *PN = dyn_cast<PHINode>(newInst)) {
+    if (auto *PN = dyn_cast<PHINode>(newInst)) {
       for (BasicBlock *BB : PN->blocks()) {
         if (_origToNewBBmap.count(BB)) {
           PN->replaceIncomingBlockWith(BB, _origToNewBBmap[BB]);
@@ -1212,7 +1197,7 @@ void ProgramSlice::reorganizeUses(Function *F) {
       }
     }
 
-    originalInst->replaceUsesWithIf(newInst, [F](Use &U) {
+    originalInst->replaceUsesWithIf(newInst, [F](const Use &U) {
       auto *UserI = dyn_cast<Instruction>(U.getUser());
       return UserI && UserI->getParent()->getParent() == F;
     });
@@ -1244,25 +1229,13 @@ void ProgramSlice::reorderBlocks(Function *F) {
   if (realEntry != nullptr) realEntry->moveBefore(&F->getEntryBlock());
 }
 
-/**
- * @brief Adjusts references between the function arguments and the operands
- * of the instructions in function F.
- *
- * @details This function iterates through all instructions in the function
- * F. For each instruction, it iterates through its operands and compares
- * their names with the names of the function arguments. If a match is
- * found, it replaces the operand with the corresponding function argument.
- *
- * @param F The Function where references between arguments and instruction
- * operands are adjusted.
- */
+
 void ProgramSlice::replaceArgs(Function *F, DenseMap<Value *, uint> dt) {
 
   for (Instruction &I : instructions(F)) {
     for (int j = 0; j < I.getNumOperands(); ++j) {
       for (int k = 0; k < F->arg_size(); ++k) {
-        auto operand = I.getOperand(j);
-        if (dt.count(operand)) {
+        if (auto operand = I.getOperand(j); dt.count(operand)) {
           I.setOperand(j, F->getArg(dt[operand]));
         }
       }
@@ -1323,26 +1296,6 @@ void ProgramSlice::simplifyCfg(Function *F, FunctionAnalysisManager &AM) {
 //     return Merger.merge(F1, F2, "", Options);
 // }
 
-/**
- * @brief Adds a return instruction to the exit basic block of the given
- * function.
- *
- * This method ensures that the exit basic block of the function has a valid
- * return instruction. If the block already has a terminator (such as an
- * unconditional branch), it removes any invalid PHINode incoming values from
- * successor blocks and erases the existing terminator.
- *
- * The return value is determined based on the type of the initial
- * instruction:
- * - If the initial instruction is a ReturnInst, its return value is used.
- * - If the initial instruction is a CallInst to a function returning void, a
- * void return is created.
- * - Otherwise, the value mapped from the initial instruction is used as the
- * return value.
- *
- * @param F The function to which the return instruction will be added.
- * @return A pointer to the newly created ReturnInst.
- */
 ReturnInst *ProgramSlice::addReturnValue(Function *F) {
   BasicBlock *exit = _origToNewInst[_initial]->getParent();
 
@@ -1350,7 +1303,7 @@ ReturnInst *ProgramSlice::addReturnValue(Function *F) {
     // The current terminator is an unconditional branch to a basic block with
     // invalid PHINode incoming values. They get removed from the current
     // slice because they are not in the slice.
-    if (auto *branchInst = dyn_cast<BranchInst>(exit->getTerminator())) {
+    if (const auto *branchInst = dyn_cast<BranchInst>(exit->getTerminator())) {
       if (!branchInst->isConditional()) {
         for (auto *succ : successors(exit)) {
           for (Instruction &inst : *succ) {
@@ -1368,10 +1321,9 @@ ReturnInst *ProgramSlice::addReturnValue(Function *F) {
       return ReturnInst::Create(F->getParent()->getContext(), retType, exit);
     }
   }
-  if (auto *callInst = dyn_cast<CallInst>(_initial)) {
-    Function *ftype = callInst->getCalledFunction();
-    if (ftype) {
-      if (ftype->getReturnType()->isVoidTy())
+  if (const auto *callInst = dyn_cast<CallInst>(_initial)) {
+    if (const Function *functionType = callInst->getCalledFunction()) {
+      if (functionType->getReturnType()->isVoidTy())
         return ReturnInst::Create(F->getParent()->getContext(), nullptr, exit);
     }
   }
@@ -1435,8 +1387,7 @@ Function *ProgramSlice::outline() {
     return nullptr;
   }
 
-  const int size = 3;
-  if (_instsInSlice.size() < size) {
+  if (constexpr int size = 3; _instsInSlice.size() < size) {
     LLVM_DEBUG(
         dbgs()
         << "Insufficient number of instructions to outline a new slice...\n");
@@ -1543,4 +1494,4 @@ std::map<Instruction *, Instruction *> ProgramSlice::getInstructionInSlice() {
  *
  * @return A pointer to the parent Function of the program slice.
  */
-Function *ProgramSlice::getParentFunction() { return _parentFunction; }
+Function *ProgramSlice::getParentFunction() const { return _parentFunction; }
