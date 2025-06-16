@@ -68,9 +68,6 @@ fi
 echo "clang $EXTRAPARAMS -Os \"$SOURCEFILENAMEDLL\" -o \"$FINAL_EXECUTABLE\""
 clang $EXTRAPARAMS -Os "$SOURCEFILENAMEDLL" -o "$FINAL_EXECUTABLE"
 
-# TODO: also check if the output of the bitcode file is the same as the original one
-# using lli over the .ll files
-
 if [ -e "$FINAL_EXECUTABLE" ]; then
     "$FINAL_EXECUTABLE" $ARGUMENTS > "${SOURCEFILEBASENAMEWEXT}.output"
 fi
@@ -84,14 +81,21 @@ for CHECKFILE in "$BUILDTESTSPATH/$SOURCEFILEBASENAMEWEXT.ll.parent_module.ll" \
                    "$BUILDTESTSPATH/${SOURCEFILEBASENAMEWEXT}_transformation.log"; do
     if FileCheck "$SOURCEFOLDER/$SOURCEFILEBASENAMEWEXT.pattern" < "$CHECKFILE"; then
         CHECK=1
-        echco -e "\nFileCheck succeed on $CHECKFILE!"
+        echo -e "\nFileCheck succeed on $CHECKFILE!"
         break
     fi
     echo -e "\nFileCheck failed on $CHECKFILE"
     CHECK=0
 done
 if [ $CHECK -eq 1 ] && cmp -s "${SOURCEFILEBASENAMEWEXT}.output" "${SOURCEFILEBASENAMEWEXT}.reference_output"; then
-    exit 0
+
+    # Also check if the output of the bitcode file is the same as the original one using lli over the .ll files
+    if ! diff <(lli "$SOURCEFILENAMELL" $ARGUMENTS) <(lli "$SOURCEFILENAMEDLL" $ARGUMENTS); then
+        echo -e "\nlli outputs do not match!"
+        exit 1
+    else
+        exit 0
+    fi
 else
     echo -e "\nFileCheck failed or outputs do not match."
     exit 1
