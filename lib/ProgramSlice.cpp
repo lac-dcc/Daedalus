@@ -8,6 +8,7 @@
 
 #include <map>
 #include <queue>
+#include <random>
 #include <set>
 #include <stack>
 #include <tuple>
@@ -41,9 +42,6 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/Utils/Local.h"
 
-#include <random>
-#include <valarray>
-
 #define DEBUG_TYPE "ProgramSlice"
 
 using namespace llvm;
@@ -76,7 +74,8 @@ struct Status {
  * @param loopHeader The header of the loop.
  * @param functionArgs Set to store function arguments.
  * @param visited Set to track visited operands.
- * @return true if the operand is outside the loop or its header, false otherwise.
+ * @return true if the operand is outside the loop or its header, false
+ * otherwise.
  */
 static bool isOperandOutsideLoopOrHeader(const Value *operand, const Loop *loop,
                                          const BasicBlock *loopHeader,
@@ -214,7 +213,7 @@ static std::pair<Status, PhiDependencies> processPHINode(
   LLVM_DEBUG(dbgs() << "\t\t[Control Dependency] PHINode being processed: "
                     << phiNode << "\n");
 
-  // ~special case~ don't outline slice if it contains the weird CFG pattern
+  // don't outline slice if it contains the weird CFG pattern
   if (isWeirdCFG(phiNode, gates, DT, PDT)) {
     status = {false, ""};
     return {status, {}};
@@ -251,8 +250,8 @@ static std::pair<Status, PhiDependencies> processPHINode(
     for (const Value *gate : gates[phiNodeBB]) {
       if (gate) {
         if (auto *gateInst = dyn_cast<Instruction>(gate)) {
-          // ~special case~ don't consider gates that are outside the slice or
-          // in slice criterion's block
+          // don't consider gates that are outside the slice or in slice
+          // criterion's block
           if (criterionLoop &&
                   isOperandOutsideLoopOrHeader(gate, criterionLoop,
                                                criterionLoop->getHeader(),
@@ -446,8 +445,8 @@ static const BasicBlock *getController(const BasicBlock *BB,
                                        const PostDominatorTree &PDT) {
   const DomTreeNode *dom_node = DT.getNode(BB);
   while (dom_node) {
-    const BasicBlock *dom_BB = dom_node->getBlock();
-    if (!PDT.dominates(BB, dom_BB)) {
+    if (const BasicBlock *dom_BB = dom_node->getBlock();
+        !PDT.dominates(BB, dom_BB)) {
       return dom_BB;
     }
     dom_node = dom_node->getIDom();
@@ -475,8 +474,8 @@ static const BasicBlock *getController(const BasicBlock *BB,
  */
 static std::unordered_map<const BasicBlock *, SmallVector<const Value *>>
 computeGates(Function &F) {
-  DominatorTree DT(F);
-  PostDominatorTree PDT(F);
+  const DominatorTree DT(F);
+  const PostDominatorTree PDT(F);
   std::unordered_map<const BasicBlock *, SmallVector<const Value *>> gates;
   for (const BasicBlock &BB : F) {
     SmallVector<const Value *> BB_gates;
@@ -579,7 +578,8 @@ listActuallyUsedValues(const DataDependencies &data,
 }
 
 /**
- * @brief Constructs a ProgramSlice object for a given instruction in a function.
+ * @brief Constructs a ProgramSlice object for a given instruction in a
+ * function.
  *
  * This constructor initializes a ProgramSlice object by analyzing the data
  * dependencies of the specified instruction within the context of the provided
@@ -657,9 +657,8 @@ ProgramSlice::ProgramSlice(Instruction &sliceCriterion, Function &F,
   LLVM_DEBUG(dbgs() << "Listing control dependencies for listed PHINodes...\n");
   for (auto &BB : F) {
     for (auto &phi : BB.phis()) {
-      auto [phiStatus, phiDependencies] =
-          getPhiDependencies(phi, gates, loop, loopInfo, DT, PDT,
-                             sliceCriterion);
+      auto [phiStatus, phiDependencies] = getPhiDependencies(
+          phi, gates, loop, loopInfo, DT, PDT, sliceCriterion);
       if (!phiStatus.status) {
         if (data.instructions.count(&phi)) invalidPHINodes.push_back(&phi);
       } else {
@@ -754,8 +753,8 @@ ProgramSlice::ProgramSlice(Instruction &sliceCriterion, Function &F,
       listUsedValues(data.instructions, usedArgs, dep);
       if (!usedArgs.empty()) {
         data.functionArguments.insert(usedArgs.begin(), usedArgs.end());
-        LLVM_DEBUG(dbgs()
-                   << "\t\tMissing Instruction: " << *dep
+        LLVM_DEBUG(
+            dbgs() << "\t\tMissing Instruction: " << *dep
                    << "\n\t\t\thas users in the updated data.instructions!\n");
       }
     }
@@ -831,7 +830,7 @@ ProgramSlice::ProgramSlice(Instruction &sliceCriterion, Function &F,
     dbgs() << "\n";
   });
 
-  computeAttractorBlocks(loop);
+  computeAttractorBlocks();
   LLVM_DEBUG({
     dbgs() << "\n\tAttractors:\n";
     for (const BasicBlock &BB : *_parentFunction) {
@@ -863,7 +862,7 @@ BasicBlock *ProgramSlice::findNextDominatedNode(const DominatorTree &DT,
   while (!stack.empty()) {
     DomTreeNode *curNode = stack.top();
     stack.pop();
-    BasicBlock *curBB = curNode->getBlock();
+    const BasicBlock *curBB = curNode->getBlock();
     BasicBlock *curBBNew = _origToNewBBmap[curBB];
     if (visited.count(curBB)) continue;
     visited.insert(curBB);
@@ -889,19 +888,18 @@ BasicBlock *ProgramSlice::findNextDominatedNode(const DominatorTree &DT,
  * blocks that are part of the slice and their corresponding attractors, which
  * are blocks that dominate them but are not post-dominated by them.
  *
- * @param loop The loop in which the slice criterion resides, if any.
  */
-void ProgramSlice::computeAttractorBlocks(const Loop *loop) {
+void ProgramSlice::computeAttractorBlocks() {
   std::map<const BasicBlock *, const BasicBlock *> attractors;
   LLVM_DEBUG(dbgs() << "Computing attractors...\n");
-  PostDominatorTree PDT(*_parentFunction);
+  const PostDominatorTree PDT(*_parentFunction);
   for (const BasicBlock &BB : *_parentFunction) {
     if (_BBsInSlice.count(&BB) > 0) {
       attractors[&BB] = &BB;
       continue;
     }
-    DomTreeNode *OrigBB = PDT.getNode(&BB);
-    DomTreeNode *Cand = OrigBB->getIDom();
+    const DomTreeNode *OrigBB = PDT.getNode(&BB);
+    const DomTreeNode *Cand = OrigBB->getIDom();
     while (Cand != nullptr) {
       if (_BBsInSlice.count(Cand->getBlock()) > 0) {
         break;
@@ -909,15 +907,7 @@ void ProgramSlice::computeAttractorBlocks(const Loop *loop) {
       Cand = Cand->getIDom();
     }
     if (Cand) {
-      // ~special case~ the slice criterion is inside a loop, hence
-      // we should not set an attractor if it's a loop header
-      if (loop && !loop->isInvalid()) {
-        if (Cand->getBlock() != loop->getHeader()) {
-          attractors[&BB] = Cand->getBlock();
-        }
-      } else {
-        attractors[&BB] = Cand->getBlock();
-      }
+      attractors[&BB] = Cand->getBlock();
     }
   }
   _attractors = attractors;
@@ -1044,9 +1034,8 @@ void ProgramSlice::rerouteBranches(Function *F) {
     const BasicBlock *originalBB = _newToOrigBBmap[&BB];
     if (originalBB == _initial->getParent())
       continue; // skip slice criterion's basic block
-    Instruction *terminator = BB.getTerminator();
 
-    if (!terminator) {
+    if (const Instruction *terminator = BB.getTerminator(); !terminator) {
       handleNoTerminatorBlock(BB, originalBB, F, DT);
     } else {
       handleTerminatorBlock(BB, originalBB, F, DT, unreachableBlock);
@@ -1118,9 +1107,9 @@ void ProgramSlice::handleNoTerminatorSwitch(BasicBlock &BB,
   SmallVector<BasicBlock *, 4> validTargets;
 
   for (unsigned int idx = 0; idx < origSwitch->getNumSuccessors(); ++idx) {
-    BasicBlock *successor = origSwitch->getSuccessor(idx);
-    BasicBlock *newTarget = _origToNewBBmap[_attractors[successor]];
-    if (newTarget && _BBsInSlice.count(successor)) {
+    const BasicBlock *successor = origSwitch->getSuccessor(idx);
+    if (BasicBlock *newTarget = _origToNewBBmap[_attractors[successor]];
+        newTarget && _BBsInSlice.count(successor)) {
       validTargets.push_back(newTarget);
     }
   }
@@ -1263,8 +1252,7 @@ void ProgramSlice::updatePHINodesForSuccessor(
 void ProgramSlice::replaceUsesAndSetSuccessor(BasicBlock *successorToReplace,
                                               BasicBlock *unreachableBlock,
                                               Function *F,
-                                              Instruction *terminator,
-                                              unsigned int successorIndex) {
+                                              Instruction *terminator, const unsigned int successorIndex) {
   successorToReplace->replaceUsesWithIf(unreachableBlock, [F](const Use &U) {
     auto *UserI = dyn_cast<Instruction>(U.getUser());
     return UserI && UserI->getParent()->getParent() == F;
@@ -1341,8 +1329,8 @@ SmallVector<Value *> ProgramSlice::getOrigFunctionArgs() {
  * @param F The Function where the new BasicBlock will be inserted.
  */
 void ProgramSlice::insertNewBB(const BasicBlock *originalBB, Function *F) {
-  auto originalName = originalBB->getName();
-  std::string newBBName = "sliceclone_" + originalName.str();
+  const auto originalName = originalBB->getName();
+  const std::string newBBName = "sliceclone_" + originalName.str();
   BasicBlock *newBB =
       BasicBlock::Create(F->getParent()->getContext(), newBBName, F);
 
@@ -1420,12 +1408,9 @@ void ProgramSlice::populateBBsWithInsts(Function *F) {
 void ProgramSlice::reorganizeUses(Function *F) {
   IRBuilder<> builder(F->getContext());
 
-  for (auto &pair : _origToNewInst) {
-    Instruction *originalInst = pair.first;
-    Instruction *newInst = pair.second;
-
+  for (auto &[originalInst, newInst] : _origToNewInst) {
     if (auto *PN = dyn_cast<PHINode>(newInst)) {
-      for (BasicBlock *BB : PN->blocks()) {
+      for (const BasicBlock *BB : PN->blocks()) {
         if (_origToNewBBmap.count(BB)) {
           PN->replaceIncomingBlockWith(BB, _origToNewBBmap[BB]);
         }
@@ -1491,7 +1476,7 @@ void ProgramSlice::replaceArgs(Function *F, DenseMap<Value *, uint> dt) {
  * TargetIRAnalysis result.
  */
 void ProgramSlice::simplifyCfg(Function *F, FunctionAnalysisManager &AM) {
-  auto &TTI = AM.getResult<TargetIRAnalysis>(*F);
+  const auto &TTI = AM.getResult<TargetIRAnalysis>(*F);
   bool changed = false;
   bool localChange = true;
 
@@ -1500,7 +1485,7 @@ void ProgramSlice::simplifyCfg(Function *F, FunctionAnalysisManager &AM) {
     assert(iterationsCounter++ < 1000 &&
            "Iterative simplification didn't converge!");
     localChange = false;
-    for (Function::iterator BBIt = F->begin(); BBIt != F->end();) {
+    for (auto BBIt = F->begin(); BBIt != F->end();) {
       BasicBlock &BB = *BBIt++;
       if (llvm::simplifyCFG(&BB, TTI)) {
         localChange = true;
@@ -1590,8 +1575,8 @@ ReturnInst *ProgramSlice::addReturnValue(Function *F) {
  */
 void ProgramSlice::createNewEntryBlock(Function *F) {
   // Insert a new entry block if the current entry has predecessors
-  BasicBlock *oldEntry = &F->getEntryBlock();
-  if (pred_begin(oldEntry) != pred_end(oldEntry)) {
+  if (BasicBlock *oldEntry = &F->getEntryBlock();
+      pred_begin(oldEntry) != pred_end(oldEntry)) {
     LLVMContext &Ctx = F->getContext();
     BasicBlock *newEntry = BasicBlock::Create(Ctx, "BB_Entry", F, oldEntry);
     IRBuilder<> builder(newEntry);
@@ -1599,7 +1584,7 @@ void ProgramSlice::createNewEntryBlock(Function *F) {
     // If oldEntry has PHINodes, add an incoming value from the new entry
     for (auto I = oldEntry->begin(); isa<PHINode>(I); ++I) {
       auto *newInst = dyn_cast<Instruction>(I);
-      auto *origPhiNode = dyn_cast<PHINode>(_newToOrigInst[newInst]);
+      const auto *origPhiNode = dyn_cast<PHINode>(_newToOrigInst[newInst]);
       LLVM_DEBUG(dbgs() << "Original PHINode: " << *origPhiNode << "\n");
       // Find a ConstantInt in the original PHINode's incoming values
       Constant *constantVal = nullptr;
@@ -1679,8 +1664,8 @@ Function *ProgramSlice::outline() {
   std::random_device rd;
   std::mt19937 mt(rd());
   std::uniform_int_distribution<int64_t> dist(1, 1000000000);
-  uint64_t random_num = dist(mt);
-  std::string functionName =
+  const uint64_t random_num = dist(mt);
+  const std::string functionName =
       "_daedalus_slice_" + _parentFunction->getName().str() + "_" +
       _initial->getName().str() + "_" + std::to_string(random_num);
 

@@ -11,7 +11,6 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Analysis/CFGPrinter.h"
-#include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/PostDominators.h"
 #include "llvm/Analysis/TargetLibraryInfo.h"
 #include "llvm/IR/Attributes.h"
@@ -25,7 +24,6 @@
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/GraphWriter.h"
-#include "llvm/Support/NativeFormatting.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/IPO/MergeFunctions.h"
 #include <filesystem>
@@ -33,7 +31,6 @@
 // #include "llvm/Transforms/IPO/FunctionMerging.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Transforms/Utils/Cloning.h"
-#include "llvm/Transforms/Utils/ValueMapper.h"
 #include <csignal>
 #include <memory>
 #include <set>
@@ -82,9 +79,9 @@ bool canBeSliceCriterion(Instruction &I) {
   // all PHINodes below it MUST be moved above our criterion. However,
   // if at least one of these PHINodes is a user of our criterion, it
   // will not dominate all its uses. In this case, we cannot replace it.
-  if (PHINode *phi = dyn_cast<PHINode>(&I)) {
+  if (auto *phi = dyn_cast<PHINode>(&I)) {
     for (User *use : phi->users()) {
-      if (Instruction *Iuse = dyn_cast<Instruction>(use))
+      if (auto *Iuse = dyn_cast<Instruction>(use))
         if (isa<PHINode>(Iuse) && Iuse->getParent() == I.getParent()) {
           LLVM_DEBUG(dbgs() << COLOR::RED
                             << "Criterion is a phi-node which at least one of "
@@ -117,7 +114,8 @@ bool canBeSliceCriterion(Instruction &I) {
  *
  * @return The number of instructions added to the `toRemove` set.
  */
-uint listInstructionsToRemove(Instruction *start, Instruction *sliceCriterion,
+uint listInstructionsToRemove(Instruction *start,
+                              const Instruction *sliceCriterion,
                               const std::set<Instruction *> &constOriginalInst,
                               std::set<Instruction *> &toRemove) {
   // First, collect all relevant instructions reachable from 'start'.
@@ -144,7 +142,7 @@ uint listInstructionsToRemove(Instruction *start, Instruction *sliceCriterion,
     reachable.push_back(cur);
 
     // Enqueue users
-    for (auto U : cur->users()) {
+    for (const auto U : cur->users()) {
       if (auto *J = dyn_cast<Instruction>(U)) {
         worklist.push(J);
       }
@@ -156,7 +154,7 @@ uint listInstructionsToRemove(Instruction *start, Instruction *sliceCriterion,
   for (auto it = reachable.rbegin(); it != reachable.rend(); ++it) {
     Instruction *cur = *it;
     bool canRem = true;
-    for (auto U : cur->users()) {
+    for (const auto U : cur->users()) {
       if (auto *J = dyn_cast<Instruction>(U)) {
         if (J == sliceCriterion) continue;
         if (!toRemove.count(J)) {
@@ -174,41 +172,6 @@ uint listInstructionsToRemove(Instruction *start, Instruction *sliceCriterion,
 }
 
 /**
- * @brief Checks if a given instruction is self-contained within a set of
- * instructions.
- *
- * This function iterates over a set of original instructions and determines if
- * the given instruction `sliceCriterion` is self-contained. An instruction is
- * considered self-contained if it can be safely removed without breaking the
- * dependencies of other instructions in the set. If an instruction `J` from
- * the original set can be removed without affecting `sliceCriterion`, it is
- * added to the `tempToRemove` set.
- *
- * @param origInst A set of original instructions to check against.
- * @param sliceCriterion The instruction to check for self-containment.
- * @param tempToRemove A set of instructions that can be removed without
- * affecting `sliceCriterion`.
- * @return Always returns true.
- */
-bool isSelfContained(std::set<Instruction *> origInst,
-                     Instruction *sliceCriterion,
-                     std::set<Instruction *> &tempToRemove) {
-  for (Instruction *J : origInst) {
-    if (J->getParent() == nullptr) continue;
-    if (sliceCriterion != J) {
-      if (uint totalToRemove = listInstructionsToRemove(
-              J, sliceCriterion, origInst, tempToRemove)) {
-        LLVM_DEBUG(dbgs() << "\t" << totalToRemove
-                          << " instruction(s) will be removed...\n");
-      } else {
-        LLVM_DEBUG(dbgs() << "\tNo instructions will be removed...\n");
-      }
-    }
-  }
-  return true;
-}
-
-/**
  * @brief Removes instructions from slices and simplifies functions.
  *
  * This function processes a collection of instruction slices, removing
@@ -222,15 +185,15 @@ bool isSelfContained(std::set<Instruction *> origInst,
  * @return A pair of unsigned integers representing the count of slices that
  *         were not merged and the count of slices that were not self-contained.
  */
-std::pair<uint, uint> removeInstructions(std::vector<iSlice> &allSlices,
-                                         const std::set<Function *> &mergeTo,
-                                         std::set<Function *> &toSimplify) {
+uint removeInstructions(const std::vector<iSlice> &allSlices,
+                        const std::set<Function *> &mergeTo,
+                        std::set<Function *> &toSimplify) {
   std::set<Instruction *> toRemove;
   std::map<Instruction *, Function *> newCalls;
 
-  uint dontMerge = 0, notSelfContained = 0;
+  uint dontMerge = 0;
 
-  for (iSlice &slice : allSlices) {
+  for (const iSlice &slice : allSlices) {
     Instruction *sliceCriterion = slice.I;
     CallInst *callInst = slice.callInst;
     Function *F = slice.F;
@@ -252,7 +215,7 @@ std::pair<uint, uint> removeInstructions(std::vector<iSlice> &allSlices,
                           << "\n");
       else
         LLVM_DEBUG(dbgs() << "Processing slice: no name\n");
-      
+
       removeCallInstruction(F, callInst, sliceCriterion);
       ++dontMerge;
       continue;
@@ -264,25 +227,30 @@ std::pair<uint, uint> removeInstructions(std::vector<iSlice> &allSlices,
         realEntry = &BB;
       }
     }
-    realEntry->moveBefore(&F->getEntryBlock());
+    if (realEntry) realEntry->moveBefore(&F->getEntryBlock());
 
     if (sliceCriterion->getParent() == nullptr) continue;
 
     std::set<Instruction *> tempToRemove;
-    if (!isSelfContained(origInst, sliceCriterion, tempToRemove)) {
-      LLVM_DEBUG(dbgs() << "Not self contained!\n");
-      removeCallInstruction(F, callInst, sliceCriterion);
-      ++notSelfContained;
-      continue;
-    } else {
-      for (auto *inst : tempToRemove) {
-        if (toRemove.find(inst) != toRemove.end()) continue;
-        toRemove.insert(inst);
-        if (CallInst *cInst = dyn_cast<CallInst>(inst)) {
-          Function *G = cInst->getCalledFunction();
-          if (G && G->hasFnAttribute(Attribute::NoInline))
-            G->removeFnAttr(Attribute::NoInline);
+    for (Instruction *J : origInst) {
+      if (J->getParent() == nullptr) continue;
+      if (sliceCriterion != J) {
+        if (const uint totalToRemove = listInstructionsToRemove(
+                J, sliceCriterion, origInst, tempToRemove)) {
+          LLVM_DEBUG(dbgs() << "\t" << totalToRemove
+                            << " instruction(s) will be removed...\n");
+        } else {
+          LLVM_DEBUG(dbgs() << "\tNo instructions will be removed...\n");
         }
+      }
+    }
+    for (auto *inst : tempToRemove) {
+      if (toRemove.find(inst) != toRemove.end()) continue;
+      toRemove.insert(inst);
+      if (const auto *cInst = dyn_cast<CallInst>(inst)) {
+        if (Function *G = cInst->getCalledFunction();
+            G && G->hasFnAttribute(Attribute::NoInline))
+          G->removeFnAttr(Attribute::NoInline);
       }
     }
     toSimplify.insert(F);
@@ -294,7 +262,7 @@ std::pair<uint, uint> removeInstructions(std::vector<iSlice> &allSlices,
     e->replaceAllUsesWith(UndefValue::get(e->getType()));
     e->eraseFromParent();
   }
-  return {dontMerge, notSelfContained};
+  return dontMerge;
 }
 
 /**
@@ -320,7 +288,7 @@ void removeCallInstruction(Function *F, CallInst *callInst,
   // builder.removeAttribute(Attribute::NoInline);
   F->removeFnAttr(Attribute::NoInline);
   for (auto it = F->user_begin(); it != F->user_end();) {
-    if (CallInst *X = dyn_cast<CallInst>(*it)) {
+    if (auto *X = dyn_cast<CallInst>(*it)) {
       ++it;
       X->replaceAllUsesWith(UndefValue::get(X->getType()));
       X->eraseFromParent();
@@ -344,24 +312,14 @@ void removeCallInstruction(Function *F, CallInst *callInst,
  * collected.
  * @return A set of pointers to instructions that meet the specified criteria.
  */
-std::set<Instruction *> instSetMeetCriterion(FunctionAnalysisManager &FAM,
-                                             Function *F) {
+std::set<Instruction *> instSetMeetCriterion(Function *F) {
   std::set<Instruction *> S;
   for (auto &BB : *F) {
-    Instruction *term = BB.getTerminator();
+    const Instruction *term = BB.getTerminator();
     assert(term && "Error: A basic block in an original function is missing a "
                    "terminator instruction...");
 
-    // if (Instruction *retValue = dyn_cast<ReturnInst>(term))
-    //   for (auto &it : retValue->operands())
-    //     if (Instruction *Iit = dyn_cast<Instruction>(it)) S.insert(Iit);
-
     for (Instruction &I : BB) {
-      // if (isa<PHINode>(I)) S.insert(&I);
-      // llvm::StringRef instName = I.getName();
-      // if (instName.find("lcssa") == instName.npos) {
-      //   S.insert(&I);
-      // }
       if (isa<BinaryOperator>(I)) {
         S.insert(&I);
       }
@@ -401,11 +359,11 @@ unsigned int numberOfInstructions(Function *F) {
  * function, including the function itself.
  */
 unsigned int
-numberOfMergedFunctions(Function *F,
+numberOfMergedFunctions(const Function *F,
                         std::map<Function *, Function *> &delToNewFunc) {
   unsigned int mergedFuncCount = 1;
-  for (auto &pair : delToNewFunc)
-    if (pair.second == F) mergedFuncCount++;
+  for (auto &[_, snd] : delToNewFunc)
+    if (snd == F) mergedFuncCount++;
   return mergedFuncCount;
 }
 
@@ -422,10 +380,10 @@ numberOfMergedFunctions(Function *F,
  * @param newFunctions A set of pointers to functions for which DOT files will
  * be generated.
  */
-void functionSlicesToDot(Module &M, const std::set<Function *> &newFunctions) {
+void functionSlicesToDot(const Module &M, const std::set<Function *> &newFunctions) {
 
   // Create directory
-  std::filesystem::path dotDir =
+  const std::filesystem::path dotDir =
       std::filesystem::current_path() / (M.getModuleIdentifier() + ".dump_dot");
 
   std::error_code errorCode;
@@ -476,14 +434,13 @@ void functionSlicesToDot(Module &M, const std::set<Function *> &newFunctions) {
  * @return A set of pointers to basic blocks that are part of try-catch logic.
  */
 std::set<BasicBlock *> searchForTryCatchLogic(Function &F) {
-  DominatorTree DT(F);
-  PostDominatorTree PDT(F);
+  const DominatorTree DT(F);
+  const PostDominatorTree PDT(F);
   std::set<BasicBlock *> tryCatchBlocks;
   for (auto &BB : F) {
     for (auto &I : BB) {
-      if (auto *Invoke = dyn_cast<InvokeInst>(&I)) {
-        BasicBlock *normalDest = Invoke->getNormalDest();
-        BasicBlock *exceptionDest = Invoke->getUnwindDest();
+      if (const auto *Invoke = dyn_cast<InvokeInst>(&I)) {
+        const BasicBlock *exceptionDest = Invoke->getUnwindDest();
         SmallVector<BasicBlock *, 8> Descendants;
         DT.getDescendants(&BB, Descendants);
         for (BasicBlock *DomBlock : Descendants) {
@@ -530,7 +487,7 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
   for (Function &F : M.getFunctionList())
     if (!F.empty()) FtoMap.insert(&F);
 
-  std::unique_ptr<Module> module =
+  auto module =
       std::make_unique<Module>("New_" + M.getName().str(), M.getContext());
 
   LLVM_DEBUG(dbgs() << "== OUTLINING INST PHASE ==\n");
@@ -544,12 +501,12 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
     }
 
     // Criterion Set
-    std::set<Instruction *> S = instSetMeetCriterion(FAM, F);
+    std::set<Instruction *> S = instSetMeetCriterion(F);
     // filter binary instructions for building a set of instructions
     // that can be used as slicing criterion. this function enables us
     // to change how we manage the slicing criterion.
 
-    // ~special case~ Search for try-catch logic inside the current function
+    // Search for try-catch logic inside the current function
     std::set<BasicBlock *> tryCatchBlocks = searchForTryCatchLogic(*F);
 
     // Replace all uses of I with the correpondent call to the new outlined
@@ -600,7 +557,7 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
       CallInst *callInst =
           CallInst::Create(G, funcArgs, I->getName(), I->getParent());
       Instruction *moveTo = I;
-      if (I && isa<PHINode>(I)) moveTo = I->getParent()->getFirstNonPHI();
+      if (isa<PHINode>(I)) moveTo = I->getParent()->getFirstNonPHI();
       callInst->moveBefore(moveTo);
       I->replaceAllUsesWith(callInst);
 
@@ -671,8 +628,7 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
   LLVM_DEBUG(dbgs() << "== REMOVING INST PHASE ==\n");
 
   std::set<Function *> toSimplify;
-  auto [dontMerge, notSelfContained] =
-      removeInstructions(allSlices, mergeTo, toSimplify);
+  uint dontMerge = removeInstructions(allSlices, mergeTo, toSimplify);
 
   LLVM_DEBUG(dbgs() << "== SIMPLIFY PHASE ==\n");
 
@@ -685,7 +641,7 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
 
   LLVM_DEBUG({
     dbgs() << "== PRINT PHASE ==\n";
-    if (delToNewFunc.size() > 0) {
+    if (!delToNewFunc.empty()) {
       M.print(llvm::outs(), nullptr);
     } else {
       dbgs() << "No functions were merged!\n";
@@ -700,8 +656,7 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
           sourceFileName.string() + "_slices_report.log";
 
       TotalFunctionsOutlined = allSlices.size();
-      TotalSlicesMerged = delToNewFunc.size();
-      TotalSlicesDiscarded = dontMerge + notSelfContained;
+      TotalSlicesMerged = delToNewFunc.size(); TotalSlicesDiscarded = dontMerge;
 
       ReportWriter ReportWriterObj(exportedFileName); ReportWriterObj.writeLine(
           "totalFunctionsOutlined = " + std::to_string(TotalFunctionsOutlined));
