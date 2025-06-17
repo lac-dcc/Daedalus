@@ -111,13 +111,13 @@ static void activateTransitiveGates(
     stack.pop();
     if (visitedBBs.count(curBB)) continue;
     visitedBBs.insert(curBB);
-    if (curBB == currentPhi.getParent()) continue;
-    if (auto it = gates.find(curBB); it != gates.end()) {
+    if (curBB == currentPhiBB) continue;
+    if (gates.count(curBB)) {
       LLVM_DEBUG(dbgs() << "\t\t\t\tTrying to activate gates from block "
                         << curBB->getName() << " into gates of block "
-                        << currentPhi.getParent()->getName() << "\n");
+                        << currentPhiBB->getName() << "\n");
 
-      for (const Value *gate : it->second) {
+      for (const Value *gate : gates[curBB]) {
         if (const auto *gateInst = dyn_cast<Instruction>(gate)) {
           if (gates[currentPhiBB].end() ==
               std::find(gates[currentPhiBB].begin(), gates[currentPhiBB].end(),
@@ -205,11 +205,16 @@ static std::pair<Status, PhiDependencies> processPHINode(
     return {status, {}};
   }
 
+  const BasicBlock *phiNodeBB = phiNode.getParent();
   for (unsigned i = 0, e = phiNode.getNumIncomingValues(); i != e; ++i) {
     const BasicBlock *incomingBB = phiNode.getIncomingBlock(i);
 
     // Activate gates that dominates incoming blocks
-    activateTransitiveGates(incomingBB, phiNode, gates);
+    // activateTransitiveGates(incomingBB, phiNode, gates);
+    if (gates.count(incomingBB)) {
+      for (const auto *gate : gates[incomingBB])
+        gates[phiNodeBB].push_back(gate);
+    }
 
     // ~special case~ if a PHINode's incoming block is an exit block of a
     // loop, then add its terminator to the gates of the PHINode's parent
@@ -219,15 +224,15 @@ static std::pair<Status, PhiDependencies> processPHINode(
                            "block that is an exiting edge of a loop and has a "
                            "back edge: "
                         << incomingBB->getName() << "\n");
-      gates[phiNode.getParent()].push_back(incomingBB->getTerminator());
+      gates[phiNodeBB].push_back(incomingBB->getTerminator());
     }
   }
 
   // Push gates to phiNodeDeps
-  if (const auto it = gates.find(phiNode.getParent()); it != gates.end()) {
+  if (gates.count(phiNodeBB)) {
     std::set<const Value *> visited;      // mocked visited set
     std::set<const Value *> functionArgs; // mocked function args set
-    for (const Value *gate : it->second) {
+    for (const Value *gate : gates[phiNodeBB]) {
       if (gate) {
         // ~special case~ don't consider gates that are outside the slice
         if (criterionLoop &&
@@ -453,7 +458,6 @@ findCommonDominator(const DominatorTree &DT,
   return commonDom;
 }
 
-
 ProgramSlice::ProgramSlice(Instruction &Initial, Function &F,
                            FunctionAnalysisManager &FAM,
                            std::set<BasicBlock *> &tryCatchBlocks)
@@ -551,20 +555,20 @@ ProgramSlice::ProgramSlice(Instruction &Initial, Function &F,
   SmallPtrSet<const Value *, 16> missingDeps;
   SmallPtrSet<const BasicBlock *, 16> missingBlocks;
   SmallPtrSet<const Value *, 16> missingArgs;
-  for (const auto &[fst, snd] : phiDeps.phiNodeDeps) {
-    if (!snd.empty()) {
-      LLVM_DEBUG(dbgs() << "PHINode: " << *fst << "\n\tDeps.:\n");
-      for (const Value *dep : snd) {
+  for (const auto &[phiNode, phiNodeDepsSet] : phiDeps.phiNodeDeps) {
+    if (!phiNodeDepsSet.empty()) {
+      LLVM_DEBUG(dbgs() << "PHINode: " << *phiNode << "\n\tDeps.:\n");
+      for (const Value *dep : phiNodeDepsSet) {
         if (auto *instDep = dyn_cast<Instruction>(dep)) {
           if (!data.instructions.count(dep)) {
-            if (!DT.dominates(commonDominator, instDep->getParent())) continue;
+            const BasicBlock *instDepBB = instDep->getParent();
+            if (!DT.dominates(commonDominator, instDepBB)) continue;
             if (missingDeps.count(dep)) continue;
             LLVM_DEBUG(dbgs()
                        << "\t\tMissing Instruction: " << *instDep << "\n");
             missingDeps.insert(instDep);
-            const BasicBlock *instDepBB = instDep->getParent();
-            if (missingBlocks.count(instDepBB)) continue;
             if (!data.basicBlocks.count(instDepBB)) {
+              if (missingBlocks.count(instDepBB)) continue;
               LLVM_DEBUG(dbgs() << "\t\tMissing Block: " << instDepBB->getName()
                                 << "\n");
               missingBlocks.insert(instDepBB);
@@ -573,9 +577,9 @@ ProgramSlice::ProgramSlice(Instruction &Initial, Function &F,
         }
       }
     }
-    if (!phiDeps.phiNodeFuncArgs[fst].empty()) {
+    if (!phiDeps.phiNodeFuncArgs[phiNode].empty()) {
       LLVM_DEBUG(dbgs() << "\n\tFunc. Args.:\n");
-      for (const Value *arg : phiDeps.phiNodeFuncArgs[fst]) {
+      for (const Value *arg : phiDeps.phiNodeFuncArgs[phiNode]) {
         if (!data.functionArguments.count(arg)) {
           if (missingArgs.count(arg)) continue;
           LLVM_DEBUG(dbgs()
@@ -618,8 +622,9 @@ ProgramSlice::ProgramSlice(Instruction &Initial, Function &F,
   };
 
   if (isa<ReturnInst>(_initial)) {
-    Value *FreturnValue = dyn_cast<ReturnInst>(_initial)->getReturnValue();
-    _instRetValue = dyn_cast<Instruction>(FreturnValue);
+    Value *functionReturnValue =
+        dyn_cast<ReturnInst>(_initial)->getReturnValue();
+    _instRetValue = dyn_cast<Instruction>(functionReturnValue);
   } else {
     _instRetValue = dyn_cast<Instruction>(_initial);
   }
@@ -1020,8 +1025,8 @@ BasicBlock *ProgramSlice::getOrCreateTargetBlock(const BasicBlock *successor,
   // block.
   if (!newTarget) {
     newTarget = findNextDominatedNode(DT, originalBB);
-    if (newTarget && is_contained(successors(originalBB),
-                                        _newToOrigBBmap[newTarget])) {
+    if (newTarget &&
+        is_contained(successors(originalBB), _newToOrigBBmap[newTarget])) {
       newTarget = nullptr;
     }
   }
@@ -1228,7 +1233,6 @@ void ProgramSlice::reorderBlocks(Function *F) {
   }
   if (realEntry != nullptr) realEntry->moveBefore(&F->getEntryBlock());
 }
-
 
 void ProgramSlice::replaceArgs(Function *F, DenseMap<Value *, uint> dt) {
 
