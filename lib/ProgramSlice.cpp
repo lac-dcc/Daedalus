@@ -236,8 +236,7 @@ static std::pair<Status, PhiDependencies> processPHINode(
     if (const Loop *loopForBB = criterionLoopInfo.getLoopFor(incomingBB);
         loopForBB && loopForBB->isLoopExiting(incomingBB)) {
       LLVM_DEBUG(dbgs() << "\t\t\t[Control Dependency] PHINode has an incoming "
-                           "block that is an exiting edge of a loop and has a "
-                           "back edge: "
+                           "block that is an exiting block of a loop: "
                         << incomingBB->getName() << "\n");
       gates[phiNodeBB].push_back(incomingBB->getTerminator());
     }
@@ -721,7 +720,7 @@ ProgramSlice::ProgramSlice(Instruction &sliceCriterion, Function &F,
             if (missingDeps.count(dep)) continue;
             LLVM_DEBUG(dbgs()
                        << "\t\tMissing Instruction: " << *instDep << "\n");
-            missingDeps.insert(instDep);
+            missingDeps.insert(dep);
             if (!data.basicBlocks.count(instDepBB)) {
               if (missingBlocks.count(instDepBB)) continue;
               LLVM_DEBUG(dbgs() << "\t\tMissing Block: " << instDepBB->getName()
@@ -1249,10 +1248,9 @@ void ProgramSlice::updatePHINodesForSuccessor(
  * @param successorIndex The index of the successor to be replaced in the
  * terminator's successors.
  */
-void ProgramSlice::replaceUsesAndSetSuccessor(BasicBlock *successorToReplace,
-                                              BasicBlock *unreachableBlock,
-                                              Function *F,
-                                              Instruction *terminator, const unsigned int successorIndex) {
+void ProgramSlice::replaceUsesAndSetSuccessor(
+    BasicBlock *successorToReplace, BasicBlock *unreachableBlock, Function *F,
+    Instruction *terminator, const unsigned int successorIndex) {
   successorToReplace->replaceUsesWithIf(unreachableBlock, [F](const Use &U) {
     auto *UserI = dyn_cast<Instruction>(U.getUser());
     return UserI && UserI->getParent()->getParent() == F;

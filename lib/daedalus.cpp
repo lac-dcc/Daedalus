@@ -121,14 +121,14 @@ uint listInstructionsToRemove(Instruction *start,
   // First, collect all relevant instructions reachable from 'start'.
   std::vector<Instruction *> reachable;
   std::stack<Instruction *> worklist;
-  std::set<Instruction *> vis;
+  std::set<Instruction *> visited;
   worklist.push(start);
 
   while (!worklist.empty()) {
     Instruction *cur = worklist.top();
     worklist.pop();
-    if (vis.count(cur)) continue;
-    vis.insert(cur);
+    if (visited.count(cur)) continue;
+    visited.insert(cur);
 
     LLVM_DEBUG(dbgs() << "\t\tVisiting: " << *cur << "\n");
 
@@ -185,7 +185,7 @@ uint listInstructionsToRemove(Instruction *start,
  * @return A pair of unsigned integers representing the count of slices that
  *         were not merged and the count of slices that were not self-contained.
  */
-uint removeInstructions(const std::vector<iSlice> &allSlices,
+uint removeInstructions(const std::vector<SliceStruct> &allSlices,
                         const std::set<Function *> &mergeTo,
                         std::set<Function *> &toSimplify) {
   std::set<Instruction *> toRemove;
@@ -193,11 +193,11 @@ uint removeInstructions(const std::vector<iSlice> &allSlices,
 
   uint dontMerge = 0;
 
-  for (const iSlice &slice : allSlices) {
+  for (const SliceStruct &slice : allSlices) {
     Instruction *sliceCriterion = slice.I;
     CallInst *callInst = slice.callInst;
     Function *F = slice.F;
-    std::set<Instruction *> origInst = slice.constOriginalInst;
+    std::set<Instruction *> origInst = slice.originalInstructionsSet;
 
     if (F == nullptr) continue;
 
@@ -233,24 +233,21 @@ uint removeInstructions(const std::vector<iSlice> &allSlices,
 
     std::set<Instruction *> tempToRemove;
     for (Instruction *J : origInst) {
-      if (J->getParent() == nullptr) continue;
-      if (sliceCriterion != J) {
-        if (const uint totalToRemove = listInstructionsToRemove(
-                J, sliceCriterion, origInst, tempToRemove)) {
-          LLVM_DEBUG(dbgs() << "\t" << totalToRemove
-                            << " instruction(s) will be removed...\n");
-        } else {
-          LLVM_DEBUG(dbgs() << "\tNo instructions will be removed...\n");
-        }
+      if (J->getParent() && sliceCriterion != J) {
+        const uint totalToRemove =
+            listInstructionsToRemove(J, sliceCriterion, origInst, tempToRemove);
+        LLVM_DEBUG(dbgs() << "\t" << totalToRemove
+                          << " instruction(s) will be removed...\n");
       }
     }
-    for (auto *inst : tempToRemove) {
-      if (toRemove.find(inst) != toRemove.end()) continue;
-      toRemove.insert(inst);
-      if (const auto *cInst = dyn_cast<CallInst>(inst)) {
-        if (Function *G = cInst->getCalledFunction();
-            G && G->hasFnAttribute(Attribute::NoInline))
-          G->removeFnAttr(Attribute::NoInline);
+    for (Instruction *inst : tempToRemove) {
+      if (toRemove.insert(inst).second) {
+        if (const auto *cInst = dyn_cast<CallInst>(inst)) {
+          if (Function *G = cInst->getCalledFunction();
+              G && G->hasFnAttribute(Attribute::NoInline)) {
+            G->removeFnAttr(Attribute::NoInline);
+          }
+        }
       }
     }
     toSimplify.insert(F);
@@ -380,7 +377,8 @@ numberOfMergedFunctions(const Function *F,
  * @param newFunctions A set of pointers to functions for which DOT files will
  * be generated.
  */
-void functionSlicesToDot(const Module &M, const std::set<Function *> &newFunctions) {
+void functionSlicesToDot(const Module &M,
+                         const std::set<Function *> &newFunctions) {
 
   // Create directory
   const std::filesystem::path dotDir =
@@ -476,7 +474,7 @@ namespace Daedalus {
 PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
 
   std::set<Function *> FtoMap;
-  std::vector<iSlice> allSlices;
+  std::vector<SliceStruct> allSlices;
 
   if (Error Err = M.materializeAll()) {
     handleAllErrors(std::move(Err), [](const ErrorInfoBase &EIB) {
@@ -551,7 +549,7 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
           ps.getInstructionInSlice();
 
       std::set<Instruction *> originInstructionSet;
-      for (auto &e : constOriginalInst) originInstructionSet.insert(e.first);
+      for (auto &[fst, _] : constOriginalInst) originInstructionSet.insert(fst);
 
       SmallVector<Value *> funcArgs = ps.getOrigFunctionArgs();
       CallInst *callInst =
@@ -561,7 +559,8 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
       callInst->moveBefore(moveTo);
       I->replaceAllUsesWith(callInst);
 
-      iSlice slice = {I, callInst, G, funcArgs, originInstructionSet, false};
+      SliceStruct slice = {I,    callInst, G, funcArgs, originInstructionSet,
+                           false};
       allSlices.push_back(slice);
 
       LLVM_DEBUG(dbgs() << COLOR::GREEN << "outlined!" << COLOR::CLEAN << '\n');
@@ -570,7 +569,7 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
 
   std::set<Function *> originalFunctions;
   std::set<Function *> outlinedFunctions;
-  for (iSlice &slice : allSlices) {
+  for (SliceStruct &slice : allSlices) {
     Instruction *sliceCriterion = slice.I;
     Function *F = slice.F;
     Function *originalF = sliceCriterion->getParent()->getParent();

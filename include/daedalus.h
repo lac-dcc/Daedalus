@@ -24,14 +24,14 @@
 /**
  * @brief Represents an outlined program slice
  */
-struct iSlice {
+struct SliceStruct {
   llvm::Instruction *I;     // Criterion
   llvm::CallInst *callInst; // CallInst to F
   llvm::Function *F;        // Slice function
   llvm::SmallVector<llvm::Value *>
-      args; // Arguments to pass on new function call
+      functionArguments; // Arguments to pass on new function call
   std::set<llvm::Instruction *>
-      constOriginalInst; // Set of instructions from the original function
+      originalInstructionsSet; // Set of instructions from the original function
   bool wasRemoved;
 };
 
@@ -52,7 +52,7 @@ uint listInstructionsToRemove(
 /**
  * @brief Removes instructions from slices and simplifies functions.
  */
-uint removeInstructions(const std::vector<iSlice> &allSlices,
+uint removeInstructions(const std::vector<SliceStruct> &allSlices,
                         const std::set<llvm::Function *> &mergeTo,
                         std::set<llvm::Function *> &toSimplify);
 
@@ -66,8 +66,7 @@ void removeCallInstruction(llvm::Function *, llvm::CallInst *,
  * @brief Collects and returns a set of instructions from a given function that
  * meet certain criteria.
  */
-std::set<llvm::Instruction *>
-instSetMeetCriterion(llvm::Function *F);
+std::set<llvm::Instruction *> instSetMeetCriterion(llvm::Function *F);
 
 /**
  * @brief Counts the number of instructions in a given function.
