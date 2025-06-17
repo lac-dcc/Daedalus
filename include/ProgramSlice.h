@@ -187,8 +187,6 @@ private:
   /// Debugging helper to log predecessors.
   static void logPredecessors(Function *F);
 
-  void size();
-
   /// pointer to the Instruction used as slice criterion
   Instruction *_initial;
 

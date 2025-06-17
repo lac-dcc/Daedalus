@@ -64,6 +64,20 @@ struct Status {
   std::string msg;
 };
 
+/**
+ * @brief Checks if an operand is outside the loop or its header.
+ *
+ * This function checks if the given operand is a PHINode or an Instruction
+ * that is either outside the specified loop or its header. If it is, the
+ * operand is added to the function arguments set and marked as visited.
+ *
+ * @param operand The Value to check (PHINode or Instruction).
+ * @param loop The Loop in which the operand should be checked.
+ * @param loopHeader The header of the loop.
+ * @param functionArgs Set to store function arguments.
+ * @param visited Set to track visited operands.
+ * @return true if the operand is outside the loop or its header, false otherwise.
+ */
 static bool isOperandOutsideLoopOrHeader(const Value *operand, const Loop *loop,
                                          const BasicBlock *loopHeader,
                                          std::set<const Value *> &functionArgs,
@@ -132,6 +146,21 @@ static const Value *getGate(const BasicBlock *BB) {
   return branchInst;
 }
 
+/**
+ * @brief Checks if a PHINode has the weird CFG pattern.
+ *
+ * This function checks if the given PHINode has a weird control flow graph
+ * (CFG) pattern, which is defined as having two incoming blocks that are
+ * predecessors of the PHINode's parent block, and at least one of those
+ * predecessors has a conditional branch or switch terminator that does not
+ * control the PHINode's parent block.
+ *
+ * @param phi The PHINode to check.
+ * @param gates A map of basic blocks to their controlling gate instructions.
+ * @param DT The dominator tree for the function.
+ * @param PDT The post-dominator tree for the function.
+ * @return true if the PHINode has a weird CFG pattern, false otherwise.
+ */
 static bool isWeirdCFG(
     const PHINode &phi,
     const std::unordered_map<const BasicBlock *, SmallVector<const Value *>>
@@ -155,6 +184,25 @@ static bool isWeirdCFG(
   return phiNodePreds.size() == 2;
 }
 
+/**
+ * @brief Processes a PHINode to extract its control dependencies.
+ *
+ * This function analyzes a given PHINode and its incoming blocks to determine
+ * the control dependencies (gates) for the PHINode's parent block. It checks
+ * if the incoming blocks are controlled by gates that dominate the PHINode's
+ * parent block but are not post-dominated by it. It also handles special cases
+ * such as loops and weird CFG patterns.
+ *
+ * @param phiNode The PHINode to process.
+ * @param gates A map of basic blocks to their controlling gate instructions.
+ * @param DT The dominator tree for the function.
+ * @param PDT The post-dominator tree for the function.
+ * @param criterionLoop The loop that serves as the slicing criterion, if any.
+ * @param criterionLoopInfo The loop information for the slicing criterion.
+ * @param sliceCriterion The instruction that serves as the slicing criterion.
+ * @return A pair containing a status indicating success or failure, and a map
+ * of PHINode dependencies.
+ */
 static std::pair<Status, PhiDependencies> processPHINode(
     const PHINode &phiNode,
     std::unordered_map<const BasicBlock *, SmallVector<const Value *>> &gates,
@@ -225,6 +273,25 @@ static std::pair<Status, PhiDependencies> processPHINode(
   }
   return {status, {phiNodeDeps, {}}};
 }
+
+/**
+ * @brief Retrieves the control dependencies for a PHINode.
+ *
+ * This function processes a given PHINode to extract its control dependencies
+ * based on the gates controlling its parent block. It uses the dominator and
+ * post-dominator trees to determine the dependencies and handles special cases
+ * such as loops and weird CFG patterns.
+ *
+ * @param phiNode The PHINode to process.
+ * @param gates A map of basic blocks to their controlling gate instructions.
+ * @param criterionLoop The loop that serves as the slicing criterion, if any.
+ * @param criterionLoopInfo The loop information for the slicing criterion.
+ * @param DT The dominator tree for the function.
+ * @param PDT The post-dominator tree for the function.
+ * @param sliceCriterion The instruction that serves as the slicing criterion.
+ * @return A pair containing a status indicating success or failure, and a map
+ * of PHINode dependencies.
+ */
 static std::pair<Status, PhiDependencies> getPhiDependencies(
     const PHINode &phiNode,
     std::unordered_map<const BasicBlock *, SmallVector<const Value *>> &gates,
@@ -279,6 +346,20 @@ static std::pair<Status, PhiDependencies> getPhiDependencies(
   return {status, {phiDependencies.phiNodeDeps, phiNodeFuncArgs}};
 }
 
+/**
+ * @brief Retrieves the data dependencies for a given instruction.
+ *
+ * This function analyzes the data dependencies of a specified instruction
+ * within a loop context. It collects all operands of the instruction, checks
+ * if they are outside the loop or its header, and builds a set of dependencies
+ * that includes basic blocks, instructions, and function arguments.
+ *
+ * @param I The instruction for which to retrieve data dependencies.
+ * @param loop The loop in which the instruction resides, if any.
+ * @param loopHeader The header of the loop, if applicable.
+ * @return A pair containing a status indicating success or failure, and a
+ * DataDependencies object containing the collected dependencies.
+ */
 static std::pair<Status, DataDependencies>
 getDataDependencies(const Instruction &I, const Loop *loop,
                     const BasicBlock *loopHeader) {
@@ -428,6 +509,17 @@ computeGates(Function &F) {
   return gates;
 }
 
+/**
+ * @brief Finds the common dominator of a set of basic blocks.
+ *
+ * This function takes a set of basic blocks and uses the dominator tree to
+ * find the nearest common dominator for all blocks in the set. If no common
+ * dominator exists, it returns nullptr.
+ *
+ * @param DT The dominator tree for the function.
+ * @param blocks A set of basic blocks for which to find the common dominator.
+ * @return The nearest common dominator block, or nullptr if none exists.
+ */
 static const BasicBlock *
 findCommonDominator(const DominatorTree &DT,
                     const std::set<const BasicBlock *> &blocks) {
@@ -441,6 +533,17 @@ findCommonDominator(const DominatorTree &DT,
   return commonDom;
 }
 
+/**
+ * @brief Lists the used values in a set of instructions.
+ *
+ * This function iterates through a set of instructions and checks if the
+ * specified argument is used as an operand in any of them. If it is, the
+ * argument is added to the set of used values.
+ *
+ * @param listedValues The set of instructions to check.
+ * @param usedValues The set where used values will be collected.
+ * @param arg The argument to check for usage.
+ */
 static void listUsedValues(const std::set<const Value *> &listedValues,
                            SmallPtrSet<const Value *, 16> &usedValues,
                            const Value *arg) {
@@ -453,6 +556,18 @@ static void listUsedValues(const std::set<const Value *> &listedValues,
   }
 }
 
+/**
+ * @brief Lists the actually used values from a set of missing values.
+ *
+ * This function iterates through a set of missing values and checks if they
+ * are used in the provided data dependencies. It collects all actually used
+ * values in a set and returns it.
+ *
+ * @param data The data dependencies containing instructions and function
+ * arguments.
+ * @param missingValues The set of missing values to check for usage.
+ * @return A set of actually used values.
+ */
 static SmallPtrSet<const Value *, 16>
 listActuallyUsedValues(const DataDependencies &data,
                        const SmallPtrSet<const Value *, 16> &missingValues) {
@@ -463,6 +578,21 @@ listActuallyUsedValues(const DataDependencies &data,
   return actuallyUsedValues;
 }
 
+/**
+ * @brief Constructs a ProgramSlice object for a given instruction in a function.
+ *
+ * This constructor initializes a ProgramSlice object by analyzing the data
+ * dependencies of the specified instruction within the context of the provided
+ * function. It computes control dependencies, checks for special cases like
+ * try-catch blocks, and determines if the slice can be outlined based on the
+ * dependencies found.
+ *
+ * @param sliceCriterion The instruction that serves as the slicing criterion.
+ * @param F The function in which the slicing criterion resides.
+ * @param FAM The FunctionAnalysisManager used to retrieve analyses.
+ * @param tryCatchBlocks A set of basic blocks that are part of try-catch
+ * constructs, which may affect outlining.
+ */
 ProgramSlice::ProgramSlice(Instruction &sliceCriterion, Function &F,
                            FunctionAnalysisManager &FAM,
                            std::set<BasicBlock *> &tryCatchBlocks)
@@ -754,25 +884,12 @@ BasicBlock *ProgramSlice::findNextDominatedNode(const DominatorTree &DT,
 /**
  * @brief Computes the attractor blocks for the program slice.
  *
- * This function calculates a mapping of basic blocks to their respective
- * attractor blocks within the program slice. An attractor block is defined
- * as the nearest post-dominator block in the slice for a given basic block.
+ * This function computes the attractor blocks for the program slice by
+ * analyzing the post-dominator tree of the parent function. It identifies
+ * blocks that are part of the slice and their corresponding attractors, which
+ * are blocks that dominate them but are not post-dominated by them.
  *
- * The function iterates over all basic blocks in the parent function and
- * determines their attractor blocks based on the post-dominator tree (PDT).
- * If a basic block is already part of the slice, it is its own attractor.
- * Otherwise, the function traverses the immediate dominators in the PDT
- * until it finds a block that belongs to the slice.
- *
- * @note The computed attractor blocks are stored in the `_attractors` member.
- *
- * @pre `_parentFunction` must be initialized and represent the function
- *      containing the basic blocks.
- * @pre `_BBsInSlice` must be populated with the set of basic blocks
- *      that are part of the slice.
- *
- * @post `_attractors` will contain a mapping of basic blocks to their
- *       attractor blocks.
+ * @param loop The loop in which the slice criterion resides, if any.
  */
 void ProgramSlice::computeAttractorBlocks(const Loop *loop) {
   std::map<const BasicBlock *, const BasicBlock *> attractors;
@@ -860,6 +977,16 @@ void ProgramSlice::addDomBranches(DomTreeNode *cur, DomTreeNode *parent,
   }
 }
 
+/**
+ * @brief Removes old incoming blocks from PHINodes in the function.
+ *
+ * This function iterates through all basic blocks in the given function and
+ * removes incoming values from PHINodes that are no longer present in the
+ * predecessors of those blocks. This is necessary to maintain the integrity of
+ * the control flow graph after slicing.
+ *
+ * @param F The function in which to remove old incoming blocks from PHINodes.
+ */
 void removeOldIncomingBlocks(Function *F) {
   for (BasicBlock &BB : *F) {
     std::set<BasicBlock *> preds(pred_begin(&BB), pred_end(&BB));
@@ -936,6 +1063,16 @@ void ProgramSlice::rerouteBranches(Function *F) {
   logPredecessors(F);
 }
 
+/**
+ * @brief Creates an unreachable block in the given function.
+ *
+ * This function creates a new basic block that contains an unreachable
+ * instruction, which can be used as a target for branches that do not have a
+ * valid successor in the program slice.
+ *
+ * @param F The function in which to create the unreachable block.
+ * @return A pointer to the newly created unreachable block.
+ */
 BasicBlock *ProgramSlice::createUnreachableBlock(Function *F) {
   BasicBlock *unreachableBlock =
       BasicBlock::Create(F->getContext(), "_daedalus_unreachable", F);
@@ -1076,6 +1213,21 @@ BasicBlock *ProgramSlice::getOrCreateTargetBlock(const BasicBlock *successor,
   return newTarget;
 }
 
+/**
+ * @brief Updates PHINodes in the successor block to reflect the new
+ * incoming block.
+ *
+ * This function iterates through all PHINodes in the successor block and
+ * replaces the incoming block that matches the original incoming block with
+ * the current basic block.
+ *
+ * @param newSuccessor The successor block where PHINodes need to be updated.
+ * @param originalIncomingBlock The original incoming block to be replaced.
+ * @param currentBB The current basic block that will replace the original
+ * incoming block.
+ * @param F The function containing the blocks and instructions.
+ * @param DT The dominator tree for the function.
+ */
 void ProgramSlice::updatePHINodesForSuccessor(
     BasicBlock *newSuccessor, const BasicBlock *originalIncomingBlock,
     BasicBlock *currentBB, const Function *F, const DominatorTree &DT) {
@@ -1091,6 +1243,23 @@ void ProgramSlice::updatePHINodesForSuccessor(
   }
 }
 
+/**
+ * @brief Replaces uses of a successor block with an unreachable block and
+ * updates the terminator instruction's successor.
+ *
+ * This function replaces all uses of the specified successor block with the
+ * unreachable block, but only if the user is an instruction in the same
+ * function as the terminator. It then updates the terminator instruction to
+ * point to the unreachable block at the specified successor index.
+ *
+ * @param successorToReplace The successor block to be replaced.
+ * @param unreachableBlock The block that will replace the successor.
+ * @param F The function containing the terminator instruction.
+ * @param terminator The terminator instruction whose successor is being
+ * replaced.
+ * @param successorIndex The index of the successor to be replaced in the
+ * terminator's successors.
+ */
 void ProgramSlice::replaceUsesAndSetSuccessor(BasicBlock *successorToReplace,
                                               BasicBlock *unreachableBlock,
                                               Function *F,
@@ -1103,12 +1272,30 @@ void ProgramSlice::replaceUsesAndSetSuccessor(BasicBlock *successorToReplace,
   terminator->setSuccessor(successorIndex, unreachableBlock);
 }
 
+/**
+ * @brief Cleans up unreachable blocks by erasing them from the parent
+ * function if they have no predecessors.
+ *
+ * This function checks if the specified unreachable block has no
+ * predecessors. If it does not, it removes the block from its parent
+ * function to clean up the control flow graph.
+ *
+ * @param unreachableBlock The unreachable block to be cleaned up.
+ */
 void ProgramSlice::cleanupUnreachableBlock(BasicBlock *unreachableBlock) {
   if (unreachableBlock->hasNPredecessors(0)) {
     unreachableBlock->eraseFromParent();
   }
 }
 
+/**
+ * @brief Logs the predecessors of the new function's basic blocks.
+ *
+ * This function iterates through all basic blocks in the new function and
+ * logs their predecessors to the debug output.
+ *
+ * @param F The function whose basic blocks' predecessors are to be logged.
+ */
 void ProgramSlice::logPredecessors(Function *F) {
   LLVM_DEBUG({
     dbgs() << "\tPredecessors of new function:\n";
@@ -1343,6 +1530,18 @@ void ProgramSlice::simplifyCfg(Function *F, FunctionAnalysisManager &AM) {
 //     return Merger.merge(F1, F2, "", Options);
 // }
 
+/**
+ * @brief Adds a return instruction to the function F based on the initial
+ * instruction.
+ *
+ * @details This function creates a return instruction in the exit block of
+ * the function F. If the initial instruction is a ReturnInst, it uses its
+ * return value; otherwise, it uses the original instruction's value or
+ * returns void if applicable.
+ *
+ * @param F The function where the return instruction will be added.
+ * @return A pointer to the newly created ReturnInst.
+ */
 ReturnInst *ProgramSlice::addReturnValue(Function *F) {
   BasicBlock *exit = _origToNewInst[_initial]->getParent();
 
@@ -1378,6 +1577,17 @@ ReturnInst *ProgramSlice::addReturnValue(Function *F) {
                             _origToNewInst[_initial], exit);
 }
 
+/**
+ * @brief Creates a new entry block for the function F if the current entry
+ * block has predecessors.
+ *
+ * @details This function checks if the current entry block of the function
+ * F has any predecessors. If it does, it creates a new entry block and
+ * redirects the control flow to the old entry block. It also updates PHINodes
+ * in the new entry block to include incoming values from the old entry block.
+ *
+ * @param F The function for which a new entry block is created.
+ */
 void ProgramSlice::createNewEntryBlock(Function *F) {
   // Insert a new entry block if the current entry has predecessors
   BasicBlock *oldEntry = &F->getEntryBlock();
@@ -1416,18 +1626,15 @@ void ProgramSlice::createNewEntryBlock(Function *F) {
 }
 
 /**
- * @brief Outlines the given slice into a standalone Function.
+ * @brief Outlines the program slice into a new function.
  *
- * @details This function creates a new standalone function (delegate
- * function) that encapsulates the computation of the original value with
- * respect to which the slice was created. The delegate function is given a
- * unique name to avoid naming conflicts, considering the original function
- * and the initial instruction from which the slice was derived. The
- * function type and arguments are derived from the dependencies (_depArgs)
- * of the slice, and its return type is determined based on the type of the
- * initial instruction.
+ * @details This function creates a new function that contains the instructions
+ * and basic blocks from the program slice. It sets up the function's return
+ * type, arguments, and attributes, and populates it with the necessary basic
+ * blocks and instructions.
  *
- * @return The newly created delegate Function that encapsulates the slice.
+ * @return A pointer to the newly created Function representing the outlined
+ * program slice, or nullptr if outlining is not possible.
  */
 Function *ProgramSlice::outline() {
   if (!_canOutline.first) {
