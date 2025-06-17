@@ -168,14 +168,17 @@
 ; CHECK-EMPTY:
 ; CHECK-NEXT: sliceclone_BB_10:                                 ; preds = %sliceclone_BB_8
 ; CHECK-NEXT:   %19 = icmp eq i32 %1, 0
-; CHECK-NEXT:   br i1 %19, label %sliceclone_BB_13, label %sliceclone_BB_12
+; CHECK-NEXT:   br i1 %19, label %sliceclone_BB_11, label %sliceclone_BB_12
 ; CHECK-EMPTY:
 ; CHECK-NEXT: sliceclone_BB_12:                                 ; preds = %sliceclone_BB_10, %sliceclone_BB_9
 ; CHECK-NEXT:   %20 = phi i32 [ %18, %sliceclone_BB_9 ], [ %8, %sliceclone_BB_10 ]
 ; CHECK-NEXT:   br label %sliceclone_BB_13
 ; CHECK-EMPTY:
-; CHECK-NEXT: sliceclone_BB_13:                                 ; preds = %sliceclone_BB_12, %sliceclone_BB_10
-; CHECK-NEXT:   %21 = phi i32 [ %8, %sliceclone_BB_10 ], [ %20, %sliceclone_BB_12 ]
+; CHECK-NEXT: sliceclone_BB_11:                                 ; preds = %sliceclone_BB_10
+; CHECK-NEXT:   br label %sliceclone_BB_13
+; CHECK-EMPTY:
+; CHECK-NEXT: sliceclone_BB_13:                                 ; preds = %sliceclone_BB_11, %sliceclone_BB_12
+; CHECK-NEXT:   %21 = phi i32 [ %8, %sliceclone_BB_11 ], [ %20, %sliceclone_BB_12 ]
 ; CHECK-NEXT:   %22 = shl i32 %21, 24
 ; CHECK-NEXT:   ret i32 %22
 ; CHECK-NEXT: }
@@ -230,14 +233,17 @@
 ; CHECK-EMPTY:
 ; CHECK-NEXT: sliceclone_BB_10:                                 ; preds = %sliceclone_BB_8
 ; CHECK-NEXT:   %19 = icmp eq i32 %1, 0
-; CHECK-NEXT:   br i1 %19, label %sliceclone_BB_13, label %sliceclone_BB_12
+; CHECK-NEXT:   br i1 %19, label %sliceclone_BB_11, label %sliceclone_BB_12
 ; CHECK-EMPTY:
 ; CHECK-NEXT: sliceclone_BB_12:                                 ; preds = %sliceclone_BB_10, %sliceclone_BB_9
 ; CHECK-NEXT:   %20 = phi i32 [ %18, %sliceclone_BB_9 ], [ %12, %sliceclone_BB_10 ]
 ; CHECK-NEXT:   br label %sliceclone_BB_13
 ; CHECK-EMPTY:
-; CHECK-NEXT: sliceclone_BB_13:                                 ; preds = %sliceclone_BB_12, %sliceclone_BB_10
-; CHECK-NEXT:   %21 = phi i32 [ %12, %sliceclone_BB_10 ], [ %20, %sliceclone_BB_12 ]
+; CHECK-NEXT: sliceclone_BB_11:                                 ; preds = %sliceclone_BB_10
+; CHECK-NEXT:   br label %sliceclone_BB_13
+; CHECK-EMPTY:
+; CHECK-NEXT: sliceclone_BB_13:                                 ; preds = %sliceclone_BB_11, %sliceclone_BB_12
+; CHECK-NEXT:   %21 = phi i32 [ %12, %sliceclone_BB_11 ], [ %20, %sliceclone_BB_12 ]
 ; CHECK-NEXT:   %22 = shl i32 %21, 24
 ; CHECK-NEXT:   ret i32 %22
 ; CHECK-NEXT: }
@@ -288,14 +294,17 @@
 ; CHECK-EMPTY:
 ; CHECK-NEXT: sliceclone_BB_10:                                 ; preds = %sliceclone_BB_8
 ; CHECK-NEXT:   %18 = icmp eq i32 %1, 0
-; CHECK-NEXT:   br i1 %18, label %sliceclone_BB_13, label %sliceclone_BB_12
+; CHECK-NEXT:   br i1 %18, label %sliceclone_BB_11, label %sliceclone_BB_12
 ; CHECK-EMPTY:
 ; CHECK-NEXT: sliceclone_BB_12:                                 ; preds = %sliceclone_BB_10, %sliceclone_BB_9
 ; CHECK-NEXT:   %19 = phi i32 [ %17, %sliceclone_BB_9 ], [ %13, %sliceclone_BB_10 ]
 ; CHECK-NEXT:   br label %sliceclone_BB_13
 ; CHECK-EMPTY:
-; CHECK-NEXT: sliceclone_BB_13:                                 ; preds = %sliceclone_BB_12, %sliceclone_BB_10
-; CHECK-NEXT:   %20 = phi i32 [ %13, %sliceclone_BB_10 ], [ %19, %sliceclone_BB_12 ]
+; CHECK-NEXT: sliceclone_BB_11:                                 ; preds = %sliceclone_BB_10
+; CHECK-NEXT:   br label %sliceclone_BB_13
+; CHECK-EMPTY:
+; CHECK-NEXT: sliceclone_BB_13:                                 ; preds = %sliceclone_BB_11, %sliceclone_BB_12
+; CHECK-NEXT:   %20 = phi i32 [ %13, %sliceclone_BB_11 ], [ %19, %sliceclone_BB_12 ]
 ; CHECK-NEXT:   %21 = shl i32 %20, 16
 ; CHECK-NEXT:   ret i32 %21
 ; CHECK-NEXT: }
@@ -342,14 +351,17 @@
 ; CHECK-EMPTY:
 ; CHECK-NEXT: sliceclone_BB_10:                                 ; preds = %sliceclone_BB_8
 ; CHECK-NEXT:   %17 = icmp eq i32 %1, 0
-; CHECK-NEXT:   br i1 %17, label %sliceclone_BB_13, label %sliceclone_BB_12
+; CHECK-NEXT:   br i1 %17, label %sliceclone_BB_11, label %sliceclone_BB_12
 ; CHECK-EMPTY:
 ; CHECK-NEXT: sliceclone_BB_12:                                 ; preds = %sliceclone_BB_10, %sliceclone_BB_9
 ; CHECK-NEXT:   %18 = phi i32 [ %16, %sliceclone_BB_9 ], [ %14, %sliceclone_BB_10 ]
 ; CHECK-NEXT:   br label %sliceclone_BB_13
 ; CHECK-EMPTY:
-; CHECK-NEXT: sliceclone_BB_13:                                 ; preds = %sliceclone_BB_12, %sliceclone_BB_10
-; CHECK-NEXT:   %19 = phi i32 [ %14, %sliceclone_BB_10 ], [ %18, %sliceclone_BB_12 ]
+; CHECK-NEXT: sliceclone_BB_11:                                 ; preds = %sliceclone_BB_10
+; CHECK-NEXT:   br label %sliceclone_BB_13
+; CHECK-EMPTY:
+; CHECK-NEXT: sliceclone_BB_13:                                 ; preds = %sliceclone_BB_11, %sliceclone_BB_12
+; CHECK-NEXT:   %19 = phi i32 [ %14, %sliceclone_BB_11 ], [ %18, %sliceclone_BB_12 ]
 ; CHECK-NEXT:   %20 = shl i32 %19, 16
 ; CHECK-NEXT:   ret i32 %20
 ; CHECK-NEXT: }
@@ -392,14 +404,17 @@
 ; CHECK-NEXT:   %14 = getelementptr i8, ptr %12, i64 %13
 ; CHECK-NEXT:   %15 = load i32, ptr %14, align 4
 ; CHECK-NEXT:   %16 = icmp eq i32 %1, 0
-; CHECK-NEXT:   br i1 %16, label %sliceclone_BB_13, label %sliceclone_BB_12
+; CHECK-NEXT:   br i1 %16, label %sliceclone_BB_11, label %sliceclone_BB_12
 ; CHECK-EMPTY:
 ; CHECK-NEXT: sliceclone_BB_12:                                 ; preds = %sliceclone_BB_10, %sliceclone_BB_9
 ; CHECK-NEXT:   %17 = phi i32 [ %10, %sliceclone_BB_9 ], [ %15, %sliceclone_BB_10 ]
 ; CHECK-NEXT:   br label %sliceclone_BB_13
 ; CHECK-EMPTY:
-; CHECK-NEXT: sliceclone_BB_13:                                 ; preds = %sliceclone_BB_12, %sliceclone_BB_10
-; CHECK-NEXT:   %18 = phi i32 [ %15, %sliceclone_BB_10 ], [ %17, %sliceclone_BB_12 ]
+; CHECK-NEXT: sliceclone_BB_11:                                 ; preds = %sliceclone_BB_10
+; CHECK-NEXT:   br label %sliceclone_BB_13
+; CHECK-EMPTY:
+; CHECK-NEXT: sliceclone_BB_13:                                 ; preds = %sliceclone_BB_11, %sliceclone_BB_12
+; CHECK-NEXT:   %18 = phi i32 [ %15, %sliceclone_BB_11 ], [ %17, %sliceclone_BB_12 ]
 ; CHECK-NEXT:   %19 = shl i32 %18, 16
 ; CHECK-NEXT:   ret i32 %19
 ; CHECK-NEXT: }
