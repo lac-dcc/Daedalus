@@ -150,7 +150,7 @@ for i in "${TESTFILENAME[@]}"; do
     if [ -e "${LLFILENAME}" ]; then
         opt -S -passes=mem2reg,lcssa,break-crit-edges "${LLFILENAME}" -o "${LLFILENAME}"
         
-        remove_old_file "${LLFILENAME}_slices_report.log"
+        remove_old_file "${FILENAMEWEXT}_slices_report.log"
         remove_old_file "${FILENAMEWEXT}.bin"
         clang $EXTRAPARAMS "${LLFILENAME}" -o "${FILENAMEWEXT}.bin"
         

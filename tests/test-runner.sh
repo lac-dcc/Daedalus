@@ -8,6 +8,7 @@ fi
 command -v clang >/dev/null 2>&1 || { echo >&2 "clang is required but it's not installed. Aborting..."; exit 1; }
 command -v llvm-objcopy >/dev/null 2>&1 || { echo >&2 "llvm-objcopy is required but it's not installed. Aborting..."; exit 1; }
 command -v opt >/dev/null 2>&1 || { echo >&2 "opt is required but it's not installed. Aborting..."; exit 1; }
+command -v FileCheck >/dev/null 2>&1 || { echo >&2 "FileCheck is required but it's not installed. Aborting..."; exit 1; }
 
 remove_old_file() {
     local FILENAME
@@ -46,34 +47,59 @@ remove_old_file "$TRANSFORMATIONLOGFILE"
 remove_old_file "$ORIGINAL_EXECUTABLE"
 remove_old_file "$FINAL_EXECUTABLE"
 
-echo "clang $EXTRAPARAMS -Os -flto -fuse-ld=lld -Wl,--plugin-opt=-lto-embed-bitcode=post-merge-pre-opt \"$SOURCEFILENAME\" -o \"$ORIGINAL_EXECUTABLE\""
 clang $EXTRAPARAMS -Os -flto -fuse-ld=lld -Wl,--plugin-opt=-lto-embed-bitcode=post-merge-pre-opt "$SOURCEFILENAME" -o "$ORIGINAL_EXECUTABLE"
 
-echo "llvm-objcopy --dump-section .llvmbc=\"$SOURCEFILENAMELL\" \"$ORIGINAL_EXECUTABLE\""
 llvm-objcopy --dump-section .llvmbc="$SOURCEFILENAMELL" "$ORIGINAL_EXECUTABLE"
 
-echo "opt -S -passes=mem2reg,lcssa,break-crit-edges \"$SOURCEFILENAMELL\" -o \"$SOURCEFILENAMELL\""
-opt -S -passes=mem2reg,lcssa,break-crit-edges "$SOURCEFILENAMELL" -o "$SOURCEFILENAMELL"
+opt -S -passes=mem2reg,lcssa "$SOURCEFILENAMELL" -o "$SOURCEFILENAMELL"
 
-echo "opt -stats -debug-only=daedalus,ProgramSlice -passes=daedalus -load-pass-plugin=\"$SHAREDOBJECTFILE\" -dump-dot -S \"$SOURCEFILENAMELL\" -o \"$SOURCEFILENAMEDLL\" &>> \"$TRANSFORMATIONLOGFILE\""
-if ! opt -stats -debug-only=daedalus,ProgramSlice -passes=daedalus -load-pass-plugin="$SHAREDOBJECTFILE" -dump-dot -S "$SOURCEFILENAMELL" -o "$SOURCEFILENAMEDLL" &>> "$TRANSFORMATIONLOGFILE"; then
+if ! opt -stats \
+         -debug-only=daedalus,ProgramSlice \
+         -passes=daedalus \
+         -load-pass-plugin="$SHAREDOBJECTFILE" \
+         -max-slice-params=5 \
+         -max-slice-size=40 \
+         -max-slice-users=100 \
+         -dump-dot \
+         -S "$SOURCEFILENAMELL" \
+         -o "$SOURCEFILENAMEDLL" &>> "$TRANSFORMATIONLOGFILE"; then
     echo "opt exited with error code $?"
     echo "Dumping last 50 lines of the transformation log file:"
     tail --lines 50 "$TRANSFORMATIONLOGFILE"
 fi
 
-echo "clang $EXTRAPARAMS -Os \"$SOURCEFILENAMEDLL\" -o \"$FINAL_EXECUTABLE\""
 clang $EXTRAPARAMS -Os "$SOURCEFILENAMEDLL" -o "$FINAL_EXECUTABLE"
 
 if [ -e "$FINAL_EXECUTABLE" ]; then
-    "$FINAL_EXECUTABLE" "$ARGUMENTS" > "${SOURCEFILEBASENAMEWEXT}.output"
+    "$FINAL_EXECUTABLE" $ARGUMENTS > "${SOURCEFILEBASENAMEWEXT}.output"
 fi
 if [ -e "$ORIGINAL_EXECUTABLE" ]; then
-    "$ORIGINAL_EXECUTABLE" "$ARGUMENTS" > "${SOURCEFILEBASENAMEWEXT}.reference_output"
+    "$ORIGINAL_EXECUTABLE" $ARGUMENTS > "${SOURCEFILEBASENAMEWEXT}.reference_output"
 fi
 
-if cmp -s "${SOURCEFILEBASENAMEWEXT}.output" "${SOURCEFILEBASENAMEWEXT}.reference_output"; then
-    exit 0
+# Run FileCheck on both possible files, but only one should succeed (not both), and cmp must succeed too
+for CHECKFILE in "$BUILDTESTSPATH/$SOURCEFILEBASENAMEWEXT.parent_module.ll" \
+                   "$BUILDTESTSPATH/$SOURCEFILEBASENAMEWEXT.d.ll" \
+                   "$BUILDTESTSPATH/${SOURCEFILEBASENAMEWEXT}_transformation.log"; do
+    if FileCheck "$SOURCEFOLDER/$SOURCEFILEBASENAMEWEXT.pattern" < "$CHECKFILE"; then
+        CHECK=1
+        echo -e "\nFileCheck succeed on $CHECKFILE!"
+        break
+    fi
+    echo -e "\nFileCheck failed on $CHECKFILE"
+    CHECK=0
+done
+if [ $CHECK -eq 1 ] && cmp -s "${SOURCEFILEBASENAMEWEXT}.output" "${SOURCEFILEBASENAMEWEXT}.reference_output"; then
+
+    # Also check if the output of the bitcode file is the same as the original one using lli over the .ll files
+    if ! diff <(lli "$SOURCEFILENAMELL" $ARGUMENTS) <(lli "$SOURCEFILENAMEDLL" $ARGUMENTS); then
+        echo -e "\nlli outputs do not match..."
+        exit 1
+    else
+        echo -e "\nlli outputs match!"
+        exit 0
+    fi
 else
+    echo -e "\nFileCheck failed or outputs do not match..."
     exit 1
 fi

@@ -1,0 +1,30 @@
+; CHECK: ; Function Attrs: noinline nounwind optsize willreturn
+; CHECK-NEXT: define internal i64 @_daedalus_slice_simplified__[[ID:[0-9]+]](i64 %0, ptr %1, i64 %2) #5 {
+; CHECK-NEXT: sliceclone_BB_0:
+; CHECK-NEXT:   %3 = add nsw i64 %2, -1
+; CHECK-NEXT:   %4 = sdiv i64 %3, 2
+; CHECK-NEXT:   %5 = icmp sgt i64 %4, %0
+; CHECK-NEXT:   br i1 %5, label %sliceclone_BB_1, label %sliceclone_BB_2
+; CHECK-EMPTY:
+; CHECK-NEXT: sliceclone_BB_1:                                  ; preds = %sliceclone_BB_1, %sliceclone_BB_0
+; CHECK-NEXT:   %6 = phi i64 [ %15, %sliceclone_BB_1 ], [ %0, %sliceclone_BB_0 ]
+; CHECK-NEXT:   %7 = shl nsw i64 %6, 1
+; CHECK-NEXT:   %8 = add nsw i64 %7, 2
+; CHECK-NEXT:   %9 = or i64 %7, 1
+; CHECK-NEXT:   %10 = getelementptr inbounds double, ptr %1, i64 %8
+; CHECK-NEXT:   %11 = load double, ptr %10, align 8, !tbaa !7
+; CHECK-NEXT:   %12 = getelementptr inbounds double, ptr %1, i64 %9
+; CHECK-NEXT:   %13 = load double, ptr %12, align 8, !tbaa !7
+; CHECK-NEXT:   %14 = fcmp olt double %11, %13
+; CHECK-NEXT:   %15 = select i1 %14, i64 %9, i64 %8
+; CHECK-NEXT:   %16 = icmp sgt i64 %4, %15
+; CHECK-NEXT:   br i1 %16, label %sliceclone_BB_1, label %sliceclone_BB_2, !llvm.loop !11
+; CHECK-EMPTY:
+; CHECK-NEXT: sliceclone_BB_2:                                  ; preds = %sliceclone_BB_1, %sliceclone_BB_0
+; CHECK-NEXT:   %17 = phi i64 [ %0, %sliceclone_BB_0 ], [ %15, %sliceclone_BB_1 ]
+; CHECK-NEXT:   br label %sliceclone_BB_4
+; CHECK-EMPTY:
+; CHECK-NEXT: sliceclone_BB_4:                                  ; preds = %sliceclone_BB_2
+; CHECK-NEXT:   %18 = shl nsw i64 %17, 1
+; CHECK-NEXT:   ret i64 %18
+; CHECK-NEXT: }
