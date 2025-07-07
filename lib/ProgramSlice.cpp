@@ -773,191 +773,112 @@ uint ProgramSlice::canOutline(
   }
 
   // Build alias sets for memory instructions in the function.
-  // for (BasicBlock &BB : *_parentFunction) {
-  //   for (Instruction &I : BB) {
-  //     if (StoreInst *SI = dyn_cast<StoreInst>(&I)) {
-  //       AST.add(SI);
-  //     }else if (CallBase *CB = dyn_cast<CallBase>(&I)) {
-  //       // if (CB == _CallSite) {
-  //       //   continue;
-  //       // }
-  //       AST.add(CB);
-  //     } else if (LoadInst *LI = dyn_cast<LoadInst>(&I)) {
-  //       AST.add(LI);
-  //     } else if (AnyMemSetInst *MSI = dyn_cast<AnyMemSetInst>(&I)) {
-  //       AST.add(MSI);
-  //     } else if (AnyMemTransferInst *MTI = dyn_cast<AnyMemTransferInst>(&I))
-  //     {
-  //       AST.add(MTI);
-  //     }
-  //   }
-  // }
-  //
-  // // LLVM does not provide alias/memory dependence information for allocas.
-  // // Thus, we track allocas that belong in the slice explicitly, so we can
-  // then
-  // // check if their memory is clobbered (changed) at any point in the slice
-  // // itself or at some other point in the parent function.
-  // SmallPtrSet<const Value *, 32> allocasInSlice;
-  // for (const Instruction *I : _instsInSlice) {
-  //   if (const AllocaInst *AI = dyn_cast<AllocaInst>(I)) {
-  //     allocasInSlice.insert(AI);
-  //   }
-  // }
-  // for (BasicBlock &BB : *_parentFunction) {
-  //   for (Instruction &I : BB) {
-  //     if (StoreInst *SI = dyn_cast<StoreInst>(&I)) {
-  //       Value *underlying = getUnderlyingObject(SI->getPointerOperand());
-  //       if (allocasInSlice.contains(underlying)) {
-  //         LLVM_DEBUG(dbgs()
-  //                        << "Cannot outline slice because alloca is
-  //                        clobbered: "
-  //                        << *underlying << "\n";);
-  //         return 0;
-  //       }
-  //     } else if (LoadInst *LI = dyn_cast<LoadInst>(&I)) {
-  //       if (AST.getAliasSetFor(MemoryLocation::get(LI)).isMod()) {
-  //         Value *underlying = getUnderlyingObject(LI->getPointerOperand());
-  //         if (allocasInSlice.contains(underlying)) {
-  //           LLVM_DEBUG(dbgs()
-  //                      << "Cannot outline slice because alloca is clobbered:
-  //                      "
-  //                      << *underlying << "\n");
-  //           return 0;
-  //         }
-  //       }
-  //     }
-  //   }
-  // }
-  //
-  // for (const Instruction *I : _instsInSlice) {
-  //   // if (I->mayThrow()) {
-  //   //   LLVM_DEBUG(dbgs() << "Cannot outline slice because inst may throw: "
-  //   << *I
-  //   //                     << "\n");
-  //   //   return 0;
-  //   // }
-  //
-  //   if (const CallBase *CB = dyn_cast<CallBase>(I)) {
-  //     if (!CB->getCalledFunction()) {
-  //       LLVM_DEBUG(
-  //           dbgs() << "Cannot outline slice because instruction calls unknown
-  //           "
-  //                     "function: "
-  //                  << *CB << "\n");
-  //       return 0;
-  //     }
-  //     LibFunc builtin;
-  //     if (CB->getCalledFunction()->isDeclaration() &&
-  //         !TLI.getLibFunc(*CB, builtin)) {
-  //       LLVM_DEBUG(
-  //           dbgs()
-  //           << "Cannot outline slice because instruction calls non-builtin "
-  //              "function with no body: "
-  //           << *CB << "\n");
-  //       return 0;
-  //     }
-  //   }
-  //
-  //   // For instructions that may read or write to memory, we need some
-  //   special
-  //   // care to avoid load/store reordering and/or side effects.
-  //   if (I->mayReadOrWriteMemory()) {
-  //     if (const LoadInst *LI = dyn_cast<LoadInst>(I)) {
-  //       // For loads, we invalidate outlining if its address can be modified.
-  //       // This is possible if the memory location pointed to by the load is
-  //       // written/modified by any possibly aliasing pointer or clobbering
-  //       // function call.
-  //       if (AST.getAliasSetFor(MemoryLocation::get(LI)).isMod()) {
-  //         LLVM_DEBUG(
-  //             dbgs()
-  //             << "Cannot outline slice because load address can be modified:
-  //             "
-  //             << *LI << "\n");
-  //         return 0;
-  //       }
-  //     } else /*if (const CallBase *CB = dyn_cast<CallBase>(I)) {
-  //       // For function calls, if the call has any side effects (as in, is
-  //       not
-  //       // read-only), we can't outline the slice.
-  //       if (!AA->onlyReadsMemory(CB->getCalledFunction())) {
-  //         LLVM_DEBUG(dbgs()
-  //                    << "Cannot outline because call may write to memory: "
-  //                    << *CB << "\n");
-  //         return 0;
-  //       }
-  //     } else */{
-  //       LLVM_DEBUG(
-  //           dbgs()
-  //           << "Cannot outline because inst may read or write to memory: " <<
-  //           *I
-  //           << "\n");
-  //       return 0;
-  //     }
-  //   } /*else if (!I->willReturn()) {
-  //     LLVM_DEBUG(dbgs() << "Cannot outline because inst may not return: " <<
-  //     *I
-  //                       << "\n");
-  //     return 0;
-  //   }*/
-  //
-  //   // if (_CallSite) {
-  //   //   for (const Value *arg : _CallSite->args()) {
-  //   //     if (arg == _initial) {
-  //   //       continue;
-  //   //     }
-  //   //     if (arg->getType()->isPointerTy() && I->getType()->isPointerTy())
-  //   {
-  //   //       if (_AA->alias(arg, I) != AliasResult::NoAlias) {
-  //   //         LLVM_DEBUG(dbgs() << "Cannot outline slice because pointer
-  //   used
-  //   //         in slice is "
-  //   //                   "passed as argument to callee.\nPointer: "
-  //   //                << *I << "\nArgument: " << *arg << "\n");
-  //   //         return 0;
-  //   //       }
-  //   //     }
-  //   //   }
-  //   // }
-  // }
-  //
-  // // if (_CallSite && LI.getLoopDepth(_CallSite->getParent()) > 0) {
-  // //   for (const BasicBlock *BB : _BBsInSlice) {
-  // //     if (LI.getLoopDepth(BB) <= LI.getLoopDepth(_CallSite->getParent()))
-  // {
-  // //       LLVM_DEBUG(dbgs() << "BB " << BB->getName()
-  // //              << " is in same or lower loop depth as CallSite BB "
-  // //              << _CallSite->getParent()->getName() << "\n");
-  // //       return 0;
-  // //     }
-  // //   }
-  // // }
-  //
-  // // if (isa<AllocaInst>(_initial)) {
-  // //   LLVM_DEBUG(
-  // //       dbgs()
-  // //       << "Cannot outline slice due to slicing criteria being an
-  // //       alloca!\n");
-  // //   return 0;
-  // // }
-  //
-  // // LCSSA may insert PHINodes with only a single incoming block. In some
-  // cases,
-  // // these PHINodes can be added into the slice, but the conditional for the
-  // // loop that generated them is not. When eliminating the PHINode, we'd
-  // // generate invalid code, so we avoid optimizing these cases temporarily.
-  // // if (PHINode *PN = dyn_cast<PHINode>(_initial)) {
-  // //   if (PN->getNumIncomingValues() == 1) {
-  // //     BasicBlock *incBB = PN->getIncomingBlock(0);
-  // //     if (_instsInSlice.count(incBB->getTerminator()) == 0) {
-  // //       LLVM_DEBUG(
-  // //           dbgs()
-  // //            << "Cannot outline slice with single incoming block
-  // //            PHINode...\n");
-  // //       return 0;
-  // //     }
-  // //   }
-  // // }
+  for (BasicBlock &BB : *_parentFunction) {
+    for (Instruction &I : BB) {
+      if (StoreInst *SI = dyn_cast<StoreInst>(&I)) {
+        AST.add(SI);
+      } else if (CallBase *CB = dyn_cast<CallBase>(&I)) {
+        AST.add(CB);
+      } else if (LoadInst *LI = dyn_cast<LoadInst>(&I)) {
+        AST.add(LI);
+      } else if (AnyMemSetInst *MSI = dyn_cast<AnyMemSetInst>(&I)) {
+        AST.add(MSI);
+      } else if (AnyMemTransferInst *MTI = dyn_cast<AnyMemTransferInst>(&I)) {
+        AST.add(MTI);
+      }
+    }
+  }
+
+  // LLVM does not provide alias/memory dependence information for allocas.
+  // Thus, we track allocas that belong in the slice explicitly, so we can then
+  // check if their memory is clobbered (changed) at any point in the slice
+  // itself or at some other point in the parent function.
+  SmallPtrSet<const Value *, 32> allocasInSlice;
+  for (const Instruction *I : _instsInSlice) {
+    if (const AllocaInst *AI = dyn_cast<AllocaInst>(I)) {
+      allocasInSlice.insert(AI);
+    }
+  }
+  for (BasicBlock &BB : *_parentFunction) {
+    for (Instruction &I : BB) {
+      if (StoreInst *SI = dyn_cast<StoreInst>(&I)) {
+        Value *underlying = getUnderlyingObject(SI->getPointerOperand());
+        if (allocasInSlice.contains(underlying)) {
+          LLVM_DEBUG(dbgs()
+                         << "Cannot outline slice because alloca is clobbered: "
+                         << *underlying << "\n";);
+          return 0;
+        }
+      } else if (LoadInst *LI = dyn_cast<LoadInst>(&I)) {
+        if (AST.getAliasSetFor(MemoryLocation::get(LI)).isMod()) {
+          Value *underlying = getUnderlyingObject(LI->getPointerOperand());
+          if (allocasInSlice.contains(underlying)) {
+            LLVM_DEBUG(dbgs()
+                       << "Cannot outline slice because alloca is clobbered:"
+                       << *underlying << "\n");
+            return 0;
+          }
+        }
+      }
+    }
+  }
+
+  for (const Instruction *I : _instsInSlice) {
+    if (const CallBase *CB = dyn_cast<CallBase>(I)) {
+      if (CB->getName().startswith("_daedalus_slice_")) {
+        // Ignore slice calls so we can outline slices of slices.
+        continue;
+      }
+      if (!CB->getCalledFunction()) {
+        LLVM_DEBUG(
+            dbgs() << "Cannot outline slice because instruction calls unknown"
+                      "function: "
+                   << *CB << "\n");
+        return 0;
+      }
+      LibFunc builtin;
+      if (CB->getCalledFunction()->isDeclaration() &&
+          !TLI.getLibFunc(*CB, builtin)) {
+        LLVM_DEBUG(
+            dbgs()
+            << "Cannot outline slice because instruction calls non-builtin "
+               "function with no body: "
+            << *CB << "\n");
+        return 0;
+      }
+    }
+
+    // For instructions that may write to memory, we need some special
+    // care to avoid load/store reordering and/or side effects.
+    if (I->mayWriteToMemory()) {
+      if (const LoadInst *LI = dyn_cast<LoadInst>(I)) {
+        // For loads, we invalidate outlining if its address can be modified.
+        // This is possible if the memory location pointed to by the load is
+        // written/modified by any possibly aliasing pointer or clobbering
+        // function call.
+        if (AST.getAliasSetFor(MemoryLocation::get(LI)).isMod()) {
+          LLVM_DEBUG(
+              dbgs()
+              << "Cannot outline slice because load address can be modified: "
+              << *LI << "\n");
+          return 0;
+        }
+      } else if (const CallBase *CB = dyn_cast<CallBase>(I)) {
+        // For function calls, if the call has any side effects (as in, is not
+        // read-only), we can't outline the slice.
+        if (!AA->onlyReadsMemory(CB->getCalledFunction())) {
+          LLVM_DEBUG(dbgs()
+                     << "Cannot outline because call may write to memory: "
+                     << *CB << "\n");
+          return 0;
+        }
+      }
+    } else if (!I->willReturn()) {
+      LLVM_DEBUG(dbgs() << "Cannot outline because inst may not return: " << *I
+                        << "\n");
+      return 0;
+    }
+  }
 
   return 1;
 }
