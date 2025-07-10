@@ -28,6 +28,7 @@ SHAREDOBJECTFILE="$BUILDPATH/lib/libdaedalus.so"
 SOURCEFILEBASENAMEWEXT=$(basename "$SOURCEFILENAME" | sed 's/\.[^.]*$//')
 SOURCEFILENAMELL="$BUILDTESTSPATH/$SOURCEFILEBASENAMEWEXT.ll"
 SOURCEFILENAMEDLL="$BUILDTESTSPATH/$SOURCEFILEBASENAMEWEXT.d.ll"
+SOURCEFILENAMEPARENTLL="$BUILDTESTSPATH/$SOURCEFILEBASENAMEWEXT.parent_module.ll"
 SLICESREPORTLOGFILE="$BUILDTESTSPATH/${SOURCEFILEBASENAMEWEXT}_slices_report.log"
 TRANSFORMATIONLOGFILE="$BUILDTESTSPATH/${SOURCEFILEBASENAMEWEXT}_transformation.log"
 ORIGINAL_EXECUTABLE="$BUILDTESTSPATH/$SOURCEFILEBASENAMEWEXT.bin"
@@ -57,9 +58,6 @@ if ! opt -stats \
          -debug-only=daedalus,ProgramSlice \
          -passes=daedalus \
          -load-pass-plugin="$SHAREDOBJECTFILE" \
-         -max-slice-params=5 \
-         -max-slice-size=40 \
-         -max-slice-users=100 \
          -dump-dot \
          -S "$SOURCEFILENAMELL" \
          -o "$SOURCEFILENAMEDLL" &>> "$TRANSFORMATIONLOGFILE"; then
@@ -78,9 +76,9 @@ if [ -e "$ORIGINAL_EXECUTABLE" ]; then
 fi
 
 # Run FileCheck on both possible files, but only one should succeed (not both), and cmp must succeed too
-for CHECKFILE in "$BUILDTESTSPATH/$SOURCEFILEBASENAMEWEXT.parent_module.ll" \
-                   "$BUILDTESTSPATH/$SOURCEFILEBASENAMEWEXT.d.ll" \
-                   "$BUILDTESTSPATH/${SOURCEFILEBASENAMEWEXT}_transformation.log"; do
+for CHECKFILE in "$SOURCEFILENAMEPARENTLL" \
+                   "$SOURCEFILENAMEDLL" \
+                   "$TRANSFORMATIONLOGFILE"; do
     if FileCheck "$SOURCEFOLDER/$SOURCEFILEBASENAMEWEXT.pattern" < "$CHECKFILE"; then
         CHECK=1
         echo -e "\nFileCheck succeed on $CHECKFILE!"

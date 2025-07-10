@@ -97,9 +97,24 @@ private:
   /// the original function.
   void computeAttractorBlocks(const Loop *loop);
 
-  /// Returns a new target basic block determined by the attractor of the given
-  /// successor block.
+  /// Finds the first dominator in the slice for each basic block in the parent
+  /// function.
+  std::map<const BasicBlock *, SmallVector<const BasicBlock *>>
+  computeFirstDominatorsInSlice() const;
+
+  /// Returns a new target basic block determined by the first dominator of the
+  /// given successor block.
+  BasicBlock *getNewTargetByFirstDominator(const BasicBlock *successor,
+                                           const BasicBlock *originalBB,
+                                           const DominatorTree &DT);
+
+  /// Returns a new target basic block determined by the attractor of the
+  /// given successor block.
   BasicBlock *getNewTargetByAttractor(const BasicBlock *succ);
+
+  // Checks if the first dominator of curBB in the slice is originalBB
+  bool isFirstDominatorInSlice(const BasicBlock *curBB,
+                               const BasicBlock *originalBB) const;
 
   /// Finds a new target basic block that is dominated by a given block.
   BasicBlock *getNewTargetByDominatedBlock(const DominatorTree &DT,
@@ -115,50 +130,62 @@ private:
   /// branch is not found
   BasicBlock *findNextDominatedNode(const DominatorTree &DT,
                                     const BasicBlock *startNodeBB);
+
   /// Helper function to create an unreachable block.
   static BasicBlock *createUnreachableBlock(Function *F);
+
   /// Helper function to handle basic blocks without terminators.
   void handleNoTerminatorBlock(BasicBlock &BB, const BasicBlock *originalBB,
                                const Function *F, const DominatorTree &DT,
                                BasicBlock *unreachableBlock);
+
   /// Helper for blocks without terminators: handles original BranchInst.
   void handleNoTerminatorBranch(BasicBlock &BB, const BasicBlock *originalBB,
                                 const Function *F, const DominatorTree &DT);
+
   /// Helper for blocks without terminators: handles original SwitchInst.
   void handleNoTerminatorSwitch(BasicBlock &BB, const BasicBlock *originalBB,
                                 const DominatorTree &DT,
                                 BasicBlock *unreachableBlock);
+
   /// Helper function to handle basic blocks with existing terminators.
   void handleTerminatorBlock(BasicBlock &BB, const BasicBlock *originalBB,
                              Function *F, const DominatorTree &DT,
                              BasicBlock *unreachableBlock);
+
   /// Helper for blocks with terminators: handles existing BranchInst.
   void handleExistingBranchInst(BranchInst *BI, BasicBlock &currentBB,
                                 const BasicBlock *originalBB, Function *F,
                                 const DominatorTree &DT,
                                 BasicBlock *unreachableBlock);
+
   /// Helper for blocks with terminators: handles existing SwitchInst.
   void handleExistingSwitchInst(SwitchInst *SI, BasicBlock &currentBB,
                                 const BasicBlock *originalBB, Function *F,
                                 const DominatorTree &DT,
                                 BasicBlock *unreachableBlock);
+
   /// Determines the target block for a successor, potentially finding a
   /// dominated node if direct mapping fails.
   BasicBlock *getOrCreateTargetBlock(const BasicBlock *successor,
                                      const BasicBlock *originalBB,
                                      const DominatorTree &DT);
+
   /// Updates PHI nodes in the new successor block.
   static void updatePHINodesForSuccessor(
       BasicBlock *newSuccessor, const BasicBlock *originalIncomingBlock,
       BasicBlock *currentBB, const Function *F, const DominatorTree &DT);
+
   /// Replaces uses of a successor with the unreachable block and updates the
   /// terminator.
   static void replaceUsesAndSetSuccessor(BasicBlock *successorToReplace,
                                          BasicBlock *unreachableBlock,
                                          Function *F, Instruction *terminator,
                                          unsigned int successorIndex);
+
   /// Cleans up the unreachable block if it wasn't used.
   static void cleanupUnreachableBlock(BasicBlock *unreachableBlock);
+
   /// Debugging helper to log predecessors.
   static void logPredecessors(Function *F);
 
@@ -183,18 +210,16 @@ private:
   /// analysis
   std::set<const BasicBlock *> _BBsInSlice;
 
-  /// function call being lazified
+  std::map<const BasicBlock *, const BasicBlock *> _attractors;
 
-  // @_Imap ->
   /// maps each BasicBlock to its attractor (its first  dominator), used for
   /// rearranging control flow
-  std::map<const BasicBlock *, const BasicBlock *> _attractors;
+  std::map<const BasicBlock *, SmallVector<const BasicBlock *>>
+      _firstDominators;
 
   /// maps BasicBlocks in the original function to their new cloned counterparts
   /// in the slice
   std::map<const BasicBlock *, BasicBlock *> _origToNewBBmap;
-
-  /// same as above, but in the opposite direction
   std::map<BasicBlock *, const BasicBlock *> _newToOrigBBmap;
 
   /// maps Instructions in the original function to their cloned counterparts in
