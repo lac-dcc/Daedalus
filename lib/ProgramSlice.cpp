@@ -100,28 +100,29 @@ static const Value *isOperandOutsideLoopOrHeader(const Value *operand,
 }
 
 /**
- * @brief Retrieves the gate instruction (conditional branch or switch) for a
- * given basic block.
+ * @brief Retrieves the predicate instruction (conditional branch or switch) for
+ * a given basic block.
  *
  * This function examines the terminator instruction of the specified basic
  * block @p BB. If the terminator is a conditional branch or a switch
  * instruction, it returns a pointer to that instruction, which serves as the
- * "gate" controlling the block's outgoing control flow. If the terminator is an
- * unconditional branch or not a branch/switch, the function returns nullptr.
+ * "predicate" controlling the block's outgoing control flow. If the terminator
+ * is an unconditional branch or not a branch/switch, the function returns
+ * nullptr.
  *
- * @param BB Pointer to the basic block whose gate instruction is to be
+ * @param BB Pointer to the basic block whose predicate instruction is to be
  * retrieved.
- * @return const Value* Pointer to the gate instruction (conditional branch or
- * switch), or nullptr if none.
+ * @return const Value* Pointer to the predicate instruction (conditional branch
+ * or switch), or nullptr if none.
  */
-static const Value *getGate(const BasicBlock *BB) {
+static const Value *getPredicate(const BasicBlock *BB) {
   const Value *branchInst = nullptr;
   if (BB) {
     const Instruction *terminator = BB->getTerminator();
     if (const auto *BI = dyn_cast<BranchInst>(terminator)) {
       assert(BI->isConditional() &&
              "Unconditional terminator found when trying to get "
-             "gate instruction...\n");
+             "predicate instruction...\n");
       branchInst = BI;
     } else if (const auto *SI = dyn_cast<SwitchInst>(terminator)) {
       branchInst = SI;
@@ -141,7 +142,8 @@ static const Value *getGate(const BasicBlock *BB) {
  * control the PHINode's parent block.
  *
  * @param phi The PHINode to check.
- * @param gates A map of basic blocks to their controlling gate instructions.
+ * @param gates A map of basic blocks to their controlling predicate
+ * instructions.
  * @param DT The dominator tree for the function.
  * @param PDT The post-dominator tree for the function.
  * @return true if the PHINode has a weird CFG pattern, false otherwise.
@@ -170,6 +172,32 @@ static bool isWeirdCFG(
   return phiNodePreds.size() == 2;
 }
 
+static bool isDiamondCFG(const DominatorTree &DT, const PHINode *phiDep) {
+  bool isDiamond = false;
+  const BasicBlock *commonAncestor = nullptr;
+  DomTreeNode *incBBDomNode = nullptr;
+  DomTreeNode *incBBIDominator = nullptr;
+  BasicBlock *incBBIDomBlock = nullptr;
+  for (auto incBB : phiDep->blocks()) {
+    incBBDomNode = DT.getNode(incBB);
+    incBBIDominator = incBBDomNode->getIDom();
+    if (!incBBIDominator) continue; // Skip if no immediate dominator
+    incBBIDomBlock = incBBIDominator->getBlock();
+    if (commonAncestor && commonAncestor == incBBIDomBlock) {
+      isDiamond = true;
+      break;
+    }
+    commonAncestor = incBBIDomBlock;
+  }
+  incBBDomNode = DT.getNode(phiDep->getParent());
+  incBBIDominator = incBBDomNode->getIDom();
+  incBBIDomBlock = incBBIDominator->getBlock();
+  if (commonAncestor &&
+      commonAncestor == DT.getNode(phiDep->getParent())->getIDom()->getBlock())
+    isDiamond &= true;
+  return isDiamond;
+}
+
 /**
  * @brief Retrieves data dependencies for a given instruction.
  *
@@ -179,7 +207,8 @@ static bool isWeirdCFG(
  * instruction's execution and returns them along with their status.
  *
  * @param I The instruction for which to retrieve data dependencies.
- * @param gates A map of basic blocks to their controlling gate instructions.
+ * @param gates A map of basic blocks to their controlling predicate
+ * instructions.
  * @param loopInfo The loop information analysis for the function.
  * @param loop The loop containing the instruction, if any.
  * @param loopHeader The header of the loop containing the instruction.
@@ -239,6 +268,17 @@ std::pair<Status, dataDependence> getDataDependencies(
       const BasicBlock *currentDepBB = dep->getParent();
       BBs.push_back(currentDepBB);
 
+      // ~special case~ Insert PHINode's incoming blocks as dependencies if
+      // their incoming values originate from a common dominator and may vary
+      // depending on the control flow path taken.
+      if (const auto *phiDep = dyn_cast<PHINode>(dep)) {
+        if (isDiamondCFG(DT, phiDep)) {
+          for (auto incBB : phiDep->blocks()) {
+            BBs.push_back(incBB);
+          }
+        }
+      }
+
       for (const Use &U : dep->operands())
         if (!processOperand(U.get())) break;
     }
@@ -266,60 +306,83 @@ std::pair<Status, dataDependence> getDataDependencies(
                         "block that is an exit block of a loop and contains "
                         "a dependency: "
                      << incomingBB->getName() << "\n");
-          gates[phi->getParent()].push_back(incomingBB->getTerminator());
+          gates[incomingBB].push_back(incomingBB->getTerminator());
         }
 
-        for (const Value *gate : gates[incomingBB]) {
-          if (gate && !visited.count(gate)) {
-            if (auto *gateInst = dyn_cast<Instruction>(gate)) {
-              LLVM_DEBUG(dbgs()
-                         << "\t\t\t[Control Dependency] Pushing gate (from "
-                         << gateInst->getParent()->getName() << "): " << *gate
-                         << "\n");
+        for (const Value *predicate : gates[incomingBB]) {
+          if (predicate && !visited.count(predicate)) {
+            if (auto *gateInst = dyn_cast<Instruction>(predicate)) {
+              LLVM_DEBUG(
+                  dbgs()
+                  << "\t\t\t[Control Dependency] Pushing predicate (from "
+                  << gateInst->getParent()->getName() << "): " << *predicate
+                  << "\n");
 
-              // ~special case~ if the gate instruction is outside the current
-              // slice criterion's loop, don't treat it as a dependency
-              if (isOperandOutsideLoopOrHeader(gate, loop, loopHeader)) {
-                if (is_contained(BBs, incomingBB)) {
-                  // Remove incomingBB from BBs if present
-                  auto it = std::find(BBs.begin(), BBs.end(), incomingBB);
-                  if (it != BBs.end()) {
-                    BBs.erase(it);
-                  }
+              // ~special case~ if the predicate instruction is outside the
+              // current slice criterion's loop, don't treat it as a dependency
+              if (isOperandOutsideLoopOrHeader(predicate, loop, loopHeader)) {
+                const BasicBlock *predicateBB = gateInst->getParent();
+
+                // Remove block from BBs if present
+                auto it = std::find(BBs.begin(), BBs.end(), predicateBB);
+                if (it != BBs.end()) {
+                  LLVM_DEBUG(dbgs() << "\t\t\tErasing block from BBs: "
+                                    << predicateBB->getName() << "\n");
+                  BBs.erase(it);
+                  // Also, remove any instructions from the erased block from
+                  // deps
+                  deps.erase(std::remove_if(
+                                 deps.begin(), deps.end(),
+                                 [predicateBB](const Value *v) -> bool {
+                                   if (const Instruction *inst =
+                                           dyn_cast<Instruction>(v)) {
+                                     return inst->getParent() == predicateBB;
+                                   }
+                                   return false;
+                                 }),
+                             deps.end());
                 }
                 continue;
               }
 
-              worklist.push(gate);
-              visited.insert(gate);
+              worklist.push(predicate);
+              visited.insert(predicate);
             }
           }
         }
       }
-
-      // for (const Value *gate : gates[phi->getParent()]) {
-      //   if (gate && !visited.count(gate)) {
-      //     if (auto *gateInst = dyn_cast<Instruction>(gate)) {
-      //       LLVM_DEBUG(dbgs()
-      //                  << "\t\t\t[Control Dependency] Pushing gate (from "
-      //                  << gateInst->getParent()->getName() << "): " << *gate
-      //                  << "\n");
-
-      //       // ~special case~ if the gate instruction is outside the current
-      //       // slice criterion's loop, don't treat it as a dependency
-      //       if (isOperandOutsideLoopOrHeader(gate, loop, loopHeader)) {
-      //         continue;
-      //       }
-
-      //       worklist.push(gate);
-      //       visited.insert(gate);
-      //     }
-      //   }
-      // }
     }
   }
 
   return {status, {BBs, deps, funcArgs}};
+}
+
+static void linkPredicates(
+    std::unordered_map<const BasicBlock *, SmallVector<const Value *>>
+        &bbToPredicates,
+    const BasicBlock *currentBB, const BasicBlock *predBB, DominatorTree &DT) {
+  LLVM_DEBUG({ dbgs() << "\t\tPredicate: " << predBB->getName() << "\n"; });
+  if (!bbToPredicates.count(currentBB))
+    bbToPredicates[currentBB] = SmallVector<const Value *>();
+  if (const Value *predicate = getPredicate(predBB))
+    bbToPredicates[currentBB].push_back(predicate);
+
+  // Propagate predicates from predecessors to current block
+  for (const BasicBlock *predBB : predecessors(currentBB)) {
+    if (bbToPredicates.count(predBB)) {
+      for (const Value *predGate : bbToPredicates[predBB]) {
+        // ~special case~ don't propagate gates from dominated
+        // blocks
+        if (!is_contained(bbToPredicates[currentBB], predGate) &&
+            !DT.dominates(currentBB, predBB)) {
+          bbToPredicates[currentBB].push_back(predGate);
+          LLVM_DEBUG(dbgs()
+                     << "\t\t\tPushed predGate: " << *predGate
+                     << "\n\t\t\t\tfrom block: " << predBB->getName() << "\n");
+        }
+      }
+    }
+  }
 }
 
 /**
@@ -379,41 +442,50 @@ mapBasicBlocksToPredicates(Function &F) {
     } else {
       // Pre-visit
       LLVM_DEBUG(dbgs() << "VISIT: " << currentBB->getName() << "\n");
+      LLVM_DEBUG({
+        dbgs() << "\t\tStack of predicates (top at bottom):\n";
+        std::stack<const BasicBlock *> tmpStack = stackOfPredicates;
+        SmallVector<const BasicBlock *> stackVec;
+        while (!tmpStack.empty()) {
+          stackVec.push_back(tmpStack.top());
+          tmpStack.pop();
+        }
+        for (auto it = stackVec.rbegin(); it != stackVec.rend(); ++it) {
+          dbgs() << "\t\t\t" << (*it)->getName();
+          if (it == stackVec.rbegin()) dbgs() << " <-- top";
+          dbgs() << "\n";
+        }
+      });
       // Record predicates (if any) for this block
       if (!stackOfPredicates.empty()) {
         const BasicBlock *predBB = stackOfPredicates.top();
         if (!PDT.dominates(currentBB, predBB)) {
-          LLVM_DEBUG(
-              { dbgs() << "\t\tPredicate: " << predBB->getName() << "\n"; });
-          if (!bbToPredicates.count(currentBB))
-            bbToPredicates[currentBB] = SmallVector<const Value *>();
-          if (const Value *predicate = getGate(predBB))
-            bbToPredicates[currentBB].push_back(predicate);
+          linkPredicates(bbToPredicates, currentBB, predBB, DT);
+        } else {
+          LLVM_DEBUG({
+            dbgs() << "\t\t" << currentBB->getName() << " post-dominates "
+                   << predBB->getName() << "\n";
+          });
+          // LLVM_DEBUG(dbgs()
+          //            << "\t\tPopping predicate: " << predBB->getName() <<
+          //            "\n");
+          // stackOfPredicates.pop();
+          // if (!stackOfPredicates.empty())
+          //   linkPredicates(bbToPredicates, currentBB,
+          //   stackOfPredicates.top(),
+          //                  DT);
 
-          // Propagate predicates from predecessors to current block
-          for (const BasicBlock *predBB : predecessors(currentBB)) {
-            if (bbToPredicates.count(predBB)) {
-              for (const Value *predGate : bbToPredicates[predBB]) {
-                // ~special case~ don't propagate gates from dominated
-                // blocks
-                if (!is_contained(bbToPredicates[currentBB], predGate) &&
-                    !DT.dominates(currentBB, predBB)) {
-                  bbToPredicates[currentBB].push_back(predGate);
-                  LLVM_DEBUG(dbgs() << "\t\t\tPushed predGate: " << *predGate
-                                    << "\n\t\t\t\tfrom block: "
-                                    << predBB->getName() << "\n");
-                }
-              }
-            }
-          }
+          // LLVM_DEBUG(dbgs() << "\t\tPushing back predicate: "
+          //                   << predBB->getName() << "\n");
+          // stackOfPredicates.push(predBB);
         }
       }
 
       if (hasPredicate) {
         LLVM_DEBUG({
           dbgs() << "\t\tPushing predicate: " << currentBB->getName() << "\n";
-          if (const Value *gate = getGate(currentBB)) {
-            dbgs() << "\t\t\tPredicate instruction: " << *gate << "\n";
+          if (const Value *predicate = getPredicate(currentBB)) {
+            dbgs() << "\t\t\tPredicate instruction: " << *predicate << "\n";
           }
         });
         stackOfPredicates.push(currentBB);
@@ -426,118 +498,6 @@ mapBasicBlocksToPredicates(Function &F) {
     }
   }
   return bbToPredicates;
-}
-
-/**
- * @brief Finds the nearest dominator of a basic block that is not
- * post-dominated by it.
- *
- * Given a basic block \p BB, this function traverses up the dominator tree
- * (using \p DT) and returns the first dominator block that is not
- * post-dominated by \p BB (according to \p PDT). If all dominators are
- * post-dominated by \p BB, returns nullptr.
- *
- * @param BB The basic block for which to find the controller.
- * @param DT The dominator tree for the function.
- * @param PDT The post-dominator tree for the function.
- * @return The nearest controlling basic block, or nullptr if none is found.
- */
-static const BasicBlock *getController(const BasicBlock *BB,
-                                       const DominatorTree &DT,
-                                       const PostDominatorTree &PDT) {
-  const DomTreeNode *dom_node = DT.getNode(BB);
-  while (dom_node) {
-    if (const BasicBlock *dom_BB = dom_node->getBlock();
-        !PDT.dominates(BB, dom_BB)) {
-      return dom_BB;
-    }
-    dom_node = dom_node->getIDom();
-  }
-  return nullptr;
-}
-
-/**
- * @brief Computes the control dependency "gates" for each basic block in a
- * function.
- *
- * This function analyzes the control flow of the given function @p F and
- * determines, for each basic block, the set of instructions (gates) that
- * control entry into that block. Gates are typically conditional branch or
- * switch instructions in predecessor blocks that dominate the current block
- * but are not post-dominated by it. If a predecessor does not directly
- * dominate the block, the function finds the controlling block and its gate.
- *
- * The result is a mapping from each basic block to a vector of gate
- * instructions that represent the control dependencies for that block.
- *
- * @param F The function for which to compute gates.
- * @param loop The loop in which the slice criterion resides, if applicable.
- * @return A map from each basic block to a vector of gate instructions
- * (conditional branches or switches) that control entry into the block.
- */
-static std::unordered_map<const BasicBlock *, SmallVector<const Value *>>
-computeGates(Function &F, const Loop *loop) {
-  const DominatorTree DT(F);
-  const PostDominatorTree PDT(F);
-  std::unordered_map<const BasicBlock *, SmallVector<const Value *>> gates;
-  for (const BasicBlock &BB : F) {
-    SmallVector<const Value *> BB_gates;
-    // const unsigned num_preds = pred_size(&BB);
-    // if (num_preds > 1) {
-    LLVM_DEBUG(dbgs() << BB.getName() << " predecessors:\n");
-    for (const BasicBlock *pred : predecessors(&BB)) {
-      LLVM_DEBUG(dbgs() << " - " << pred->getName() << " :");
-
-      if (loop && !loop->isInvalid()) {
-        if (loop->contains(pred) && loop->isLoopLatch(pred) && pred != &BB) {
-          LLVM_DEBUG(
-              dbgs()
-              << "Predecessor is a loop latch... skipping gate activation.\n");
-          continue;
-        }
-      }
-
-      if (DT.dominates(pred, &BB) && !PDT.dominates(&BB, pred)) {
-        if (const Value *gate = getGate(pred)) {
-          LLVM_DEBUG(dbgs() << "\n\tInstruction: " << *gate << "\n");
-          BB_gates.push_back(gate);
-        }
-      } else {
-        const BasicBlock *ctrl_BB = getController(pred, DT, PDT);
-        if (const Value *ctrl_gate = getGate(ctrl_BB)) {
-          LLVM_DEBUG(dbgs() << " Edge controlled by " << ctrl_BB->getName()
-                            << " " << ctrl_gate->getName()
-                            << "\n\tInstruction: " << *ctrl_gate << "\n");
-          BB_gates.push_back(ctrl_gate);
-        }
-      }
-      LLVM_DEBUG(dbgs() << "\n");
-
-      // ~special case~ Activate predecessors' gates for the current block to
-      // capture the transitive dependencies
-      if (gates.count(pred) && !gates[pred].empty()) {
-        LLVM_DEBUG(dbgs() << "\n\tPredecessor gates:\n");
-        for (auto *predGate : gates[pred]) {
-          if (BB_gates.end() ==
-              std::find(BB_gates.begin(), BB_gates.end(), predGate)) {
-            LLVM_DEBUG(dbgs() << "\n\t\tInstruction: " << *predGate << "\n");
-
-            if (auto *predGateInst = dyn_cast<Instruction>(predGate)) {
-              const BasicBlock *predGateParent = predGateInst->getParent();
-              // A gate from a dominated block cannot be propagated to the
-              // current block
-              if (!DT.dominates(&BB, predGateParent))
-                BB_gates.push_back(predGate);
-            }
-          }
-        }
-        LLVM_DEBUG(dbgs() << "\n");
-      }
-    }
-    // }
-    gates.emplace(&BB, BB_gates);
-  }
-  return gates;
 }
 
 /**
@@ -566,8 +526,6 @@ ProgramSlice::ProgramSlice(Instruction &Initial, Function &F,
   Loop *loop = loopInfo.getLoopFor(Initial.getParent());
   BasicBlock *loopHeader = (loop) ? loop->getHeader() : nullptr;
 
-  // std::unordered_map<const BasicBlock *, SmallVector<const Value *>> gates =
-  //     computeGates(F, loop);
   std::unordered_map<const BasicBlock *, SmallVector<const Value *>> gates =
       mapBasicBlocksToPredicates(F);
 
@@ -656,7 +614,7 @@ ProgramSlice::ProgramSlice(Instruction &Initial, Function &F,
     dbgs() << "\n";
   });
 
-  // computeAttractorBlocks(loop);
+  _attractors = computeAttractorBlocks(loop);
   _firstDominators = computeFirstDominatorsInSlice();
 
   LLVM_DEBUG({
@@ -677,14 +635,17 @@ ProgramSlice::ProgramSlice(Instruction &Initial, Function &F,
   });
 
   LLVM_DEBUG({
-    // dbgs() << "\nAttractors:\n";
-    // for (const BasicBlock &BB : *_parentFunction) {
-    //   if (_attractors.count(&BB) && _attractors[&BB]) {
-    //     StringRef attractorBlockName = _attractors[&BB]->getName();
-    //     dbgs() << "\tBlock: " << BB.getName()
-    //            << " -> Attractor: " << attractorBlockName << "\n";
-    //   }
-    // }
+    dbgs() << "\nAttractors:\n";
+    for (const BasicBlock &BB : *_parentFunction) {
+      if (_attractors.count(&BB) && _attractors[&BB]) {
+        StringRef attractorBlockName = _attractors[&BB]->getName();
+        dbgs() << "\tBlock: " << BB.getName()
+               << " -> Attractor: " << attractorBlockName << "\n";
+      }
+    }
+  });
+
+  LLVM_DEBUG({
     dbgs() << "\nPredecessors of original function:\n";
     for (const BasicBlock &BB : *_parentFunction) {
       dbgs() << "\tBlock: " << BB.getName() << " -> Predecessors: ";
@@ -695,48 +656,6 @@ ProgramSlice::ProgramSlice(Instruction &Initial, Function &F,
     }
     dbgs() << "\n";
   });
-}
-
-/**
- * @brief Finds the next dominated node in the dominator tree that is part of
- * the program slice.
- *
- * This function traverses the dominator tree starting from the given
- * `startNodeBB` and returns the first basic block that is dominated by it and
- * is also part of the program slice. It uses a stack to perform a depth-first
- * search through the dominator tree.
- *
- * @param DT The dominator tree for the function.
- * @param startNodeBB The starting basic block from which to begin the search.
- * @return A pointer to the next dominated basic block in the slice, or nullptr
- * if no such block is found.
- */
-BasicBlock *ProgramSlice::findNextDominatedNode(const DominatorTree &DT,
-                                                const BasicBlock *startNodeBB) {
-  BasicBlock *newTarget = nullptr;
-  std::stack<DomTreeNode *> stack;
-  std::set<const BasicBlock *> visited;
-  LLVM_DEBUG(dbgs() << "\tStart node: " << startNodeBB->getName() << "\n");
-  if (DomTreeNode *domNode = DT.getNode(startNodeBB)) stack.push(domNode);
-  while (!stack.empty()) {
-    DomTreeNode *curNode = stack.top();
-    stack.pop();
-    const BasicBlock *curBB = curNode->getBlock();
-    BasicBlock *curBBNew = _origToNewBBmap[curBB];
-    if (visited.count(curBB)) continue;
-    visited.insert(curBB);
-    LLVM_DEBUG(dbgs() << "\t\tVisiting: " << curBB->getName() << "\n");
-    if (curBBNew && curBB != startNodeBB && _BBsInSlice.count(curBB)) {
-      newTarget = curBBNew;
-      LLVM_DEBUG(dbgs() << "\t\t\tNew target found: " << newTarget->getName()
-                        << "\n");
-      break;
-    }
-    for (DomTreeNode *child : *curNode) {
-      stack.push(child);
-    }
-  }
-  return newTarget;
 }
 
 /**
@@ -756,7 +675,8 @@ BasicBlock *ProgramSlice::findNextDominatedNode(const DominatorTree &DT,
  *
  * @param loop Pointer to the loop being analyzed, or nullptr if not applicable.
  */
-void ProgramSlice::computeAttractorBlocks(const Loop *loop) {
+std::map<const BasicBlock *, const BasicBlock *>
+ProgramSlice::computeAttractorBlocks(const Loop *loop) const {
   std::map<const BasicBlock *, const BasicBlock *> attractors;
   const PostDominatorTree PDT(*_parentFunction);
   for (const BasicBlock &BB : *_parentFunction) {
@@ -781,7 +701,7 @@ void ProgramSlice::computeAttractorBlocks(const Loop *loop) {
       attractors[&BB] = Cand->getBlock();
     }
   }
-  _attractors = attractors;
+  return attractors;
 }
 
 /**
@@ -1095,7 +1015,7 @@ uint ProgramSlice::canOutline(
  * @param F The function representing the sliced version of the original
  * function.
  */
-void ProgramSlice::rerouteBranches(Function *F) {
+void ProgramSlice::rerouteBranches(Function *F, const PostDominatorTree &PDT) {
   DominatorTree DT(*_parentFunction);
   std::set<DomTreeNode *> visited;
   DomTreeNode *parent = nullptr;
@@ -1120,9 +1040,9 @@ void ProgramSlice::rerouteBranches(Function *F) {
       continue; // skip slice criterion's basic block
 
     if (const Instruction *terminator = BB.getTerminator(); !terminator) {
-      handleNoTerminatorBlock(BB, originalBB, F, DT, unreachableBlock);
+      handleNoTerminatorBlock(BB, originalBB, F, DT, unreachableBlock, PDT);
     } else {
-      handleTerminatorBlock(BB, originalBB, F, DT, unreachableBlock);
+      handleTerminatorBlock(BB, originalBB, F, DT, unreachableBlock, PDT);
     }
   }
 
@@ -1177,15 +1097,16 @@ void ProgramSlice::handleNoTerminatorBlock(BasicBlock &BB,
                                            const BasicBlock *originalBB,
                                            const Function *F,
                                            const DominatorTree &DT,
-                                           BasicBlock *unreachableBlock) {
+                                           BasicBlock *unreachableBlock,
+                                           const PostDominatorTree &PDT) {
   if (isa<BranchInst>(originalBB->getTerminator())) {
     LLVM_DEBUG(dbgs() << "Parent BB without terminator (BranchInst): "
                       << BB.getName() << "\n");
-    handleNoTerminatorBranch(BB, originalBB, F, DT);
+    handleNoTerminatorBranch(BB, originalBB, F, DT, PDT);
   } else if (isa<SwitchInst>(originalBB->getTerminator())) {
     LLVM_DEBUG(dbgs() << "Parent BB without terminator (SwitchInst): "
                       << BB.getName() << "\n");
-    handleNoTerminatorSwitch(BB, originalBB, DT, unreachableBlock);
+    handleNoTerminatorSwitch(BB, originalBB, DT, unreachableBlock, PDT);
   }
 }
 
@@ -1210,13 +1131,14 @@ void ProgramSlice::handleNoTerminatorBlock(BasicBlock &BB,
 void ProgramSlice::handleNoTerminatorBranch(BasicBlock &BB,
                                             const BasicBlock *originalBB,
                                             const Function *F,
-                                            const DominatorTree &DT) {
+                                            const DominatorTree &DT,
+                                            const PostDominatorTree &PDT) {
   const auto *origBranch = cast<BranchInst>(originalBB->getTerminator());
 
   for (const BasicBlock *successor : origBranch->successors()) {
     LLVM_DEBUG(dbgs() << "\tSuccessor: " << successor->getName() << "\n");
     if (BasicBlock *newTarget =
-            getOrCreateTargetBlock(successor, originalBB, DT)) {
+            getOrCreateTargetBlock(successor, originalBB, DT, PDT)) {
       LLVM_DEBUG(dbgs() << "\tNew Successor: " << newTarget->getName() << "\n");
       BranchInst::Create(newTarget, &BB);
       updatePHINodesForSuccessor(newTarget, originalBB, &BB, F, DT);
@@ -1278,22 +1200,20 @@ BasicBlock *ProgramSlice::getNewTargetByAttractor(const BasicBlock *succ) {
 void ProgramSlice::handleNoTerminatorSwitch(BasicBlock &BB,
                                             const BasicBlock *originalBB,
                                             const DominatorTree &DT,
-                                            BasicBlock *unreachableBlock) {
+                                            BasicBlock *unreachableBlock,
+                                            const PostDominatorTree &PDT) {
   auto *origSwitch = cast<SwitchInst>(originalBB->getTerminator());
 
   SmallVector<BasicBlock *, 4> validTargets;
   const BasicBlock *origDefault = origSwitch->getDefaultDest();
-  BasicBlock *d =
-      getNewTargetByFirstDominator(origDefault, originalBB, DT);
-  // if (auto *d = getNewTargetByAttractor(origDefault)) {
+  BasicBlock *d = getOrCreateTargetBlock(origDefault, originalBB, DT, PDT);
   if (d) {
     validTargets.push_back(d);
   }
 
   for (auto &Case : origSwitch->cases()) {
     const BasicBlock *origSucc = Case.getCaseSuccessor();
-    BasicBlock *t = getNewTargetByFirstDominator(origSucc, originalBB, DT);
-    // if (auto *t = getNewTargetByAttractor(origSucc)) {
+    BasicBlock *t = getOrCreateTargetBlock(origSucc, originalBB, DT, PDT);
     if (t) {
       validTargets.push_back(t);
     }
@@ -1304,15 +1224,6 @@ void ProgramSlice::handleNoTerminatorSwitch(BasicBlock &BB,
     BranchInst::Create(validTargets[0], &BB);
     return;
   }
-
-  // If there are no valid targets, create a branch to the next dominated node
-  // if (validTargets.empty()) {
-  //   if (BasicBlock *fallback =
-  //           getNewTargetByDominatedBlock(DT, originalBB, originalBB)) {
-  //     BranchInst::Create(fallback, &BB);
-  //   }
-  //   return;
-  // }
 
   // If the switch has more than two valid targets, create a new switch and
   // replace missing condition with an undefined value
@@ -1329,17 +1240,13 @@ void ProgramSlice::handleNoTerminatorSwitch(BasicBlock &BB,
     SwitchInst *newSwitch =
         SwitchInst::Create(newCondition, unreachableBlock, numCases, &BB);
 
-    // BasicBlock *d = getNewTargetByAttractor(origDefault);
-    BasicBlock *d =
-        getNewTargetByFirstDominator(origDefault, originalBB, DT);
+    BasicBlock *d = getOrCreateTargetBlock(origDefault, originalBB, DT, PDT);
     newSwitch->setDefaultDest(d ? d : unreachableBlock);
 
     for (auto &Case : origSwitch->cases()) {
       const ConstantInt *caseVal = Case.getCaseValue();
       const BasicBlock *origSucc = Case.getCaseSuccessor();
-      // BasicBlock *dest = getNewTargetByAttractor(origSucc);
-      BasicBlock *dest =
-          getNewTargetByFirstDominator(origSucc, originalBB, DT);
+      BasicBlock *dest = getOrCreateTargetBlock(origSucc, originalBB, DT, PDT);
       newSwitch->addCase(const_cast<ConstantInt *>(caseVal),
                          dest ? dest : unreachableBlock);
     }
@@ -1368,15 +1275,16 @@ void ProgramSlice::handleNoTerminatorSwitch(BasicBlock &BB,
 void ProgramSlice::handleTerminatorBlock(BasicBlock &BB,
                                          const BasicBlock *originalBB,
                                          Function *F, const DominatorTree &DT,
-                                         BasicBlock *unreachableBlock) {
+                                         BasicBlock *unreachableBlock,
+                                         const PostDominatorTree &PDT) {
   if (auto *BI = dyn_cast<BranchInst>(BB.getTerminator())) {
     LLVM_DEBUG(dbgs() << "Parent BB WITH terminator (BranchInst): "
                       << BB.getName() << "\n");
-    handleExistingBranchInst(BI, BB, originalBB, F, DT, unreachableBlock);
+    handleExistingBranchInst(BI, BB, originalBB, F, DT, unreachableBlock, PDT);
   } else if (auto *SI = dyn_cast<SwitchInst>(BB.getTerminator())) {
     LLVM_DEBUG(dbgs() << "Parent BB WITH terminator (SwitchInst): "
                       << BB.getName() << "\n");
-    handleExistingSwitchInst(SI, BB, originalBB, F, DT, unreachableBlock);
+    handleExistingSwitchInst(SI, BB, originalBB, F, DT, unreachableBlock, PDT);
   }
 }
 
@@ -1403,7 +1311,8 @@ void ProgramSlice::handleTerminatorBlock(BasicBlock &BB,
  */
 void ProgramSlice::handleExistingBranchInst(
     BranchInst *BI, BasicBlock &currentBB, const BasicBlock *originalBB,
-    Function *F, const DominatorTree &DT, BasicBlock *unreachableBlock) {
+    Function *F, const DominatorTree &DT, BasicBlock *unreachableBlock,
+    const PostDominatorTree &PDT) {
   for (unsigned int idx = 0; idx < BI->getNumSuccessors(); ++idx) {
     BasicBlock *successor = BI->getSuccessor(idx);
     // If the successor is within the current function, no rerouting is needed
@@ -1413,10 +1322,16 @@ void ProgramSlice::handleExistingBranchInst(
     }
     LLVM_DEBUG(dbgs() << "\tSuccessor: " << successor->getName() << "\n");
     if (BasicBlock *newSucc =
-            getOrCreateTargetBlock(successor, originalBB, DT)) {
+            getOrCreateTargetBlock(successor, originalBB, DT, PDT)) {
       LLVM_DEBUG(dbgs() << "\tNew Successor: " << newSucc->getName() << "\n");
       BI->setSuccessor(idx, newSucc);
-      updatePHINodesForSuccessor(newSucc, successor, &currentBB, F, DT);
+      for (Instruction &I : *newSucc) {
+        if (!isa<PHINode>(I)) {
+          continue;
+        }
+        PHINode *phi = cast<PHINode>(&I);
+        phi->replaceIncomingBlockWith(successor, &currentBB);
+      }
     } else {
       // If no valid new successor, reroute to the unreachable block.
       replaceUsesAndSetSuccessor(successor, unreachableBlock, F, BI, idx);
@@ -1447,7 +1362,8 @@ void ProgramSlice::handleExistingBranchInst(
  */
 void ProgramSlice::handleExistingSwitchInst(
     SwitchInst *SI, BasicBlock &currentBB, const BasicBlock *originalBB,
-    Function *F, const DominatorTree &DT, BasicBlock *unreachableBlock) {
+    Function *F, const DominatorTree &DT, BasicBlock *unreachableBlock,
+    const PostDominatorTree &PDT) {
   for (unsigned int idx = 0; idx < SI->getNumSuccessors(); ++idx) {
     BasicBlock *successor = SI->getSuccessor(idx);
     // If the successor is within the current function, no rerouting is needed
@@ -1455,43 +1371,24 @@ void ProgramSlice::handleExistingSwitchInst(
     if (successor->getParent() == F) {
       continue;
     }
+    LLVM_DEBUG(dbgs() << "\tSuccessor: " << successor->getName() << "\n");
 
     if (BasicBlock *newSucc =
-            getOrCreateTargetBlock(successor, originalBB, DT)) {
+            getOrCreateTargetBlock(successor, originalBB, DT, PDT)) {
       LLVM_DEBUG(dbgs() << "\tNew Successor: " << newSucc->getName() << "\n");
       SI->setSuccessor(idx, newSucc);
-      updatePHINodesForSuccessor(newSucc, successor, &currentBB, F, DT);
+      for (Instruction &I : *newSucc) {
+        if (!isa<PHINode>(I)) {
+          continue;
+        }
+        PHINode *phi = cast<PHINode>(&I);
+        phi->replaceIncomingBlockWith(successor, &currentBB);
+      }
     } else {
       // If no valid new successor, reroute to the unreachable block.
       replaceUsesAndSetSuccessor(successor, unreachableBlock, F, SI, idx);
     }
   }
-}
-
-/**
- * Finds the next dominated basic block starting from a given block, ensuring
- * that the new target is not a direct successor of the original block.
- *
- * @param DT       The dominator tree used to determine dominance relationships.
- * @param startBB  The basic block from which to start the search for the next
- * dominated node.
- * @param origBB   The original basic block whose successors should be excluded
- * as potential targets.
- * @return         A pointer to the next dominated BasicBlock, or nullptr if no
- * suitable block is found.
- */
-BasicBlock *
-ProgramSlice::getNewTargetByDominatedBlock(const DominatorTree &DT,
-                                           const BasicBlock *startBB,
-                                           const BasicBlock *origBB) {
-  BasicBlock *newTarget = findNextDominatedNode(DT, startBB);
-  // If the new target is a successor of the original block, it should not
-  // be considered as a next dominated node
-  if (newTarget &&
-      is_contained(successors(origBB), _newToOrigBBmap[newTarget])) {
-    newTarget = nullptr;
-  }
-  return newTarget;
 }
 
 /**
@@ -1512,16 +1409,21 @@ ProgramSlice::getNewTargetByDominatedBlock(const DominatorTree &DT,
  */
 BasicBlock *ProgramSlice::getOrCreateTargetBlock(const BasicBlock *successor,
                                                  const BasicBlock *originalBB,
-                                                 const DominatorTree &DT) {
-  // BasicBlock *newTarget = getNewTargetByAttractor(successor);
-  // ~special case~ if the new target is not in the slice, find a dominated
-  // block.
-  // if (!newTarget) {
-  //   newTarget = getNewTargetByDominatedBlock(DT, successor, originalBB);
-  // }
-
+                                                 const DominatorTree &DT,
+                                                 const PostDominatorTree &PDT) {
   BasicBlock *newTarget =
-      getNewTargetByFirstDominator(successor, originalBB, DT);
+      getNewTargetByFirstDominatorOfSucc(successor, originalBB, DT);
+
+  // The first dominator might be a block not dominated by the original
+  // successor, but it is dominated by the original block.
+  if (!newTarget) {
+    newTarget =
+        getNewTargetByFirstDominatorOfDominated(successor, originalBB, DT, PDT);
+  }
+
+  // This fixes test4.c, which is a ladder graph where we can't reach the first
+  // domminator of the successor block if (!newTarget) newTarget =
+  // getNewTargetByAttractor(successor);
 
   return newTarget;
 }
@@ -1554,8 +1456,8 @@ bool ProgramSlice::isFirstDominatorInSlice(const BasicBlock *curBB,
  *
  * Given a successor basic block and the original source block, this function
  * searches for a dominated block whose first dominator is the source block. If
- * the successor is already in the slice, it returns the corresponding new basic
- * block. Otherwise, it traverses the dominance tree starting from the
+ * the successor is already in the slice, it returns the corresponding new
+ * basic block. Otherwise, it traverses the dominance tree starting from the
  * successor, looking for a block that satisfies the first-dominator condition.
  * The result is mapped to the new basic block in the sliced program.
  *
@@ -1567,9 +1469,9 @@ bool ProgramSlice::isFirstDominatorInSlice(const BasicBlock *curBB,
  * found.
  */
 BasicBlock *
-ProgramSlice::getNewTargetByFirstDominator(const BasicBlock *successor,
-                                           const BasicBlock *originalBB,
-                                           const DominatorTree &DT) {
+ProgramSlice::getNewTargetByFirstDominatorOfSucc(const BasicBlock *successor,
+                                                 const BasicBlock *originalBB,
+                                                 const DominatorTree &DT) {
   BasicBlock *newTarget = nullptr;
   // The attractor for each missing successor basic block is a successor's
   // dominated block whose first dominator is the source block.
@@ -1582,8 +1484,8 @@ ProgramSlice::getNewTargetByFirstDominator(const BasicBlock *successor,
   }
   // Otherwise, traverse down the dominance tree starting from the missing
   // block, and stop when a dominated block has as its first dominator the
-  // source block.
-  const DomTreeNode *startNode = DT.getNode(successor);
+  // source block
+  const DomTreeNode *startNode = DT.getNode(originalBB);
   const BasicBlock *found = nullptr;
   if (startNode) {
     std::stack<const DomTreeNode *> domStack;
@@ -1596,13 +1498,27 @@ ProgramSlice::getNewTargetByFirstDominator(const BasicBlock *successor,
         LLVM_DEBUG(dbgs() << "\t\tVisiting dominated block: "
                           << curBB->getName() << "\n");
 
+      // We can only consider the current block if it is dominated by the
+      // missing successor block
+      if (curBB != originalBB && !DT.dominates(successor, curBB)) {
+        LLVM_DEBUG(dbgs() << "\t\t\tSkipping block: " << curBB->getName()
+                          << " (not dominated by " << successor->getName()
+                          << ")\n");
+        continue;
+      }
+
       if (isFirstDominatorInSlice(curBB, originalBB)) {
         found = curBB;
         break;
       }
 
       for (const DomTreeNode *child : *curNode) {
-        domStack.push(child);
+        auto childBB = child->getBlock();
+        if (curBB == originalBB &&
+                is_contained(successors(originalBB), childBB) ||
+            DT.dominates(successor, childBB)) {
+          domStack.push(child);
+        }
       }
     }
   }
@@ -1610,6 +1526,71 @@ ProgramSlice::getNewTargetByFirstDominator(const BasicBlock *successor,
     LLVM_DEBUG(dbgs() << "\t\t\tFound block: " << found->getName() << "\n");
     newTarget = const_cast<BasicBlock *>(found);
     newTarget = _origToNewBBmap[newTarget];
+  }
+  return newTarget;
+}
+
+/**
+ * @brief Finds a new target basic block by traversing the dominator tree.
+ *
+ * This function searches for a basic block that is dominated by the given
+ * original basic block (`originalBB`) but is not a direct successor of it.
+ * The search is performed by traversing the dominator tree (`DT`) starting
+ * from `originalBB`. For each dominated block, it checks if the first dominator
+ * in the slice is `originalBB` using `isFirstDominatorInSlice`. If such a block
+ * is found, it returns the corresponding new basic block from
+ * `_origToNewBBmap`.
+ *
+ * @param successor The successor basic block that is missing or being
+ * considered.
+ * @param originalBB The original basic block from which the search starts.
+ * @param DT The dominator tree used for traversal.
+ * @return A pointer to the new target basic block if found, otherwise nullptr.
+ */
+BasicBlock *ProgramSlice::getNewTargetByFirstDominatorOfDominated(
+    const BasicBlock *successor, const BasicBlock *originalBB,
+    const DominatorTree &DT, const PostDominatorTree &PDT) {
+  LLVM_DEBUG(dbgs() << "\tTrying to visit a block that is not dominated by the "
+                       "missing successor...\n");
+  BasicBlock *newTarget = nullptr;
+  const DomTreeNode *startNode = DT.getNode(originalBB);
+  const BasicBlock *found = nullptr;
+  if (!startNode) return nullptr;
+
+  std::stack<const DomTreeNode *> domStack;
+  domStack.push(startNode);
+  while (!domStack.empty()) {
+    const DomTreeNode *curNode = domStack.top();
+    domStack.pop();
+    const BasicBlock *curBB = curNode->getBlock();
+    if (!curBB) continue;
+    if (is_contained(successors(originalBB), curBB))
+      continue; // Skip blocks that are successors of originalBB
+
+    // Skip blocks that are not post dominated by the slice criterion
+    // block.
+    // if (!PDT.dominates(_initial->getParent(), curBB))
+    //   continue;
+
+    LLVM_DEBUG(dbgs() << "\t\tVisiting dominated block: " << curBB->getName()
+                      << "\n");
+
+    // Check if curBB's first dominator in the slice is originalBB
+    if (isFirstDominatorInSlice(curBB, originalBB)) {
+      found = curBB;
+      break;
+    }
+
+    // Traverse children in the dominator tree
+    for (const DomTreeNode *child : *curNode) {
+      domStack.push(child);
+    }
+  }
+
+  if (found) {
+    LLVM_DEBUG(dbgs() << "\t\t\tFound block: " << found->getName() << "\n");
+    auto it = _origToNewBBmap.find(found);
+    if (it != _origToNewBBmap.end()) newTarget = it->second;
   }
   return newTarget;
 }
@@ -1646,7 +1627,8 @@ void ProgramSlice::updatePHINodesForSuccessor(
       // It checks if the original incoming block's dominator chain leads back
       // to currentBB.
       if (originalIncomingBlock->getParent() !=
-          F) { // Check if originalIncomingBlock is not in the current function
+          F) { // Check if originalIncomingBlock is not in the current
+               // function
                // F
         if (const DomTreeNode *origBBNode = DT.getNode(originalIncomingBlock)) {
           const DomTreeNode *ancestorNode = origBBNode->getIDom();
@@ -1667,24 +1649,26 @@ void ProgramSlice::updatePHINodesForSuccessor(
 }
 
 /**
- * @brief Replaces all uses of a given successor basic block with an unreachable
- * block within a specific function, and updates the terminator instruction to
- * set the unreachable block as the new successor.
+ * @brief Replaces all uses of a given successor basic block with an
+ * unreachable block within a specific function, and updates the terminator
+ * instruction to set the unreachable block as the new successor.
  *
  * This function searches for all uses of the specified successor basic block
  * (`successorToReplace`) within the provided function (`F`) and replaces them
  * with the given unreachable block (`unreachableBlock`). Only uses where the
  * user is an instruction belonging to the function `F` are replaced. After
- * replacing the uses, the function updates the provided terminator instruction
- * (`terminator`) to set the unreachable block as the successor at the specified
- * index (`successorIndex`).
+ * replacing the uses, the function updates the provided terminator
+ * instruction
+ * (`terminator`) to set the unreachable block as the successor at the
+ * specified index (`successorIndex`).
  *
  * @param successorToReplace The basic block whose uses are to be replaced.
  * @param unreachableBlock The basic block to replace uses with.
  * @param F The function in which to perform the replacement.
- * @param terminator The terminator instruction whose successor will be updated.
- * @param successorIndex The index of the successor to update in the terminator
- * instruction.
+ * @param terminator The terminator instruction whose successor will be
+ * updated.
+ * @param successorIndex The index of the successor to update in the
+ * terminator instruction.
  */
 void ProgramSlice::replaceUsesAndSetSuccessor(BasicBlock *successorToReplace,
                                               BasicBlock *unreachableBlock,
@@ -1816,7 +1800,7 @@ void ProgramSlice::populateFunctionWithBBs(Function *F) {
 void ProgramSlice::populateBBsWithInsts(Function *F) {
   for (BasicBlock &BB : *_parentFunction) {
     for (Instruction &origInst : BB) {
-      if (_instsInSlice.count(&origInst)) {
+      if (_instsInSlice.count(&origInst) && _origToNewBBmap.count(&BB)) {
         Instruction *newInst = origInst.clone();
         newInst->setName(origInst.getName());
         _origToNewInst.insert(std::make_pair(&origInst, newInst));
@@ -2015,12 +1999,43 @@ ReturnInst *ProgramSlice::addReturnValue(Function *F) {
 }
 
 /**
+ * @brief Inserts a new entry block in function F if its current entry block
+ * has predecessors.
+ *
+ * This function checks if the current entry block of F has any predecessors.
+ * If so, it creates a new basic block at the beginning of F, moves it before
+ * the current entry block, and sets it as the new entry. The new entry block
+ * unconditionally branches to the original entry block.
+ *
+ * @param F The function in which to insert the new entry block.
+ */
+void ProgramSlice::createNewEntryBlock(Function *F) {
+  BasicBlock &entry = F->getEntryBlock();
+  // If the entry block has predecessors, insert a new entry block
+  if (entry.hasNPredecessorsOrMore(1)) {
+    // Create a new basic block
+    BasicBlock *newEntry =
+        BasicBlock::Create(F->getContext(), "_daedalus_new_entry", F);
+    // Move the new entry block before the current entry block
+    newEntry->moveBefore(&entry);
+    // Add an unconditional branch to the original entry block
+    BranchInst::Create(&entry, newEntry);
+    for (Instruction &I : entry) {
+      if (auto *PN = dyn_cast<PHINode>(&I)) {
+        // Add a new incoming value with undef from newEntry
+        PN->addIncoming(UndefValue::get(PN->getType()), newEntry);
+      }
+    }
+  }
+}
+
+/**
  * @brief Outlines the program slice into a new function.
  *
- * @details This function creates a new function that contains the instructions
- * and basic blocks from the program slice. It sets up the function's return
- * type, arguments, and attributes, and populates it with the necessary basic
- * blocks and instructions.
+ * @details This function creates a new function that contains the
+ * instructions and basic blocks from the program slice. It sets up the
+ * function's return type, arguments, and attributes, and populates it with
+ * the necessary basic blocks and instructions.
  *
  * @return A pointer to the newly created Function representing the outlined
  * program slice, or nullptr if outlining is not possible.
@@ -2082,10 +2097,11 @@ Function *ProgramSlice::outline() {
   populateFunctionWithBBs(F);
   populateBBsWithInsts(F);
   reorganizeUses(F);
-  rerouteBranches(F);
+  rerouteBranches(F, PDT);
   addReturnValue(F);
   reorderBlocks(F);
   replaceArgs(F, dt);
+  createNewEntryBlock(F);
 
   LLVM_DEBUG(dbgs() << "Outlined function:\n" << *F << "\n");
 

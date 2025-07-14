@@ -123,6 +123,10 @@ uint listInstructionsToRemove(Instruction *start,
   while (!worklist.empty()) {
     Instruction *cur = worklist.top();
     worklist.pop();
+    if (!cur) {
+      LLVM_DEBUG(dbgs() << "\t\tCurrent instruction is null...\n");
+      continue;
+    }
     if (visited.count(cur)) continue;
     visited.insert(cur);
 
