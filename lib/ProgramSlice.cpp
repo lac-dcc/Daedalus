@@ -1239,8 +1239,7 @@ BasicBlock *ProgramSlice::getOrCreateTargetBlock(const BasicBlock *successor,
                                                  const BasicBlock *originalBB,
                                                  const DominatorTree &DT,
                                                  const PostDominatorTree &PDT) {
-  BasicBlock *newTarget =
-      getNewTargetByFirstDominatorOfSucc(successor, originalBB);
+  BasicBlock *newTarget = getNewTargetByFirstDominator(successor, originalBB);
 
   // This fixes test4.c, which is a ladder graph that we can't reach the first
   // dominator of a successor block
@@ -1264,11 +1263,16 @@ BasicBlock *ProgramSlice::getOrCreateTargetBlock(const BasicBlock *successor,
  */
 bool ProgramSlice::isFirstDominatorInSlice(const BasicBlock *curBB,
                                            const BasicBlock *originalBB) const {
-  // Check if the first dominator of curBB in the slice is originalBB
-  auto it = _firstDominators.find(curBB);
-  const auto curBBDominators = it->second;
-  return (it != _firstDominators.end() &&
-          is_contained(curBBDominators, originalBB));
+  if (_firstDominators.count(curBB)) {
+    const auto curBBDominators = _firstDominators.at(curBB);
+    auto currFirstDominator = curBBDominators.front();
+    assert(currFirstDominator != nullptr &&
+           "Current first dominator should not be null");
+    if (currFirstDominator == originalBB) {
+      return true;
+    }
+  }
+  return false;
 }
 
 /**
@@ -1290,8 +1294,8 @@ bool ProgramSlice::isFirstDominatorInSlice(const BasicBlock *curBB,
  * found.
  */
 BasicBlock *
-ProgramSlice::getNewTargetByFirstDominatorOfSucc(const BasicBlock *successor,
-                                                 const BasicBlock *originalBB) {
+ProgramSlice::getNewTargetByFirstDominator(const BasicBlock *successor,
+                                           const BasicBlock *originalBB) {
   BasicBlock *newTarget = nullptr;
   // If the block is in the slice, it is its own attractor.
   if (_BBsInSlice.count(successor)) {

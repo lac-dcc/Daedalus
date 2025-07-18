@@ -104,7 +104,7 @@ private:
 
   /// Returns a new target basic block determined by the first dominator of the
   /// given successor block.
-  BasicBlock *getNewTargetByFirstDominatorOfSucc(const BasicBlock *successor,
+  BasicBlock *getNewTargetByFirstDominator(const BasicBlock *successor,
                                                  const BasicBlock *originalBB);
 
   // Checks if the first dominator of curBB in the slice is originalBB
