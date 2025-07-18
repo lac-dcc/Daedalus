@@ -284,27 +284,6 @@ std::pair<Status, dataDependence> getDataDependencies(
               // ~special case~ if the predicate instruction is outside the
               // current slice criterion's loop, don't treat it as a dependency
               if (isOperandOutsideLoopOrHeader(predicate, loop, loopHeader)) {
-                const BasicBlock *predicateBB = gateInst->getParent();
-
-                // Remove block from BBs if present
-                auto it = std::find(BBs.begin(), BBs.end(), predicateBB);
-                if (it != BBs.end()) {
-                  LLVM_DEBUG(dbgs() << "\t\t\tErasing block from BBs: "
-                                    << predicateBB->getName() << "\n");
-                  BBs.erase(it);
-                  // Also, remove any instructions from the erased block from
-                  // deps
-                  deps.erase(std::remove_if(
-                                 deps.begin(), deps.end(),
-                                 [predicateBB](const Value *v) -> bool {
-                                   if (const Instruction *inst =
-                                           dyn_cast<Instruction>(v)) {
-                                     return inst->getParent() == predicateBB;
-                                   }
-                                   return false;
-                                 }),
-                             deps.end());
-                }
                 continue;
               }
 
@@ -330,12 +309,11 @@ static void linkPredicates(
   if (const Value *predicate = getPredicate(predBB))
     bbToPredicates[currentBB].push_back(predicate);
 
-  // Propagate predicates from predecessors to current block
+  // ~special case~ Propagate predicates from predecessors to current block
   for (const BasicBlock *predBB : predecessors(currentBB)) {
     if (bbToPredicates.count(predBB)) {
       for (const Value *predGate : bbToPredicates[predBB]) {
-        // ~special case~ don't propagate gates from dominated
-        // blocks
+        // Don't propagate gates from dominated blocks
         if (!is_contained(bbToPredicates[currentBB], predGate) &&
             !DT.dominates(currentBB, predBB)) {
           bbToPredicates[currentBB].push_back(predGate);
@@ -429,18 +407,21 @@ mapBasicBlocksToPredicates(Function &F) {
             dbgs() << "\t\t" << currentBB->getName() << " post-dominates "
                    << predBB->getName() << "\n";
           });
-          // LLVM_DEBUG(dbgs()
-          //            << "\t\tPopping predicate: " << predBB->getName() <<
-          //            "\n");
-          // stackOfPredicates.pop();
-          // if (!stackOfPredicates.empty())
-          //   linkPredicates(bbToPredicates, currentBB,
-          //   stackOfPredicates.top(),
-          //                  DT);
+          LLVM_DEBUG(dbgs()
+                     << "\t\tPopping predicate: " << predBB->getName() << "\n");
 
-          // LLVM_DEBUG(dbgs() << "\t\tPushing back predicate: "
-          //                   << predBB->getName() << "\n");
-          // stackOfPredicates.push(predBB);
+          // If the current block post-dominates the predicate block, we
+          // pop the predicate from the stack, as it is no longer relevant
+          // for the current block, and force pushing of remainder predicates
+          stackOfPredicates.pop();
+          if (!stackOfPredicates.empty())
+            linkPredicates(bbToPredicates, currentBB, stackOfPredicates.top(),
+                           DT);
+          LLVM_DEBUG(
+              dbgs()
+              << "\t\tRe-pushing predicate from the top, for next iteration: "
+              << predBB->getName() << "\n");
+          stackOfPredicates.push(predBB);
         }
       }
 
@@ -983,15 +964,41 @@ void ProgramSlice::handleNoTerminatorBranch(BasicBlock &BB,
                                             const PostDominatorTree &PDT) {
   const auto *origBranch = cast<BranchInst>(originalBB->getTerminator());
 
+  SmallVector<BasicBlock *, 4> validTargets;
   for (const BasicBlock *successor : origBranch->successors()) {
     LLVM_DEBUG(dbgs() << "\tSuccessor: " << successor->getName() << "\n");
     if (BasicBlock *newTarget =
             getOrCreateTargetBlock(successor, originalBB, DT, PDT)) {
-      LLVM_DEBUG(dbgs() << "\tNew Successor: " << newTarget->getName() << "\n");
-      BranchInst::Create(newTarget, &BB);
-      updatePHINodesForSuccessor(newTarget, originalBB, &BB, F, DT);
-      break;
+      LLVM_DEBUG(dbgs() << "\tValid target: " << newTarget->getName() << "\n");
+      validTargets.push_back(newTarget);
     }
+  }
+
+  if (validTargets.empty()) {
+    // No valid targets found, do nothing (or could branch to unreachable)
+    return;
+  } else if (validTargets.size() == 1) {
+    BranchInst::Create(validTargets[0], &BB);
+    updatePHINodesForSuccessor(validTargets[0], originalBB, &BB, F, DT);
+  } else if (validTargets.size() == 2) {
+    // Conditional branch: use undef as condition if original is not available
+    Value *cond = nullptr;
+    if (auto *origCond = origBranch->getCondition()) {
+      if (auto *condInst = dyn_cast<Instruction>(origCond)) {
+        if (auto it = _origToNewInst.find(condInst); it != _origToNewInst.end())
+          cond = it->second;
+      }
+      if (!cond) cond = UndefValue::get(origCond->getType());
+    } else {
+      cond = UndefValue::get(Type::getInt1Ty(BB.getContext()));
+    }
+    BranchInst::Create(validTargets[0], validTargets[1], cond, &BB);
+    updatePHINodesForSuccessor(validTargets[0], originalBB, &BB, F, DT);
+    updatePHINodesForSuccessor(validTargets[1], originalBB, &BB, F, DT);
+  } else {
+    // More than two valid targets: fallback to unconditional branch to first
+    BranchInst::Create(validTargets[0], &BB);
+    updatePHINodesForSuccessor(validTargets[0], originalBB, &BB, F, DT);
   }
 }
 
@@ -1839,14 +1846,14 @@ Function *ProgramSlice::outline() {
   const std::string errorMsg(
       "Original function name: " + _parentFunction->getName().str() + "\n");
 
-  // int numEntryBlocks = 0;
-  // for (BasicBlock &BB : *F)
-  //   if (BB.hasNPredecessors(0)) ++numEntryBlocks;
-  // if (numEntryBlocks != 1) {
-  //   errs() << errorMsg;
-  // }
-  // assert(numEntryBlocks == 1 &&
-  //        "The only block with no predecessors must be the entry block.");
+  int numEntryBlocks = 0;
+  for (BasicBlock &BB : *F)
+    if (BB.hasNPredecessors(0)) ++numEntryBlocks;
+  if (numEntryBlocks != 1) {
+    errs() << errorMsg;
+  }
+  assert(numEntryBlocks == 1 &&
+         "The only block with no predecessors must be the entry block.");
 
   if (verifyFunction(*F, &errs())) {
     errs() << errorMsg;
