@@ -97,11 +97,6 @@ private:
   /// from the original function being sliced.
   void insertNewBB(const BasicBlock *originalBB, Function *F);
 
-  /// Computes the attractor blocks (first dominator) for each basic block in
-  /// the original function.
-  std::map<const BasicBlock *, const BasicBlock *>
-  computeAttractorBlocks(const Loop *loop) const;
-
   /// Finds the first dominator in the slice for each basic block in the parent
   /// function.
   std::map<const BasicBlock *, SmallVector<const BasicBlock *>>
@@ -110,25 +105,11 @@ private:
   /// Returns a new target basic block determined by the first dominator of the
   /// given successor block.
   BasicBlock *getNewTargetByFirstDominatorOfSucc(const BasicBlock *successor,
-                                                 const BasicBlock *originalBB,
-                                                 const DominatorTree &DT);
-
-  BasicBlock *getNewTargetByFirstDominatorOfDominated(
-      const BasicBlock *successor, const BasicBlock *originalBB,
-      const DominatorTree &DT, const PostDominatorTree &PDT);
-
-  /// Returns a new target basic block determined by the attractor of the
-  /// given successor block.
-  BasicBlock *getNewTargetByAttractor(const BasicBlock *succ);
+                                                 const BasicBlock *originalBB);
 
   // Checks if the first dominator of curBB in the slice is originalBB
   bool isFirstDominatorInSlice(const BasicBlock *curBB,
                                const BasicBlock *originalBB) const;
-
-  /// Adds branches from immediate dominators which existed in the original
-  /// function to the slice.
-  void addDomBranches(DomTreeNode *cur, DomTreeNode *parent,
-                      std::set<DomTreeNode *> &visited);
 
   /// Helper function to create an unreachable block.
   static BasicBlock *createUnreachableBlock(Function *F);
@@ -215,8 +196,6 @@ private:
   /// set of BasicBLocks that must be in the slice, according to dependence
   /// analysis
   std::set<const BasicBlock *> _BBsInSlice;
-
-  std::map<const BasicBlock *, const BasicBlock *> _attractors;
 
   /// maps each BasicBlock to its attractor (its first  dominator), used for
   /// rearranging control flow

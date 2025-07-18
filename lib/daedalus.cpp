@@ -715,7 +715,11 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
     functionSlicesToDot(M, toSimplify);
   }
 
-  assert(!verifyModule(M, &errs())); // assert module is not broken
+  if (verifyModule(M, &errs())) {
+    errs() << "Module verification failed! Printing module:\n";
+    M.print(errs(), nullptr);
+    assert(false && "Module verification failed!");
+  }
 
   return PreservedAnalyses::none();
 }

@@ -172,32 +172,6 @@ static bool isWeirdCFG(
   return phiNodePreds.size() == 2;
 }
 
-static bool isDiamondCFG(const DominatorTree &DT, const PHINode *phiDep) {
-  bool isDiamond = false;
-  const BasicBlock *commonAncestor = nullptr;
-  DomTreeNode *incBBDomNode = nullptr;
-  DomTreeNode *incBBIDominator = nullptr;
-  BasicBlock *incBBIDomBlock = nullptr;
-  for (auto incBB : phiDep->blocks()) {
-    incBBDomNode = DT.getNode(incBB);
-    incBBIDominator = incBBDomNode->getIDom();
-    if (!incBBIDominator) continue; // Skip if no immediate dominator
-    incBBIDomBlock = incBBIDominator->getBlock();
-    if (commonAncestor && commonAncestor == incBBIDomBlock) {
-      isDiamond = true;
-      break;
-    }
-    commonAncestor = incBBIDomBlock;
-  }
-  incBBDomNode = DT.getNode(phiDep->getParent());
-  incBBIDominator = incBBDomNode->getIDom();
-  incBBIDomBlock = incBBIDominator->getBlock();
-  if (commonAncestor &&
-      commonAncestor == DT.getNode(phiDep->getParent())->getIDom()->getBlock())
-    isDiamond &= true;
-  return isDiamond;
-}
-
 /**
  * @brief Retrieves data dependencies for a given instruction.
  *
@@ -267,17 +241,6 @@ std::pair<Status, dataDependence> getDataDependencies(
 
       const BasicBlock *currentDepBB = dep->getParent();
       BBs.push_back(currentDepBB);
-
-      // ~special case~ Insert PHINode's incoming blocks as dependencies if
-      // their incoming values originate from a common dominator and may vary
-      // depending on the control flow path taken.
-      if (const auto *phiDep = dyn_cast<PHINode>(dep)) {
-        if (isDiamondCFG(DT, phiDep)) {
-          for (auto incBB : phiDep->blocks()) {
-            BBs.push_back(incBB);
-          }
-        }
-      }
 
       for (const Use &U : dep->operands())
         if (!processOperand(U.get())) break;
@@ -614,7 +577,6 @@ ProgramSlice::ProgramSlice(Instruction &Initial, Function &F,
     dbgs() << "\n";
   });
 
-  _attractors = computeAttractorBlocks(loop);
   _firstDominators = computeFirstDominatorsInSlice();
 
   LLVM_DEBUG({
@@ -635,17 +597,6 @@ ProgramSlice::ProgramSlice(Instruction &Initial, Function &F,
   });
 
   LLVM_DEBUG({
-    dbgs() << "\nAttractors:\n";
-    for (const BasicBlock &BB : *_parentFunction) {
-      if (_attractors.count(&BB) && _attractors[&BB]) {
-        StringRef attractorBlockName = _attractors[&BB]->getName();
-        dbgs() << "\tBlock: " << BB.getName()
-               << " -> Attractor: " << attractorBlockName << "\n";
-      }
-    }
-  });
-
-  LLVM_DEBUG({
     dbgs() << "\nPredecessors of original function:\n";
     for (const BasicBlock &BB : *_parentFunction) {
       dbgs() << "\tBlock: " << BB.getName() << " -> Predecessors: ";
@@ -656,52 +607,6 @@ ProgramSlice::ProgramSlice(Instruction &Initial, Function &F,
     }
     dbgs() << "\n";
   });
-}
-
-/**
- * @brief Computes the attractor blocks for each basic block in the parent
- * function.
- *
- * This method determines, for each basic block in the parent function, the
- * "attractor" block, which is the nearest post-dominating block that is part of
- * the current program slice. The attractor mapping is stored in the
- * `_attractors` member variable.
- *
- * If a loop is provided and is valid, only basic blocks that are part of the
- * slice are considered. For each basic block:
- *   - If the block is in the slice, it is its own attractor.
- *   - Otherwise, the method walks up the post-dominator tree to find the
- * nearest ancestor that is in the slice and assigns it as the attractor.
- *
- * @param loop Pointer to the loop being analyzed, or nullptr if not applicable.
- */
-std::map<const BasicBlock *, const BasicBlock *>
-ProgramSlice::computeAttractorBlocks(const Loop *loop) const {
-  std::map<const BasicBlock *, const BasicBlock *> attractors;
-  const PostDominatorTree PDT(*_parentFunction);
-  for (const BasicBlock &BB : *_parentFunction) {
-    // ~special case~ if the slice criterion is inside a
-    // loop and the block is not part of the slice, skip it
-    if (loop && !loop->isInvalid()) {
-      if (!_BBsInSlice.count(&BB)) continue;
-    }
-    if (_BBsInSlice.count(&BB) > 0) {
-      attractors[&BB] = &BB;
-      continue;
-    }
-    const DomTreeNode *OrigBB = PDT.getNode(&BB);
-    const DomTreeNode *Cand = OrigBB->getIDom();
-    while (Cand != nullptr) {
-      if (_BBsInSlice.count(Cand->getBlock()) > 0) {
-        break;
-      }
-      Cand = Cand->getIDom();
-    }
-    if (Cand) {
-      attractors[&BB] = Cand->getBlock();
-    }
-  }
-  return attractors;
 }
 
 /**
@@ -738,60 +643,6 @@ ProgramSlice::computeFirstDominatorsInSlice() const {
     }
   }
   return firstDominators;
-}
-
-/**
- * @brief Adds branches from immediate dominators which existed in the
- * original function to the slice.
- *
- * @details This function traverses the dominator tree starting from the
- * current node `cur`. For each child node `child`, it recursively adds
- * branches to the slice if both `child` and its parent are part of
- * `_BBsInSlice`, indicating they are part of the program slice. It uses
- * `_origToNewBBmap` to map original basic blocks to their corresponding new
- * blocks in the slice.
- *
- * @param cur The current node in the dominator tree.
- * @param parent The parent node in the dominator tree.
- * @param visited Set of visited dominator tree nodes to avoid reprocessing.
- */
-void ProgramSlice::addDomBranches(DomTreeNode *cur, DomTreeNode *parent,
-                                  std::set<DomTreeNode *> &visited) {
-  // Stack for iterative traversal
-  std::stack<std::pair<DomTreeNode *, DomTreeNode *>> stack;
-  stack.emplace(cur, parent);
-
-  while (!stack.empty()) {
-    auto [current, parentNode] = stack.top();
-    stack.pop();
-
-    if (!parentNode || !current) continue;
-
-    // Update parent if the current block is part of the slice
-    if (_BBsInSlice.count(current->getBlock())) {
-      parentNode = current;
-    }
-
-    // Iterate over child nodes
-    for (DomTreeNode *child : *current) {
-      // Skip already visited nodes
-      if (!visited.insert(child).second) {
-        continue;
-      }
-
-      // Push child and updated parent to the stack
-      stack.emplace(child, parentNode);
-
-      // If the child block is part of the slice and there is a valid parent
-      if (parentNode && _BBsInSlice.count(child->getBlock())) {
-        BasicBlock *parentBB = _origToNewBBmap[parent->getBlock()];
-        BasicBlock *childBB = _origToNewBBmap[child->getBlock()];
-        if (parentBB->getTerminator() == nullptr) {
-          BranchInst::Create(childBB, parentBB);
-        }
-      }
-    }
-  }
 }
 
 /**
@@ -1027,9 +878,6 @@ void ProgramSlice::rerouteBranches(Function *F, const PostDominatorTree &PDT) {
     parent = init;
   }
 
-  // Add branches based on dominance relationships.
-  addDomBranches(init, parent, visited);
-
   // Create a single unreachable block to simplify branch removal.
   BasicBlock *unreachableBlock = createUnreachableBlock(F);
 
@@ -1146,33 +994,6 @@ void ProgramSlice::handleNoTerminatorBranch(BasicBlock &BB,
     }
   }
 }
-
-/**
- * Retrieves the new target basic block corresponding to the given successor
- * basic block, using the attractor mapping and the original-to-new basic block
- * map.
- *
- * @param succ Pointer to the successor BasicBlock for which the new target is
- * sought.
- * @return Pointer to the new BasicBlock if found; otherwise, nullptr.
- *
- * The function performs the following steps:
- * 1. Checks if the input successor is valid.
- * 2. Looks up the attractor associated with the successor in the _attractors
- * map.
- * 3. Uses the attractor to find the corresponding new basic block in the
- * _origToNewBBmap.
- * 4. Returns the new basic block if all lookups succeed; otherwise, returns
- * nullptr.
- */
-BasicBlock *ProgramSlice::getNewTargetByAttractor(const BasicBlock *succ) {
-  if (!succ) return nullptr;
-  const auto attIt = _attractors.find(succ);
-  if (attIt == _attractors.end()) return nullptr;
-  const auto mapIt = _origToNewBBmap.find(attIt->second);
-  if (mapIt == _origToNewBBmap.end()) return nullptr;
-  return mapIt->second;
-};
 
 /**
  * @brief Handles the case where a basic block in the sliced function,
@@ -1412,18 +1233,11 @@ BasicBlock *ProgramSlice::getOrCreateTargetBlock(const BasicBlock *successor,
                                                  const DominatorTree &DT,
                                                  const PostDominatorTree &PDT) {
   BasicBlock *newTarget =
-      getNewTargetByFirstDominatorOfSucc(successor, originalBB, DT);
+      getNewTargetByFirstDominatorOfSucc(successor, originalBB);
 
-  // The first dominator might be a block not dominated by the original
-  // successor, but it is dominated by the original block.
-  if (!newTarget) {
-    newTarget =
-        getNewTargetByFirstDominatorOfDominated(successor, originalBB, DT, PDT);
-  }
-
-  // This fixes test4.c, which is a ladder graph where we can't reach the first
-  // domminator of the successor block if (!newTarget) newTarget =
-  // getNewTargetByAttractor(successor);
+  // This fixes test4.c, which is a ladder graph that we can't reach the first
+  // dominator of a successor block
+  // if (!newTarget) newTarget = getNewTargetByAttractor(successor);
 
   return newTarget;
 }
@@ -1470,127 +1284,44 @@ bool ProgramSlice::isFirstDominatorInSlice(const BasicBlock *curBB,
  */
 BasicBlock *
 ProgramSlice::getNewTargetByFirstDominatorOfSucc(const BasicBlock *successor,
-                                                 const BasicBlock *originalBB,
-                                                 const DominatorTree &DT) {
+                                                 const BasicBlock *originalBB) {
   BasicBlock *newTarget = nullptr;
-  // The attractor for each missing successor basic block is a successor's
-  // dominated block whose first dominator is the source block.
-  //
   // If the block is in the slice, it is its own attractor.
   if (_BBsInSlice.count(successor)) {
     newTarget = const_cast<BasicBlock *>(successor);
     newTarget = _origToNewBBmap[newTarget];
     return newTarget;
   }
-  // Otherwise, traverse down the dominance tree starting from the missing
-  // block, and stop when a dominated block has as its first dominator the
-  // source block
-  const DomTreeNode *startNode = DT.getNode(originalBB);
+
+  // Traverse the CFG starting from the successor, looking for a block whose
+  // first dominator in the slice is originalBB
+  std::set<const BasicBlock *> visited;
+  std::stack<const BasicBlock *> cfgStack;
+  cfgStack.push(successor);
   const BasicBlock *found = nullptr;
-  if (startNode) {
-    std::stack<const DomTreeNode *> domStack;
-    domStack.push(startNode);
-    while (!domStack.empty()) {
-      const DomTreeNode *curNode = domStack.top();
-      domStack.pop();
-      const BasicBlock *curBB = curNode->getBlock();
-      if (curBB)
-        LLVM_DEBUG(dbgs() << "\t\tVisiting dominated block: "
-                          << curBB->getName() << "\n");
+  while (!cfgStack.empty()) {
+    const BasicBlock *curBB = cfgStack.top();
+    cfgStack.pop();
+    if (!visited.insert(curBB).second) continue;
+    if (curBB == originalBB) continue; // skip the source block itself
 
-      // We can only consider the current block if it is dominated by the
-      // missing successor block
-      if (curBB != originalBB && !DT.dominates(successor, curBB)) {
-        LLVM_DEBUG(dbgs() << "\t\t\tSkipping block: " << curBB->getName()
-                          << " (not dominated by " << successor->getName()
-                          << ")\n");
-        continue;
-      }
+    LLVM_DEBUG(dbgs() << "\t\tVisiting CFG block: " << curBB->getName()
+                      << "\n");
 
-      if (isFirstDominatorInSlice(curBB, originalBB)) {
-        found = curBB;
-        break;
-      }
+    if (isFirstDominatorInSlice(curBB, originalBB)) {
+      found = curBB;
+      break;
+    }
 
-      for (const DomTreeNode *child : *curNode) {
-        auto childBB = child->getBlock();
-        if (curBB == originalBB &&
-                is_contained(successors(originalBB), childBB) ||
-            DT.dominates(successor, childBB)) {
-          domStack.push(child);
-        }
-      }
+    // Traverse successors in the CFG
+    for (const BasicBlock *succ : successors(curBB)) {
+      cfgStack.push(succ);
     }
   }
   if (found) {
     LLVM_DEBUG(dbgs() << "\t\t\tFound block: " << found->getName() << "\n");
     newTarget = const_cast<BasicBlock *>(found);
     newTarget = _origToNewBBmap[newTarget];
-  }
-  return newTarget;
-}
-
-/**
- * @brief Finds a new target basic block by traversing the dominator tree.
- *
- * This function searches for a basic block that is dominated by the given
- * original basic block (`originalBB`) but is not a direct successor of it.
- * The search is performed by traversing the dominator tree (`DT`) starting
- * from `originalBB`. For each dominated block, it checks if the first dominator
- * in the slice is `originalBB` using `isFirstDominatorInSlice`. If such a block
- * is found, it returns the corresponding new basic block from
- * `_origToNewBBmap`.
- *
- * @param successor The successor basic block that is missing or being
- * considered.
- * @param originalBB The original basic block from which the search starts.
- * @param DT The dominator tree used for traversal.
- * @return A pointer to the new target basic block if found, otherwise nullptr.
- */
-BasicBlock *ProgramSlice::getNewTargetByFirstDominatorOfDominated(
-    const BasicBlock *successor, const BasicBlock *originalBB,
-    const DominatorTree &DT, const PostDominatorTree &PDT) {
-  LLVM_DEBUG(dbgs() << "\tTrying to visit a block that is not dominated by the "
-                       "missing successor...\n");
-  BasicBlock *newTarget = nullptr;
-  const DomTreeNode *startNode = DT.getNode(originalBB);
-  const BasicBlock *found = nullptr;
-  if (!startNode) return nullptr;
-
-  std::stack<const DomTreeNode *> domStack;
-  domStack.push(startNode);
-  while (!domStack.empty()) {
-    const DomTreeNode *curNode = domStack.top();
-    domStack.pop();
-    const BasicBlock *curBB = curNode->getBlock();
-    if (!curBB) continue;
-    if (is_contained(successors(originalBB), curBB))
-      continue; // Skip blocks that are successors of originalBB
-
-    // Skip blocks that are not post dominated by the slice criterion
-    // block.
-    // if (!PDT.dominates(_initial->getParent(), curBB))
-    //   continue;
-
-    LLVM_DEBUG(dbgs() << "\t\tVisiting dominated block: " << curBB->getName()
-                      << "\n");
-
-    // Check if curBB's first dominator in the slice is originalBB
-    if (isFirstDominatorInSlice(curBB, originalBB)) {
-      found = curBB;
-      break;
-    }
-
-    // Traverse children in the dominator tree
-    for (const DomTreeNode *child : *curNode) {
-      domStack.push(child);
-    }
-  }
-
-  if (found) {
-    LLVM_DEBUG(dbgs() << "\t\t\tFound block: " << found->getName() << "\n");
-    auto it = _origToNewBBmap.find(found);
-    if (it != _origToNewBBmap.end()) newTarget = it->second;
   }
   return newTarget;
 }
