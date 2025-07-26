@@ -116,19 +116,15 @@ static const Value *isOperandOutsideLoopOrHeader(const Value *operand,
  * or switch), or nullptr if none.
  */
 static const Value *getPredicate(const BasicBlock *BB) {
-  const Value *branchInst = nullptr;
+  const Value *predicate = nullptr;
   if (BB) {
     const Instruction *terminator = BB->getTerminator();
-    if (const auto *BI = dyn_cast<BranchInst>(terminator)) {
-      assert(BI->isConditional() &&
-             "Unconditional terminator found when trying to get "
-             "predicate instruction...\n");
-      branchInst = BI;
-    } else if (const auto *SI = dyn_cast<SwitchInst>(terminator)) {
-      branchInst = SI;
-    }
+    if (isa<BranchInst>(terminator) &&
+            cast<BranchInst>(terminator)->isConditional() ||
+        isa<SwitchInst>(terminator))
+      predicate = terminator;
   }
-  return branchInst;
+  return predicate;
 }
 
 /**
@@ -328,122 +324,50 @@ static void linkPredicates(
   }
 }
 
-/**
- * @brief Maps each basic block in a function to the set of predicate values
- * (conditions) that control its execution, based on dominator and
- * post-dominator analysis.
- *
- * This function traverses the dominator tree of the given function and, for
- * each basic block, collects the set of predicate instructions (such as
- * conditional branches or switches) that must be true for the block to execute.
- * It uses a stack to track the current predicates along the traversal path and
- * propagates predicates from predecessor blocks, taking into account dominance
- * and post-dominance relationships to avoid redundant or dominated predicates.
- *
- * @param F The LLVM Function to analyze.
- * @return std::unordered_map<const BasicBlock *, SmallVector<const Value *>>
- *         A mapping from each basic block to a vector of predicate values
- * (instructions) that guard its execution.
- */
-static std::unordered_map<const BasicBlock *, SmallVector<const Value *>>
+void preOrderDomTreeTraversal(
+    DomTreeNode *Node, DominatorTree &DT, PostDominatorTree &PDT,
+    std::unordered_map<const BasicBlock *, SmallVector<const Value *>>
+        &BlockValueMap) {
+  if (!Node) return;
+
+  BasicBlock *BB = Node->getBlock();
+  LLVM_DEBUG(dbgs() << "[Traversing] " << BB->getName() << "\n");
+
+  DomTreeNode *IDomNode = Node->getIDom();
+
+  if (IDomNode) {
+    BasicBlock *IDomBB = IDomNode->getBlock();
+    if (!PDT.dominates(BB, IDomBB)) {
+      LLVM_DEBUG({
+        dbgs() << "  -> Condition met: Block '" << BB->getName()
+               << "' does not post-dominates its immediate dominator '"
+               << IDomBB->getName() << "'.\n";
+        dbgs() << "  -> Populating map.\n";
+      });
+
+      linkPredicates(BlockValueMap, BB, IDomBB, DT);
+    }
+  }
+
+  for (DomTreeNode *Child : Node->children()) {
+    preOrderDomTreeTraversal(Child, DT, PDT, BlockValueMap);
+  }
+}
+
+std::unordered_map<const BasicBlock *, SmallVector<const Value *>>
 mapBasicBlocksToPredicates(Function &F) {
+  std::unordered_map<const BasicBlock *, SmallVector<const Value *>>
+      BlockValueMap;
+
   DominatorTree DT(F);
   PostDominatorTree PDT(F);
 
-  std::unordered_map<const BasicBlock *, SmallVector<const Value *>>
-      bbToPredicates;
-  std::stack<const BasicBlock *> stackOfPredicates;
-
-  // Stack frame: node + bool isPostVisit (true means after children)
-  using Frame = std::pair<const DomTreeNode *, bool>;
-  std::stack<Frame> worklist;
-
-  // Multiple roots possible
-  for (BasicBlock *RootBB : DT.roots()) {
-    if (const DomTreeNode *root = DT.getNode(RootBB))
-      worklist.push({root, false});
+  DomTreeNode *RootNode = DT.getRootNode();
+  if (RootNode) {
+    preOrderDomTreeTraversal(RootNode, DT, PDT, BlockValueMap);
   }
 
-  while (!worklist.empty()) {
-    auto [node, isPostVisit] = worklist.top();
-    worklist.pop();
-
-    const BasicBlock *currentBB = node->getBlock();
-    const Value *currentTerminator = currentBB->getTerminator();
-    bool hasPredicate =
-        (isa<BranchInst>(currentTerminator) &&
-         cast<BranchInst>(currentTerminator)->isConditional()) ||
-        isa<SwitchInst>(currentTerminator);
-
-    if (isPostVisit) {
-      // After all children
-      if (hasPredicate && !stackOfPredicates.empty()) {
-        LLVM_DEBUG(dbgs() << "\t\tPopping predicate: "
-                          << stackOfPredicates.top()->getName() << "\n");
-        stackOfPredicates.pop();
-      }
-    } else {
-      // Pre-visit
-      LLVM_DEBUG(dbgs() << "VISIT: " << currentBB->getName() << "\n");
-      LLVM_DEBUG({
-        dbgs() << "\t\tStack of predicates (top at bottom):\n";
-        std::stack<const BasicBlock *> tmpStack = stackOfPredicates;
-        SmallVector<const BasicBlock *> stackVec;
-        while (!tmpStack.empty()) {
-          stackVec.push_back(tmpStack.top());
-          tmpStack.pop();
-        }
-        for (auto it = stackVec.rbegin(); it != stackVec.rend(); ++it) {
-          dbgs() << "\t\t\t" << (*it)->getName();
-          if (it == stackVec.rbegin()) dbgs() << " <-- top";
-          dbgs() << "\n";
-        }
-      });
-      // Record predicates (if any) for this block
-      if (!stackOfPredicates.empty()) {
-        const BasicBlock *predBB = stackOfPredicates.top();
-        if (!PDT.dominates(currentBB, predBB)) {
-          linkPredicates(bbToPredicates, currentBB, predBB, DT);
-        } else {
-          LLVM_DEBUG({
-            dbgs() << "\t\t" << currentBB->getName() << " post-dominates "
-                   << predBB->getName() << "\n";
-          });
-          LLVM_DEBUG(dbgs()
-                     << "\t\tPopping predicate: " << predBB->getName() << "\n");
-
-          // If the current block post-dominates the predicate block, we
-          // pop the predicate from the stack, as it is no longer relevant
-          // for the current block, and force pushing of remainder predicates
-          stackOfPredicates.pop();
-          if (!stackOfPredicates.empty())
-            linkPredicates(bbToPredicates, currentBB, stackOfPredicates.top(),
-                           DT);
-          LLVM_DEBUG(
-              dbgs()
-              << "\t\tRe-pushing predicate from the top, for next iteration: "
-              << predBB->getName() << "\n");
-          stackOfPredicates.push(predBB);
-        }
-      }
-
-      if (hasPredicate) {
-        LLVM_DEBUG({
-          dbgs() << "\t\tPushing predicate: " << currentBB->getName() << "\n";
-          if (const Value *predicate = getPredicate(currentBB)) {
-            dbgs() << "\t\t\tPredicate instruction: " << *predicate << "\n";
-          }
-        });
-        stackOfPredicates.push(currentBB);
-      }
-
-      // Mark this node for post-visit (after children)
-      worklist.push({node, true});
-      // Push all children
-      for (const DomTreeNode *child : *node) worklist.push({child, false});
-    }
-  }
-  return bbToPredicates;
+  return BlockValueMap;
 }
 
 /**
