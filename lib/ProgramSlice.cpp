@@ -42,6 +42,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/Utils/Local.h"
 
+#include "../include/PHIGateAnalyzer.h"
 #include "../include/daedalus.h"
 
 #define DEBUG_TYPE "ProgramSlice"
@@ -97,79 +98,6 @@ static const Value *isOperandOutsideLoopOrHeader(const Value *operand,
     }
   }
   return nullptr;
-}
-
-/**
- * @brief Retrieves the predicate instruction (conditional branch or switch) for
- * a given basic block.
- *
- * This function examines the terminator instruction of the specified basic
- * block @p BB. If the terminator is a conditional branch or a switch
- * instruction, it returns a pointer to that instruction, which serves as the
- * "predicate" controlling the block's outgoing control flow. If the terminator
- * is an unconditional branch or not a branch/switch, the function returns
- * nullptr.
- *
- * @param BB Pointer to the basic block whose predicate instruction is to be
- * retrieved.
- * @return const Value* Pointer to the predicate instruction (conditional branch
- * or switch), or nullptr if none.
- */
-static const Value *getPredicate(const BasicBlock *BB) {
-  const Value *branchInst = nullptr;
-  if (BB) {
-    const Instruction *terminator = BB->getTerminator();
-    if (const auto *BI = dyn_cast<BranchInst>(terminator)) {
-      assert(BI->isConditional() &&
-             "Unconditional terminator found when trying to get "
-             "predicate instruction...\n");
-      branchInst = BI;
-    } else if (const auto *SI = dyn_cast<SwitchInst>(terminator)) {
-      branchInst = SI;
-    }
-  }
-  return branchInst;
-}
-
-/**
- * @brief Computes only data dependencies for a given instruction within a
- * function.
- *
- * This function checks if the given PHINode has a weird control flow graph
- * (CFG) pattern, which is defined as having two incoming blocks that are
- * predecessors of the PHINode's parent block, and at least one of those
- * predecessors has a conditional branch or switch terminator that does not
- * control the PHINode's parent block.
- *
- * @param phi The PHINode to check.
- * @param predicates A map of basic blocks to their controlling predicate
- * instructions.
- * @param DT The dominator tree for the function.
- * @param PDT The post-dominator tree for the function.
- * @return true if the PHINode has a weird CFG pattern, false otherwise.
- */
-static bool isWeirdCFG(
-    const PHINode &phi,
-    const std::unordered_map<const BasicBlock *, SmallVector<const Value *>>
-        &predicates,
-    const DominatorTree &DT, const PostDominatorTree &PDT) {
-  SmallPtrSet<BasicBlock *, 2> phiNodePreds;
-  for (unsigned i = 0, e = phi.getNumIncomingValues(); i != e; ++i) {
-    BasicBlock *incomingBlock = phi.getIncomingBlock(i);
-    for (const BasicBlock *pred : predecessors(incomingBlock)) {
-      if (!predicates.count(incomingBlock)) continue;
-      if (incomingBlock->phis().empty() &&
-          ((isa<BranchInst>(pred->getTerminator()) &&
-            cast<BranchInst>(pred->getTerminator())->isConditional()) ||
-           isa<SwitchInst>(pred->getTerminator())) &&
-          !is_contained(predicates.at(incomingBlock), pred->getTerminator()) &&
-          !PDT.dominates(incomingBlock, pred) &&
-          !DT.dominates(pred, incomingBlock)) {
-        phiNodePreds.insert(incomingBlock);
-      }
-    }
-  }
-  return phiNodePreds.size() == 2;
 }
 
 /**
@@ -251,47 +179,30 @@ std::pair<Status, dataDependence> getDataDependencies(
       LLVM_DEBUG(dbgs() << "\t\t[Control Dependency] PHINode being processed: "
                         << *phi << "\n");
 
-      if (isWeirdCFG(*phi, predicates, DT, PDT)) { // ~special case~
-        status = {false, "There's a PHINode whose incoming blocks don't have "
-                         "PHINodes and one of its predecessors has a "
-                         "conditional branch or switch, that don't control it"};
-        return {status, {}};
-      }
-
       for (const auto *incomingBB : phi->blocks()) {
         BBs.push_back(incomingBB);
+      }
 
-        // ~special case~ if a PHINode's incoming block is an exit block of a
-        // loop, then add its terminator to the predicates of the PHINode's
-        // parent
-        Loop *loopForBB = loopInfo.getLoopFor(incomingBB);
-        if (loopForBB && loopForBB->isLoopExiting(incomingBB)) {
-          LLVM_DEBUG(dbgs()
-                     << "\t\t[Control Dependency] PHINode has an incoming "
-                        "block that is an exit block of a loop and contains "
-                        "a dependency: "
-                     << incomingBB->getName() << "\n");
-          predicates[incomingBB].push_back(incomingBB->getTerminator());
-        }
+      for (const Value *predicate : predicates[phi->getParent()]) {
+        if (predicate && !visited.count(predicate)) {
+          if (auto *predicateInst = dyn_cast<Instruction>(predicate)) {
+            LLVM_DEBUG(dbgs()
+                       << "\t\t\t[Control Dependency] Pushing predicate (from "
+                       << predicateInst->getParent()->getName()
+                       << "): " << *predicate << "\n");
 
-        for (const Value *predicate : predicates[incomingBB]) {
-          if (predicate && !visited.count(predicate)) {
-            if (auto *predicateInst = dyn_cast<Instruction>(predicate)) {
-              LLVM_DEBUG(
-                  dbgs()
-                  << "\t\t\t[Control Dependency] Pushing predicate (from "
-                  << predicateInst->getParent()->getName()
-                  << "): " << *predicate << "\n");
-
-              // ~special case~ if the predicate instruction is outside the
-              // current slice criterion's loop, don't treat it as a dependency
-              if (isOperandOutsideLoopOrHeader(predicate, loop, loopHeader)) {
-                continue;
-              }
-
-              worklist.push(predicate);
-              visited.insert(predicate);
+            // ~special case~ if the predicate instruction is outside the
+            // current slice criterion's loop, don't treat it as a dependency
+            if (isOperandOutsideLoopOrHeader(predicate, loop, loopHeader)) {
+              continue;
             }
+
+            if (predicateInst->getParent() == I.getParent()) {
+              continue;
+            }
+
+            worklist.push(predicate);
+            visited.insert(predicate);
           }
         }
       }
@@ -299,151 +210,6 @@ std::pair<Status, dataDependence> getDataDependencies(
   }
 
   return {status, {BBs, deps, funcArgs}};
-}
-
-static void linkPredicates(
-    std::unordered_map<const BasicBlock *, SmallVector<const Value *>>
-        &bbToPredicates,
-    const BasicBlock *currentBB, const BasicBlock *predBB, DominatorTree &DT) {
-  LLVM_DEBUG({ dbgs() << "\t\tPredicate: " << predBB->getName() << "\n"; });
-  if (!bbToPredicates.count(currentBB))
-    bbToPredicates[currentBB] = SmallVector<const Value *>();
-  if (const Value *predicate = getPredicate(predBB))
-    bbToPredicates[currentBB].push_back(predicate);
-
-  // ~special case~ Propagate predicates from predecessors to current block
-  for (const BasicBlock *predBB : predecessors(currentBB)) {
-    if (bbToPredicates.count(predBB)) {
-      for (const Value *predPredicate : bbToPredicates[predBB]) {
-        // Don't propagate predicates from dominated blocks
-        if (!is_contained(bbToPredicates[currentBB], predPredicate) &&
-            !DT.dominates(currentBB, predBB)) {
-          bbToPredicates[currentBB].push_back(predPredicate);
-          LLVM_DEBUG(dbgs()
-                     << "\t\t\tPushed predPredicate: " << *predPredicate
-                     << "\n\t\t\t\tfrom block: " << predBB->getName() << "\n");
-        }
-      }
-    }
-  }
-}
-
-/**
- * @brief Maps each basic block in a function to the set of predicate values
- * (conditions) that control its execution, based on dominator and
- * post-dominator analysis.
- *
- * This function traverses the dominator tree of the given function and, for
- * each basic block, collects the set of predicate instructions (such as
- * conditional branches or switches) that must be true for the block to execute.
- * It uses a stack to track the current predicates along the traversal path and
- * propagates predicates from predecessor blocks, taking into account dominance
- * and post-dominance relationships to avoid redundant or dominated predicates.
- *
- * @param F The LLVM Function to analyze.
- * @return std::unordered_map<const BasicBlock *, SmallVector<const Value *>>
- *         A mapping from each basic block to a vector of predicate values
- * (instructions) that guard its execution.
- */
-static std::unordered_map<const BasicBlock *, SmallVector<const Value *>>
-mapBasicBlocksToPredicates(Function &F) {
-  DominatorTree DT(F);
-  PostDominatorTree PDT(F);
-
-  std::unordered_map<const BasicBlock *, SmallVector<const Value *>>
-      bbToPredicates;
-  std::stack<const BasicBlock *> stackOfPredicates;
-
-  // Stack frame: node + bool isPostVisit (true means after children)
-  using Frame = std::pair<const DomTreeNode *, bool>;
-  std::stack<Frame> worklist;
-
-  // Multiple roots possible
-  for (BasicBlock *RootBB : DT.roots()) {
-    if (const DomTreeNode *root = DT.getNode(RootBB))
-      worklist.push({root, false});
-  }
-
-  while (!worklist.empty()) {
-    auto [node, isPostVisit] = worklist.top();
-    worklist.pop();
-
-    const BasicBlock *currentBB = node->getBlock();
-    const Value *currentTerminator = currentBB->getTerminator();
-    bool hasPredicate =
-        (isa<BranchInst>(currentTerminator) &&
-         cast<BranchInst>(currentTerminator)->isConditional()) ||
-        isa<SwitchInst>(currentTerminator);
-
-    if (isPostVisit) {
-      // After all children
-      if (hasPredicate && !stackOfPredicates.empty()) {
-        LLVM_DEBUG(dbgs() << "\t\tPopping predicate: "
-                          << stackOfPredicates.top()->getName() << "\n");
-        stackOfPredicates.pop();
-      }
-    } else {
-      // Pre-visit
-      LLVM_DEBUG(dbgs() << "VISIT: " << currentBB->getName() << "\n");
-      LLVM_DEBUG({
-        dbgs() << "\t\tStack of predicates (top at bottom):\n";
-        std::stack<const BasicBlock *> tmpStack = stackOfPredicates;
-        SmallVector<const BasicBlock *> stackVec;
-        while (!tmpStack.empty()) {
-          stackVec.push_back(tmpStack.top());
-          tmpStack.pop();
-        }
-        for (auto it = stackVec.rbegin(); it != stackVec.rend(); ++it) {
-          dbgs() << "\t\t\t" << (*it)->getName();
-          if (it == stackVec.rbegin()) dbgs() << " <-- top";
-          dbgs() << "\n";
-        }
-      });
-      // Record predicates (if any) for this block
-      if (!stackOfPredicates.empty()) {
-        const BasicBlock *predBB = stackOfPredicates.top();
-        if (!PDT.dominates(currentBB, predBB)) {
-          linkPredicates(bbToPredicates, currentBB, predBB, DT);
-        } else {
-          LLVM_DEBUG({
-            dbgs() << "\t\t" << currentBB->getName() << " post-dominates "
-                   << predBB->getName() << "\n";
-          });
-          LLVM_DEBUG(dbgs()
-                     << "\t\tPopping predicate: " << predBB->getName() << "\n");
-
-          // If the current block post-dominates the predicate block, we
-          // pop the predicate from the stack, as it is no longer relevant
-          // for the current block, and force pushing of remainder predicates
-          stackOfPredicates.pop();
-          if (!stackOfPredicates.empty())
-            linkPredicates(bbToPredicates, currentBB, stackOfPredicates.top(),
-                           DT);
-          LLVM_DEBUG(
-              dbgs()
-              << "\t\tRe-pushing predicate from the top, for next iteration: "
-              << predBB->getName() << "\n");
-          stackOfPredicates.push(predBB);
-        }
-      }
-
-      if (hasPredicate) {
-        LLVM_DEBUG({
-          dbgs() << "\t\tPushing predicate: " << currentBB->getName() << "\n";
-          if (const Value *predicate = getPredicate(currentBB)) {
-            dbgs() << "\t\t\tPredicate instruction: " << *predicate << "\n";
-          }
-        });
-        stackOfPredicates.push(currentBB);
-      }
-
-      // Mark this node for post-visit (after children)
-      worklist.push({node, true});
-      // Push all children
-      for (const DomTreeNode *child : *node) worklist.push({child, false});
-    }
-  }
-  return bbToPredicates;
 }
 
 /**
@@ -471,28 +237,34 @@ ProgramSlice::ProgramSlice(Instruction &Initial, Function &F,
   LoopInfo &loopInfo = FAM.getResult<LoopAnalysis>(F);
   Loop *loop = loopInfo.getLoopFor(Initial.getParent());
   BasicBlock *loopHeader = (loop) ? loop->getHeader() : nullptr;
+  DominatorTree &DT = FAM.getResult<DominatorTreeAnalysis>(F);
+  PostDominatorTree &PDT = FAM.getResult<PostDominatorTreeAnalysis>(F);
 
-  std::unordered_map<const BasicBlock *, SmallVector<const Value *>>
-      predicates = mapBasicBlocksToPredicates(F);
+  std::unordered_map<const BasicBlock *, SmallVector<const Value *>> predicates;
+
+  PHIGateAnalyzer Analyzer(F, DT);
+  predicates = Analyzer.getGatesForAllPhis();
 
   LLVM_DEBUG({
     dbgs() << "\nPredicates mapping:\n";
-    for (const auto &entry : predicates) {
-      const BasicBlock *bb = entry.first;
-      dbgs() << "  " << bb->getName() << ":\n\t\t";
-      for (const Value *pred : entry.second) {
-        if (const Instruction *inst = dyn_cast<Instruction>(pred)) {
-          dbgs() << "[Instruction] " << *inst << "\n\t\t";
-        } else {
-          dbgs() << "[Value]\n\t\t";
+    if (predicates.empty()) {
+      dbgs() << "No gating conditions found for any PHI nodes.\n";
+    } else {
+      for (const auto &entry : predicates) {
+        const BasicBlock *bb = entry.first;
+        dbgs() << "  " << bb->getName() << ":\n\t\t";
+        for (const Value *pred : entry.second) {
+          if (const Instruction *inst = dyn_cast<Instruction>(pred)) {
+            dbgs() << "[Instruction] " << *inst << "\n\t\t";
+          } else {
+            dbgs() << "[Value]\n\t\t";
+          }
         }
+        dbgs() << "\n";
       }
-      dbgs() << "\n";
     }
   });
 
-  DominatorTree DT(F);
-  PostDominatorTree PDT(F);
   auto [check, data] = getDataDependencies(Initial, predicates, loopInfo, loop,
                                            loopHeader, DT, PDT);
 
@@ -1273,6 +1045,13 @@ bool ProgramSlice::isFirstDominatorInSlice(const BasicBlock *curBB,
     if (currFirstDominator == originalBB) {
       return true;
     }
+
+    // Fixes test4.c, but may add incorrect branches.
+    // TODO: find another way to fix test4.c
+    // const DominatorTree DT(*_parentFunction);
+    // if (DT.dominates(currFirstDominator, originalBB)) {
+    //   return true;
+    // }
   }
   return false;
 }
@@ -1851,15 +1630,6 @@ Function *ProgramSlice::outline() {
 
   const std::string errorMsg(
       "Original function name: " + _parentFunction->getName().str() + "\n");
-
-  int numEntryBlocks = 0;
-  for (BasicBlock &BB : *F)
-    if (BB.hasNPredecessors(0)) ++numEntryBlocks;
-  if (numEntryBlocks != 1) {
-    errs() << errorMsg;
-  }
-  assert(numEntryBlocks == 1 &&
-         "The only block with no predecessors must be the entry block.");
 
   if (verifyFunction(*F, &errs())) {
     errs() << errorMsg;

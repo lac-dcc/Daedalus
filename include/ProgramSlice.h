@@ -22,6 +22,8 @@
 
 // #include "llvm/Transforms/IPO/FunctionMerging.h"
 
+#include "../include/PHIGateAnalyzer.h"
+
 namespace llvm {
 
 class ProgramSlice {
@@ -105,7 +107,7 @@ private:
   /// Returns a new target basic block determined by the first dominator of the
   /// given successor block.
   BasicBlock *getNewTargetByFirstDominator(const BasicBlock *successor,
-                                                 const BasicBlock *originalBB);
+                                           const BasicBlock *originalBB);
 
   // Checks if the first dominator of curBB in the slice is originalBB
   bool isFirstDominatorInSlice(const BasicBlock *curBB,
