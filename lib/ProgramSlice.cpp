@@ -333,6 +333,7 @@ ProgramSlice::ProgramSlice(Instruction &Initial, Function &F,
   });
 
   _firstDominators = computeFirstDominatorsInSlice();
+  _attractors = computeAttractors();
 
   LLVM_DEBUG({
     dbgs() << "First dominators in slice:\n";
@@ -344,6 +345,19 @@ ProgramSlice::ProgramSlice(Instruction &Initial, Function &F,
           const BasicBlock *bb = *bbIt;
           dbgs() << bb->getName() << ", ";
         }
+      } else {
+        dbgs() << "nullptr";
+      }
+      dbgs() << "\n";
+    }
+  });
+
+  LLVM_DEBUG({
+    dbgs() << "Attractors in slice:\n";
+    for (const auto &entry : _attractors) {
+      dbgs() << "  " << entry.first->getName() << " -> ";
+      if (entry.second) {
+        dbgs() << entry.second->getName();
       } else {
         dbgs() << "nullptr";
       }
@@ -398,6 +412,30 @@ ProgramSlice::computeFirstDominatorsInSlice() const {
     }
   }
   return firstDominators;
+}
+
+std::map<const BasicBlock *, const BasicBlock *>
+ProgramSlice::computeAttractors() const {
+  std::map<const BasicBlock *, const BasicBlock *> attractors;
+  const PostDominatorTree PDT(*_parentFunction);
+  for (const BasicBlock &BB : *_parentFunction) {
+    if (_BBsInSlice.count(&BB) > 0) {
+      attractors[&BB] = &BB;
+      continue;
+    }
+    const DomTreeNode *OrigBB = PDT.getNode(&BB);
+    const DomTreeNode *Cand = OrigBB->getIDom();
+    while (Cand != nullptr) {
+      if (_BBsInSlice.count(Cand->getBlock()) > 0) {
+        break;
+      }
+      Cand = Cand->getIDom();
+    }
+    if (Cand) {
+      attractors[&BB] = Cand->getBlock();
+    }
+  }
+  return attractors;
 }
 
 /**
@@ -635,9 +673,12 @@ void ProgramSlice::rerouteBranches(Function *F, const PostDominatorTree &PDT) {
     Instruction *terminator = BB.getTerminator();
 
     if (!terminator) {
+      LLVM_DEBUG(dbgs() << "Block with no terminator: " << BB.getName()
+                        << "\n");
       // If block has no terminator, reconstruct based on original
       reconstructTerminator(BB, origBB, F, DT, unreachableBlock, PDT);
     } else {
+      LLVM_DEBUG(dbgs() << "Block with terminator: " << BB.getName() << "\n");
       // If block has a terminator, ensure all its successors are valid
       rerouteTerminatorSuccessors(terminator, BB, origBB, F, DT,
                                   unreachableBlock, PDT);
@@ -658,6 +699,8 @@ void ProgramSlice::reconstructTerminator(BasicBlock &BB,
   if (auto *origBranch = dyn_cast<BranchInst>(origTerm)) {
     SmallVector<BasicBlock *, 2> targets;
     for (const BasicBlock *succ : origBranch->successors()) {
+      LLVM_DEBUG(dbgs() << "\tAnalyzing successor: " << succ->getName()
+                        << "\n");
       if (BasicBlock *target = getOrCreateTargetBlock(succ, origBB, DT, PDT)) {
         targets.push_back(target);
       }
@@ -688,7 +731,6 @@ void ProgramSlice::reconstructTerminator(BasicBlock &BB,
     newSwitch->setDefaultDest(def ? def : unreachableBlock);
     // Optionally, update PHI nodes here too
   }
-  // Optionally handle other terminator types
 }
 
 void ProgramSlice::rerouteTerminatorSuccessors(
@@ -698,6 +740,8 @@ void ProgramSlice::rerouteTerminatorSuccessors(
   if (auto *br = dyn_cast<BranchInst>(terminator)) {
     for (unsigned idx = 0; idx < br->getNumSuccessors(); ++idx) {
       BasicBlock *succ = br->getSuccessor(idx);
+      LLVM_DEBUG(dbgs() << "\tAnalyzing successor: " << succ->getName()
+                        << "\n");
       if (succ->getParent() == F) continue;
       BasicBlock *target = getOrCreateTargetBlock(succ, origBB, DT, PDT);
       if (!target) target = unreachableBlock;
@@ -707,6 +751,8 @@ void ProgramSlice::rerouteTerminatorSuccessors(
   } else if (auto *sw = dyn_cast<SwitchInst>(terminator)) {
     for (unsigned idx = 0; idx < sw->getNumSuccessors(); ++idx) {
       BasicBlock *succ = sw->getSuccessor(idx);
+      LLVM_DEBUG(dbgs() << "\tAnalyzing successor: " << succ->getName()
+                        << "\n");
       if (succ->getParent() == F) continue;
       BasicBlock *target = getOrCreateTargetBlock(succ, origBB, DT, PDT);
       if (!target) target = unreachableBlock;
@@ -748,8 +794,8 @@ BasicBlock *ProgramSlice::getOrCreateTargetBlock(const BasicBlock *successor,
                                                  const PostDominatorTree &PDT) {
   BasicBlock *newTarget = getNewTargetByFirstDominator(successor, originalBB);
 
-  // This fixes test4.c, which is a ladder graph that we can't reach the first
-  // dominator of a successor block
+  // Alternatively, if the first dominator method fails, try using the
+  // attractor method.
   // if (!newTarget) newTarget = getNewTargetByAttractor(successor);
 
   return newTarget;
@@ -782,7 +828,8 @@ bool ProgramSlice::isFirstDominatorInSlice(const BasicBlock *curBB,
     // Fixes test4.c, but may add incorrect branches.
     // TODO: find another way to fix test4.c
     // const DominatorTree DT(*_parentFunction);
-    // if (DT.dominates(currFirstDominator, originalBB)) {
+    // if (DT.dominates(currFirstDominator, originalBB) &&
+    //     !DT.dominates(curBB, originalBB)) {
     //   return true;
     // }
   }
@@ -850,6 +897,15 @@ ProgramSlice::getNewTargetByFirstDominator(const BasicBlock *successor,
   }
   return newTarget;
 }
+
+BasicBlock *ProgramSlice::getNewTargetByAttractor(const BasicBlock *succ) {
+  if (!succ) return nullptr;
+  const auto attIt = _attractors.find(succ);
+  if (attIt == _attractors.end()) return nullptr;
+  const auto mapIt = _origToNewBBmap.find(attIt->second);
+  if (mapIt == _origToNewBBmap.end()) return nullptr;
+  return mapIt->second;
+};
 
 void ProgramSlice::updatePHINodesForSuccessor(
     BasicBlock *newSuccessor, const BasicBlock *originalIncomingBlock,

@@ -100,6 +100,11 @@ private:
   std::map<const BasicBlock *, SmallVector<const BasicBlock *>>
   computeFirstDominatorsInSlice() const;
 
+  std::map<const BasicBlock *, const BasicBlock *>
+  computeAttractors() const;
+
+  BasicBlock *getNewTargetByAttractor(const BasicBlock *succ);
+
   /// Returns a new target basic block determined by the first dominator of the
   /// given successor block.
   BasicBlock *getNewTargetByFirstDominator(const BasicBlock *successor,
@@ -173,6 +178,8 @@ private:
   /// rearranging control flow
   std::map<const BasicBlock *, SmallVector<const BasicBlock *>>
       _firstDominators;
+
+  std::map<const BasicBlock *, const BasicBlock *> _attractors;
 
   /// maps BasicBlocks in the original function to their new cloned counterparts
   /// in the slice
