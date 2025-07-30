@@ -1,43 +1,174 @@
 ; CHECK: ; Function Attrs: noinline nounwind optsize willreturn
+; CHECK-NEXT: define internal float @_daedalus_slice_check__[[ID:[0-9]+]](float %0, i64 %1, i64 %2) #8 {
+; CHECK-NEXT: sliceclone_BB_4:
+; CHECK-NEXT:   %3 = getelementptr inbounds [256 x float], ptr getelementptr inbounds (%struct.GlobalData, ptr @global_data, i64 0, i32 15, i64 0, i64 0), i64 %1, i64 %2
+; CHECK-NEXT:   %4 = load float, ptr %3, align 4, !tbaa !7
+; CHECK-NEXT:   %5 = fadd float %0, %4
+; CHECK-NEXT:   ret float %5
+; CHECK-NEXT: }
+; CHECK-EMPTY:
+; CHECK-NEXT: ; Function Attrs: noinline nounwind optsize willreturn
+; CHECK-NEXT: define internal float @_daedalus_slice_check__[[ID:[0-9]+]](float %0, i64 %1, i64 %2) #8 {
+; CHECK-NEXT: sliceclone_BB_4:
+; CHECK-NEXT:   %3 = getelementptr inbounds [256 x float], ptr getelementptr inbounds (%struct.GlobalData, ptr @global_data, i64 0, i32 18, i64 0, i64 0), i64 %1, i64 %2
+; CHECK-NEXT:   %4 = load float, ptr %3, align 4, !tbaa !7
+; CHECK-NEXT:   %5 = fadd float %0, %4
+; CHECK-NEXT:   ret float %5
+; CHECK-NEXT: }
+; CHECK-EMPTY:
+; CHECK-NEXT: ; Function Attrs: noinline nounwind optsize willreturn
+; CHECK-NEXT: define internal float @_daedalus_slice_check__[[ID:[0-9]+]](float %0, i64 %1, i64 %2) #8 {
+; CHECK-NEXT: sliceclone_BB_4:
+; CHECK-NEXT:   %3 = getelementptr inbounds [256 x float], ptr getelementptr inbounds (%struct.GlobalData, ptr @global_data, i64 0, i32 21, i64 0, i64 0), i64 %1, i64 %2
+; CHECK-NEXT:   %4 = load float, ptr %3, align 4, !tbaa !7
+; CHECK-NEXT:   %5 = fadd float %0, %4
+; CHECK-NEXT:   ret float %5
+; CHECK-NEXT: }
+; CHECK-EMPTY:
+; CHECK-NEXT: ; Function Attrs: noinline nounwind optsize willreturn
 ; CHECK-NEXT: define internal float @_daedalus_slice_check__[[ID:[0-9]+]]() #8 {
 ; CHECK-NEXT: sliceclone_BB_0:
 ; CHECK-NEXT:   br label %sliceclone_BB_1
 ; CHECK-EMPTY:
-; CHECK-NEXT: sliceclone_BB_1:                                  ; preds = %sliceclone_BB_{{1|0}}, %sliceclone_BB_{{1|0}}
+; CHECK-NEXT: sliceclone_BB_1:                                  ; preds = %sliceclone_BB_0, %sliceclone_BB_1
 ; CHECK-NEXT:   %0 = phi i64 [ 0, %sliceclone_BB_0 ], [ %1, %sliceclone_BB_1 ]
 ; CHECK-NEXT:   %1 = add nuw nsw i64 %0, 1
 ; CHECK-NEXT:   %2 = icmp eq i64 %1, 32000
 ; CHECK-NEXT:   br i1 %2, label %sliceclone_BB_2, label %sliceclone_BB_1
 ; CHECK-EMPTY:
 ; CHECK-NEXT: sliceclone_BB_2:                                  ; preds = %sliceclone_BB_3, %sliceclone_BB_1
-; CHECK-NEXT:   %3 = phi i64 [ %6, %sliceclone_BB_3 ], [ 0, %sliceclone_BB_1 ]
-; CHECK-NEXT:   %4 = phi float [ %5, %sliceclone_BB_3 ], [ 0.000000e+00, %sliceclone_BB_1 ]
+; CHECK-NEXT:   %3 = phi i64 [ %8, %sliceclone_BB_3 ], [ 0, %sliceclone_BB_1 ]
+; CHECK-NEXT:   %4 = phi float [ %7, %sliceclone_BB_3 ], [ 0.000000e+00, %sliceclone_BB_1 ]
+; CHECK-NEXT:   %5 = phi float [ %6, %sliceclone_BB_3 ], [ 0.000000e+00, %sliceclone_BB_1 ]
 ; CHECK-NEXT:   br label %sliceclone_BB_4
 ; CHECK-EMPTY:
 ; CHECK-NEXT: sliceclone_BB_3:                                  ; preds = %sliceclone_BB_4
-; CHECK-NEXT:   %5 = phi float [ undef, %sliceclone_BB_4 ]
-; CHECK-NEXT:   %6 = add nuw nsw i64 %3, 1
-; CHECK-NEXT:   %7 = icmp eq i64 %6, 256
-; CHECK-NEXT:   br i1 %7, label %sliceclone_BB_6, label %sliceclone_BB_2
+; CHECK-NEXT:   %6 = phi float [ %13, %sliceclone_BB_4 ]
+; CHECK-NEXT:   %7 = phi float [ %14, %sliceclone_BB_4 ]
+; CHECK-NEXT:   %8 = add nuw nsw i64 %3, 1
+; CHECK-NEXT:   %9 = icmp eq i64 %8, 256
+; CHECK-NEXT:   br i1 %9, label %sliceclone_BB_6, label %sliceclone_BB_2
 ; CHECK-EMPTY:
 ; CHECK-NEXT: sliceclone_BB_4:                                  ; preds = %sliceclone_BB_4, %sliceclone_BB_2
-; CHECK-NEXT:   %8 = phi i64 [ 0, %sliceclone_BB_2 ], [ %10, %sliceclone_BB_4 ]
-; CHECK-NEXT:   %9 = phi float [ %4, %sliceclone_BB_2 ], [ undef, %sliceclone_BB_4 ]
-; CHECK-NEXT:   %10 = add nuw nsw i64 %8, 1
-; CHECK-NEXT:   %11 = icmp eq i64 %10, 256
-; CHECK-NEXT:   br i1 %11, label %sliceclone_BB_3, label %sliceclone_BB_4
+; CHECK-NEXT:   %10 = phi i64 [ 0, %sliceclone_BB_2 ], [ %15, %sliceclone_BB_4 ]
+; CHECK-NEXT:   %11 = phi float [ %4, %sliceclone_BB_2 ], [ %14, %sliceclone_BB_4 ]
+; CHECK-NEXT:   %12 = phi float [ %5, %sliceclone_BB_2 ], [ %13, %sliceclone_BB_4 ]
+; CHECK-NEXT:   %13 = call float @_daedalus_slice_check__[[ID:[0-9]+]](float %12, i64 %3, i64 %10)
+; CHECK-NEXT:   %14 = call float @_daedalus_slice_check__[[ID:[0-9]+]](float %11, i64 %3, i64 %10)
+; CHECK-NEXT:   %15 = add nuw nsw i64 %10, 1
+; CHECK-NEXT:   %16 = icmp eq i64 %15, 256
+; CHECK-NEXT:   br i1 %16, label %sliceclone_BB_3, label %sliceclone_BB_4
 ; CHECK-EMPTY:
 ; CHECK-NEXT: sliceclone_BB_6:                                  ; preds = %sliceclone_BB_6, %sliceclone_BB_3
-; CHECK-NEXT:   %12 = phi float [ %12, %sliceclone_BB_6 ], [ %5, %sliceclone_BB_3 ]
-; CHECK-NEXT:   %13 = phi float [ %13, %sliceclone_BB_6 ], [ %5, %sliceclone_BB_3 ]
-; CHECK-NEXT:   %14 = phi i64 [ %15, %sliceclone_BB_6 ], [ 0, %sliceclone_BB_3 ]
-; CHECK-NEXT:   %15 = add nuw nsw i64 %14, 1
-; CHECK-NEXT:   %16 = icmp eq i64 %15, 65536
-; CHECK-NEXT:   br i1 %16, label %sliceclone_BB_{{19|20}}, label %sliceclone_BB_6
+; CHECK-NEXT:   %17 = phi float [ %17, %sliceclone_BB_6 ], [ %6, %sliceclone_BB_3 ]
+; CHECK-NEXT:   %18 = phi float [ %18, %sliceclone_BB_6 ], [ %7, %sliceclone_BB_3 ]
+; CHECK-NEXT:   %19 = phi i64 [ %20, %sliceclone_BB_6 ], [ 0, %sliceclone_BB_3 ]
+; CHECK-NEXT:   %20 = add nuw nsw i64 %19, 1
+; CHECK-NEXT:   %21 = icmp eq i64 %20, 65536
+; CHECK-NEXT:   br i1 %21, label %sliceclone_BB_5, label %sliceclone_BB_6
 ; CHECK-EMPTY:
-; CHECK-NEXT: sliceclone_BB_{{19|20}}:                                 ; preds = %sliceclone_BB_6
-; CHECK-NEXT:   %17 = phi float [ %12, %sliceclone_BB_6 ]
-; CHECK-NEXT:   %18 = phi float [ %13, %sliceclone_BB_6 ]
-; CHECK-NEXT:   %19 = fadd float %17, %18
-; CHECK-NEXT:   ret float %19
+; CHECK-NEXT: sliceclone_BB_5:                                  ; preds = %sliceclone_BB_6
+; CHECK-NEXT:   %22 = phi float [ %17, %sliceclone_BB_6 ]
+; CHECK-NEXT:   %23 = phi float [ %18, %sliceclone_BB_6 ]
+; CHECK-NEXT:   switch i32 undef, label %_daedalus_unreachable [
+; CHECK-NEXT:     i32 1, label %_daedalus_unreachable
+; CHECK-NEXT:     i32 2, label %_daedalus_unreachable
+; CHECK-NEXT:     i32 3, label %_daedalus_unreachable
+; CHECK-NEXT:     i32 4, label %_daedalus_unreachable
+; CHECK-NEXT:     i32 5, label %_daedalus_unreachable
+; CHECK-NEXT:     i32 11, label %_daedalus_unreachable
+; CHECK-NEXT:     i32 22, label %_daedalus_unreachable
+; CHECK-NEXT:     i32 33, label %_daedalus_unreachable
+; CHECK-NEXT:     i32 0, label %_daedalus_unreachable
+; CHECK-NEXT:     i32 12, label %_daedalus_unreachable
+; CHECK-NEXT:     i32 25, label %_daedalus_unreachable
+; CHECK-NEXT:     i32 13, label %_daedalus_unreachable
+; CHECK-NEXT:     i32 123, label %_daedalus_unreachable
+; CHECK-NEXT:     i32 1122, label %sliceclone_BB_19
+; CHECK-NEXT:     i32 112233, label %_daedalus_unreachable
+; CHECK-NEXT:     i32 111, label %_daedalus_unreachable
+; CHECK-NEXT:     i32 -1, label %_daedalus_unreachable
+; CHECK-NEXT:     i32 -12, label %_daedalus_unreachable
+; CHECK-NEXT:   ]
+; CHECK-EMPTY:
+; CHECK-NEXT: sliceclone_BB_19:                                 ; preds = %sliceclone_BB_5
+; CHECK-NEXT:   %24 = fadd float %22, %23
+; CHECK-NEXT:   ret float %24
+; CHECK-EMPTY:
+; CHECK-NEXT: _daedalus_unreachable:                            ; preds = %sliceclone_BB_5, %sliceclone_BB_5, %sliceclone_BB_5, %sliceclone_BB_5, %sliceclone_BB_5, %sliceclone_BB_5, %sliceclone_BB_5, %sliceclone_BB_5, %sliceclone_BB_5, %sliceclone_BB_5, %sliceclone_BB_5, %sliceclone_BB_5, %sliceclone_BB_5, %sliceclone_BB_5, %sliceclone_BB_5, %sliceclone_BB_5, %sliceclone_BB_5, %sliceclone_BB_5
+; CHECK-NEXT:   unreachable
+; CHECK-NEXT: }
+; CHECK-EMPTY:
+; CHECK-NEXT: ; Function Attrs: noinline nounwind optsize willreturn
+; CHECK-NEXT: define internal float @_daedalus_slice_check__[[ID:[0-9]+]]() #8 {
+; CHECK-NEXT: sliceclone_BB_0:
+; CHECK-NEXT:   br label %sliceclone_BB_1
+; CHECK-EMPTY:
+; CHECK-NEXT: sliceclone_BB_1:                                  ; preds = %sliceclone_BB_0, %sliceclone_BB_1
+; CHECK-NEXT:   %0 = phi i64 [ 0, %sliceclone_BB_0 ], [ %1, %sliceclone_BB_1 ]
+; CHECK-NEXT:   %1 = add nuw nsw i64 %0, 1
+; CHECK-NEXT:   %2 = icmp eq i64 %1, 32000
+; CHECK-NEXT:   br i1 %2, label %sliceclone_BB_2, label %sliceclone_BB_1
+; CHECK-EMPTY:
+; CHECK-NEXT: sliceclone_BB_2:                                  ; preds = %sliceclone_BB_3, %sliceclone_BB_1
+; CHECK-NEXT:   %3 = phi i64 [ %8, %sliceclone_BB_3 ], [ 0, %sliceclone_BB_1 ]
+; CHECK-NEXT:   %4 = phi float [ %7, %sliceclone_BB_3 ], [ 0.000000e+00, %sliceclone_BB_1 ]
+; CHECK-NEXT:   %5 = phi float [ %6, %sliceclone_BB_3 ], [ 0.000000e+00, %sliceclone_BB_1 ]
+; CHECK-NEXT:   br label %sliceclone_BB_4
+; CHECK-EMPTY:
+; CHECK-NEXT: sliceclone_BB_3:                                  ; preds = %sliceclone_BB_4
+; CHECK-NEXT:   %6 = phi float [ %13, %sliceclone_BB_4 ]
+; CHECK-NEXT:   %7 = phi float [ %14, %sliceclone_BB_4 ]
+; CHECK-NEXT:   %8 = add nuw nsw i64 %3, 1
+; CHECK-NEXT:   %9 = icmp eq i64 %8, 256
+; CHECK-NEXT:   br i1 %9, label %sliceclone_BB_6, label %sliceclone_BB_2
+; CHECK-EMPTY:
+; CHECK-NEXT: sliceclone_BB_4:                                  ; preds = %sliceclone_BB_4, %sliceclone_BB_2
+; CHECK-NEXT:   %10 = phi i64 [ 0, %sliceclone_BB_2 ], [ %15, %sliceclone_BB_4 ]
+; CHECK-NEXT:   %11 = phi float [ %4, %sliceclone_BB_2 ], [ %14, %sliceclone_BB_4 ]
+; CHECK-NEXT:   %12 = phi float [ %5, %sliceclone_BB_2 ], [ %13, %sliceclone_BB_4 ]
+; CHECK-NEXT:   %13 = call float @_daedalus_slice_check__[[ID:[0-9]+]](float %12, i64 %3, i64 %10)
+; CHECK-NEXT:   %14 = call float @_daedalus_slice_check__[[ID:[0-9]+]](float %11, i64 %3, i64 %10)
+; CHECK-NEXT:   %15 = add nuw nsw i64 %10, 1
+; CHECK-NEXT:   %16 = icmp eq i64 %15, 256
+; CHECK-NEXT:   br i1 %16, label %sliceclone_BB_3, label %sliceclone_BB_4
+; CHECK-EMPTY:
+; CHECK-NEXT: sliceclone_BB_6:                                  ; preds = %sliceclone_BB_6, %sliceclone_BB_3
+; CHECK-NEXT:   %17 = phi float [ %17, %sliceclone_BB_6 ], [ %6, %sliceclone_BB_3 ]
+; CHECK-NEXT:   %18 = phi float [ %18, %sliceclone_BB_6 ], [ %7, %sliceclone_BB_3 ]
+; CHECK-NEXT:   %19 = phi i64 [ %20, %sliceclone_BB_6 ], [ 0, %sliceclone_BB_3 ]
+; CHECK-NEXT:   %20 = add nuw nsw i64 %19, 1
+; CHECK-NEXT:   %21 = icmp eq i64 %20, 65536
+; CHECK-NEXT:   br i1 %21, label %sliceclone_BB_5, label %sliceclone_BB_6
+; CHECK-EMPTY:
+; CHECK-NEXT: sliceclone_BB_5:                                  ; preds = %sliceclone_BB_6
+; CHECK-NEXT:   %22 = phi float [ %17, %sliceclone_BB_6 ]
+; CHECK-NEXT:   %23 = phi float [ %18, %sliceclone_BB_6 ]
+; CHECK-NEXT:   switch i32 undef, label %_daedalus_unreachable [
+; CHECK-NEXT:     i32 1, label %_daedalus_unreachable
+; CHECK-NEXT:     i32 2, label %_daedalus_unreachable
+; CHECK-NEXT:     i32 3, label %_daedalus_unreachable
+; CHECK-NEXT:     i32 4, label %_daedalus_unreachable
+; CHECK-NEXT:     i32 5, label %_daedalus_unreachable
+; CHECK-NEXT:     i32 11, label %_daedalus_unreachable
+; CHECK-NEXT:     i32 22, label %_daedalus_unreachable
+; CHECK-NEXT:     i32 33, label %_daedalus_unreachable
+; CHECK-NEXT:     i32 0, label %_daedalus_unreachable
+; CHECK-NEXT:     i32 12, label %_daedalus_unreachable
+; CHECK-NEXT:     i32 25, label %_daedalus_unreachable
+; CHECK-NEXT:     i32 13, label %_daedalus_unreachable
+; CHECK-NEXT:     i32 123, label %_daedalus_unreachable
+; CHECK-NEXT:     i32 1122, label %_daedalus_unreachable
+; CHECK-NEXT:     i32 112233, label %sliceclone_BB_20
+; CHECK-NEXT:     i32 111, label %_daedalus_unreachable
+; CHECK-NEXT:     i32 -1, label %_daedalus_unreachable
+; CHECK-NEXT:     i32 -12, label %_daedalus_unreachable
+; CHECK-NEXT:   ]
+; CHECK-EMPTY:
+; CHECK-NEXT: sliceclone_BB_20:                                 ; preds = %sliceclone_BB_5
+; CHECK-NEXT:   %24 = fadd float %22, %23
+; CHECK-NEXT:   ret float %24
+; CHECK-EMPTY:
+; CHECK-NEXT: _daedalus_unreachable:                            ; preds = %sliceclone_BB_5, %sliceclone_BB_5, %sliceclone_BB_5, %sliceclone_BB_5, %sliceclone_BB_5, %sliceclone_BB_5, %sliceclone_BB_5, %sliceclone_BB_5, %sliceclone_BB_5, %sliceclone_BB_5, %sliceclone_BB_5, %sliceclone_BB_5, %sliceclone_BB_5, %sliceclone_BB_5, %sliceclone_BB_5, %sliceclone_BB_5, %sliceclone_BB_5, %sliceclone_BB_5
+; CHECK-NEXT:   unreachable
 ; CHECK-NEXT: }

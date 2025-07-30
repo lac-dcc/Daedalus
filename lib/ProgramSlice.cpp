@@ -513,9 +513,6 @@ uint ProgramSlice::canOutline(
     }
   }
 
-  // TODO: https://llvm.org/doxygen/CodeMoverUtils_8h.html
-  // isSafeToMoveBefore
-
   // LLVM does not provide alias/memory dependence information for allocas.
   // Thus, we track allocas that belong in the slice explicitly, so we can then
   // check if their memory is clobbered (changed) at any point in the slice
@@ -610,56 +607,6 @@ uint ProgramSlice::canOutline(
 }
 
 /**
- * @brief Reroutes branches in the slice to properly build control flow in
- * the delegate function.
- *
- * @details This function reroutes branches in the sliced function to ensure
- * that the control flow of the delegate function is correctly constructed
- * after instructions and basic blocks from the original function have
- * possibly been removed during slicing.
- *
- * @param F The function representing the sliced version of the original
- * function.
- */
-void ProgramSlice::rerouteBranches(Function *F, const PostDominatorTree &PDT) {
-  DominatorTree DT(*_parentFunction);
-  std::set<DomTreeNode *> visited;
-  DomTreeNode *parent = nullptr;
-
-  // Initialize dominance tree traversal and identify the initial parent block.
-  DomTreeNode *init = DT.getRootNode();
-  visited.insert(init);
-  if (_BBsInSlice.count(init->getBlock())) {
-    parent = init;
-  }
-
-  // Create a single unreachable block to simplify branch removal.
-  BasicBlock *unreachableBlock = createUnreachableBlock(F);
-
-  // Iterate over all basic blocks in the function to reroute branches.
-  for (BasicBlock &BB : *F) {
-    const BasicBlock *originalBB = _newToOrigBBmap[&BB];
-    if (originalBB == _initial->getParent())
-      continue; // skip slice criterion's basic block
-
-    if (const Instruction *terminator = BB.getTerminator(); !terminator) {
-      handleNoTerminatorBlock(BB, originalBB, F, DT, unreachableBlock, PDT);
-    } else {
-      handleTerminatorBlock(BB, originalBB, F, DT, unreachableBlock, PDT);
-    }
-  }
-
-  // Clean up the unreachable block if it was not used.
-  cleanupUnreachableBlock(unreachableBlock);
-
-  // Update PHI nodes after all branch rerouting is complete.
-  updatePHINodes(F);
-
-  // Debugging output for predecessors (optional).
-  logPredecessors(F);
-}
-
-/**
  * @brief Creates an unreachable block in the given function.
  *
  * This function creates a new basic block that contains an unreachable
@@ -676,321 +623,107 @@ BasicBlock *ProgramSlice::createUnreachableBlock(Function *F) {
   return unreachableBlock;
 }
 
-/**
- * @brief Handles the case where a basic block in the sliced function has no
- * terminator instruction.
- *
- * This function is responsible for reconstructing the control flow for a basic
- * block (`BB`) in the sliced function that does not have a terminator
- * instruction. It inspects the terminator of the corresponding original basic
- * block (`originalBB`) and delegates to the appropriate handler based on
- * whether the original terminator was a branch or a switch instruction.
- *
- * @param BB                Reference to the basic block in the sliced function
- * that lacks a terminator.
- * @param originalBB        Pointer to the corresponding basic block in the
- * original function.
- * @param F                 Pointer to the function containing the basic block.
- * @param DT                Reference to the dominator tree of the original
- * function.
- * @param unreachableBlock  Pointer to a special block used as a target for
- * unreachable control flow.
- */
-void ProgramSlice::handleNoTerminatorBlock(BasicBlock &BB,
-                                           const BasicBlock *originalBB,
-                                           const Function *F,
-                                           const DominatorTree &DT,
-                                           BasicBlock *unreachableBlock,
-                                           const PostDominatorTree &PDT) {
-  if (isa<BranchInst>(originalBB->getTerminator())) {
-    LLVM_DEBUG(dbgs() << "Parent BB without terminator (BranchInst): "
-                      << BB.getName() << "\n");
-    handleNoTerminatorBranch(BB, originalBB, F, DT, PDT);
-  } else if (isa<SwitchInst>(originalBB->getTerminator())) {
-    LLVM_DEBUG(dbgs() << "Parent BB without terminator (SwitchInst): "
-                      << BB.getName() << "\n");
-    handleNoTerminatorSwitch(BB, originalBB, DT, unreachableBlock, PDT);
-  }
-}
+void ProgramSlice::rerouteBranches(Function *F, const PostDominatorTree &PDT) {
+  DominatorTree DT(*_parentFunction);
+  BasicBlock *unreachableBlock = createUnreachableBlock(F);
 
-/**
- * @brief Handles the case where a basic block in the sliced function,
- * corresponding to an original block with a branch, has no terminator.
- *
- * This function reconstructs the control flow for a basic block (`BB`) in the
- * sliced function that lacks a terminator, when the corresponding original
- * basic block (`originalBB`) ended with a branch instruction. It iterates over
- * the original branch's successors, attempts to find or create a valid target
- * block in the slice, and creates a new branch to that target. It also updates
- * PHI nodes for the new successor as needed.
- *
- * @param BB Reference to the basic block in the sliced function that lacks a
- * terminator.
- * @param originalBB Pointer to the corresponding basic block in the original
- * function.
- * @param F Pointer to the function containing the basic block.
- * @param DT Reference to the dominator tree of the original function.
- */
-void ProgramSlice::handleNoTerminatorBranch(BasicBlock &BB,
-                                            const BasicBlock *originalBB,
-                                            const Function *F,
-                                            const DominatorTree &DT,
-                                            const PostDominatorTree &PDT) {
-  const auto *origBranch = cast<BranchInst>(originalBB->getTerminator());
+  for (BasicBlock &BB : *F) {
+    // Skip the criterion's block if needed
+    if (_newToOrigBBmap[&BB] == _initial->getParent()) continue;
 
-  SmallVector<BasicBlock *, 4> validTargets;
-  for (const BasicBlock *successor : origBranch->successors()) {
-    LLVM_DEBUG(dbgs() << "\tSuccessor: " << successor->getName() << "\n");
-    if (BasicBlock *newTarget =
-            getOrCreateTargetBlock(successor, originalBB, DT, PDT)) {
-      LLVM_DEBUG(dbgs() << "\tValid target: " << newTarget->getName() << "\n");
-      validTargets.push_back(newTarget);
-    }
-  }
+    const BasicBlock *origBB = _newToOrigBBmap[&BB];
+    Instruction *terminator = BB.getTerminator();
 
-  if (validTargets.empty()) {
-    // No valid targets found, do nothing (or could branch to unreachable)
-    return;
-  } else if (validTargets.size() == 1) {
-    BranchInst::Create(validTargets[0], &BB);
-    updatePHINodesForSuccessor(validTargets[0], originalBB, &BB, F, DT);
-  } else if (validTargets.size() == 2) {
-    // Conditional branch: use undef as condition if original is not available
-    Value *cond = nullptr;
-    if (auto *origCond = origBranch->getCondition()) {
-      if (auto *condInst = dyn_cast<Instruction>(origCond)) {
-        if (auto it = _origToNewInst.find(condInst); it != _origToNewInst.end())
-          cond = it->second;
-      }
-      if (!cond) cond = UndefValue::get(origCond->getType());
+    if (!terminator) {
+      // If block has no terminator, reconstruct based on original
+      reconstructTerminator(BB, origBB, F, DT, unreachableBlock, PDT);
     } else {
-      cond = UndefValue::get(Type::getInt1Ty(BB.getContext()));
+      // If block has a terminator, ensure all its successors are valid
+      rerouteTerminatorSuccessors(terminator, BB, origBB, F, DT,
+                                  unreachableBlock, PDT);
     }
-    BranchInst::Create(validTargets[0], validTargets[1], cond, &BB);
-    updatePHINodesForSuccessor(validTargets[0], originalBB, &BB, F, DT);
-    updatePHINodesForSuccessor(validTargets[1], originalBB, &BB, F, DT);
-  } else {
-    // More than two valid targets: fallback to unconditional branch to first
-    BranchInst::Create(validTargets[0], &BB);
-    updatePHINodesForSuccessor(validTargets[0], originalBB, &BB, F, DT);
   }
+
+  cleanupUnreachableBlock(unreachableBlock);
+  updatePHINodes(F);
+  logPredecessors(F);
 }
 
-/**
- * @brief Handles the case where a basic block in the sliced function,
- * corresponding to an original block with a switch, has no terminator.
- *
- * This function reconstructs the control flow for a basic block (`BB`) in the
- * sliced function that lacks a terminator, when the corresponding original
- * basic block (`originalBB`) ended with a switch instruction. It attempts to
- * map each case and the default destination of the original switch to valid
- * targets in the slice.
- * - If only one valid target is found, it creates a branch to that target.
- * - If no valid targets are found, it creates a branch to a fallback or
- * unreachable block.
- * - Otherwise, it creates a new switch instruction, mapping each case and the
- * default to the appropriate new or unreachable block.
- *
- * @param BB Reference to the basic block in the sliced function that lacks a
- * terminator.
- * @param originalBB Pointer to the corresponding basic block in the original
- * function.
- * @param DT Reference to the dominator tree of the original function.
- * @param unreachableBlock Pointer to a special block used as a target for
- * unreachable control flow.
- */
-void ProgramSlice::handleNoTerminatorSwitch(BasicBlock &BB,
-                                            const BasicBlock *originalBB,
-                                            const DominatorTree &DT,
-                                            BasicBlock *unreachableBlock,
-                                            const PostDominatorTree &PDT) {
-  auto *origSwitch = cast<SwitchInst>(originalBB->getTerminator());
-
-  SmallVector<BasicBlock *, 4> validTargets;
-  const BasicBlock *origDefault = origSwitch->getDefaultDest();
-  BasicBlock *d = getOrCreateTargetBlock(origDefault, originalBB, DT, PDT);
-  if (d) {
-    validTargets.push_back(d);
-  }
-
-  for (auto &Case : origSwitch->cases()) {
-    const BasicBlock *origSucc = Case.getCaseSuccessor();
-    BasicBlock *t = getOrCreateTargetBlock(origSucc, originalBB, DT, PDT);
-    if (t) {
-      validTargets.push_back(t);
-    }
-  }
-
-  // Create a branch if there's only one valid target
-  if (validTargets.size() == 1) {
-    BranchInst::Create(validTargets[0], &BB);
-    return;
-  }
-
-  // If the switch has more than two valid targets, create a new switch and
-  // replace missing condition with an undefined value
-  if (validTargets.size() >= 2) {
-    unsigned numCases = origSwitch->getNumCases();
-    Value *newCondition = nullptr;
-    if (auto *condInst = dyn_cast<Instruction>(origSwitch->getCondition())) {
-      if (auto it = _origToNewInst.find(condInst); it != _origToNewInst.end())
-        newCondition = it->second;
-    }
-    if (!newCondition) {
-      newCondition = UndefValue::get(origSwitch->getCondition()->getType());
-    }
-    SwitchInst *newSwitch =
-        SwitchInst::Create(newCondition, unreachableBlock, numCases, &BB);
-
-    BasicBlock *d = getOrCreateTargetBlock(origDefault, originalBB, DT, PDT);
-    newSwitch->setDefaultDest(d ? d : unreachableBlock);
-
-    for (auto &Case : origSwitch->cases()) {
-      const ConstantInt *caseVal = Case.getCaseValue();
-      const BasicBlock *origSucc = Case.getCaseSuccessor();
-      BasicBlock *dest = getOrCreateTargetBlock(origSucc, originalBB, DT, PDT);
-      newSwitch->addCase(const_cast<ConstantInt *>(caseVal),
-                         dest ? dest : unreachableBlock);
-    }
-  }
-}
-
-/**
- * @brief Handles the terminator instruction of a basic block within a program
- * slice.
- *
- * This function inspects the terminator instruction of the given basic block
- * (`BB`). If the terminator is a branch instruction, it delegates handling to
- * `handleExistingBranchInst`. If the terminator is a switch instruction, it
- * delegates handling to `handleExistingSwitchInst`.
- *
- * @param BB                Reference to the basic block whose terminator is to
- * be handled.
- * @param originalBB        Pointer to the original basic block, may be used for
- * context.
- * @param F                 Pointer to the function containing the basic block.
- * @param DT                Reference to the dominator tree for dominance
- * queries.
- * @param unreachableBlock  Pointer to a basic block representing unreachable
- * code, if applicable.
- */
-void ProgramSlice::handleTerminatorBlock(BasicBlock &BB,
-                                         const BasicBlock *originalBB,
-                                         Function *F, const DominatorTree &DT,
+void ProgramSlice::reconstructTerminator(BasicBlock &BB,
+                                         const BasicBlock *origBB, Function *F,
+                                         const DominatorTree &DT,
                                          BasicBlock *unreachableBlock,
                                          const PostDominatorTree &PDT) {
-  if (auto *BI = dyn_cast<BranchInst>(BB.getTerminator())) {
-    LLVM_DEBUG(dbgs() << "Parent BB WITH terminator (BranchInst): "
-                      << BB.getName() << "\n");
-    handleExistingBranchInst(BI, BB, originalBB, F, DT, unreachableBlock, PDT);
-  } else if (auto *SI = dyn_cast<SwitchInst>(BB.getTerminator())) {
-    LLVM_DEBUG(dbgs() << "Parent BB WITH terminator (SwitchInst): "
-                      << BB.getName() << "\n");
-    handleExistingSwitchInst(SI, BB, originalBB, F, DT, unreachableBlock, PDT);
+  const Instruction *origTerm = origBB->getTerminator();
+  if (auto *origBranch = dyn_cast<BranchInst>(origTerm)) {
+    SmallVector<BasicBlock *, 2> targets;
+    for (const BasicBlock *succ : origBranch->successors()) {
+      if (BasicBlock *target = getOrCreateTargetBlock(succ, origBB, DT, PDT)) {
+        targets.push_back(target);
+      }
+    }
+    if (targets.empty()) {
+      BranchInst::Create(unreachableBlock, &BB);
+    } else if (targets.size() == 1) {
+      BranchInst::Create(targets[0], &BB);
+      updatePHINodesForSuccessor(targets[0], origBB, &BB);
+    } else {
+      Value *cond = getClonedOrUndef(origBranch->getCondition(), &BB);
+      BranchInst::Create(targets[0], targets[1], cond, &BB);
+      updatePHINodesForSuccessor(targets[0], origBB, &BB);
+      updatePHINodesForSuccessor(targets[1], origBB, &BB);
+    }
+  } else if (auto *origSwitch = dyn_cast<SwitchInst>(origTerm)) {
+    Value *cond = getClonedOrUndef(origSwitch->getCondition(), &BB);
+    SwitchInst *newSwitch = SwitchInst::Create(cond, unreachableBlock,
+                                               origSwitch->getNumCases(), &BB);
+    for (auto &Case : origSwitch->cases()) {
+      BasicBlock *target =
+          getOrCreateTargetBlock(Case.getCaseSuccessor(), origBB, DT, PDT);
+      newSwitch->addCase(const_cast<ConstantInt *>(Case.getCaseValue()),
+                         target ? target : unreachableBlock);
+    }
+    BasicBlock *def =
+        getOrCreateTargetBlock(origSwitch->getDefaultDest(), origBB, DT, PDT);
+    newSwitch->setDefaultDest(def ? def : unreachableBlock);
+    // Optionally, update PHI nodes here too
   }
+  // Optionally handle other terminator types
 }
 
-/**
- * @brief Handles the successors of an existing BranchInst within a program
- * slice.
- *
- * This function iterates over all successors of the given BranchInst (`BI`) and
- * ensures that each successor is valid within the current function (`F`). If a
- * successor is not part of the current function, it attempts to find or create
- * a suitable target block using `getOrCreateTargetBlock`. If a valid new
- * successor is found, it updates the branch instruction and corresponding PHI
- * nodes. If not, it reroutes the branch to an unreachable block to maintain
- * correctness.
- *
- * @param BI The branch instruction whose successors are to be handled.
- * @param currentBB The current basic block containing the branch instruction.
- * @param originalBB The original basic block from which the slice is derived.
- * @param F The function in which the slicing is being performed.
- * @param DT The dominator tree for the function, used for control flow
- * analysis.
- * @param unreachableBlock The block to reroute to if no valid successor can be
- * found.
- */
-void ProgramSlice::handleExistingBranchInst(
-    BranchInst *BI, BasicBlock &currentBB, const BasicBlock *originalBB,
+void ProgramSlice::rerouteTerminatorSuccessors(
+    Instruction *terminator, BasicBlock &BB, const BasicBlock *origBB,
     Function *F, const DominatorTree &DT, BasicBlock *unreachableBlock,
     const PostDominatorTree &PDT) {
-  for (unsigned int idx = 0; idx < BI->getNumSuccessors(); ++idx) {
-    BasicBlock *successor = BI->getSuccessor(idx);
-    // If the successor is within the current function, no rerouting is needed
-    // for it.
-    if (successor->getParent() == F) {
-      continue;
+  if (auto *br = dyn_cast<BranchInst>(terminator)) {
+    for (unsigned idx = 0; idx < br->getNumSuccessors(); ++idx) {
+      BasicBlock *succ = br->getSuccessor(idx);
+      if (succ->getParent() == F) continue;
+      BasicBlock *target = getOrCreateTargetBlock(succ, origBB, DT, PDT);
+      if (!target) target = unreachableBlock;
+      br->setSuccessor(idx, target);
+      updatePHINodesForSuccessor(target, origBB, &BB);
     }
-    LLVM_DEBUG(dbgs() << "\tSuccessor: " << successor->getName() << "\n");
-    if (BasicBlock *newSucc =
-            getOrCreateTargetBlock(successor, originalBB, DT, PDT)) {
-      LLVM_DEBUG(dbgs() << "\tNew Successor: " << newSucc->getName() << "\n");
-      BI->setSuccessor(idx, newSucc);
-      for (Instruction &I : *newSucc) {
-        if (!isa<PHINode>(I)) {
-          continue;
-        }
-        PHINode *phi = cast<PHINode>(&I);
-        phi->replaceIncomingBlockWith(successor, &currentBB);
-      }
-    } else {
-      // If no valid new successor, reroute to the unreachable block.
-      replaceUsesAndSetSuccessor(successor, unreachableBlock, F, BI, idx);
+  } else if (auto *sw = dyn_cast<SwitchInst>(terminator)) {
+    for (unsigned idx = 0; idx < sw->getNumSuccessors(); ++idx) {
+      BasicBlock *succ = sw->getSuccessor(idx);
+      if (succ->getParent() == F) continue;
+      BasicBlock *target = getOrCreateTargetBlock(succ, origBB, DT, PDT);
+      if (!target) target = unreachableBlock;
+      sw->setSuccessor(idx, target);
+      updatePHINodesForSuccessor(target, origBB, &BB);
     }
   }
+  // Optionally handle other multi-successor terminators
 }
 
-/**
- * @brief Handles the rerouting of successors for an existing SwitchInst within
- * a function slice.
- *
- * This method iterates over all successors of the given SwitchInst (SI) and
- * ensures that each successor is valid within the current function context. If
- * a successor belongs to a different function, it attempts to create or
- * retrieve a suitable target block within the current function. If a valid new
- * successor cannot be found or created, the successor is rerouted to an
- * unreachable block. PHI nodes are updated as necessary to maintain
- * correctness.
- *
- * @param SI The SwitchInst whose successors are to be handled.
- * @param currentBB The current basic block being processed.
- * @param originalBB The original basic block from which the slice was created.
- * @param F The function in which the switch instruction resides.
- * @param DT The dominator tree for the function, used for control flow
- * analysis.
- * @param unreachableBlock The block to reroute to if no valid successor can be
- * found.
- */
-void ProgramSlice::handleExistingSwitchInst(
-    SwitchInst *SI, BasicBlock &currentBB, const BasicBlock *originalBB,
-    Function *F, const DominatorTree &DT, BasicBlock *unreachableBlock,
-    const PostDominatorTree &PDT) {
-  for (unsigned int idx = 0; idx < SI->getNumSuccessors(); ++idx) {
-    BasicBlock *successor = SI->getSuccessor(idx);
-    // If the successor is within the current function, no rerouting is needed
-    // for it.
-    if (successor->getParent() == F) {
-      continue;
-    }
-    LLVM_DEBUG(dbgs() << "\tSuccessor: " << successor->getName() << "\n");
-
-    if (BasicBlock *newSucc =
-            getOrCreateTargetBlock(successor, originalBB, DT, PDT)) {
-      LLVM_DEBUG(dbgs() << "\tNew Successor: " << newSucc->getName() << "\n");
-      SI->setSuccessor(idx, newSucc);
-      for (Instruction &I : *newSucc) {
-        if (!isa<PHINode>(I)) {
-          continue;
-        }
-        PHINode *phi = cast<PHINode>(&I);
-        phi->replaceIncomingBlockWith(successor, &currentBB);
-      }
-    } else {
-      // If no valid new successor, reroute to the unreachable block.
-      replaceUsesAndSetSuccessor(successor, unreachableBlock, F, SI, idx);
-    }
+Value *ProgramSlice::getClonedOrUndef(Value *origCond, BasicBlock *context) {
+  if (!origCond) return UndefValue::get(Type::getInt1Ty(context->getContext()));
+  if (auto *inst = dyn_cast<Instruction>(origCond)) {
+    auto it = _origToNewInst.find(inst);
+    if (it != _origToNewInst.end()) return it->second;
   }
+  return UndefValue::get(origCond->getType());
 }
 
 /**
@@ -1118,91 +851,16 @@ ProgramSlice::getNewTargetByFirstDominator(const BasicBlock *successor,
   return newTarget;
 }
 
-/**
- * @brief Updates PHI nodes in a successor basic block to reflect changes in
- * control flow.
- *
- * This function iterates over all instructions in the given successor basic
- * block (`newSuccessor`) and updates any PHI nodes that have
- * `originalIncomingBlock` as an incoming block. The update replaces
- * `originalIncomingBlock` with `currentBB` as the incoming block. The update
- * logic considers dominance relationships to ensure correctness, particularly
- * when the original incoming block is not part of the current function (`F`).
- * In such cases, the function checks the dominator tree to determine if the
- * replacement should occur.
- *
- * @param newSuccessor The successor basic block whose PHI nodes may need
- * updating.
- * @param originalIncomingBlock The original incoming block to be replaced in
- * PHI nodes.
- * @param currentBB The basic block to use as the new incoming block in PHI
- * nodes.
- * @param F The function containing the basic blocks.
- * @param DT The dominator tree for the function, used to check dominance
- * relationships.
- */
 void ProgramSlice::updatePHINodesForSuccessor(
     BasicBlock *newSuccessor, const BasicBlock *originalIncomingBlock,
-    BasicBlock *currentBB, const Function *F, const DominatorTree &DT) {
+    BasicBlock *currentBB) {
   for (Instruction &I : *newSuccessor) {
-    if (auto *phi = dyn_cast<PHINode>(&I)) {
-      // This part handles a specific dominance-based PHI update.
-      // It checks if the original incoming block's dominator chain leads back
-      // to currentBB.
-      if (originalIncomingBlock->getParent() !=
-          F) { // Check if originalIncomingBlock is not in the current
-               // function
-               // F
-        if (const DomTreeNode *origBBNode = DT.getNode(originalIncomingBlock)) {
-          const DomTreeNode *ancestorNode = origBBNode->getIDom();
-          while (ancestorNode) {
-            if (ancestorNode->getBlock() == originalIncomingBlock) {
-              phi->replaceIncomingBlockWith(originalIncomingBlock, currentBB);
-              break;
-            }
-            ancestorNode = ancestorNode->getIDom();
-          }
-        }
-      } else {
-        // If originalIncomingBlock is in F, simply replace it.
-        phi->replaceIncomingBlockWith(originalIncomingBlock, currentBB);
-      }
+    if (!isa<PHINode>(I)) {
+      continue;
     }
+    PHINode *phi = cast<PHINode>(&I);
+    phi->replaceIncomingBlockWith(originalIncomingBlock, currentBB);
   }
-}
-
-/**
- * @brief Replaces all uses of a given successor basic block with an
- * unreachable block within a specific function, and updates the terminator
- * instruction to set the unreachable block as the new successor.
- *
- * This function searches for all uses of the specified successor basic block
- * (`successorToReplace`) within the provided function (`F`) and replaces them
- * with the given unreachable block (`unreachableBlock`). Only uses where the
- * user is an instruction belonging to the function `F` are replaced. After
- * replacing the uses, the function updates the provided terminator
- * instruction
- * (`terminator`) to set the unreachable block as the successor at the
- * specified index (`successorIndex`).
- *
- * @param successorToReplace The basic block whose uses are to be replaced.
- * @param unreachableBlock The basic block to replace uses with.
- * @param F The function in which to perform the replacement.
- * @param terminator The terminator instruction whose successor will be
- * updated.
- * @param successorIndex The index of the successor to update in the
- * terminator instruction.
- */
-void ProgramSlice::replaceUsesAndSetSuccessor(BasicBlock *successorToReplace,
-                                              BasicBlock *unreachableBlock,
-                                              Function *F,
-                                              Instruction *terminator,
-                                              unsigned int successorIndex) {
-  successorToReplace->replaceUsesWithIf(unreachableBlock, [F](const Use &U) {
-    auto *UserI = dyn_cast<Instruction>(U.getUser());
-    return UserI && UserI->getParent()->getParent() == F;
-  });
-  terminator->setSuccessor(successorIndex, unreachableBlock);
 }
 
 /**

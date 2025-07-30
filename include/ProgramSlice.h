@@ -69,10 +69,6 @@ private:
   /// block of a function is always its entry block.
   static void reorderBlocks(Function *F);
 
-  /// Reroutes branches in the slice to properly build control flow in the
-  /// delegate function.
-  void rerouteBranches(Function *F, const PostDominatorTree &PDT);
-
   /// Adds a return instruction to function F, returning the computed
   /// value of the sliced function.
   ReturnInst *addReturnValue(Function *F);
@@ -116,42 +112,22 @@ private:
   /// Helper function to create an unreachable block.
   static BasicBlock *createUnreachableBlock(Function *F);
 
-  /// Helper function to handle basic blocks without terminators.
-  void handleNoTerminatorBlock(BasicBlock &BB, const BasicBlock *originalBB,
-                               const Function *F, const DominatorTree &DT,
-                               BasicBlock *unreachableBlock,
-                               const PostDominatorTree &PDT);
+  /// Reroutes branches in the slice to properly build control flow in the
+  /// delegate function.
+  void rerouteBranches(Function *F, const PostDominatorTree &PDT);
 
-  /// Helper for blocks without terminators: handles original BranchInst.
-  void handleNoTerminatorBranch(BasicBlock &BB, const BasicBlock *originalBB,
-                                const Function *F, const DominatorTree &DT,
-                                const PostDominatorTree &PDT);
-
-  /// Helper for blocks without terminators: handles original SwitchInst.
-  void handleNoTerminatorSwitch(BasicBlock &BB, const BasicBlock *originalBB,
-                                const DominatorTree &DT,
-                                BasicBlock *unreachableBlock,
-                                const PostDominatorTree &PDT);
-
-  /// Helper function to handle basic blocks with existing terminators.
-  void handleTerminatorBlock(BasicBlock &BB, const BasicBlock *originalBB,
+  void reconstructTerminator(BasicBlock &BB, const BasicBlock *origBB,
                              Function *F, const DominatorTree &DT,
                              BasicBlock *unreachableBlock,
                              const PostDominatorTree &PDT);
 
-  /// Helper for blocks with terminators: handles existing BranchInst.
-  void handleExistingBranchInst(BranchInst *BI, BasicBlock &currentBB,
-                                const BasicBlock *originalBB, Function *F,
-                                const DominatorTree &DT,
-                                BasicBlock *unreachableBlock,
-                                const PostDominatorTree &PDT);
+  void rerouteTerminatorSuccessors(Instruction *terminator, BasicBlock &BB,
+                                   const BasicBlock *origBB, Function *F,
+                                   const DominatorTree &DT,
+                                   BasicBlock *unreachableBlock,
+                                   const PostDominatorTree &PDT);
 
-  /// Helper for blocks with terminators: handles existing SwitchInst.
-  void handleExistingSwitchInst(SwitchInst *SI, BasicBlock &currentBB,
-                                const BasicBlock *originalBB, Function *F,
-                                const DominatorTree &DT,
-                                BasicBlock *unreachableBlock,
-                                const PostDominatorTree &PDT);
+  Value *getClonedOrUndef(Value *origCond, BasicBlock *context);
 
   /// Determines the target block for a successor, potentially finding a
   /// dominated node if direct mapping fails.
@@ -161,16 +137,10 @@ private:
                                      const PostDominatorTree &PDT);
 
   /// Updates PHI nodes in the new successor block.
-  static void updatePHINodesForSuccessor(
-      BasicBlock *newSuccessor, const BasicBlock *originalIncomingBlock,
-      BasicBlock *currentBB, const Function *F, const DominatorTree &DT);
-
-  /// Replaces uses of a successor with the unreachable block and updates the
-  /// terminator.
-  static void replaceUsesAndSetSuccessor(BasicBlock *successorToReplace,
-                                         BasicBlock *unreachableBlock,
-                                         Function *F, Instruction *terminator,
-                                         unsigned int successorIndex);
+  static void
+  updatePHINodesForSuccessor(BasicBlock *newSuccessor,
+                             const BasicBlock *originalIncomingBlock,
+                             BasicBlock *currentBB);
 
   /// Cleans up the unreachable block if it wasn't used.
   static void cleanupUnreachableBlock(BasicBlock *unreachableBlock);
