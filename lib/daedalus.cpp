@@ -123,6 +123,10 @@ uint listInstructionsToRemove(Instruction *start,
   while (!worklist.empty()) {
     Instruction *cur = worklist.top();
     worklist.pop();
+    if (!cur) {
+      LLVM_DEBUG(dbgs() << "\t\tCurrent instruction is null...\n");
+      continue;
+    }
     if (visited.count(cur)) continue;
     visited.insert(cur);
 
@@ -711,7 +715,11 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
     functionSlicesToDot(M, toSimplify);
   }
 
-  assert(!verifyModule(M, &errs())); // assert module is not broken
+  if (verifyModule(M, &errs())) {
+    errs() << "Module verification failed! Printing module:\n";
+    M.print(errs(), nullptr);
+    assert(false && "Module verification failed!");
+  }
 
   return PreservedAnalyses::none();
 }

@@ -4,6 +4,7 @@ add_library(daedalus SHARED
 	debugCommon.cpp
 	ProgramSlice.cpp
 	reports.cpp
+  PHIGateAnalyzer.cpp
 )
 
 target_include_directories(daedalus PUBLIC

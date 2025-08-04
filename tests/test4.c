@@ -1,63 +1,51 @@
 /*
- * Test sign extensions on short signed values passed as arguments
- * to function calls.  Include arithmetic to produce extra high bits
- * from operations that overflow.  Lots of codes do this!
- */
+  This is an example of tricky ladder graph, inspired by the LLVM Test Suite program
+  called "SingleSource/UnitTests/2003-07-09-SignedArgs".
+*/
 #include <stdio.h>
-#include <stdarg.h>
-#include <inttypes.h>
+#include <stdlib.h>
 
-typedef signed char schar;
-
-short getShort(schar c, schar c2, schar c3, short s, short s2, int i);
-int   getUnknown(schar c, ...);
-
-int passShort(schar c, short s)
-{
-  schar c2 = s + c;
-  schar c3 = s - c;
-  short s2 = s * c;
-  int    i = s * s * c * c;
-  short s3 = getShort(c, c2, c3, s, s2, i);   /* args shd be sign-extended */
-  return getUnknown(c, c2, c3, s, s2, s3, i); /* args shd be promoted to int */
+void tricky_ladder(int a, int b, int c) {
+  int d = a + b;
+  if (a < 41) {
+    if (b < 33) {
+      if (c < 25) {
+        d = d * c;
+        if (c < 17) {
+          printf("d value: %d\n", d);
+        } else {
+        block3:
+          printf("w value: %d\n", d);
+        }
+      } else {
+      block2:
+        d = a * d;
+        printf("y value: %d\n", d);
+        goto block3;
+      }
+    } else {
+    block1:
+      printf("q value: %d\n", d);
+      goto block2;
+    }
+  } else {
+    printf("x value: %d\n", d);
+    goto block1;
+  }
+  int t = d << 16;
+  printf("t value: %d\n", t);
 }
 
-int main()
-{
-  printf("%d\n", passShort(0x80, 0xf0f4));
+int main(int argc, char *argv[]) {
+  if (argc < 4) {
+    fprintf(stderr, "Usage: %s <arg1> <arg2> <arg3>\n", argv[0]);
+    return 1;
+  }
+  int arg1 = atoi(argv[1]);
+  int arg2 = atoi(argv[2]);
+  int arg3 = atoi(argv[3]);
+  int val1 = arg1 * arg2;
+  int val2 = arg3 * arg2;
+  tricky_ladder(argc, val1, val2);
   return 0;
-}
-
-short getShort(schar c, schar c2, schar c3, short s, short s2, int i)
-{
-  int bc  = c  == (schar) -128;
-  int bc2 = c2 == (schar) 116;
-  int bc3 = c3 == (schar) 116;
-  int bs  = s  == (short) -3852;
-  int bs2 = s2 == (short) -31232;
-  int bi  = i  == (int) -1708916736;
-  
-  printf("getShort():\t%d %d %d %d %d %d\n", bc, bc2, bc3, bs, bs2, bi);
-  printf("getShort():\t%d %d %d %d %d %d\n",  c,  c2,  c3,  s,  s2,  i);
-  return (c + c2 + c3 + s + s2) + (short) i;
-}
-
-int getUnknown(schar c, ...)
-{
-  schar c2, c3;
-  short s, s2, s3;
-  int i;
-  va_list ap;
-
-  va_start(ap, c);
-  c2 = (schar) va_arg(ap, int);
-  c3 = (schar) va_arg(ap, int);
-  s  = (short) va_arg(ap, int);
-  s2 = (short) va_arg(ap, int);
-  s3 = (short) va_arg(ap, int);
-  i  =         va_arg(ap, int);
-  va_end(ap);
-
-  printf("getUnknown():\t%d %d %d %d %d %d %d\n", c, c2, c3, s, s2, s3, i);
-  return c + c2 + c3 + s + s2 + s3 + i;
 }
