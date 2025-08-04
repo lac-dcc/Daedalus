@@ -55,7 +55,7 @@ llvm-objcopy --dump-section .llvmbc="$SOURCEFILENAMELL" "$ORIGINAL_EXECUTABLE"
 opt -S -passes=mem2reg,lcssa "$SOURCEFILENAMELL" -o "$SOURCEFILENAMELL"
 
 if ! opt -stats \
-         -debug-only=daedalus,ProgramSlice \
+         -debug-only=daedalus,ProgramSlice,PHIGateAnalyzer \
          -passes=daedalus \
          -load-pass-plugin="$SHAREDOBJECTFILE" \
          -dump-dot \

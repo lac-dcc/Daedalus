@@ -1,7 +1,10 @@
 #include "../include/PHIGateAnalyzer.h"
 #include "llvm/ADT/PostOrderIterator.h"
+#include "llvm/Support/Debug.h"
 
 #include <vector>
+
+#define DEBUG_TYPE "PHIGateAnalyzer"
 
 using namespace llvm;
 
@@ -211,23 +214,25 @@ PHIGateAnalyzer::getGatesForAllPhis() {
   DenseMap<const BasicBlock *, PHIGateAnalyzer::GateInfo> result =
       run(allBlocks);
 
-  for (const auto &entry : result) {
-    const BasicBlock *BB = entry.first;
-    const auto &GI = entry.second;
-    dbgs() << "Block: " << BB->getName() << "\n";
-    dbgs() << "  Gamma: ";
-    if (GI.GammaFunction)
-      GI.GammaFunction->print(dbgs());
-    else
-      dbgs() << "(none)";
-    dbgs() << "\n";
-    dbgs() << "  Mu: ";
-    if (GI.MuFunction)
-      GI.MuFunction->print(dbgs());
-    else
-      dbgs() << "(none)";
-    dbgs() << "\n";
-  }
+  LLVM_DEBUG({
+    for (const auto &entry : result) {
+      const BasicBlock *BB = entry.first;
+      const auto &GI = entry.second;
+      dbgs() << "Block: " << BB->getName() << "\n";
+      dbgs() << "  Gamma: ";
+      if (GI.GammaFunction)
+        GI.GammaFunction->print(dbgs());
+      else
+        dbgs() << "(none)";
+      dbgs() << "\n";
+      dbgs() << "  Mu: ";
+      if (GI.MuFunction)
+        GI.MuFunction->print(dbgs());
+      else
+        dbgs() << "(none)";
+      dbgs() << "\n";
+    }
+  });
 
   // Now, resolve the symbolic path expressions into concrete Value* gates.
   std::unordered_map<const BasicBlock *, SmallVector<const Value *>> AllGates;
@@ -314,8 +319,6 @@ PHIGateAnalyzer::run(const SmallPtrSet<const BasicBlock *, 8> &InitialDefs) {
 
     // --- MERGE PHASE ---
     // Process children in a topological order of the dependencies between them.
-    // For simplicity, we iterate multiple times until all paths are resolved.
-    // A true implementation would build a dependency graph and topsort it.
     bool changed = true;
     int pass = 0;
     const int maxPasses = uNode->getNumChildren() + 1;

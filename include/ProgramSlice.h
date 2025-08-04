@@ -22,8 +22,6 @@
 
 // #include "llvm/Transforms/IPO/FunctionMerging.h"
 
-#include "../include/PHIGateAnalyzer.h"
-
 namespace llvm {
 
 class ProgramSlice {
@@ -100,19 +98,17 @@ private:
   std::map<const BasicBlock *, SmallVector<const BasicBlock *>>
   computeFirstDominatorsInSlice() const;
 
-  std::map<const BasicBlock *, const BasicBlock *>
-  computeAttractors() const;
-
-  BasicBlock *getNewTargetByAttractor(const BasicBlock *succ);
-
   /// Returns a new target basic block determined by the first dominator of the
   /// given successor block.
   BasicBlock *getNewTargetByFirstDominator(const BasicBlock *successor,
-                                           const BasicBlock *originalBB);
+                                           const BasicBlock *originalBB,
+                                           const DominatorTree &DT,
+                                           const PostDominatorTree &PDT);
 
   // Checks if the first dominator of curBB in the slice is originalBB
   bool isFirstDominatorInSlice(const BasicBlock *curBB,
-                               const BasicBlock *originalBB) const;
+                               const BasicBlock *originalBB,
+                               const DominatorTree &DT) const;
 
   /// Helper function to create an unreachable block.
   static BasicBlock *createUnreachableBlock(Function *F);
@@ -179,8 +175,6 @@ private:
   std::map<const BasicBlock *, SmallVector<const BasicBlock *>>
       _firstDominators;
 
-  std::map<const BasicBlock *, const BasicBlock *> _attractors;
-
   /// maps BasicBlocks in the original function to their new cloned counterparts
   /// in the slice
   std::map<const BasicBlock *, BasicBlock *> _origToNewBBmap;
@@ -190,6 +184,10 @@ private:
   /// the slice
   std::map<Instruction *, Instruction *> _origToNewInst;
   std::map<Instruction *, Instruction *> _newToOrigInst;
+
+  LoopInfo *_loopInfo;
+  Loop *_loop;
+  BasicBlock *_loopHeader;
 };
 } // namespace llvm
 

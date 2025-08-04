@@ -14,7 +14,6 @@
 #include <tuple>
 #include <utility>
 
-#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/AliasSetTracker.h"
@@ -123,8 +122,8 @@ std::pair<Status, dataDependence> getDataDependencies(
     const Instruction &I,
     std::unordered_map<const BasicBlock *, SmallVector<const Value *>>
         &predicates,
-    const LoopInfo &loopInfo, const Loop *loop, const BasicBlock *loopHeader,
-    const DominatorTree &DT, const PostDominatorTree &PDT) {
+    const Loop *loop, const BasicBlock *loopHeader, const DominatorTree &DT,
+    const PostDominatorTree &PDT) {
 
   Status status = {true, ""};
   SmallVector<const Value *> deps;
@@ -234,9 +233,9 @@ ProgramSlice::ProgramSlice(Instruction &Initial, Function &F,
   assert(Initial.getParent()->getParent() == &F &&
          "Slicing instruction from different function!");
 
-  LoopInfo &loopInfo = FAM.getResult<LoopAnalysis>(F);
-  Loop *loop = loopInfo.getLoopFor(Initial.getParent());
-  BasicBlock *loopHeader = (loop) ? loop->getHeader() : nullptr;
+  _loopInfo = &FAM.getResult<LoopAnalysis>(F);
+  _loop = _loopInfo->getLoopFor(Initial.getParent());
+  _loopHeader = (_loop) ? _loop->getHeader() : nullptr;
   DominatorTree &DT = FAM.getResult<DominatorTreeAnalysis>(F);
   PostDominatorTree &PDT = FAM.getResult<PostDominatorTreeAnalysis>(F);
 
@@ -265,8 +264,8 @@ ProgramSlice::ProgramSlice(Instruction &Initial, Function &F,
     }
   });
 
-  auto [check, data] = getDataDependencies(Initial, predicates, loopInfo, loop,
-                                           loopHeader, DT, PDT);
+  auto [check, data] =
+      getDataDependencies(Initial, predicates, _loop, _loopHeader, DT, PDT);
 
   if (!check.status) {
     _canOutline.first = check.status;
@@ -333,7 +332,6 @@ ProgramSlice::ProgramSlice(Instruction &Initial, Function &F,
   });
 
   _firstDominators = computeFirstDominatorsInSlice();
-  _attractors = computeAttractors();
 
   LLVM_DEBUG({
     dbgs() << "First dominators in slice:\n";
@@ -345,19 +343,6 @@ ProgramSlice::ProgramSlice(Instruction &Initial, Function &F,
           const BasicBlock *bb = *bbIt;
           dbgs() << bb->getName() << ", ";
         }
-      } else {
-        dbgs() << "nullptr";
-      }
-      dbgs() << "\n";
-    }
-  });
-
-  LLVM_DEBUG({
-    dbgs() << "Attractors in slice:\n";
-    for (const auto &entry : _attractors) {
-      dbgs() << "  " << entry.first->getName() << " -> ";
-      if (entry.second) {
-        dbgs() << entry.second->getName();
       } else {
         dbgs() << "nullptr";
       }
@@ -412,30 +397,6 @@ ProgramSlice::computeFirstDominatorsInSlice() const {
     }
   }
   return firstDominators;
-}
-
-std::map<const BasicBlock *, const BasicBlock *>
-ProgramSlice::computeAttractors() const {
-  std::map<const BasicBlock *, const BasicBlock *> attractors;
-  const PostDominatorTree PDT(*_parentFunction);
-  for (const BasicBlock &BB : *_parentFunction) {
-    if (_BBsInSlice.count(&BB) > 0) {
-      attractors[&BB] = &BB;
-      continue;
-    }
-    const DomTreeNode *OrigBB = PDT.getNode(&BB);
-    const DomTreeNode *Cand = OrigBB->getIDom();
-    while (Cand != nullptr) {
-      if (_BBsInSlice.count(Cand->getBlock()) > 0) {
-        break;
-      }
-      Cand = Cand->getIDom();
-    }
-    if (Cand) {
-      attractors[&BB] = Cand->getBlock();
-    }
-  }
-  return attractors;
 }
 
 /**
@@ -792,11 +753,12 @@ BasicBlock *ProgramSlice::getOrCreateTargetBlock(const BasicBlock *successor,
                                                  const BasicBlock *originalBB,
                                                  const DominatorTree &DT,
                                                  const PostDominatorTree &PDT) {
-  BasicBlock *newTarget = getNewTargetByFirstDominator(successor, originalBB);
+  if (_loop && !_loop->contains(successor)) {
+    return nullptr;
+  }
 
-  // Alternatively, if the first dominator method fails, try using the
-  // attractor method.
-  // if (!newTarget) newTarget = getNewTargetByAttractor(successor);
+  BasicBlock *newTarget =
+      getNewTargetByFirstDominator(successor, originalBB, DT, PDT);
 
   return newTarget;
 }
@@ -815,7 +777,8 @@ BasicBlock *ProgramSlice::getOrCreateTargetBlock(const BasicBlock *successor,
  * otherwise.
  */
 bool ProgramSlice::isFirstDominatorInSlice(const BasicBlock *curBB,
-                                           const BasicBlock *originalBB) const {
+                                           const BasicBlock *originalBB,
+                                           const DominatorTree &DT) const {
   if (_firstDominators.count(curBB)) {
     const auto curBBDominators = _firstDominators.at(curBB);
     auto currFirstDominator = curBBDominators.front();
@@ -825,13 +788,11 @@ bool ProgramSlice::isFirstDominatorInSlice(const BasicBlock *curBB,
       return true;
     }
 
-    // Fixes test4.c, but may add incorrect branches.
-    // TODO: find another way to fix test4.c
-    // const DominatorTree DT(*_parentFunction);
-    // if (DT.dominates(currFirstDominator, originalBB) &&
-    //     !DT.dominates(curBB, originalBB)) {
-    //   return true;
-    // }
+    // Fixes test4.c and deals with ladder graphs
+    if (DT.dominates(currFirstDominator, originalBB) &&
+        !DT.dominates(curBB, originalBB)) {
+      return true;
+    }
   }
   return false;
 }
@@ -854,9 +815,9 @@ bool ProgramSlice::isFirstDominatorInSlice(const BasicBlock *curBB,
  * @return The new target basic block in the sliced program, or nullptr if not
  * found.
  */
-BasicBlock *
-ProgramSlice::getNewTargetByFirstDominator(const BasicBlock *successor,
-                                           const BasicBlock *originalBB) {
+BasicBlock *ProgramSlice::getNewTargetByFirstDominator(
+    const BasicBlock *successor, const BasicBlock *originalBB,
+    const DominatorTree &DT, const PostDominatorTree &PDT) {
   BasicBlock *newTarget = nullptr;
   // If the block is in the slice, it is its own attractor.
   if (_BBsInSlice.count(successor)) {
@@ -877,10 +838,19 @@ ProgramSlice::getNewTargetByFirstDominator(const BasicBlock *successor,
     if (!visited.insert(curBB).second) continue;
     if (curBB == originalBB) continue; // skip the source block itself
 
+    // Skip traversing from loop latches or blocks outside the current loop
+    if (_loop) {
+      if (_loop->contains(curBB)) {
+        if (_loop->isLoopLatch(curBB)) continue;
+      } else {
+        continue;
+      }
+    }
+
     LLVM_DEBUG(dbgs() << "\t\tVisiting CFG block: " << curBB->getName()
                       << "\n");
 
-    if (isFirstDominatorInSlice(curBB, originalBB)) {
+    if (isFirstDominatorInSlice(curBB, originalBB, DT)) {
       found = curBB;
       break;
     }
@@ -897,15 +867,6 @@ ProgramSlice::getNewTargetByFirstDominator(const BasicBlock *successor,
   }
   return newTarget;
 }
-
-BasicBlock *ProgramSlice::getNewTargetByAttractor(const BasicBlock *succ) {
-  if (!succ) return nullptr;
-  const auto attIt = _attractors.find(succ);
-  if (attIt == _attractors.end()) return nullptr;
-  const auto mapIt = _origToNewBBmap.find(attIt->second);
-  if (mapIt == _origToNewBBmap.end()) return nullptr;
-  return mapIt->second;
-};
 
 void ProgramSlice::updatePHINodesForSuccessor(
     BasicBlock *newSuccessor, const BasicBlock *originalIncomingBlock,
