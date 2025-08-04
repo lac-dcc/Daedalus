@@ -1306,6 +1306,15 @@ Function *ProgramSlice::outline() {
   const std::string errorMsg(
       "Original function name: " + _parentFunction->getName().str() + "\n");
 
+  // int numEntryBlocks = 0;
+  // for (BasicBlock &BB : *F)
+  //   if (BB.hasNPredecessors(0)) ++numEntryBlocks;
+  // if (numEntryBlocks != 1) {
+  //   errs() << errorMsg;
+  // }
+  // assert(numEntryBlocks == 1 &&
+  //        "The only block with no predecessors must be the entry block.");
+
   if (verifyFunction(*F, &errs())) {
     errs() << errorMsg;
     assert(false && "Function verification failed.");
