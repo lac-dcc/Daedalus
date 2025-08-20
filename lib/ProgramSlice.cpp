@@ -838,14 +838,21 @@ BasicBlock *ProgramSlice::getNewTargetByFirstDominator(
     if (!visited.insert(curBB).second) continue;
     if (curBB == originalBB) continue; // skip the source block itself
 
+    // Second try:
+    // If the current block is not post-dominated by the initial block, skip it
+    // if (!PDT.dominates(_initial->getParent(), curBB)) {
+    //   return nullptr;
+    // }
+
+    // Second try:
     // Skip traversing from loop latches or blocks outside the current loop
-    if (_loop) {
-      if (_loop->contains(curBB)) {
-        if (_loop->isLoopLatch(curBB)) continue;
-      } else {
-        continue;
-      }
-    }
+    // if (_loop) {
+    //   if (_loop->contains(curBB)) {
+    //     if (_loop->isLoopLatch(curBB)) continue;
+    //   } else {
+    //     continue;
+    //   }
+    // }
 
     LLVM_DEBUG(dbgs() << "\t\tVisiting CFG block: " << curBB->getName()
                       << "\n");
