@@ -128,7 +128,7 @@ private:
                                    BasicBlock *unreachableBlock,
                                    const PostDominatorTree &PDT);
 
-  Value *getClonedOrUndef(Value *origCond, BasicBlock *context);
+  Value *getClonedCond(Value *origCond);
 
   /// Determines the target block for a successor, potentially finding a
   /// dominated node if direct mapping fails.

@@ -183,7 +183,7 @@ void PHIGateAnalyzer::collectGates(
           collectGates(arg.Lhs, Gates, Visited);
           collectGates(arg.Rhs, Gates, Visited);
         } else if constexpr (std::is_same_v<T, SpecialExpr>) {
-          // ~secial case~ The paper assumes that SpecialExpr is an
+          // ~special case~ The paper assumes that SpecialExpr is an
           // unconditional branch, then a lambda expression is set with the
           // controlling predecessor. But we want to propagate the gate of that
           // predecessor, so we collect the predecessor's gates.
