@@ -189,8 +189,6 @@ uint removeInstructions(const std::vector<SliceStruct> &allSlices,
                         const std::set<Function *> &mergeTo,
                         std::set<Function *> &toSimplify) {
   std::set<Instruction *> toRemove;
-  std::map<Instruction *, Function *> newCalls;
-
   uint dontMerge = 0;
 
   for (const SliceStruct &slice : allSlices) {

@@ -28,9 +28,8 @@ Daedalus is an out-of-tree LLVM pass. Therefore, you can compile and install it 
 
 ```shell
 $ mkdir build
-$ cd build
-$ cmake -DLLVM_DIR={path_to_llvm_project} ../
-$ cmake --build .
+$ cmake -DLLVM_DIR=$(llvm-config --cmakedir) -S . -B build
+$ cmake --build build
 ```
 
 **Disclaimer**: This pass depends on a custom fork of [LLVM 17](https://github.com/Casperento/llvm-project/tree/merge-functions-pass).

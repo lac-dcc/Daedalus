@@ -137,7 +137,7 @@ std::pair<Status, dataDependence> getDataDependencies(
 
   // Helper to process operands
   auto processOperand = [&](const Value *operand) {
-    if (isa<GlobalVariable>(operand)) { // ~special case~
+    if (isa<GlobalVariable>(operand)) {
       status = {false, "Some dependency is on a Global Variable."};
       return false;
     }
@@ -672,13 +672,13 @@ void ProgramSlice::reconstructTerminator(BasicBlock &BB,
       BranchInst::Create(targets[0], &BB);
       updatePHINodesForSuccessor(targets[0], origBB, &BB);
     } else {
-      Value *cond = getClonedOrUndef(origBranch->getCondition(), &BB);
+      Value *cond = getClonedCond(origBranch->getCondition());
       BranchInst::Create(targets[0], targets[1], cond, &BB);
       updatePHINodesForSuccessor(targets[0], origBB, &BB);
       updatePHINodesForSuccessor(targets[1], origBB, &BB);
     }
   } else if (auto *origSwitch = dyn_cast<SwitchInst>(origTerm)) {
-    Value *cond = getClonedOrUndef(origSwitch->getCondition(), &BB);
+    Value *cond = getClonedCond(origSwitch->getCondition());
     SwitchInst *newSwitch = SwitchInst::Create(cond, unreachableBlock,
                                                origSwitch->getNumCases(), &BB);
     for (auto &Case : origSwitch->cases()) {
@@ -690,7 +690,6 @@ void ProgramSlice::reconstructTerminator(BasicBlock &BB,
     BasicBlock *def =
         getOrCreateTargetBlock(origSwitch->getDefaultDest(), origBB, DT, PDT);
     newSwitch->setDefaultDest(def ? def : unreachableBlock);
-    // Optionally, update PHI nodes here too
   }
 }
 
@@ -721,14 +720,16 @@ void ProgramSlice::rerouteTerminatorSuccessors(
       updatePHINodesForSuccessor(target, origBB, &BB);
     }
   }
-  // Optionally handle other multi-successor terminators
 }
 
-Value *ProgramSlice::getClonedOrUndef(Value *origCond, BasicBlock *context) {
-  if (!origCond) return UndefValue::get(Type::getInt1Ty(context->getContext()));
+Value *ProgramSlice::getClonedCond(Value *origCond) {
   if (auto *inst = dyn_cast<Instruction>(origCond)) {
     auto it = _origToNewInst.find(inst);
     if (it != _origToNewInst.end()) return it->second;
+  }
+  if (auto *arg = dyn_cast<Argument>(origCond)) {
+    auto it = std::find(_depArgs.begin(), _depArgs.end(), arg);
+    if (it != _depArgs.end()) return *it;
   }
   return UndefValue::get(origCond->getType());
 }
@@ -753,13 +754,8 @@ BasicBlock *ProgramSlice::getOrCreateTargetBlock(const BasicBlock *successor,
                                                  const BasicBlock *originalBB,
                                                  const DominatorTree &DT,
                                                  const PostDominatorTree &PDT) {
-  if (_loop && !_loop->contains(successor)) {
-    return nullptr;
-  }
-
   BasicBlock *newTarget =
       getNewTargetByFirstDominator(successor, originalBB, DT, PDT);
-
   return newTarget;
 }
 
@@ -838,11 +834,17 @@ BasicBlock *ProgramSlice::getNewTargetByFirstDominator(
     if (!visited.insert(curBB).second) continue;
     if (curBB == originalBB) continue; // skip the source block itself
 
-    // Skip traversing from loop latches or blocks outside the current loop
-    if (_loop) {
+    // Skip traversing from loop header or blocks outside the current loop
+    if (_loop && !_loop->isInvalid()) {
       if (_loop->contains(curBB)) {
-        if (_loop->isLoopLatch(curBB)) continue;
+        if (_loop->getHeader() == curBB) {
+          LLVM_DEBUG(dbgs() << "\t\tCFG block is a loop header: "
+                            << curBB->getName() << "\n");
+          continue;
+        }
       } else {
+        LLVM_DEBUG(dbgs() << "\t\tCFG block is not in loop: "
+                          << curBB->getName() << "\n");
         continue;
       }
     }
