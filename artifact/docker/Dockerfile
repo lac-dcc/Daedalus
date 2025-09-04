@@ -23,6 +23,8 @@ RUN git clone --depth 100 -b merge-functions-pass https://github.com/Casperento/
 WORKDIR llvm-project
 RUN mkdir -p build
 RUN cmake -G Ninja \
+	-DCMAKE_C_COMPILER=clang \
+	-DCMAKE_CXX_COMPILER=clang++ \
 	-DLLVM_ENABLE_PROJECTS='clang;compiler-rt;lld' \
 	-DCMAKE_BUILD_TYPE="Release" \
 	-DLLVM_TARGETS_TO_BUILD=X86 \
