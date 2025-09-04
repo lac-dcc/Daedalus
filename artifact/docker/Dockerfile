@@ -25,6 +25,7 @@ RUN mkdir -p build
 RUN cmake -G Ninja \
 	-DCMAKE_C_COMPILER=clang \
 	-DCMAKE_CXX_COMPILER=clang++ \
+	-DCMAKE_CXX_FLAGS="-O2" \
 	-DLLVM_ENABLE_PROJECTS='clang;compiler-rt;lld' \
 	-DCMAKE_BUILD_TYPE="Release" \
 	-DLLVM_TARGETS_TO_BUILD=X86 \
@@ -60,6 +61,7 @@ RUN mkdir -p build
 RUN cmake -G Ninja \
 	-DCMAKE_C_COMPILER=clang \
 	-DCMAKE_CXX_COMPILER=clang++ \
+	-DCMAKE_CXX_FLAGS="-O2" \
 	-DLLVM_ENABLE_PROJECTS='clang;compiler-rt;lld' \
 	-DCMAKE_BUILD_TYPE="Release" \
 	-DLLVM_TARGETS_TO_BUILD=X86 \
