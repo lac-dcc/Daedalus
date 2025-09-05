@@ -66,7 +66,7 @@ WORKDIR /src/daedalus-dbg-toolkit
 RUN ./run-experiment.sh -w 10 \
 	-t 120 \
 	--llvm-project /src/llvm-project \
-	--code-size-llvm-project /src/code-size \
+	--code-size /src/code-size \
 	--llvm-test-suite /src/llvm-test-suite \
 	--daedalus /src/Daedalus \
 	--lit-results /lit-results \
