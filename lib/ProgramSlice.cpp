@@ -227,7 +227,8 @@ std::pair<Status, dataDependence> getDataDependencies(
  * LoopInfo.
  */
 ProgramSlice::ProgramSlice(Instruction &Initial, Function &F,
-                           FunctionAnalysisManager &FAM)
+                           FunctionAnalysisManager &FAM,
+                           std::unordered_map<const BasicBlock *, SmallVector<const Value *>> &predicates)
     : _initial(&Initial), _parentFunction(&F) {
 
   assert(Initial.getParent()->getParent() == &F &&
@@ -238,11 +239,6 @@ ProgramSlice::ProgramSlice(Instruction &Initial, Function &F,
   _loopHeader = (_loop) ? _loop->getHeader() : nullptr;
   DominatorTree &DT = FAM.getResult<DominatorTreeAnalysis>(F);
   PostDominatorTree &PDT = FAM.getResult<PostDominatorTreeAnalysis>(F);
-
-  std::unordered_map<const BasicBlock *, SmallVector<const Value *>> predicates;
-
-  PHIGateAnalyzer Analyzer(F, DT);
-  predicates = Analyzer.getGatesForAllPhis();
 
   LLVM_DEBUG({
     dbgs() << "\nPredicates mapping:\n";
