@@ -15,7 +15,6 @@ RUN apt install -y sudo \
 
 RUN python3 -m venv /src/venv-py
 ENV PATH="/src/venv-py/bin:$PATH"
-RUN python3 -m pip install --upgrade pandas scipy psutil
 
 # Clone and Build LLVM 17
 RUN git clone --depth 100 -b merge-functions-pass https://github.com/Casperento/llvm-project.git 
@@ -69,4 +68,5 @@ RUN ./run-experiment.sh -w 10 \
 	--llvm-test-suite /src/llvm-test-suite \
 	--daedalus /src/Daedalus \
 	--lit-results /lit-results \
-	--errors-dbg /src/daedalus-dbg-toolkit
+	--errors-dbg /src/daedalus-dbg-toolkit \
+	--venv /src/venv-py
