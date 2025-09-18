@@ -8,7 +8,6 @@
 
 #include <map>
 #include <queue>
-#include <random>
 #include <set>
 #include <stack>
 #include <tuple>
@@ -41,7 +40,6 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/Utils/Local.h"
 
-#include "../include/PHIGateAnalyzer.h"
 #include "../include/daedalus.h"
 
 #define DEBUG_TYPE "ProgramSlice"
