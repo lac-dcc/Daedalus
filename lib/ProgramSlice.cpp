@@ -8,7 +8,6 @@
 
 #include <map>
 #include <queue>
-#include <random>
 #include <set>
 #include <stack>
 #include <tuple>
@@ -41,7 +40,6 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/Utils/Local.h"
 
-#include "../include/PHIGateAnalyzer.h"
 #include "../include/daedalus.h"
 
 #define DEBUG_TYPE "ProgramSlice"
@@ -226,8 +224,10 @@ std::pair<Status, dataDependence> getDataDependencies(
  * @param FAM The function analysis manager for accessing analyses like
  * LoopInfo.
  */
-ProgramSlice::ProgramSlice(Instruction &Initial, Function &F,
-                           FunctionAnalysisManager &FAM)
+ProgramSlice::ProgramSlice(
+    Instruction &Initial, Function &F, FunctionAnalysisManager &FAM,
+    std::unordered_map<const BasicBlock *, SmallVector<const Value *>>
+        &predicates)
     : _initial(&Initial), _parentFunction(&F) {
 
   assert(Initial.getParent()->getParent() == &F &&
@@ -238,11 +238,6 @@ ProgramSlice::ProgramSlice(Instruction &Initial, Function &F,
   _loopHeader = (_loop) ? _loop->getHeader() : nullptr;
   DominatorTree &DT = FAM.getResult<DominatorTreeAnalysis>(F);
   PostDominatorTree &PDT = FAM.getResult<PostDominatorTreeAnalysis>(F);
-
-  std::unordered_map<const BasicBlock *, SmallVector<const Value *>> predicates;
-
-  PHIGateAnalyzer Analyzer(F, DT);
-  predicates = Analyzer.getGatesForAllPhis();
 
   LLVM_DEBUG({
     dbgs() << "\nPredicates mapping:\n";
@@ -1240,7 +1235,7 @@ void ProgramSlice::createNewEntryBlock(Function *F) {
  * @return A pointer to the newly created Function representing the outlined
  * program slice, or nullptr if outlining is not possible.
  */
-Function *ProgramSlice::outline() {
+Function *ProgramSlice::outline(unsigned int *counter) {
   PostDominatorTree PDT(*_parentFunction);
   // Get function's return type. If the function is an add of integers,
   // then the function must return an integer.
@@ -1262,18 +1257,9 @@ Function *ProgramSlice::outline() {
   }
   FunctionType *delegateFunctionType = FunctionType::get(FreturnType, v, false);
 
-  // generate a random number to use as suffix for delegate function, to
-  // avoid naming conflicts NOTE: we cannot use a simple counter that gets
-  // incremented on every slice here, because when optimizing per
-  // translation unit, the same function may be sliced across different
-  // translation units
-  std::random_device rd;
-  std::mt19937 mt(rd());
-  std::uniform_int_distribution<int64_t> dist(1, 1000000000);
-  const uint64_t random_num = dist(mt);
-  const std::string functionName =
-      "_daedalus_slice_" + _parentFunction->getName().str() + "_" +
-      _initial->getName().str() + "_" + std::to_string(random_num);
+  const std::string functionName = "_daedalus_slice_" +
+                                   _parentFunction->getName().str() + "_" +
+                                   std::to_string(*counter);
 
   Function *F =
       Function::Create(delegateFunctionType, Function::ExternalLinkage,

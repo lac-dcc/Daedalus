@@ -1,5 +1,5 @@
 ; CHECK: ; Function Attrs: noinline nounwind optsize willreturn
-; CHECK-NEXT: define internal i32 @_daedalus_slice_tricky_ladder__[[ID:[0-9]+]](i32 %0, i32 %1, i32 %2) #3 {
+; CHECK-NEXT: define internal i32 @_daedalus_slice_tricky_ladder_[[ID:[0-9]+]](i32 %0, i32 %1, i32 %2) #3 {
 ; CHECK-NEXT: sliceclone_BB_0:
 ; CHECK-NEXT:   %3 = add nsw i32 %1, %2
 ; CHECK-NEXT:   %4 = icmp slt i32 %2, 41
@@ -36,7 +36,7 @@
 ; CHECK-NEXT: }
 ; CHECK-EMPTY:
 ; CHECK-NEXT: ; Function Attrs: noinline nounwind optsize willreturn
-; CHECK-NEXT: define internal i32 @_daedalus_slice_main__[[ID:[0-9]+]](ptr %0) #3 {
+; CHECK-NEXT: define internal i32 @_daedalus_slice_main_[[ID:[0-9]+]](ptr %0) #3 {
 ; CHECK-NEXT: sliceclone_BB_2:
 ; CHECK-NEXT:   %1 = getelementptr inbounds ptr, ptr %0, i64 1
 ; CHECK-NEXT:   %2 = load ptr, ptr %1, align 8, !tbaa !7

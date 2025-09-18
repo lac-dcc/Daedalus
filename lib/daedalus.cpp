@@ -5,6 +5,7 @@
  *  @date   2024-07-08
  ***********************************************/
 #include "../include/daedalus.h"
+#include "../include/PHIGateAnalyzer.h"
 #include "../include/ProgramSlice.h"
 #include "../include/debugCommon.h"
 #include "../include/reports.h"
@@ -489,6 +490,7 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
   FunctionAnalysisManager &FAM =
       MAM.getResult<FunctionAnalysisManagerModuleProxy>(M).getManager();
 
+  unsigned int outline_counter = 0;
   for (Function *F : FtoMap) {
     uint ki = 0;
     for (auto &BB : *F) {
@@ -504,13 +506,19 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
     // Search for try-catch logic inside the current function
     std::set<const BasicBlock *> tryCatchBlocks = searchForTryCatchLogic(*F);
 
+    // Construct gating functions for all PHI nodes in the function
+    DominatorTree &DT = FAM.getResult<DominatorTreeAnalysis>(*F);
+    PHIGateAnalyzer GSAAnalyzer(*F, DT);
+    std::unordered_map<const BasicBlock *, SmallVector<const Value *>>
+        predicates = GSAAnalyzer.getGatesForAllPhis();
+    LLVM_DEBUG(dbgs() << "daedalus.cpp: Function: " << F->getName() << ",\n");
+
     // Replace all uses of I with the correpondent call to the new outlined
     // function
     for (Instruction *I : S) {
       if (!canBeSliceCriterion(*I)) continue;
 
-      LLVM_DEBUG(dbgs() << "daedalus.cpp: Function: " << F->getName()
-                        << ",\n\tInstruction (Basic Block: "
+      LLVM_DEBUG(dbgs() << "\tInstruction (Basic Block: "
                         << I->getParent()->getName() << "):\n\t\t" << *I
                         << "\n");
 
@@ -523,7 +531,7 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
         continue;
       }
 
-      ProgramSlice ps = ProgramSlice(*I, *F, FAM);
+      ProgramSlice ps = ProgramSlice(*I, *F, FAM, predicates);
 
       TargetLibraryInfo &TLI = FAM.getResult<TargetLibraryAnalysis>(*F);
       AAResults *AA = &FAM.getResult<AAManager>(*F);
@@ -560,8 +568,9 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
         }
       });
 
-      Function *G = ps.outline();
+      Function *G = ps.outline(&outline_counter);
       if (G == nullptr) continue;
+      outline_counter++;
 
       // Get the original instruction to check if it can be removed
       std::map<Instruction *, Instruction *> constOriginalInst =

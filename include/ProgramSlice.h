@@ -21,13 +21,16 @@
 #include "llvm/Support/Error.h"
 
 // #include "llvm/Transforms/IPO/FunctionMerging.h"
+#include "PHIGateAnalyzer.h"
 
 namespace llvm {
 
 class ProgramSlice {
 public:
   /// Constructs a ProgramSlice object.
-  ProgramSlice(Instruction &I, Function &F, FunctionAnalysisManager &FAM);
+  ProgramSlice(Instruction &I, Function &F, FunctionAnalysisManager &FAM,
+               std::unordered_map<const BasicBlock *,
+                                  SmallVector<const Value *>> &predicates);
 
   /// Checks if current slice can be outlined into a standalone function.
   uint canOutline(AAResults *AA, TargetLibraryInfo &TLI,
@@ -44,7 +47,7 @@ public:
   std::map<Instruction *, Instruction *> getInstructionInSlice();
 
   /// Outlines the given slice into a standalone Function.
-  Function *outline();
+  Function *outline(unsigned int *counter);
 
   /// A function to simplify basic blocks of a function using the same
   /// method as the SimplifyCFGPass
