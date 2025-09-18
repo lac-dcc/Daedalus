@@ -490,6 +490,7 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
   FunctionAnalysisManager &FAM =
       MAM.getResult<FunctionAnalysisManagerModuleProxy>(M).getManager();
 
+  unsigned int outline_counter = 0;
   for (Function *F : FtoMap) {
     uint ki = 0;
     for (auto &BB : *F) {
@@ -567,8 +568,9 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
         }
       });
 
-      Function *G = ps.outline();
+      Function *G = ps.outline(&outline_counter);
       if (G == nullptr) continue;
+      outline_counter++;
 
       // Get the original instruction to check if it can be removed
       std::map<Instruction *, Instruction *> constOriginalInst =

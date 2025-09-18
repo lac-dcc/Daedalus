@@ -1,5 +1,5 @@
 ; CHECK: ; Function Attrs: noinline nounwind optsize willreturn
-; CHECK-NEXT: define internal float @_daedalus_slice_check__[[ID:[0-9]+]](float %0, i64 %1, i64 %2) #8 {
+; CHECK-NEXT: define internal float @_daedalus_slice_check_[[ID:[0-9]+]](float %0, i64 %1, i64 %2) #8 {
 ; CHECK-NEXT: sliceclone_BB_4:
 ; CHECK-NEXT:   %3 = getelementptr inbounds [256 x float], ptr getelementptr inbounds (%struct.GlobalData, ptr @global_data, i64 0, i32 15, i64 0, i64 0), i64 %1, i64 %2
 ; CHECK-NEXT:   %4 = load float, ptr %3, align 4, !tbaa !7
@@ -8,7 +8,7 @@
 ; CHECK-NEXT: }
 ; CHECK-EMPTY:
 ; CHECK-NEXT: ; Function Attrs: noinline nounwind optsize willreturn
-; CHECK-NEXT: define internal float @_daedalus_slice_check__[[ID:[0-9]+]](float %0, i64 %1, i64 %2) #8 {
+; CHECK-NEXT: define internal float @_daedalus_slice_check_[[ID:[0-9]+]](float %0, i64 %1, i64 %2) #8 {
 ; CHECK-NEXT: sliceclone_BB_4:
 ; CHECK-NEXT:   %3 = getelementptr inbounds [256 x float], ptr getelementptr inbounds (%struct.GlobalData, ptr @global_data, i64 0, i32 18, i64 0, i64 0), i64 %1, i64 %2
 ; CHECK-NEXT:   %4 = load float, ptr %3, align 4, !tbaa !7
@@ -17,7 +17,7 @@
 ; CHECK-NEXT: }
 ; CHECK-EMPTY:
 ; CHECK-NEXT: ; Function Attrs: noinline nounwind optsize willreturn
-; CHECK-NEXT: define internal float @_daedalus_slice_check__[[ID:[0-9]+]](float %0, i64 %1, i64 %2) #8 {
+; CHECK-NEXT: define internal float @_daedalus_slice_check_[[ID:[0-9]+]](float %0, i64 %1, i64 %2) #8 {
 ; CHECK-NEXT: sliceclone_BB_4:
 ; CHECK-NEXT:   %3 = getelementptr inbounds [256 x float], ptr getelementptr inbounds (%struct.GlobalData, ptr @global_data, i64 0, i32 21, i64 0, i64 0), i64 %1, i64 %2
 ; CHECK-NEXT:   %4 = load float, ptr %3, align 4, !tbaa !7
@@ -26,7 +26,7 @@
 ; CHECK-NEXT: }
 ; CHECK-EMPTY:
 ; CHECK-NEXT: ; Function Attrs: noinline nounwind optsize willreturn
-; CHECK-NEXT: define internal float @_daedalus_slice_check__[[ID:[0-9]+]]() #8 {
+; CHECK-NEXT: define internal float @_daedalus_slice_check_[[ID:[0-9]+]]() #8 {
 ; CHECK-NEXT: sliceclone_BB_0:
 ; CHECK-NEXT:   br label %sliceclone_BB_1
 ; CHECK-EMPTY:
@@ -53,8 +53,8 @@
 ; CHECK-NEXT:   %10 = phi i64 [ 0, %sliceclone_BB_2 ], [ %15, %sliceclone_BB_4 ]
 ; CHECK-NEXT:   %11 = phi float [ %4, %sliceclone_BB_2 ], [ %14, %sliceclone_BB_4 ]
 ; CHECK-NEXT:   %12 = phi float [ %5, %sliceclone_BB_2 ], [ %13, %sliceclone_BB_4 ]
-; CHECK-NEXT:   %13 = call float @_daedalus_slice_check__[[ID:[0-9]+]](float %12, i64 %3, i64 %10)
-; CHECK-NEXT:   %14 = call float @_daedalus_slice_check__[[ID:[0-9]+]](float %11, i64 %3, i64 %10)
+; CHECK-NEXT:   %13 = call float @_daedalus_slice_check_[[ID:[0-9]+]](float %12, i64 %3, i64 %10)
+; CHECK-NEXT:   %14 = call float @_daedalus_slice_check_[[ID:[0-9]+]](float %11, i64 %3, i64 %10)
 ; CHECK-NEXT:   %15 = add nuw nsw i64 %10, 1
 ; CHECK-NEXT:   %16 = icmp eq i64 %15, 256
 ; CHECK-NEXT:   br i1 %16, label %sliceclone_BB_3, label %sliceclone_BB_4
@@ -100,7 +100,7 @@
 ; CHECK-NEXT: }
 ; CHECK-EMPTY:
 ; CHECK-NEXT: ; Function Attrs: noinline nounwind optsize willreturn
-; CHECK-NEXT: define internal float @_daedalus_slice_check__[[ID:[0-9]+]]() #8 {
+; CHECK-NEXT: define internal float @_daedalus_slice_check_[[ID:[0-9]+]]() #8 {
 ; CHECK-NEXT: sliceclone_BB_0:
 ; CHECK-NEXT:   br label %sliceclone_BB_1
 ; CHECK-EMPTY:
@@ -127,8 +127,8 @@
 ; CHECK-NEXT:   %10 = phi i64 [ 0, %sliceclone_BB_2 ], [ %15, %sliceclone_BB_4 ]
 ; CHECK-NEXT:   %11 = phi float [ %4, %sliceclone_BB_2 ], [ %14, %sliceclone_BB_4 ]
 ; CHECK-NEXT:   %12 = phi float [ %5, %sliceclone_BB_2 ], [ %13, %sliceclone_BB_4 ]
-; CHECK-NEXT:   %13 = call float @_daedalus_slice_check__[[ID:[0-9]+]](float %12, i64 %3, i64 %10)
-; CHECK-NEXT:   %14 = call float @_daedalus_slice_check__[[ID:[0-9]+]](float %11, i64 %3, i64 %10)
+; CHECK-NEXT:   %13 = call float @_daedalus_slice_check_[[ID:[0-9]+]](float %12, i64 %3, i64 %10)
+; CHECK-NEXT:   %14 = call float @_daedalus_slice_check_[[ID:[0-9]+]](float %11, i64 %3, i64 %10)
 ; CHECK-NEXT:   %15 = add nuw nsw i64 %10, 1
 ; CHECK-NEXT:   %16 = icmp eq i64 %15, 256
 ; CHECK-NEXT:   br i1 %16, label %sliceclone_BB_3, label %sliceclone_BB_4

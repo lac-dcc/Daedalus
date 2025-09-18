@@ -1,5 +1,5 @@
 ; CHECK: ; Function Attrs: noinline nounwind optsize willreturn
-; CHECK-NEXT: define internal i32 @_daedalus_slice_main__[[ID:[0-9]+]](i64 %0) #4 {
+; CHECK-NEXT: define internal i32 @_daedalus_slice_main_[[ID:[0-9]+]](i64 %0) #4 {
 ; CHECK-NEXT: sliceclone_BB_1:
 ; CHECK-NEXT:   %1 = shl nuw nsw i64 %0, 1
 ; CHECK-NEXT:   %2 = trunc i64 %1 to i32
@@ -8,7 +8,7 @@
 ; CHECK-NEXT: }
 ; CHECK-EMPTY:
 ; CHECK-NEXT: ; Function Attrs: noinline nounwind optsize willreturn
-; CHECK-NEXT: define internal i32 @_daedalus_slice_main__[[ID:[0-9]+]](ptr %0, i32 %1) #4 {
+; CHECK-NEXT: define internal i32 @_daedalus_slice_main_[[ID:[0-9]+]](ptr %0, i32 %1) #4 {
 ; CHECK-NEXT: sliceclone_BB_2:
 ; CHECK-NEXT:   %2 = sext i32 %1 to i64
 ; CHECK-NEXT:   %3 = getelementptr inbounds ptr, ptr %0, i64 %2
@@ -23,7 +23,7 @@
 ; CHECK-NEXT: }
 ; CHECK-EMPTY:
 ; CHECK-NEXT: ; Function Attrs: noinline nounwind optsize willreturn
-; CHECK-NEXT: define internal i32 @_daedalus_slice_main__[[ID:[0-9]+]](ptr %0, i32 %1) #4 {
+; CHECK-NEXT: define internal i32 @_daedalus_slice_main_[[ID:[0-9]+]](ptr %0, i32 %1) #4 {
 ; CHECK-NEXT: sliceclone_BB_2:
 ; CHECK-NEXT:   %2 = sext i32 %1 to i64
 ; CHECK-NEXT:   %3 = getelementptr inbounds ptr, ptr %0, i64 %2
@@ -41,9 +41,9 @@
 ; CHECK-NEXT: }
 ; CHECK-EMPTY:
 ; CHECK-NEXT: ; Function Attrs: noinline nounwind optsize willreturn
-; CHECK-NEXT: define internal i8 @_daedalus_slice_main__[[ID:[0-9]+]](ptr %0, ptr %1, i32 %2) #4 {
+; CHECK-NEXT: define internal i8 @_daedalus_slice_main_[[ID:[0-9]+]](ptr %0, ptr %1, i32 %2) #4 {
 ; CHECK-NEXT: sliceclone_BB_3:
-; CHECK-NEXT:   %3 = call i32 @_daedalus_slice_main__[[ID:[0-9]+]](ptr %1, i32 %2)
+; CHECK-NEXT:   %3 = call i32 @_daedalus_slice_main_[[ID:[0-9]+]](ptr %1, i32 %2)
 ; CHECK-NEXT:   %4 = sext i32 %3 to i64
 ; CHECK-NEXT:   br label %sliceclone_BB_4
 ; CHECK-EMPTY:
@@ -55,7 +55,7 @@
 ; CHECK-NEXT: }
 ; CHECK-EMPTY:
 ; CHECK-NEXT: ; Function Attrs: noinline nounwind optsize willreturn
-; CHECK-NEXT: define internal i32 @_daedalus_slice_main__[[ID:[0-9]+]](i32 %0, i32 %1, ptr %2, ptr %3, ptr %4) #4 {
+; CHECK-NEXT: define internal i32 @_daedalus_slice_main_[[ID:[0-9]+]](i32 %0, i32 %1, ptr %2, ptr %3, ptr %4) #4 {
 ; CHECK-NEXT: sliceclone_BB_2:
 ; CHECK-NEXT:   %5 = sext i32 %0 to i64
 ; CHECK-NEXT:   %6 = getelementptr inbounds ptr, ptr %3, i64 %5
@@ -70,7 +70,7 @@
 ; CHECK-NEXT:   ret i32 %11
 ; CHECK-EMPTY:
 ; CHECK-NEXT: sliceclone_BB_3:                                  ; preds = %sliceclone_BB_2
-; CHECK-NEXT:   %12 = call i32 @_daedalus_slice_main__[[ID:[0-9]+]](ptr %3, i32 %0)
+; CHECK-NEXT:   %12 = call i32 @_daedalus_slice_main_[[ID:[0-9]+]](ptr %3, i32 %0)
 ; CHECK-NEXT:   %13 = sext i32 %12 to i64
 ; CHECK-NEXT:   %14 = getelementptr inbounds ptr, ptr %4, i64 %13
 ; CHECK-NEXT:   %15 = load ptr, ptr %14, align 8, !tbaa !10
@@ -84,9 +84,9 @@
 ; CHECK-NEXT: sliceclone_BB_4:                                  ; preds = %sliceclone_BB_3
 ; CHECK-NEXT:   %18 = getelementptr inbounds i8, ptr %2, i64 %13
 ; CHECK-NEXT:   %19 = load i8, ptr %18, align 1, !tbaa !7
-; CHECK-NEXT:   %20 = call i32 @_daedalus_slice_main__[[ID:[0-9]+]](ptr %3, i32 %0)
+; CHECK-NEXT:   %20 = call i32 @_daedalus_slice_main_[[ID:[0-9]+]](ptr %3, i32 %0)
 ; CHECK-NEXT:   %21 = icmp eq i32 %20, 0
-; CHECK-NEXT:   %22 = call i8 @_daedalus_slice_main__[[ID:[0-9]+]](ptr %2, ptr %3, i32 %0)
+; CHECK-NEXT:   %22 = call i8 @_daedalus_slice_main_[[ID:[0-9]+]](ptr %2, ptr %3, i32 %0)
 ; CHECK-NEXT:   %23 = select i1 %21, i8 %19, i8 %22
 ; CHECK-NEXT:   %24 = icmp eq i8 %23, 1
 ; CHECK-NEXT:   br i1 %24, label %sliceclone_BB_6, label %sliceclone_BB_5
@@ -96,7 +96,7 @@
 ; CHECK-NEXT: }
 ; CHECK-EMPTY:
 ; CHECK-NEXT: ; Function Attrs: noinline nounwind optsize willreturn
-; CHECK-NEXT: define internal i32 @_daedalus_slice_main__[[ID:[0-9]+]](ptr %0, i32 %1, i32 %2) #4 {
+; CHECK-NEXT: define internal i32 @_daedalus_slice_main_[[ID:[0-9]+]](ptr %0, i32 %1, i32 %2) #4 {
 ; CHECK-NEXT: sliceclone_BB_9:
 ; CHECK-NEXT:   %3 = add nsw i32 %1, %2
 ; CHECK-NEXT:   br label %sliceclone_BB_10
@@ -115,7 +115,7 @@
 ; CHECK-NEXT: }
 ; CHECK-EMPTY:
 ; CHECK-NEXT: ; Function Attrs: noinline nounwind optsize willreturn
-; CHECK-NEXT: define internal i32 @_daedalus_slice_main__[[ID:[0-9]+]](ptr %0, i32 %1, i32 %2) #4 {
+; CHECK-NEXT: define internal i32 @_daedalus_slice_main_[[ID:[0-9]+]](ptr %0, i32 %1, i32 %2) #4 {
 ; CHECK-NEXT: sliceclone_BB_9:
 ; CHECK-NEXT:   %3 = add nsw i32 %1, %2
 ; CHECK-NEXT:   br label %sliceclone_BB_10

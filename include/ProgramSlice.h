@@ -47,7 +47,7 @@ public:
   std::map<Instruction *, Instruction *> getInstructionInSlice();
 
   /// Outlines the given slice into a standalone Function.
-  Function *outline();
+  Function *outline(unsigned int *counter);
 
   /// A function to simplify basic blocks of a function using the same
   /// method as the SimplifyCFGPass

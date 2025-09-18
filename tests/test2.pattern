@@ -1,5 +1,5 @@
 ; CHECK: ; Function Attrs: noinline nounwind optsize willreturn
-; CHECK-NEXT: define internal i32 @_daedalus_slice_main__[[ID:[0-9]+]](ptr %0) #3 {
+; CHECK-NEXT: define internal i32 @_daedalus_slice_main_[[ID:[0-9]+]](ptr %0) #3 {
 ; CHECK-NEXT: sliceclone_BB_1:
 ; CHECK-NEXT:   %1 = getelementptr inbounds ptr, ptr %0, i64 1
 ; CHECK-NEXT:   %2 = load ptr, ptr %1, align 8, !tbaa !11
