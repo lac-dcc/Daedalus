@@ -455,41 +455,8 @@ std::set<const BasicBlock *> searchForTryCatchLogic(Function &F) {
   return tryCatchBlocks;
 }
 
-namespace Daedalus {
-
-/**
- * @brief Runs the Daedalus LLVM pass on a given module.
- *
- * @details This function performs slicing on the given module, creating and
- * outlining program slices, and removing instructions that meet specific
- * criteria. It attempts to merge slices and remove unused instructions from the
- * original functions.
- *
- * @param M The module to run the pass on.
- * @param MAM The module analysis manager.
- * @return The preserved analyses after running the pass.
- */
-PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
-
-  std::set<Function *> FtoMap;
-  std::vector<SliceStruct> allSlices;
-
-  if (Error Err = M.materializeAll()) {
-    handleAllErrors(std::move(Err), [](const ErrorInfoBase &EIB) {
-      errs() << "Error materializing module: " << EIB.message() << "\n";
-    });
-  }
-
-  for (Function &F : M.getFunctionList())
-    if (!F.empty()) FtoMap.insert(&F);
-
-  auto module =
-      std::make_unique<Module>("New_" + M.getName().str(), M.getContext());
-
-  LLVM_DEBUG(dbgs() << "== OUTLINING INST PHASE ==\n");
-  FunctionAnalysisManager &FAM =
-      MAM.getResult<FunctionAnalysisManagerModuleProxy>(M).getManager();
-
+void outlinePhase(std::set<Function *> &FtoMap, FunctionAnalysisManager &FAM,
+                  std::vector<SliceStruct> &allSlices) {
   unsigned int outline_counter = 0;
   for (Function *F : FtoMap) {
     uint ki = 0;
@@ -594,8 +561,49 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
       LLVM_DEBUG(dbgs() << COLOR::GREEN << "outlined!" << COLOR::CLEAN << '\n');
     }
   }
+}
 
+namespace Daedalus {
+
+/**
+ * @brief Runs the Daedalus LLVM pass on a given module.
+ *
+ * @details This function performs slicing on the given module, creating and
+ * outlining program slices, and removing instructions that meet specific
+ * criteria. It attempts to merge slices and remove unused instructions from the
+ * original functions.
+ *
+ * @param M The module to run the pass on.
+ * @param MAM The module analysis manager.
+ * @return The preserved analyses after running the pass.
+ */
+PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
+
+  std::set<Function *> FtoMap;
+  std::vector<SliceStruct> allSlices;
   std::set<Function *> originalFunctions;
+
+  if (Error Err = M.materializeAll()) {
+    handleAllErrors(std::move(Err), [](const ErrorInfoBase &EIB) {
+      errs() << "Error materializing module: " << EIB.message() << "\n";
+    });
+  }
+
+  for (Function &F : M.getFunctionList())
+    if (!F.empty()) FtoMap.insert(&F);
+
+  auto module =
+      std::make_unique<Module>("New_" + M.getName().str(), M.getContext());
+
+  FunctionAnalysisManager &FAM =
+      MAM.getResult<FunctionAnalysisManagerModuleProxy>(M).getManager();
+
+  LLVM_DEBUG(dbgs() << "== OUTLINING INST PHASE ==\n");
+
+  outlinePhase(FtoMap, FAM, allSlices);
+
+  LLVM_DEBUG(dbgs() << "== MERGE SLICES FUNC PHASE ==\n");
+
   std::set<Function *> outlinedFunctions;
   for (SliceStruct &slice : allSlices) {
     Instruction *sliceCriterion = slice.I;
@@ -607,8 +615,6 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
                    SizeOfLargestSliceBeforeMerging = numberOfInstructions(F););
   }
 
-  LLVM_DEBUG(dbgs() << "== MERGE SLICES FUNC PHASE ==\n");
-
   // Say S and T are two slices that will merge, if we replace S by T, Then
   // delToNewFunc is a map from S to T "deleted function to newFunction".
   auto [mergeFunc, delToNewFunc] =
@@ -619,6 +625,8 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
   else
     LLVM_DEBUG(dbgs() << "MergeFunc returned false...\n");
 
+  // LLVM_DEBUG(dbgs() << "== REMOVING INST PHASE ==\n");
+  //
   std::set<Function *> mergeTo; // If a function is on this set, there are some
                                 // other function that merges with it.
   for (auto [A, B] : delToNewFunc) {
@@ -629,37 +637,15 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
                    SizeOfLargestSliceAfterMerging = numberOfInstructions(B););
     mergeTo.insert(B);
   }
-
-  // func-merging impl.
-  // std::set<Function *> combinedFunctions;
-  // std::set<Function *> mergedFunctions;
-  // for (auto [I, F, args, origInst, wasRemoved] : allSlices) {
-  //     for (auto [I, G, args, origInst, wasRemoved] : allSlices) {
-  //         if (F == G)
-  //             continue;
-  //         if (combinedFunctions.count(F) > 0 || combinedFunctions.count(G)
-  //         > 0)
-  //             continue;
-  //         FunctionMergeResult fmResult =
-  //         llvm::ProgramSlice::mergeFunctions(F, G); if
-  //         (fmResult.getMergedFunction() != nullptr) {
-  //             combinedFunctions.insert(F);
-  //             combinedFunctions.insert(G);
-  //             mergedFunctions.insert(fmResult.getMergedFunction());
-  //         }
-  //         LLVM_DEBUG(dbgs() << "-Merged function: "<<
-  //         fmResult.getMergedFunction()->getName() << "\n");
-  //     }
-  // };
-
-  LLVM_DEBUG(dbgs() << "== REMOVING INST PHASE ==\n");
-
-  std::set<Function *> toSimplify;
-  uint dontMerge = removeInstructions(allSlices, mergeTo, toSimplify);
+  //
+  // std::set<Function *> toSimplify;
+  // uint dontMerge = removeInstructions(allSlices, mergeTo, toSimplify);
+  uint dontMerge = outlinedFunctions.size() - mergeTo.size();
 
   LLVM_DEBUG(dbgs() << "== SIMPLIFY PHASE ==\n");
 
-  for (auto F : toSimplify) {
+  // for (auto F : toSimplify) {
+  for (auto F : mergeTo) {
     llvm::ProgramSlice::simplifyCfg(F, FAM);
   }
   for (auto originalF : originalFunctions) {
@@ -719,7 +705,8 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
                         << "' file...\n"););
 
   if (dumpDot) {
-    functionSlicesToDot(M, toSimplify);
+    // functionSlicesToDot(M, toSimplify);
+    functionSlicesToDot(M, outlinedFunctions);
   }
 
   if (verifyModule(M, &errs())) {
