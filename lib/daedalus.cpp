@@ -23,18 +23,14 @@
 #include "llvm/IR/PassManager.h"
 #include "llvm/IR/Verifier.h"
 #include "llvm/Support/Casting.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/GraphWriter.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/IPO/MergeFunctions.h"
+#include "llvm/Transforms/Utils/Cloning.h"
 #include <filesystem>
 #include <llvm/Pass.h>
-// #include "llvm/Transforms/IPO/FunctionMerging.h"
-
-#include "llvm/Support/CommandLine.h"
-#include "llvm/Transforms/Utils/Cloning.h"
-#include <csignal>
-#include <memory>
 #include <set>
 #include <system_error>
 
@@ -181,13 +177,13 @@ uint listInstructionsToRemove(Instruction *start,
  * instructions and updating function attributes.
  *
  * @param allSlices A vector of instruction slices to process.
- * @param mergeTo A set of functions that are allowed to be merged.
+ * @param mergedFunctions A set of functions that are allowed to be merged.
  * @param toSimplify A set of functions that need to be simplified.
  * @return A pair of unsigned integers representing the count of slices that
  *         were not merged and the count of slices that were not self-contained.
  */
 uint removeInstructions(const std::vector<SliceStruct> &allSlices,
-                        const std::set<Function *> &mergeTo,
+                        const std::set<Function *> &mergedFunctions,
                         std::set<Function *> &toSimplify) {
   std::set<Instruction *> toRemove;
   uint dontMerge = 0;
@@ -206,7 +202,7 @@ uint removeInstructions(const std::vector<SliceStruct> &allSlices,
       LLVM_DEBUG(dbgs() << "Processing slice: no name\n");
 
     F = callInst->getCalledFunction();
-    if (mergeTo.count(F) == 0) {
+    if (mergedFunctions.count(F) == 0) {
 
       if (F->hasName())
         LLVM_DEBUG(dbgs() << "Function '" << F->getName()
@@ -563,48 +559,10 @@ void outlinePhase(std::set<Function *> &FtoMap, FunctionAnalysisManager &FAM,
   }
 }
 
-namespace Daedalus {
-
-/**
- * @brief Runs the Daedalus LLVM pass on a given module.
- *
- * @details This function performs slicing on the given module, creating and
- * outlining program slices, and removing instructions that meet specific
- * criteria. It attempts to merge slices and remove unused instructions from the
- * original functions.
- *
- * @param M The module to run the pass on.
- * @param MAM The module analysis manager.
- * @return The preserved analyses after running the pass.
- */
-PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
-
-  std::set<Function *> FtoMap;
-  std::vector<SliceStruct> allSlices;
-  std::set<Function *> originalFunctions;
-
-  if (Error Err = M.materializeAll()) {
-    handleAllErrors(std::move(Err), [](const ErrorInfoBase &EIB) {
-      errs() << "Error materializing module: " << EIB.message() << "\n";
-    });
-  }
-
-  for (Function &F : M.getFunctionList())
-    if (!F.empty()) FtoMap.insert(&F);
-
-  auto module =
-      std::make_unique<Module>("New_" + M.getName().str(), M.getContext());
-
-  FunctionAnalysisManager &FAM =
-      MAM.getResult<FunctionAnalysisManagerModuleProxy>(M).getManager();
-
-  LLVM_DEBUG(dbgs() << "== OUTLINING INST PHASE ==\n");
-
-  outlinePhase(FtoMap, FAM, allSlices);
-
-  LLVM_DEBUG(dbgs() << "== MERGE SLICES FUNC PHASE ==\n");
-
-  std::set<Function *> outlinedFunctions;
+void mergePhase(std::set<Function *> &originalFunctions,
+                std::set<Function *> &outlinedFunctions,
+                std::vector<SliceStruct> &allSlices,
+                std::map<Function *, Function *> &delToNewFunc) {
   for (SliceStruct &slice : allSlices) {
     Instruction *sliceCriterion = slice.I;
     Function *F = slice.F;
@@ -617,41 +575,46 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
 
   // Say S and T are two slices that will merge, if we replace S by T, Then
   // delToNewFunc is a map from S to T "deleted function to newFunction".
-  auto [mergeFunc, delToNewFunc] =
+  auto [mergeFunc, delToNewFuncTmp] =
       MergeFunctionsPass::runOnFunctions(outlinedFunctions);
 
-  if (mergeFunc)
+  if (mergeFunc) {
     LLVM_DEBUG(dbgs() << "MergeFunc returned true!\n");
-  else
+    delToNewFunc = delToNewFuncTmp;
+  } else {
     LLVM_DEBUG(dbgs() << "MergeFunc returned false...\n");
+  }
+}
 
-  // LLVM_DEBUG(dbgs() << "== REMOVING INST PHASE ==\n");
-  //
-  std::set<Function *> mergeTo; // If a function is on this set, there are some
-                                // other function that merges with it.
+void removeInstPhase(uint *dontMerge, std::set<Function *> &toSimplify,
+                     std::vector<SliceStruct> &allSlices,
+                     std::map<Function *, Function *> &delToNewFunc) {
+  std::set<Function *>
+      mergedFunctions; // If a function is on this set, there are some
+                       // other function that merges with it.
   for (auto [A, B] : delToNewFunc) {
     if (B == nullptr) continue;
     while (delToNewFunc.count(B)) B = delToNewFunc[B];
-    assert(!verifyFunction(*B, &errs()));
     LLVM_DEBUG(if (numberOfInstructions(B) > SizeOfLargestSliceAfterMerging)
                    SizeOfLargestSliceAfterMerging = numberOfInstructions(B););
-    mergeTo.insert(B);
+    mergedFunctions.insert(B);
   }
-  //
-  // std::set<Function *> toSimplify;
-  // uint dontMerge = removeInstructions(allSlices, mergeTo, toSimplify);
-  uint dontMerge = outlinedFunctions.size() - mergeTo.size();
 
-  LLVM_DEBUG(dbgs() << "== SIMPLIFY PHASE ==\n");
+  *dontMerge = removeInstructions(allSlices, mergedFunctions, toSimplify);
+}
 
-  // for (auto F : toSimplify) {
-  for (auto F : mergeTo) {
+void simplifyPhase(std::set<Function *> &toSimplify,
+                   std::set<Function *> &originalFunctions,
+                   FunctionAnalysisManager &FAM) {
+  for (auto F : toSimplify) {
     llvm::ProgramSlice::simplifyCfg(F, FAM);
   }
   for (auto originalF : originalFunctions) {
     llvm::ProgramSlice::simplifyCfg(originalF, FAM);
   }
+}
 
+void printPhase(Module &M, std::map<Function *, Function *> &delToNewFunc) {
   LLVM_DEBUG({
     dbgs() << "== PRINT PHASE ==\n";
     if (!delToNewFunc.empty()) {
@@ -660,7 +623,12 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
       dbgs() << "No functions were merged!\n";
     }
   });
+}
 
+void reportGenPhase(Module &M, uint *dontMerge,
+                    std::set<Function *> &toSimplify,
+                    std::vector<SliceStruct> &allSlices,
+                    std::map<Function *, Function *> &delToNewFunc) {
   LLVM_DEBUG(
       LLVM_DEBUG(dbgs() << "== REPORT GENERATION PHASE ==\n");
       LLVM_DEBUG(dbgs() << "Exporting slices' metadata to disk...\n");
@@ -670,7 +638,8 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
           sourceFileName.string() + "_slices_report.log";
 
       TotalFunctionsOutlined = allSlices.size();
-      TotalSlicesMerged = delToNewFunc.size(); TotalSlicesDiscarded = dontMerge;
+      TotalSlicesMerged = delToNewFunc.size();
+      TotalSlicesDiscarded = *dontMerge;
 
       ReportWriter ReportWriterObj(exportedFileName); ReportWriterObj.writeLine(
           "totalFunctionsOutlined = " + std::to_string(TotalFunctionsOutlined));
@@ -705,9 +674,64 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
                         << "' file...\n"););
 
   if (dumpDot) {
-    // functionSlicesToDot(M, toSimplify);
-    functionSlicesToDot(M, outlinedFunctions);
+    functionSlicesToDot(M, toSimplify);
   }
+}
+
+namespace Daedalus {
+
+/**
+ * @brief Runs the Daedalus LLVM pass on a given module.
+ *
+ * @details This function performs slicing on the given module, creating and
+ * outlining program slices, and removing instructions that meet specific
+ * criteria. It attempts to merge slices and remove unused instructions from the
+ * original functions.
+ *
+ * @param M The module to run the pass on.
+ * @param MAM The module analysis manager.
+ * @return The preserved analyses after running the pass.
+ */
+PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
+  std::set<Function *> FtoMap;
+  std::vector<SliceStruct> allSlices;
+  std::set<Function *> originalFunctions;
+  std::set<Function *> outlinedFunctions;
+  std::map<Function *, Function *> delToNewFunc;
+  std::set<Function *> toSimplify;
+  uint dontMerge = 0;
+
+  if (Error Err = M.materializeAll()) {
+    handleAllErrors(std::move(Err), [](const ErrorInfoBase &EIB) {
+      errs() << "Error materializing module: " << EIB.message() << "\n";
+    });
+  }
+
+  for (Function &F : M.getFunctionList())
+    if (!F.empty()) FtoMap.insert(&F);
+
+  FunctionAnalysisManager &FAM =
+      MAM.getResult<FunctionAnalysisManagerModuleProxy>(M).getManager();
+
+  LLVM_DEBUG(dbgs() << "== OUTLINING INST PHASE ==\n");
+
+  outlinePhase(FtoMap, FAM, allSlices);
+
+  LLVM_DEBUG(dbgs() << "== MERGE SLICES FUNC PHASE ==\n");
+
+  mergePhase(originalFunctions, outlinedFunctions, allSlices, delToNewFunc);
+
+  LLVM_DEBUG(dbgs() << "== REMOVING INST PHASE ==\n");
+
+  removeInstPhase(&dontMerge, toSimplify, allSlices, delToNewFunc);
+
+  LLVM_DEBUG(dbgs() << "== SIMPLIFY PHASE ==\n");
+
+  simplifyPhase(toSimplify, originalFunctions, FAM);
+
+  // debug related
+  printPhase(M, delToNewFunc);
+  reportGenPhase(M, &dontMerge, toSimplify, allSlices, delToNewFunc);
 
   if (verifyModule(M, &errs())) {
     errs() << "Module verification failed! Printing module:\n";
