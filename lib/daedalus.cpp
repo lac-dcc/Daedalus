@@ -26,6 +26,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/GraphWriter.h"
+#include "llvm/Support/Timer.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/IPO/MergeFunctions.h"
 #include "llvm/Transforms/Utils/Cloning.h"
@@ -37,6 +38,17 @@
 using namespace llvm;
 
 #define DEBUG_TYPE "daedalus"
+
+static TimerGroup PhasesTiming("PhasesTimers", "Timers for Passes' phases");
+static Timer OutlinePhaseTimer("OutlinePhaseTimer", "Outline Phase Timer",
+                               PhasesTiming);
+static Timer MergePhaseTimer("MergePhaseTimer", "Merge Phase Timer",
+                             PhasesTiming);
+static Timer RemoveInstPhaseTimer("RemoveInstPhaseTimer",
+                                  "Remove Instructions Phase Timer",
+                                  PhasesTiming);
+static Timer SimplifyPhaseTimer("SimplifyPhaseTimer", "Simplify Phase Timer",
+                                PhasesTiming);
 
 STATISTIC(TotalFunctionsOutlined, "Total number of functions outlined");
 STATISTIC(TotalSlicesMerged, "Total number of slices that got merged");
@@ -714,20 +726,28 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
       MAM.getResult<FunctionAnalysisManagerModuleProxy>(M).getManager();
 
   LLVM_DEBUG(dbgs() << "== OUTLINING INST PHASE ==\n");
-
-  outlinePhase(FtoMap, FAM, allSlices);
+  {
+    TimeRegion ScopedTimer(OutlinePhaseTimer);
+    outlinePhase(FtoMap, FAM, allSlices);
+  }
 
   LLVM_DEBUG(dbgs() << "== MERGE SLICES FUNC PHASE ==\n");
-
-  mergePhase(originalFunctions, outlinedFunctions, allSlices, delToNewFunc);
+  {
+    TimeRegion ScopedTimer(MergePhaseTimer);
+    mergePhase(originalFunctions, outlinedFunctions, allSlices, delToNewFunc);
+  }
 
   LLVM_DEBUG(dbgs() << "== REMOVING INST PHASE ==\n");
-
-  removeInstPhase(&dontMerge, toSimplify, allSlices, delToNewFunc);
+  {
+    TimeRegion ScopedTimer(RemoveInstPhaseTimer);
+    removeInstPhase(&dontMerge, toSimplify, allSlices, delToNewFunc);
+  }
 
   LLVM_DEBUG(dbgs() << "== SIMPLIFY PHASE ==\n");
-
-  simplifyPhase(toSimplify, originalFunctions, FAM);
+  {
+    TimeRegion ScopedTimer(SimplifyPhaseTimer);
+    simplifyPhase(toSimplify, originalFunctions, FAM);
+  }
 
   // debug related
   printPhase(M, delToNewFunc);
