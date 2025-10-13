@@ -60,13 +60,28 @@ RUN cmake -G Ninja \
 	-DLLVM_ENABLE_ASSERTIONS=On \
 	-S llvm -B build
 RUN cmake --build build -- -j 10
+
+# Run experiment 1
 WORKDIR /src/daedalus-dbg-toolkit
-RUN ./run-experiment.sh -w 10 \
+RUN ./run-experiment.sh -w 20 \
 	-t 120 \
 	--llvm-project /src/llvm-project \
 	--code-size /src/code-size \
 	--llvm-test-suite /src/llvm-test-suite \
 	--daedalus /src/Daedalus \
+	--daedalus-branch phases-time \
+	--lit-results /lit-results \
+	--errors-dbg /src/daedalus-dbg-toolkit \
+	--venv /src/venv-py
+
+# Run experiment 2
+RUN ./run-experiment-2.sh -w 20 \
+	-t 120 \
+	--llvm-project /src/llvm-project \
+	--code-size /src/code-size \
+	--llvm-test-suite /src/llvm-test-suite \
+	--daedalus /src/Daedalus \
+	--daedalus-branch phases-time \
 	--lit-results /lit-results \
 	--errors-dbg /src/daedalus-dbg-toolkit \
 	--venv /src/venv-py
