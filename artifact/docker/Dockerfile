@@ -16,17 +16,17 @@ RUN apt install -y sudo \
 RUN python3 -m venv /src/venv-py
 ENV PATH="/src/venv-py/bin:$PATH"
 
-# Clone and Build LLVM 17
+# Clone and Build LLVM 17 with the Daedalus and func-merging patches
 RUN git clone --depth 100 -b merge-functions-pass https://github.com/Casperento/llvm-project.git 
 WORKDIR llvm-project
 RUN mkdir -p build
 RUN cmake -G Ninja \
-	-DLLVM_ENABLE_PROJECTS='clang;compiler-rt;lld' \
+	-DLLVM_ENABLE_PROJECTS='clang;lld' \
 	-DCMAKE_BUILD_TYPE="Release" \
 	-DLLVM_TARGETS_TO_BUILD=X86 \
 	-DLLVM_ENABLE_ASSERTIONS=On \
 	-S llvm -B build
-RUN cmake --build build -- -j 10
+RUN cmake --build build -- -j 20
 ENV PATH="/src/llvm-project/build/bin:$PATH"
 
 # Clone and Build Daedalus
@@ -49,24 +49,11 @@ WORKDIR /src
 RUN git clone https://github.com/Casperento/daedalus-dbg-toolkit.git
 RUN python3 -m pip install -r /src/daedalus-dbg-toolkit/requirements.txt
 
-# Build llvm with func-merging pass
-RUN git clone --depth 100 -b code-size https://github.com/rcorcs/llvm-project.git code-size
-WORKDIR code-size
-RUN mkdir -p build
-RUN cmake -G Ninja \
-	-DLLVM_ENABLE_PROJECTS='clang;compiler-rt;lld' \
-	-DCMAKE_BUILD_TYPE="Release" \
-	-DLLVM_TARGETS_TO_BUILD=X86 \
-	-DLLVM_ENABLE_ASSERTIONS=On \
-	-S llvm -B build
-RUN cmake --build build -- -j 10
-
 # Run experiment 1
 WORKDIR /src/daedalus-dbg-toolkit
 RUN ./run-experiment.sh -w 20 \
 	-t 120 \
 	--llvm-project /src/llvm-project \
-	--code-size /src/code-size \
 	--llvm-test-suite /src/llvm-test-suite \
 	--daedalus /src/Daedalus \
 	--daedalus-branch phases-time \
@@ -78,7 +65,6 @@ RUN ./run-experiment.sh -w 20 \
 RUN ./run-experiment-2.sh -w 20 \
 	-t 120 \
 	--llvm-project /src/llvm-project \
-	--code-size /src/code-size \
 	--llvm-test-suite /src/llvm-test-suite \
 	--daedalus /src/Daedalus \
 	--daedalus-branch phases-time \
