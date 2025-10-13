@@ -53,9 +53,6 @@ public:
   /// method as the SimplifyCFGPass
   static void simplifyCfg(Function *F, FunctionAnalysisManager &AM);
 
-  /// A function to merge two other functions using func-merging pass.
-  // static FunctionMergeResult mergeFunctions(Function *F1, Function *F2);
-
   /// Retrieves the current slice's parent function.
   Function *getParentFunction() const;
 
