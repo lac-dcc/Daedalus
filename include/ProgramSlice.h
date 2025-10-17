@@ -10,8 +10,8 @@
 #include <map>
 #include <set>
 
+#include "PHIGateAnalyzer.h"
 #include "llvm/Analysis/AliasAnalysis.h"
-
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/PostDominators.h"
 #include "llvm/IR/Dominators.h"
@@ -20,13 +20,11 @@
 #include "llvm/IR/PassManager.h"
 #include "llvm/Support/Error.h"
 
-// #include "llvm/Transforms/IPO/FunctionMerging.h"
-#include "PHIGateAnalyzer.h"
-
 namespace llvm {
 
 class ProgramSlice {
 public:
+  ProgramSlice() = default;
   /// Constructs a ProgramSlice object.
   ProgramSlice(Instruction &I, Function &F, FunctionAnalysisManager &FAM,
                std::unordered_map<const BasicBlock *,

@@ -50,6 +50,21 @@ static Timer RemoveInstPhaseTimer("RemoveInstPhaseTimer",
 static Timer SimplifyPhaseTimer("SimplifyPhaseTimer", "Simplify Phase Timer",
                                 PhasesTiming);
 
+static TimerGroup OutlinePhasesTiming("OutlinePhasesTimers",
+                                      "Timers for Outline subphases");
+static Timer GSAConstructionPhaseTimer("GSAConstructionPhasePhaseTimer",
+                                       "GSA Construction Phase Timer",
+                                       OutlinePhasesTiming);
+static Timer SliceIdentificationPhaseTimer("SliceIdentificationPhasePhaseTimer",
+                                           "Slice Identification Phase Timer",
+                                           OutlinePhasesTiming);
+static Timer CanOutlinePhaseTimer("CanOutlinePhasePhaseTimer",
+                                  "canOutline Phase Timer",
+                                  OutlinePhasesTiming);
+static Timer FunctionOutlinePhaseTimer("FunctionOutlinePhasePhaseTimer",
+                                       "Function Outline Phase Timer",
+                                       OutlinePhasesTiming);
+
 STATISTIC(TotalFunctionsOutlined, "Total number of functions outlined");
 STATISTIC(TotalSlicesMerged, "Total number of slices that got merged");
 STATISTIC(TotalSlicesDiscarded, "Total number of slices that got discarded");
@@ -483,13 +498,16 @@ void outlinePhase(std::set<Function *> &FtoMap, FunctionAnalysisManager &FAM,
 
     // Construct gating functions for all PHI nodes in the function
     DominatorTree &DT = FAM.getResult<DominatorTreeAnalysis>(*F);
-    PHIGateAnalyzer GSAAnalyzer(*F, DT);
     std::unordered_map<const BasicBlock *, SmallVector<const Value *>>
-        predicates = GSAAnalyzer.getGatesForAllPhis();
+        predicates;
+    {
+      TimeRegion ScopedTimerGSA(GSAConstructionPhaseTimer);
+      PHIGateAnalyzer GSAAnalyzer(*F, DT);
+      predicates = GSAAnalyzer.getGatesForAllPhis();
+    }
+
     LLVM_DEBUG(dbgs() << "daedalus.cpp: Function: " << F->getName() << ",\n");
 
-    // Replace all uses of I with the correpondent call to the new outlined
-    // function
     for (Instruction *I : S) {
       if (!canBeSliceCriterion(*I)) continue;
 
@@ -506,22 +524,31 @@ void outlinePhase(std::set<Function *> &FtoMap, FunctionAnalysisManager &FAM,
         continue;
       }
 
-      ProgramSlice ps = ProgramSlice(*I, *F, FAM, predicates);
-
+      ProgramSlice ps;
+      {
+        TimeRegion ScopedTimerSlicer(SliceIdentificationPhaseTimer);
+        ps = ProgramSlice(*I, *F, FAM, predicates);
+      }
       TargetLibraryInfo &TLI = FAM.getResult<TargetLibraryAnalysis>(*F);
       AAResults *AA = &FAM.getResult<AAManager>(*F);
-      uint canOutlineResult = ps.canOutline(AA, TLI, tryCatchBlocks);
+
+      uint canOutlineResult;
+
+      {
+        TimeRegion ScopedTimerCanOutline(CanOutlinePhaseTimer);
+        canOutlineResult = ps.canOutline(AA, TLI, tryCatchBlocks);
+      }
+
       if (!canOutlineResult) {
-        LLVM_DEBUG(
-            dbgs()
-            << "Daedalus could not outline a slice function for the criterion: "
-            << *I << "\n");
+        LLVM_DEBUG(dbgs() << "Daedalus could not outline a slice function "
+                             "for the criterion: "
+                          << *I << "\n");
         continue;
       }
 
       LLVM_DEBUG({
-        // Print the entire module containing the parent function to a file, to
-        // extract the faulty function separately later
+        // Print the entire module containing the parent function to a file,
+        // to extract the faulty function separately later
         Module *parentModule = ps.getParentFunction()->getParent();
         if (parentModule) {
           std::string baseName =
@@ -543,7 +570,12 @@ void outlinePhase(std::set<Function *> &FtoMap, FunctionAnalysisManager &FAM,
         }
       });
 
-      Function *G = ps.outline(&outline_counter);
+      Function *G;
+      {
+        TimeRegion ScopedTimerOutline(FunctionOutlinePhaseTimer);
+        G = ps.outline(&outline_counter);
+      }
+
       if (G == nullptr) continue;
       outline_counter++;
 
@@ -554,6 +586,8 @@ void outlinePhase(std::set<Function *> &FtoMap, FunctionAnalysisManager &FAM,
       std::set<Instruction *> originInstructionSet;
       for (auto &[fst, _] : constOriginalInst) originInstructionSet.insert(fst);
 
+      // Replace all uses of I with the correpondent call to the new outlined
+      // function
       SmallVector<Value *> funcArgs = ps.getOrigFunctionArgs();
       CallInst *callInst =
           CallInst::Create(G, funcArgs, I->getName(), I->getParent());
