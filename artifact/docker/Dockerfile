@@ -56,7 +56,7 @@ RUN ./run-experiment.sh -w 20 \
 	--llvm-project /src/llvm-project \
 	--llvm-test-suite /src/llvm-test-suite \
 	--daedalus /src/Daedalus \
-	--daedalus-branch phases-time \
+	--daedalus-branch main \
 	--lit-results /lit-results \
 	--errors-dbg /src/daedalus-dbg-toolkit \
 	--venv /src/venv-py
@@ -67,7 +67,7 @@ RUN ./run-experiment-2.sh -w 20 \
 	--llvm-project /src/llvm-project \
 	--llvm-test-suite /src/llvm-test-suite \
 	--daedalus /src/Daedalus \
-	--daedalus-branch phases-time \
+	--daedalus-branch main \
 	--lit-results /lit-results \
 	--errors-dbg /src/daedalus-dbg-toolkit \
 	--venv /src/venv-py
