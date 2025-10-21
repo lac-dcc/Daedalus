@@ -23,24 +23,47 @@
 #include "llvm/IR/PassManager.h"
 #include "llvm/IR/Verifier.h"
 #include "llvm/Support/Casting.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/GraphWriter.h"
+#include "llvm/Support/Timer.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/IPO/MergeFunctions.h"
+#include "llvm/Transforms/Utils/Cloning.h"
 #include <filesystem>
 #include <llvm/Pass.h>
-// #include "llvm/Transforms/IPO/FunctionMerging.h"
-
-#include "llvm/Support/CommandLine.h"
-#include "llvm/Transforms/Utils/Cloning.h"
-#include <csignal>
-#include <memory>
 #include <set>
 #include <system_error>
 
 using namespace llvm;
 
 #define DEBUG_TYPE "daedalus"
+
+static TimerGroup PhasesTiming("PhasesTimers", "Timers for Passes' phases");
+static Timer OutlinePhaseTimer("OutlinePhaseTimer", "Outline Phase Timer",
+                               PhasesTiming);
+static Timer MergePhaseTimer("MergePhaseTimer", "Merge Phase Timer",
+                             PhasesTiming);
+static Timer RemoveInstPhaseTimer("RemoveInstPhaseTimer",
+                                  "Remove Instructions Phase Timer",
+                                  PhasesTiming);
+static Timer SimplifyPhaseTimer("SimplifyPhaseTimer", "Simplify Phase Timer",
+                                PhasesTiming);
+
+static TimerGroup OutlinePhasesTiming("OutlinePhasesTimers",
+                                      "Timers for Outline subphases");
+static Timer GSAConstructionPhaseTimer("GSAConstructionPhasePhaseTimer",
+                                       "GSA Construction Phase Timer",
+                                       OutlinePhasesTiming);
+static Timer SliceIdentificationPhaseTimer("SliceIdentificationPhasePhaseTimer",
+                                           "Slice Identification Phase Timer",
+                                           OutlinePhasesTiming);
+static Timer CanOutlinePhaseTimer("CanOutlinePhasePhaseTimer",
+                                  "canOutline Phase Timer",
+                                  OutlinePhasesTiming);
+static Timer FunctionOutlinePhaseTimer("FunctionOutlinePhasePhaseTimer",
+                                       "Function Outline Phase Timer",
+                                       OutlinePhasesTiming);
 
 STATISTIC(TotalFunctionsOutlined, "Total number of functions outlined");
 STATISTIC(TotalSlicesMerged, "Total number of slices that got merged");
@@ -181,13 +204,13 @@ uint listInstructionsToRemove(Instruction *start,
  * instructions and updating function attributes.
  *
  * @param allSlices A vector of instruction slices to process.
- * @param mergeTo A set of functions that are allowed to be merged.
+ * @param mergedFunctions A set of functions that are allowed to be merged.
  * @param toSimplify A set of functions that need to be simplified.
  * @return A pair of unsigned integers representing the count of slices that
  *         were not merged and the count of slices that were not self-contained.
  */
 uint removeInstructions(const std::vector<SliceStruct> &allSlices,
-                        const std::set<Function *> &mergeTo,
+                        const std::set<Function *> &mergedFunctions,
                         std::set<Function *> &toSimplify) {
   std::set<Instruction *> toRemove;
   uint dontMerge = 0;
@@ -206,7 +229,7 @@ uint removeInstructions(const std::vector<SliceStruct> &allSlices,
       LLVM_DEBUG(dbgs() << "Processing slice: no name\n");
 
     F = callInst->getCalledFunction();
-    if (mergeTo.count(F) == 0) {
+    if (mergedFunctions.count(F) == 0) {
 
       if (F->hasName())
         LLVM_DEBUG(dbgs() << "Function '" << F->getName()
@@ -455,41 +478,8 @@ std::set<const BasicBlock *> searchForTryCatchLogic(Function &F) {
   return tryCatchBlocks;
 }
 
-namespace Daedalus {
-
-/**
- * @brief Runs the Daedalus LLVM pass on a given module.
- *
- * @details This function performs slicing on the given module, creating and
- * outlining program slices, and removing instructions that meet specific
- * criteria. It attempts to merge slices and remove unused instructions from the
- * original functions.
- *
- * @param M The module to run the pass on.
- * @param MAM The module analysis manager.
- * @return The preserved analyses after running the pass.
- */
-PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
-
-  std::set<Function *> FtoMap;
-  std::vector<SliceStruct> allSlices;
-
-  if (Error Err = M.materializeAll()) {
-    handleAllErrors(std::move(Err), [](const ErrorInfoBase &EIB) {
-      errs() << "Error materializing module: " << EIB.message() << "\n";
-    });
-  }
-
-  for (Function &F : M.getFunctionList())
-    if (!F.empty()) FtoMap.insert(&F);
-
-  auto module =
-      std::make_unique<Module>("New_" + M.getName().str(), M.getContext());
-
-  LLVM_DEBUG(dbgs() << "== OUTLINING INST PHASE ==\n");
-  FunctionAnalysisManager &FAM =
-      MAM.getResult<FunctionAnalysisManagerModuleProxy>(M).getManager();
-
+void outlinePhase(std::set<Function *> &FtoMap, FunctionAnalysisManager &FAM,
+                  std::vector<SliceStruct> &allSlices) {
   unsigned int outline_counter = 0;
   for (Function *F : FtoMap) {
     uint ki = 0;
@@ -508,13 +498,18 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
 
     // Construct gating functions for all PHI nodes in the function
     DominatorTree &DT = FAM.getResult<DominatorTreeAnalysis>(*F);
-    PHIGateAnalyzer GSAAnalyzer(*F, DT);
     std::unordered_map<const BasicBlock *, SmallVector<const Value *>>
-        predicates = GSAAnalyzer.getGatesForAllPhis();
+        predicates;
+    {
+      if (llvm::TimePassesIsEnabled) {
+        TimeRegion ScopedTimerGSA(GSAConstructionPhaseTimer);
+      }
+      PHIGateAnalyzer GSAAnalyzer(*F, DT);
+      predicates = GSAAnalyzer.getGatesForAllPhis();
+    }
+
     LLVM_DEBUG(dbgs() << "daedalus.cpp: Function: " << F->getName() << ",\n");
 
-    // Replace all uses of I with the correpondent call to the new outlined
-    // function
     for (Instruction *I : S) {
       if (!canBeSliceCriterion(*I)) continue;
 
@@ -531,22 +526,35 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
         continue;
       }
 
-      ProgramSlice ps = ProgramSlice(*I, *F, FAM, predicates);
-
+      ProgramSlice ps;
+      {
+        if (llvm::TimePassesIsEnabled) {
+          TimeRegion ScopedTimerSlicer(SliceIdentificationPhaseTimer);
+        }
+        ps = ProgramSlice(*I, *F, FAM, predicates);
+      }
       TargetLibraryInfo &TLI = FAM.getResult<TargetLibraryAnalysis>(*F);
       AAResults *AA = &FAM.getResult<AAManager>(*F);
-      uint canOutlineResult = ps.canOutline(AA, TLI, tryCatchBlocks);
+
+      uint canOutlineResult;
+
+      {
+        if (llvm::TimePassesIsEnabled) {
+          TimeRegion ScopedTimerCanOutline(CanOutlinePhaseTimer);
+        }
+        canOutlineResult = ps.canOutline(AA, TLI, tryCatchBlocks);
+      }
+
       if (!canOutlineResult) {
-        LLVM_DEBUG(
-            dbgs()
-            << "Daedalus could not outline a slice function for the criterion: "
-            << *I << "\n");
+        LLVM_DEBUG(dbgs() << "Daedalus could not outline a slice function "
+                             "for the criterion: "
+                          << *I << "\n");
         continue;
       }
 
       LLVM_DEBUG({
-        // Print the entire module containing the parent function to a file, to
-        // extract the faulty function separately later
+        // Print the entire module containing the parent function to a file,
+        // to extract the faulty function separately later
         Module *parentModule = ps.getParentFunction()->getParent();
         if (parentModule) {
           std::string baseName =
@@ -568,7 +576,14 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
         }
       });
 
-      Function *G = ps.outline(&outline_counter);
+      Function *G;
+      {
+        if (llvm::TimePassesIsEnabled) {
+          TimeRegion ScopedTimerOutline(FunctionOutlinePhaseTimer);
+        }
+        G = ps.outline(&outline_counter);
+      }
+
       if (G == nullptr) continue;
       outline_counter++;
 
@@ -579,6 +594,8 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
       std::set<Instruction *> originInstructionSet;
       for (auto &[fst, _] : constOriginalInst) originInstructionSet.insert(fst);
 
+      // Replace all uses of I with the correpondent call to the new outlined
+      // function
       SmallVector<Value *> funcArgs = ps.getOrigFunctionArgs();
       CallInst *callInst =
           CallInst::Create(G, funcArgs, I->getName(), I->getParent());
@@ -594,9 +611,12 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
       LLVM_DEBUG(dbgs() << COLOR::GREEN << "outlined!" << COLOR::CLEAN << '\n');
     }
   }
+}
 
-  std::set<Function *> originalFunctions;
-  std::set<Function *> outlinedFunctions;
+void mergePhase(std::set<Function *> &originalFunctions,
+                std::set<Function *> &outlinedFunctions,
+                std::vector<SliceStruct> &allSlices,
+                std::map<Function *, Function *> &delToNewFunc) {
   for (SliceStruct &slice : allSlices) {
     Instruction *sliceCriterion = slice.I;
     Function *F = slice.F;
@@ -607,65 +627,48 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
                    SizeOfLargestSliceBeforeMerging = numberOfInstructions(F););
   }
 
-  LLVM_DEBUG(dbgs() << "== MERGE SLICES FUNC PHASE ==\n");
-
   // Say S and T are two slices that will merge, if we replace S by T, Then
   // delToNewFunc is a map from S to T "deleted function to newFunction".
-  auto [mergeFunc, delToNewFunc] =
+  auto [mergeFunc, delToNewFuncTmp] =
       MergeFunctionsPass::runOnFunctions(outlinedFunctions);
 
-  if (mergeFunc)
+  if (mergeFunc) {
     LLVM_DEBUG(dbgs() << "MergeFunc returned true!\n");
-  else
+    delToNewFunc = delToNewFuncTmp;
+  } else {
     LLVM_DEBUG(dbgs() << "MergeFunc returned false...\n");
+  }
+}
 
-  std::set<Function *> mergeTo; // If a function is on this set, there are some
-                                // other function that merges with it.
+void removeInstPhase(uint *dontMerge, std::set<Function *> &toSimplify,
+                     std::vector<SliceStruct> &allSlices,
+                     std::map<Function *, Function *> &delToNewFunc) {
+  std::set<Function *>
+      mergedFunctions; // If a function is on this set, there are some
+                       // other function that merges with it.
   for (auto [A, B] : delToNewFunc) {
     if (B == nullptr) continue;
     while (delToNewFunc.count(B)) B = delToNewFunc[B];
-    assert(!verifyFunction(*B, &errs()));
     LLVM_DEBUG(if (numberOfInstructions(B) > SizeOfLargestSliceAfterMerging)
                    SizeOfLargestSliceAfterMerging = numberOfInstructions(B););
-    mergeTo.insert(B);
+    mergedFunctions.insert(B);
   }
 
-  // func-merging impl.
-  // std::set<Function *> combinedFunctions;
-  // std::set<Function *> mergedFunctions;
-  // for (auto [I, F, args, origInst, wasRemoved] : allSlices) {
-  //     for (auto [I, G, args, origInst, wasRemoved] : allSlices) {
-  //         if (F == G)
-  //             continue;
-  //         if (combinedFunctions.count(F) > 0 || combinedFunctions.count(G)
-  //         > 0)
-  //             continue;
-  //         FunctionMergeResult fmResult =
-  //         llvm::ProgramSlice::mergeFunctions(F, G); if
-  //         (fmResult.getMergedFunction() != nullptr) {
-  //             combinedFunctions.insert(F);
-  //             combinedFunctions.insert(G);
-  //             mergedFunctions.insert(fmResult.getMergedFunction());
-  //         }
-  //         LLVM_DEBUG(dbgs() << "-Merged function: "<<
-  //         fmResult.getMergedFunction()->getName() << "\n");
-  //     }
-  // };
+  *dontMerge = removeInstructions(allSlices, mergedFunctions, toSimplify);
+}
 
-  LLVM_DEBUG(dbgs() << "== REMOVING INST PHASE ==\n");
-
-  std::set<Function *> toSimplify;
-  uint dontMerge = removeInstructions(allSlices, mergeTo, toSimplify);
-
-  LLVM_DEBUG(dbgs() << "== SIMPLIFY PHASE ==\n");
-
+void simplifyPhase(std::set<Function *> &toSimplify,
+                   std::set<Function *> &originalFunctions,
+                   FunctionAnalysisManager &FAM) {
   for (auto F : toSimplify) {
     llvm::ProgramSlice::simplifyCfg(F, FAM);
   }
   for (auto originalF : originalFunctions) {
     llvm::ProgramSlice::simplifyCfg(originalF, FAM);
   }
+}
 
+void printPhase(Module &M, std::map<Function *, Function *> &delToNewFunc) {
   LLVM_DEBUG({
     dbgs() << "== PRINT PHASE ==\n";
     if (!delToNewFunc.empty()) {
@@ -674,7 +677,12 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
       dbgs() << "No functions were merged!\n";
     }
   });
+}
 
+void reportGenPhase(Module &M, uint *dontMerge,
+                    std::set<Function *> &toSimplify,
+                    std::vector<SliceStruct> &allSlices,
+                    std::map<Function *, Function *> &delToNewFunc) {
   LLVM_DEBUG(
       LLVM_DEBUG(dbgs() << "== REPORT GENERATION PHASE ==\n");
       LLVM_DEBUG(dbgs() << "Exporting slices' metadata to disk...\n");
@@ -684,14 +692,15 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
           sourceFileName.string() + "_slices_report.log";
 
       TotalFunctionsOutlined = allSlices.size();
-      TotalSlicesMerged = delToNewFunc.size(); TotalSlicesDiscarded = dontMerge;
+      TotalSlicesMerged = delToNewFunc.size();
+      TotalSlicesDiscarded = *dontMerge;
 
       ReportWriter ReportWriterObj(exportedFileName); ReportWriterObj.writeLine(
           "totalFunctionsOutlined = " + std::to_string(TotalFunctionsOutlined));
       ReportWriterObj.writeLine(
           "totalSlicesMerged = " +
-          std::to_string(TotalSlicesMerged)); // Note: all delToNewFunc keys are
-                                              // unique slices
+          std::to_string(TotalSlicesMerged)); // Note: all delToNewFunc keys
+                                              // are unique slices
       ReportWriterObj.writeLine("totalSlicesDiscarded = " +
                                 std::to_string(TotalSlicesDiscarded));
       ReportWriterObj.writeLine(
@@ -721,6 +730,78 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
   if (dumpDot) {
     functionSlicesToDot(M, toSimplify);
   }
+}
+
+namespace Daedalus {
+
+/**
+ * @brief Runs the Daedalus LLVM pass on a given module.
+ *
+ * @details This function performs slicing on the given module, creating and
+ * outlining program slices, and removing instructions that meet specific
+ * criteria. It attempts to merge slices and remove unused instructions from
+ * the original functions.
+ *
+ * @param M The module to run the pass on.
+ * @param MAM The module analysis manager.
+ * @return The preserved analyses after running the pass.
+ */
+PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
+  std::set<Function *> FtoMap;
+  std::vector<SliceStruct> allSlices;
+  std::set<Function *> originalFunctions;
+  std::set<Function *> outlinedFunctions;
+  std::map<Function *, Function *> delToNewFunc;
+  std::set<Function *> toSimplify;
+  uint dontMerge = 0;
+
+  if (Error Err = M.materializeAll()) {
+    handleAllErrors(std::move(Err), [](const ErrorInfoBase &EIB) {
+      errs() << "Error materializing module: " << EIB.message() << "\n";
+    });
+  }
+
+  for (Function &F : M.getFunctionList())
+    if (!F.empty()) FtoMap.insert(&F);
+
+  FunctionAnalysisManager &FAM =
+      MAM.getResult<FunctionAnalysisManagerModuleProxy>(M).getManager();
+
+  LLVM_DEBUG(dbgs() << "== OUTLINING INST PHASE ==\n");
+  {
+    if (llvm::TimePassesIsEnabled) {
+      TimeRegion ScopedTimer(OutlinePhaseTimer);
+    }
+    outlinePhase(FtoMap, FAM, allSlices);
+  }
+
+  LLVM_DEBUG(dbgs() << "== MERGE SLICES FUNC PHASE ==\n");
+  {
+    if (llvm::TimePassesIsEnabled) {
+      TimeRegion ScopedTimer(MergePhaseTimer);
+    }
+    mergePhase(originalFunctions, outlinedFunctions, allSlices, delToNewFunc);
+  }
+
+  LLVM_DEBUG(dbgs() << "== REMOVING INST PHASE ==\n");
+  {
+    if (llvm::TimePassesIsEnabled) {
+      TimeRegion ScopedTimer(RemoveInstPhaseTimer);
+    }
+    removeInstPhase(&dontMerge, toSimplify, allSlices, delToNewFunc);
+  }
+
+  LLVM_DEBUG(dbgs() << "== SIMPLIFY PHASE ==\n");
+  {
+    if (llvm::TimePassesIsEnabled) {
+      TimeRegion ScopedTimer(SimplifyPhaseTimer);
+    }
+    simplifyPhase(toSimplify, originalFunctions, FAM);
+  }
+
+  // debug related
+  printPhase(M, delToNewFunc);
+  reportGenPhase(M, &dontMerge, toSimplify, allSlices, delToNewFunc);
 
   if (verifyModule(M, &errs())) {
     errs() << "Module verification failed! Printing module:\n";

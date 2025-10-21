@@ -10,8 +10,8 @@
 #include <map>
 #include <set>
 
+#include "PHIGateAnalyzer.h"
 #include "llvm/Analysis/AliasAnalysis.h"
-
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/PostDominators.h"
 #include "llvm/IR/Dominators.h"
@@ -20,13 +20,11 @@
 #include "llvm/IR/PassManager.h"
 #include "llvm/Support/Error.h"
 
-// #include "llvm/Transforms/IPO/FunctionMerging.h"
-#include "PHIGateAnalyzer.h"
-
 namespace llvm {
 
 class ProgramSlice {
 public:
+  ProgramSlice() = default;
   /// Constructs a ProgramSlice object.
   ProgramSlice(Instruction &I, Function &F, FunctionAnalysisManager &FAM,
                std::unordered_map<const BasicBlock *,
@@ -52,9 +50,6 @@ public:
   /// A function to simplify basic blocks of a function using the same
   /// method as the SimplifyCFGPass
   static void simplifyCfg(Function *F, FunctionAnalysisManager &AM);
-
-  /// A function to merge two other functions using func-merging pass.
-  // static FunctionMergeResult mergeFunctions(Function *F1, Function *F2);
 
   /// Retrieves the current slice's parent function.
   Function *getParentFunction() const;
