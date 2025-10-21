@@ -501,7 +501,9 @@ void outlinePhase(std::set<Function *> &FtoMap, FunctionAnalysisManager &FAM,
     std::unordered_map<const BasicBlock *, SmallVector<const Value *>>
         predicates;
     {
-      TimeRegion ScopedTimerGSA(GSAConstructionPhaseTimer);
+      if (llvm::TimePassesIsEnabled) {
+        TimeRegion ScopedTimerGSA(GSAConstructionPhaseTimer);
+      }
       PHIGateAnalyzer GSAAnalyzer(*F, DT);
       predicates = GSAAnalyzer.getGatesForAllPhis();
     }
@@ -526,7 +528,9 @@ void outlinePhase(std::set<Function *> &FtoMap, FunctionAnalysisManager &FAM,
 
       ProgramSlice ps;
       {
-        TimeRegion ScopedTimerSlicer(SliceIdentificationPhaseTimer);
+        if (llvm::TimePassesIsEnabled) {
+          TimeRegion ScopedTimerSlicer(SliceIdentificationPhaseTimer);
+        }
         ps = ProgramSlice(*I, *F, FAM, predicates);
       }
       TargetLibraryInfo &TLI = FAM.getResult<TargetLibraryAnalysis>(*F);
@@ -535,7 +539,9 @@ void outlinePhase(std::set<Function *> &FtoMap, FunctionAnalysisManager &FAM,
       uint canOutlineResult;
 
       {
-        TimeRegion ScopedTimerCanOutline(CanOutlinePhaseTimer);
+        if (llvm::TimePassesIsEnabled) {
+          TimeRegion ScopedTimerCanOutline(CanOutlinePhaseTimer);
+        }
         canOutlineResult = ps.canOutline(AA, TLI, tryCatchBlocks);
       }
 
@@ -572,7 +578,9 @@ void outlinePhase(std::set<Function *> &FtoMap, FunctionAnalysisManager &FAM,
 
       Function *G;
       {
-        TimeRegion ScopedTimerOutline(FunctionOutlinePhaseTimer);
+        if (llvm::TimePassesIsEnabled) {
+          TimeRegion ScopedTimerOutline(FunctionOutlinePhaseTimer);
+        }
         G = ps.outline(&outline_counter);
       }
 
@@ -691,8 +699,8 @@ void reportGenPhase(Module &M, uint *dontMerge,
           "totalFunctionsOutlined = " + std::to_string(TotalFunctionsOutlined));
       ReportWriterObj.writeLine(
           "totalSlicesMerged = " +
-          std::to_string(TotalSlicesMerged)); // Note: all delToNewFunc keys are
-                                              // unique slices
+          std::to_string(TotalSlicesMerged)); // Note: all delToNewFunc keys
+                                              // are unique slices
       ReportWriterObj.writeLine("totalSlicesDiscarded = " +
                                 std::to_string(TotalSlicesDiscarded));
       ReportWriterObj.writeLine(
@@ -731,8 +739,8 @@ namespace Daedalus {
  *
  * @details This function performs slicing on the given module, creating and
  * outlining program slices, and removing instructions that meet specific
- * criteria. It attempts to merge slices and remove unused instructions from the
- * original functions.
+ * criteria. It attempts to merge slices and remove unused instructions from
+ * the original functions.
  *
  * @param M The module to run the pass on.
  * @param MAM The module analysis manager.
@@ -761,25 +769,33 @@ PreservedAnalyses DaedalusPass::run(Module &M, ModuleAnalysisManager &MAM) {
 
   LLVM_DEBUG(dbgs() << "== OUTLINING INST PHASE ==\n");
   {
-    TimeRegion ScopedTimer(OutlinePhaseTimer);
+    if (llvm::TimePassesIsEnabled) {
+      TimeRegion ScopedTimer(OutlinePhaseTimer);
+    }
     outlinePhase(FtoMap, FAM, allSlices);
   }
 
   LLVM_DEBUG(dbgs() << "== MERGE SLICES FUNC PHASE ==\n");
   {
-    TimeRegion ScopedTimer(MergePhaseTimer);
+    if (llvm::TimePassesIsEnabled) {
+      TimeRegion ScopedTimer(MergePhaseTimer);
+    }
     mergePhase(originalFunctions, outlinedFunctions, allSlices, delToNewFunc);
   }
 
   LLVM_DEBUG(dbgs() << "== REMOVING INST PHASE ==\n");
   {
-    TimeRegion ScopedTimer(RemoveInstPhaseTimer);
+    if (llvm::TimePassesIsEnabled) {
+      TimeRegion ScopedTimer(RemoveInstPhaseTimer);
+    }
     removeInstPhase(&dontMerge, toSimplify, allSlices, delToNewFunc);
   }
 
   LLVM_DEBUG(dbgs() << "== SIMPLIFY PHASE ==\n");
   {
-    TimeRegion ScopedTimer(SimplifyPhaseTimer);
+    if (llvm::TimePassesIsEnabled) {
+      TimeRegion ScopedTimer(SimplifyPhaseTimer);
+    }
     simplifyPhase(toSimplify, originalFunctions, FAM);
   }
 
